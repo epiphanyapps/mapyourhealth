@@ -18,6 +18,10 @@
     "dev:mobile": "yarn sync:amplify && yarn mobile",
     "lint": "yarn workspaces foreach -A run lint:check",
     "type-check": "yarn workspaces foreach -A run compile",
-    "clean": "yarn workspaces foreach -A run clean && rm -rf node_modules"
+    "clean": "yarn workspaces foreach -A run clean && rm -rf node_modules",
+    "esbuild": "esbuild"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.2"
   }
 }

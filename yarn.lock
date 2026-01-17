@@ -18075,6 +18075,8 @@ __metadata:
 "mapyourhealth-monorepo@workspace:.":
   version: 0.0.0-use.local
   resolution: "mapyourhealth-monorepo@workspace:."
+  dependencies:
+    esbuild: "npm:^0.24.2"
   languageName: unknown
   linkType: soft
 

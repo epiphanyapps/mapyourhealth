@@ -7,7 +7,8 @@
     "deploy": "ampx pipeline-deploy --branch main",
     "lint:check": "echo 'No lint configured'",
     "compile": "tsc --noEmit",
-    "clean": "rm -rf dist .amplify"
+    "clean": "rm -rf dist .amplify",
+    "esbuild": "esbuild"
   },
   "dependencies": {
     "@aws-amplify/backend": "^1.14.1",
