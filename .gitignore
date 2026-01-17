@@ -2,6 +2,20 @@
 #
 .DS_Store
 
+# Amplify
+.amplify/
+amplify_outputs.json
+!apps/mobile/amplify_outputs.json
+
+# Yarn
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
 # Xcode
 #
 build/
@@ -68,8 +82,8 @@ buck-out/
 # Expo
 .expo/*
 bin/Exponent.app
-/android
-/ios
+apps/mobile/android
+apps/mobile/ios
 expo-env.d.ts
 
 ## Secrets
@@ -85,8 +99,10 @@ web-build/
 # Configurations
 !env.js
 
-/coverage
+apps/mobile/coverage
+coverage
 
 # Dependency Graph Visualizations
 app-dependency-graph.svg
 app-dependency-graph.png
+apps/mobile/.expo

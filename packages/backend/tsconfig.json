@@ -5,11 +5,10 @@
     "moduleResolution": "bundler",
     "strict": true,
     "skipLibCheck": true,
-    "resolveJsonModule": true,
     "esModuleInterop": true,
-    "paths": {
-      "@mapyourhealth/backend/*": ["./packages/backend/*"]
-    }
+    "resolveJsonModule": true,
+    "outDir": "dist"
   },
-  "exclude": ["node_modules", ".amplify"]
+  "include": ["amplify/**/*"],
+  "exclude": ["node_modules"]
 }

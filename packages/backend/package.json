@@ -1,0 +1,22 @@
+{
+  "name": "@mapyourhealth/backend",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "sandbox": "ampx sandbox",
+    "deploy": "ampx pipeline-deploy --branch main",
+    "lint:check": "echo 'No lint configured'",
+    "compile": "tsc --noEmit",
+    "clean": "rm -rf dist .amplify"
+  },
+  "dependencies": {
+    "@aws-amplify/backend": "^1.14.1",
+    "@aws-amplify/backend-cli": "^1.4.6",
+    "aws-cdk": "^2.177.0",
+    "aws-cdk-lib": "^2.177.0",
+    "constructs": "^10.4.2",
+    "esbuild": "^0.24.2",
+    "tsx": "^4.20.3",
+    "typescript": "~5.9.2"
+  }
+}
