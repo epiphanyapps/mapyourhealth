@@ -8,6 +8,8 @@ on:
       - 'amplify.yml'
       - 'package.json'
       - 'yarn.lock'
+      - '.github/workflows/mobile-deploy.yml'
+  workflow_dispatch:
   workflow_run:
     workflows: ["Backend CI/CD"]
     types: [completed]
