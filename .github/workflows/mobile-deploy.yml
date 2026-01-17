@@ -44,31 +44,56 @@ jobs:
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
-      - name: Trigger Amplify Build
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Generate Amplify outputs from backend
+        run: npx ampx generate outputs --branch ${{ github.ref_name }} --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} --out-dir apps/mobile
+
+      - name: Build Expo web
+        working-directory: apps/mobile
+        run: npx expo export --platform web
+
+      - name: Deploy to Amplify
+        working-directory: apps/mobile
         run: |
-          echo "Triggering Amplify build for mobile web..."
-          HTTP_CODE=$(curl -s -X POST "${{ secrets.AMPLIFY_MOBILE_WEBHOOK_URL }}&operation=startbuild" \
-            -H "Content-Type: application/json" \
-            -w "%{http_code}" \
-            -o /tmp/webhook_response.json)
+          # Create deployment zip
+          cd dist && zip -r ../deployment.zip . && cd ..
 
-          if [ "$HTTP_CODE" = "200" ] || [ "$HTTP_CODE" = "202" ]; then
-            echo "✅ Amplify build triggered successfully (HTTP $HTTP_CODE)"
-            cat /tmp/webhook_response.json
-          else
-            echo "❌ Failed to trigger Amplify build (HTTP $HTTP_CODE)"
-            cat /tmp/webhook_response.json
-            exit 1
-          fi
+          # Start deployment
+          DEPLOYMENT=$(aws amplify create-deployment \
+            --app-id ${{ secrets.AMPLIFY_MOBILE_APP_ID }} \
+            --branch-name main)
 
-      - name: Wait for Amplify Build
-        run: |
-          echo "Waiting for Amplify build to complete..."
-          sleep 30  # Initial wait
+          JOB_ID=$(echo $DEPLOYMENT | jq -r '.jobId')
+          ZIP_URL=$(echo $DEPLOYMENT | jq -r '.zipUploadUrl')
 
-          # Poll for build status (optional - can be removed if you don't need to wait)
-          for i in {1..60}; do
-            echo "Checking build status... attempt $i"
-            sleep 30
-          done
-        continue-on-error: true
+          echo "Job ID: $JOB_ID"
+
+          # Upload zip to presigned URL
+          curl -X PUT -T deployment.zip "$ZIP_URL" -H "Content-Type: application/zip"
+
+          # Start the deployment
+          aws amplify start-deployment \
+            --app-id ${{ secrets.AMPLIFY_MOBILE_APP_ID }} \
+            --branch-name main \
+            --job-id $JOB_ID
+
+          echo "✅ Deployment started: $JOB_ID"
