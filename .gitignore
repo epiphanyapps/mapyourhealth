@@ -85,6 +85,7 @@ bin/Exponent.app
 apps/mobile/android
 apps/mobile/ios
 expo-env.d.ts
+dist/
 
 ## Secrets
 npm-debug.*

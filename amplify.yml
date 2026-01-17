@@ -1,27 +1,38 @@
 version: 1
 applications:
-  # Backend deployment
+  # Backend deployment (app: d60z6evrscdvy)
   - appRoot: packages/backend
     backend:
       phases:
         preBuild:
           commands:
             - corepack enable
+            - corepack prepare yarn@4.5.3 --activate
             - cd ../.. && yarn install --immutable
         build:
           commands:
             - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+    frontend:
+      phases:
+        build:
+          commands:
+            - echo "Backend-only app, no frontend build needed"
+      artifacts:
+        baseDirectory: .
+        files:
+          - '**/*'
 
-  # Mobile web frontend deployment
+  # Mobile web frontend deployment (app: d2gm0q60qirodx)
   - appRoot: apps/mobile
     frontend:
       phases:
         preBuild:
           commands:
             - corepack enable
+            - corepack prepare yarn@4.5.3 --activate
             - cd ../.. && yarn install --immutable
-            # Generate Amplify outputs from backend
-            - npx ampx generate outputs --branch $AWS_BRANCH --app-id d3jl0ykn4qgj9r
+            # Generate Amplify outputs from backend app
+            - npx ampx generate outputs --branch $AWS_BRANCH --app-id d60z6evrscdvy
         build:
           commands:
             - npx expo export --platform web
