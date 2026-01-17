@@ -64,7 +64,7 @@ jobs:
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: us-east-1
+          aws-region: ca-central-1
 
       - name: Generate Amplify outputs from backend
         run: npx ampx generate outputs --branch ${{ github.ref_name }} --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} --out-dir apps/mobile
