@@ -161,3 +161,22 @@ Branch: ralph/safety-dashboard-mvp
   - Export CATEGORY_COLORS constant so other components can use matching colors
 ---
 
+## 2026-01-17 - US-011: Create DashboardScreen
+- Implemented DashboardScreen in apps/mobile/app/screens/DashboardScreen.tsx
+- Files created:
+  - apps/mobile/app/screens/DashboardScreen.tsx
+- Features implemented:
+  - LocationHeader at top displaying zip code (90210) and city name (Beverly Hills, CA)
+  - SearchBar below header with placeholder for search and settings functionality
+  - StatCategoryCard list for all 4 categories (water, air, health, disaster)
+  - Uses Screen component with preset="scroll" for scrollable content
+  - Loads mock data using getZipCodeData helper
+  - Uses getWorstStatusForCategory to determine each category's status
+  - Imports CATEGORY_DISPLAY_NAMES from StatCategoryCard for consistent naming
+- **Learnings for future iterations:**
+  - Use Screen component from @/components/Screen with preset="scroll" for scrollable screens
+  - StatCategoryCard exports CATEGORY_DISPLAY_NAMES constant for category display names
+  - getZipCodeData and getWorstStatusForCategory are the main helpers for dashboard data
+  - Safe area edges can be configured via safeAreaEdges prop on Screen
+---
+
