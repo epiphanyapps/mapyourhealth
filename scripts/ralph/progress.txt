@@ -10,6 +10,12 @@ Branch: ralph/safety-dashboard-mvp
 - Screens follow *Screen.tsx naming convention in apps/mobile/app/screens/
 - Backend is AWS Amplify Gen2 in packages/backend/
 - Use yarn workspaces - run commands from root or specific app directory
+- Data helpers: import from `apps/mobile/app/data/helpers.ts` for utility functions
+- Mock data: import from `apps/mobile/app/data/mock` barrel export (e.g., `import { getZipCodeDataByCode } from "@/data/mock"`)
+- Icons: @expo/vector-icons is bundled with Expo - use MaterialCommunityIcons for category icons
+- Category colors: import `CATEGORY_COLORS` from `@/components/CategoryIcon` for consistent category coloring
+- Amplify outputs: Run `yarn sync:amplify` after backend changes to copy amplify_outputs.json to mobile app
+- Backend deployed to us-east-1 (not ca-central-1) - check amplify_outputs.json for actual region
 
 ---
 
@@ -20,5 +26,241 @@ Branch: ralph/safety-dashboard-mvp
 - Stories ordered by dependency: mock data → UI components → auth → backend features
 - Each story links to GitHub issue via `githubIssue` field
 
+---
+
+## 2026-01-17 - US-001: Create TypeScript types for safety data
+- Implemented all required TypeScript types in apps/mobile/app/data/types/safety.ts
+- Files created:
+  - apps/mobile/app/data/types/safety.ts (main types file)
+  - apps/mobile/app/data/types/index.ts (barrel export)
+- Types implemented:
+  - StatCategory enum (water, air, health, disaster)
+  - StatStatus type ('danger' | 'warning' | 'safe')
+  - StatThresholds interface
+  - StatDefinition interface
+  - ZipCodeStat and ZipCodeData interfaces
+  - HazardCategory and ProductRecommendation interfaces
+  - HazardReport and Subscription interfaces
+- **Learnings for future iterations:**
+  - Data layer lives in apps/mobile/app/data/ (not src/)
+  - Created types/index.ts barrel export for cleaner imports
+  - yarn type-check runs from root and takes ~1 minute
+---
+
+## 2026-01-17 - US-002: Create mock stat definitions
+- Implemented mock stat definitions in apps/mobile/app/data/mock/stat-definitions.ts
+- Files created:
+  - apps/mobile/app/data/mock/stat-definitions.ts
+- Stats defined (11 total across 4 categories):
+  - Water (3): Lead Levels, Nitrate Levels, Bacteria Count
+  - Air (3): Air Quality Index, PM2.5 Levels, Ozone Levels
+  - Health (3): COVID-19 Cases, Flu Cases, Healthcare Access
+  - Disaster (2): Wildfire Risk, Flood Risk
+- Each stat has: id, name, unit, description, category, thresholds
+- Added helper functions: getStatDefinitionById(), getStatDefinitionsByCategory()
+- **Learnings for future iterations:**
+  - Import types from "../types/safety" in mock files
+  - Use grouped exports (e.g., waterStatDefinitions, airStatDefinitions) for organization
+  - Include helper functions in mock files for convenience
+---
+
+## 2026-01-17 - US-003: Create mock zip code data
+- Implemented mock zip code data in apps/mobile/app/data/mock/zip-codes.ts
+- Files created:
+  - apps/mobile/app/data/mock/zip-codes.ts
+- Zip codes defined (5 total):
+  - 90210 (Beverly Hills, CA) - Generally safe with wildfire warning
+  - 10001 (New York, NY) - Mixed with air quality issues and lead warning
+  - 33139 (Miami Beach, FL) - Safe with flood danger
+  - 60601 (Chicago, IL) - Lead danger (old pipes), water warnings
+  - 98101 (Seattle, WA) - Very safe overall
+- Features implemented:
+  - calculateStatus() helper to compute status from value and thresholds
+  - createStat() helper to create ZipCodeStat with auto-calculated status
+  - zipCodeDataMap for quick lookups by zip code
+  - getZipCodeDataByCode() and getAvailableZipCodes() helper functions
+- **Learnings for future iterations:**
+  - Use thresholds.higherIsBad to handle metrics where lower is bad (e.g., healthcare access)
+  - Export individual zip code data objects for direct access in tests
+  - Include a map-based lookup (zipCodeDataMap) for O(1) access by zip code
+---
+
+## 2026-01-17 - US-004: Create mock hazard categories and recommendations
+- Implemented mock hazard categories in apps/mobile/app/data/mock/hazards.ts
+- Implemented product recommendations in apps/mobile/app/data/mock/recommendations.ts
+- Files created:
+  - apps/mobile/app/data/mock/hazards.ts
+  - apps/mobile/app/data/mock/recommendations.ts
+- Hazard categories defined (8 total):
+  - Water: Contaminated Water
+  - Air: Poor Air Quality, Respiratory Health Concerns
+  - Health: Infectious Disease Outbreak, Limited Healthcare Access
+  - Disaster: Wildfire Danger, Flood Danger
+  - Multi-category: General Emergency Preparedness
+- Product recommendations defined (12 total):
+  - Water: Home Water Filtration System, Water Quality Test Kit
+  - Air: HEPA Air Purifier, N95 Respirator Masks, Indoor Air Quality Monitor
+  - Health: Comprehensive First Aid Kit, Infection Prevention Kit, Pulse Oximeter
+  - Disaster: 72-Hour Emergency Survival Kit, Emergency Weather Radio, Evacuation Go Bag, Portable Flood Barriers
+- Helper functions added:
+  - getHazardCategoryById(), getHazardCategoriesByStatCategory()
+  - getRecommendationById(), getRecommendationsByHazardCategory(), getRecommendationsForHazards()
+- **Learnings for future iterations:**
+  - Use relatedCategories array in HazardCategory to link to StatCategory enum values
+  - Use hazardCategoryIds array in ProductRecommendation to link to hazard IDs
+  - Include helper for getting unique recommendations across multiple hazards (getRecommendationsForHazards)
+  - Organize exports by domain (water, air, health, disaster) for readability
+---
+
+## 2026-01-17 - US-005: Create data helper functions and barrel exports
+- Implemented barrel export in apps/mobile/app/data/mock/index.ts
+- Implemented helper functions in apps/mobile/app/data/helpers.ts
+- Files created:
+  - apps/mobile/app/data/mock/index.ts (barrel export for all mock data)
+  - apps/mobile/app/data/helpers.ts (utility functions for data access)
+- Functions implemented:
+  - getZipCodeData(zipCode: string) - Get zip code data by code
+  - getStatsByCategory(category: StatCategory) - Get stat definitions by category
+  - getWorstStatusForCategory(zipData, category) - Get worst status for a category
+  - getStatsForCategory(zipData, category) - Get stats with definitions for a category
+  - getAlertStats(zipData) - Get all danger/warning stats
+  - getOverallStatus(zipData) - Get worst status across all categories
+- **Learnings for future iterations:**
+  - Import from "./mock" in helpers.ts to use barrel export
+  - Use Set for efficient lookup when filtering by statId
+  - Added extra helper functions (getStatsForCategory, getAlertStats, getOverallStatus) for UI components
+  - Barrel export in mock/index.ts re-exports everything from all mock files
+---
+
+## 2026-01-17 - US-006: Create StatusIndicator component
+- Implemented StatusIndicator component in apps/mobile/app/components/StatusIndicator.tsx
+- Files created:
+  - apps/mobile/app/components/StatusIndicator.tsx
+- Features implemented:
+  - Three status colors: danger (#DC2626 red), warning (#F59E0B yellow), safe (#10B981 green)
+  - Three size presets: small (8px), medium (12px), large (16px)
+  - Uses View with borderRadius for circular indicator
+  - Accessibility label for screen readers
+- **Learnings for future iterations:**
+  - Components import types from "@/data/types/safety"
+  - Components use direct imports (not barrel exports) in this project
+  - Use simple ViewStyle objects for component-specific styles (no need for useAppTheme for simple components)
+---
+
+## 2026-01-17 - US-007: Create category icons
+- Implemented CategoryIcon component in apps/mobile/app/components/CategoryIcon.tsx
+- Files created:
+  - apps/mobile/app/components/CategoryIcon.tsx
+- Features implemented:
+  - Uses MaterialCommunityIcons from @expo/vector-icons (bundled with Expo)
+  - Icon mapping for each category: water="water", air="weather-cloudy", health="heart", disaster="fire"
+  - Default colors for each category: water=#3B82F6 (blue), air=#8B5CF6 (purple), health=#EF4444 (red), disaster=#F97316 (orange)
+  - Accepts size prop (default 24) and color prop (defaults to category color)
+  - Accessibility label for screen readers
+- **Learnings for future iterations:**
+  - @expo/vector-icons comes bundled with Expo - no need to add to dependencies
+  - MaterialCommunityIcons has good icon coverage for safety/category themes
+  - Export CATEGORY_COLORS constant so other components can use matching colors
+---
+
+## 2026-01-17 - US-011: Create DashboardScreen
+- Implemented DashboardScreen in apps/mobile/app/screens/DashboardScreen.tsx
+- Files created:
+  - apps/mobile/app/screens/DashboardScreen.tsx
+- Features implemented:
+  - LocationHeader at top displaying zip code (90210) and city name (Beverly Hills, CA)
+  - SearchBar below header with placeholder for search and settings functionality
+  - StatCategoryCard list for all 4 categories (water, air, health, disaster)
+  - Uses Screen component with preset="scroll" for scrollable content
+  - Loads mock data using getZipCodeData helper
+  - Uses getWorstStatusForCategory to determine each category's status
+  - Imports CATEGORY_DISPLAY_NAMES from StatCategoryCard for consistent naming
+- **Learnings for future iterations:**
+  - Use Screen component from @/components/Screen with preset="scroll" for scrollable screens
+  - StatCategoryCard exports CATEGORY_DISPLAY_NAMES constant for category display names
+  - getZipCodeData and getWorstStatusForCategory are the main helpers for dashboard data
+  - Safe area edges can be configured via safeAreaEdges prop on Screen
+---
+
+## 2026-01-17 - US-012: Create WarningBanner component
+- Implemented WarningBanner component in apps/mobile/app/components/WarningBanner.tsx
+- Integrated WarningBanner into DashboardScreen
+- Files created:
+  - apps/mobile/app/components/WarningBanner.tsx
+- Files modified:
+  - apps/mobile/app/screens/DashboardScreen.tsx
+- Features implemented:
+  - Yellow/amber background (#FEF3C7) for warning visibility
+  - Alert circle icon on left (MaterialCommunityIcons "alert-circle")
+  - "Special Warning" label with stat name and current value display
+  - "Full Report" link with chevron icon and onViewDetails callback
+  - Integrated into DashboardScreen above category cards
+  - Uses getAlertStats helper to find danger/warning stats
+  - Prioritizes danger stats over warning stats for display
+- **Learnings for future iterations:**
+  - Use getAlertStats() from @/data/helpers to get all danger/warning stats for a zip code
+  - The WarningBanner requires both statDefinition and stat props (definition for metadata, stat for value)
+  - Amber color palette: background #FEF3C7, accent #D97706, dark #92400E for text hierarchy
+  - Prioritize danger status over warning when multiple alerts exist
+---
+
+## 2026-01-17 - US-028: Create ForgotPasswordScreen
+- Implemented ForgotPasswordScreen with two-step password reset flow
+- Files created:
+  - apps/mobile/app/screens/ForgotPasswordScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/AppNavigator.tsx (added ForgotPasswordScreen to auth flow)
+- Features implemented:
+  - Step 1: Email input for requesting reset code via Amplify Auth resetPassword()
+  - Step 2: Code input (6-digit) and new password input with confirmResetPassword()
+  - Validation for email (format), code (6 digits), and password (min 8 chars)
+  - Password visibility toggle using PressableIcon
+  - Loading states on submit buttons
+  - Error display for validation and API errors
+  - Navigation to Login screen on success
+  - Back to Login button on both steps
+- **Learnings for future iterations:**
+  - Auth screens use aws-amplify/auth imports: signUp, confirmSignUp, resetPassword, confirmResetPassword
+  - Follow existing auth screen patterns: Screen preset="auto", safeAreaEdges, themed styles
+  - Use two-step flow pattern with Step type for multi-phase forms
+  - ForgotPassword route type already defined in navigationTypes.ts (no params needed)
+  - Auth screens go in the non-authenticated section of AppNavigator (isAuthenticated ? ... : ...)
+---
+
+## 2026-01-17 - US-025: Deploy sandbox and sync Amplify outputs
+- Verified Amplify backend sandbox was already deployed (found real AWS resource IDs)
+- Synced amplify_outputs.json from backend to mobile app using yarn sync:amplify
+- Files modified:
+  - apps/mobile/amplify_outputs.json (updated from PLACEHOLDER to real AWS resource IDs)
+- Resources verified in AWS:
+  - Cognito User Pool: us-east-1_3M3Rzzomr
+  - Cognito Identity Pool: us-east-1:38ac9798-df44-457a-b5c1-4cc817867754
+  - Admin group created with proper IAM role
+  - AppSync GraphQL API with all data models (HealthRecord, StatDefinition, ZipCodeStat, ZipCodeSubscription, HazardReport)
+- **Learnings for future iterations:**
+  - Backend sandbox was deployed earlier - check packages/backend/amplify_outputs.json first
+  - Use yarn sync:amplify to copy outputs from backend to mobile and root directories
+  - Root amplify_outputs.json is gitignored for security (contains AWS resource IDs)
+  - Amplify outputs include password policy requirements (min 8 chars, lowercase, uppercase, numbers, symbols)
+  - The backend region in amplify_outputs.json is us-east-1 (not ca-central-1 from PRD amplify config)
+---
+
+## 2026-01-17 - US-029: Create AuthGuard component
+- Implemented AuthGuard component in apps/mobile/app/components/AuthGuard.tsx
+- Files created:
+  - apps/mobile/app/components/AuthGuard.tsx
+- Features implemented:
+  - Uses Amplify Auth getCurrentUser() to check authentication status
+  - Loading state with ActivityIndicator while checking auth
+  - Automatic redirect to Login screen if not authenticated (via navigation.reset)
+  - Optional callbacks: onAuthenticated, onUnauthenticated
+  - Optional redirectToLogin prop (default: true) to control redirect behavior
+  - Uses useCallback to properly memoize checkAuthStatus function
+- **Learnings for future iterations:**
+  - Amplify Auth: import { getCurrentUser } from "aws-amplify/auth" - throws when no user signed in
+  - Navigation: Use navigation.reset({ index: 0, routes: [...] }) for auth redirects
+  - Import order: @react-navigation imports before aws-amplify, then @/ imports with type imports first
+  - The eslint import/no-unresolved error for @/theme/context is a false positive (TypeScript compiles fine)
+  - Use useCallback with proper dependencies for async functions called in useEffect
 ---
 

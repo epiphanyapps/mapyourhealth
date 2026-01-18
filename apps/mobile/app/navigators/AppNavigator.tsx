@@ -11,7 +11,13 @@ import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
+import { SignupScreen } from "@/screens/SignupScreen"
+import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
+import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
+import { DashboardScreen } from "@/screens/DashboardScreen"
+import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
+import { ReportScreen } from "@/screens/ReportScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -43,10 +49,16 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Welcome" : "Login"}
+      initialRouteName={isAuthenticated ? "Dashboard" : "Login"}
     >
       {isAuthenticated ? (
         <>
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+
+          <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+
+          <Stack.Screen name="Report" component={ReportScreen} />
+
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
 
           <Stack.Screen name="Demo" component={DemoNavigator} />
@@ -54,6 +66,9 @@ const AppStack = () => {
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       )}
 
