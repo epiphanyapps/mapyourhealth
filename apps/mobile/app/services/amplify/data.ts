@@ -13,7 +13,7 @@ const client = generateClient<Schema>()
 // Types for easier consumption
 export type StatDefinition = Schema['StatDefinition']['type']
 export type ZipCodeStat = Schema['ZipCodeStat']['type']
-export type Subscription = Schema['Subscription']['type']
+export type ZipCodeSubscription = Schema['ZipCodeSubscription']['type']
 export type HazardReport = Schema['HazardReport']['type']
 
 /**
@@ -45,12 +45,12 @@ export async function getZipCodeStats(zipCode: string): Promise<ZipCodeStat[]> {
 /**
  * Create a new subscription for the current user
  */
-export async function createSubscription(
+export async function createZipCodeSubscription(
   zipCode: string,
   cityName?: string,
   state?: string,
-): Promise<Subscription> {
-  const { data, errors } = await client.models.Subscription.create({
+): Promise<ZipCodeSubscription> {
+  const { data, errors } = await client.models.ZipCodeSubscription.create({
     zipCode,
     cityName,
     state,
@@ -69,8 +69,8 @@ export async function createSubscription(
 /**
  * Delete a subscription by ID
  */
-export async function deleteSubscription(id: string): Promise<void> {
-  const { errors } = await client.models.Subscription.delete({ id })
+export async function deleteZipCodeSubscription(id: string): Promise<void> {
+  const { errors } = await client.models.ZipCodeSubscription.delete({ id })
   if (errors) {
     console.error('Error deleting subscription:', errors)
     throw new Error('Failed to delete subscription')
@@ -80,8 +80,8 @@ export async function deleteSubscription(id: string): Promise<void> {
 /**
  * Get all subscriptions for the current user
  */
-export async function getUserSubscriptions(): Promise<Subscription[]> {
-  const { data, errors } = await client.models.Subscription.list()
+export async function getUserZipCodeSubscriptions(): Promise<ZipCodeSubscription[]> {
+  const { data, errors } = await client.models.ZipCodeSubscription.list()
   if (errors) {
     console.error('Error fetching user subscriptions:', errors)
     throw new Error('Failed to fetch user subscriptions')
