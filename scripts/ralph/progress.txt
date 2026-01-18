@@ -10,6 +10,8 @@ Branch: ralph/safety-dashboard-mvp
 - Screens follow *Screen.tsx naming convention in apps/mobile/app/screens/
 - Backend is AWS Amplify Gen2 in packages/backend/
 - Use yarn workspaces - run commands from root or specific app directory
+- Data helpers: import from `apps/mobile/app/data/helpers.ts` for utility functions
+- Mock data: import from `apps/mobile/app/data/mock` barrel export (e.g., `import { getZipCodeDataByCode } from "@/data/mock"`)
 
 ---
 
@@ -104,5 +106,25 @@ Branch: ralph/safety-dashboard-mvp
   - Use hazardCategoryIds array in ProductRecommendation to link to hazard IDs
   - Include helper for getting unique recommendations across multiple hazards (getRecommendationsForHazards)
   - Organize exports by domain (water, air, health, disaster) for readability
+---
+
+## 2026-01-17 - US-005: Create data helper functions and barrel exports
+- Implemented barrel export in apps/mobile/app/data/mock/index.ts
+- Implemented helper functions in apps/mobile/app/data/helpers.ts
+- Files created:
+  - apps/mobile/app/data/mock/index.ts (barrel export for all mock data)
+  - apps/mobile/app/data/helpers.ts (utility functions for data access)
+- Functions implemented:
+  - getZipCodeData(zipCode: string) - Get zip code data by code
+  - getStatsByCategory(category: StatCategory) - Get stat definitions by category
+  - getWorstStatusForCategory(zipData, category) - Get worst status for a category
+  - getStatsForCategory(zipData, category) - Get stats with definitions for a category
+  - getAlertStats(zipData) - Get all danger/warning stats
+  - getOverallStatus(zipData) - Get worst status across all categories
+- **Learnings for future iterations:**
+  - Import from "./mock" in helpers.ts to use barrel export
+  - Use Set for efficient lookup when filtering by statId
+  - Added extra helper functions (getStatsForCategory, getAlertStats, getOverallStatus) for UI components
+  - Barrel export in mock/index.ts re-exports everything from all mock files
 ---
 

@@ -85,7 +85,7 @@
         "yarn type-check passes"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001 through US-004"
     },
     {
