@@ -201,7 +201,7 @@
         "yarn type-check passes"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-011"
     },
     {
@@ -217,7 +217,7 @@
         "yarn type-check passes"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "notes": "No dependencies - standalone component"
     },
     {
