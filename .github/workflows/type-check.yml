@@ -48,3 +48,24 @@ jobs:
 
       - name: Type check mobile
         run: yarn workspace @mapyourhealth/mobile compile
+
+  type-check-admin:
+    name: Type Check Admin
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Type check admin (via build)
+        run: yarn workspace admin build
