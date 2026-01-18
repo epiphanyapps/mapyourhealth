@@ -4,7 +4,7 @@
   "description": "MapYourHealth Safety Dashboard - A mobile app showing safety stats for zip codes with warnings, recommendations, and reporting",
   "githubRepo": "epiphanyapps/mapyourhealth",
   "amplify": {
-    "region": "us-east-1",
+    "region": "ca-central-1",
     "frontendAppId": "d2z5ddqhlc1q5",
     "backendAppId": "d3jl0ykn4qgj9r"
   },
@@ -68,7 +68,7 @@
         "yarn type-check passes"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001"
     },
     {
