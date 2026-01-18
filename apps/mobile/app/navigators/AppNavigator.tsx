@@ -12,6 +12,7 @@ import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
+import { DashboardScreen } from "@/screens/DashboardScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -43,10 +44,12 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Welcome" : "Login"}
+      initialRouteName={isAuthenticated ? "Dashboard" : "Login"}
     >
       {isAuthenticated ? (
         <>
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
 
           <Stack.Screen name="Demo" component={DemoNavigator} />
