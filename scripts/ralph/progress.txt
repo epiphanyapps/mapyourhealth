@@ -245,3 +245,22 @@ Branch: ralph/safety-dashboard-mvp
   - The backend region in amplify_outputs.json is us-east-1 (not ca-central-1 from PRD amplify config)
 ---
 
+## 2026-01-17 - US-029: Create AuthGuard component
+- Implemented AuthGuard component in apps/mobile/app/components/AuthGuard.tsx
+- Files created:
+  - apps/mobile/app/components/AuthGuard.tsx
+- Features implemented:
+  - Uses Amplify Auth getCurrentUser() to check authentication status
+  - Loading state with ActivityIndicator while checking auth
+  - Automatic redirect to Login screen if not authenticated (via navigation.reset)
+  - Optional callbacks: onAuthenticated, onUnauthenticated
+  - Optional redirectToLogin prop (default: true) to control redirect behavior
+  - Uses useCallback to properly memoize checkAuthStatus function
+- **Learnings for future iterations:**
+  - Amplify Auth: import { getCurrentUser } from "aws-amplify/auth" - throws when no user signed in
+  - Navigation: Use navigation.reset({ index: 0, routes: [...] }) for auth redirects
+  - Import order: @react-navigation imports before aws-amplify, then @/ imports with type imports first
+  - The eslint import/no-unresolved error for @/theme/context is a false positive (TypeScript compiles fine)
+  - Use useCallback with proper dependencies for async functions called in useEffect
+---
+

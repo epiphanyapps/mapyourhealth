@@ -479,7 +479,7 @@
         "yarn type-check passes"
       ],
       "priority": 29,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-022, US-025"
     },
     {
@@ -564,6 +564,151 @@
       "priority": 34,
       "passes": false,
       "notes": "Depends on US-031, US-033, US-023"
+    },
+    {
+      "id": "US-035",
+      "githubIssue": null,
+      "title": "Create Admin Portal Next.js app",
+      "description": "As an admin, I need a web portal to manage safety data for all zip codes.",
+      "acceptanceCriteria": [
+        "Create apps/admin using Next.js 14+ with App Router",
+        "Configure TypeScript, Tailwind CSS, and shadcn/ui",
+        "Set up Amplify client configuration for admin app",
+        "Add apps/admin to yarn workspaces in root package.json",
+        "Create basic layout with sidebar navigation",
+        "yarn type-check passes"
+      ],
+      "priority": 35,
+      "passes": false,
+      "notes": "Phase 8 - Admin Portal. New Next.js app for CMS functionality."
+    },
+    {
+      "id": "US-036",
+      "githubIssue": null,
+      "title": "Create Admin authentication flow",
+      "description": "As an admin, I need to log in with my admin credentials to access the portal.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/login/page.tsx with email/password form",
+        "Integrate Amplify Auth signIn",
+        "Check user is in 'admin' Cognito group after login",
+        "Redirect non-admin users with error message",
+        "Create AuthProvider context for admin session",
+        "Protect all routes with admin auth middleware",
+        "yarn type-check passes"
+      ],
+      "priority": 36,
+      "passes": false,
+      "notes": "Depends on US-035, US-022"
+    },
+    {
+      "id": "US-037",
+      "githubIssue": null,
+      "title": "Create StatDefinition management page",
+      "description": "As an admin, I want to manage stat definitions so I can add new safety metrics.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/stats/page.tsx with stats list table",
+        "Display all StatDefinitions with name, category, unit, thresholds",
+        "Add 'Create New Stat' button opening modal/dialog",
+        "Form fields: statId, name, unit, description, category, dangerThreshold, warningThreshold, higherIsBad",
+        "Edit button on each row to modify existing stats",
+        "Delete button with confirmation dialog",
+        "yarn type-check passes"
+      ],
+      "priority": 37,
+      "passes": false,
+      "notes": "Depends on US-036, US-021"
+    },
+    {
+      "id": "US-038",
+      "githubIssue": null,
+      "title": "Create ZipCodeStat management page",
+      "description": "As an admin, I want to add and edit safety stats for specific zip codes.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/zip-codes/page.tsx with zip code search/filter",
+        "Create apps/admin/app/zip-codes/[zipCode]/page.tsx for individual zip code",
+        "Display all stats for selected zip code in editable table",
+        "Form to add new stat value: select stat definition, enter value, auto-calculate status",
+        "Edit existing stat values inline or via modal",
+        "Show lastUpdated timestamp and source field",
+        "Batch save changes button",
+        "yarn type-check passes"
+      ],
+      "priority": 38,
+      "passes": false,
+      "notes": "Depends on US-037"
+    },
+    {
+      "id": "US-039",
+      "githubIssue": null,
+      "title": "Create bulk import functionality",
+      "description": "As an admin, I want to import stats data in bulk via CSV/JSON upload.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/import/page.tsx with file upload",
+        "Support CSV format: zipCode, statId, value, source",
+        "Support JSON format: array of {zipCode, statId, value, source}",
+        "Validate data before import (valid zip codes, stat IDs exist)",
+        "Show preview of data to be imported with validation errors highlighted",
+        "Progress indicator during import",
+        "Summary of imported/failed records after completion",
+        "yarn type-check passes"
+      ],
+      "priority": 39,
+      "passes": false,
+      "notes": "Depends on US-038"
+    },
+    {
+      "id": "US-040",
+      "githubIssue": null,
+      "title": "Create HazardReport moderation page",
+      "description": "As an admin, I want to review and moderate user-submitted hazard reports.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/reports/page.tsx with reports list",
+        "Filter by status: pending, reviewed, resolved, dismissed",
+        "Filter by category: water, air, health, disaster",
+        "Display report details: category, description, location, zipCode, createdAt, owner",
+        "Action buttons: Mark Reviewed, Mark Resolved, Dismiss",
+        "Admin notes field for internal comments",
+        "Pagination for large report lists",
+        "yarn type-check passes"
+      ],
+      "priority": 40,
+      "passes": false,
+      "notes": "Depends on US-036, US-021"
+    },
+    {
+      "id": "US-041",
+      "githubIssue": null,
+      "title": "Create Admin dashboard home page",
+      "description": "As an admin, I want a dashboard showing key metrics and quick actions.",
+      "acceptanceCriteria": [
+        "Create apps/admin/app/page.tsx (dashboard home)",
+        "Display counts: total zip codes with data, total stat definitions, pending reports",
+        "Recent activity feed: last 10 stat updates, last 5 reports",
+        "Quick action cards: Add Stat Data, Import Data, Review Reports",
+        "Links to all main sections in sidebar",
+        "yarn type-check passes"
+      ],
+      "priority": 41,
+      "passes": false,
+      "notes": "Depends on US-037, US-038, US-040"
+    },
+    {
+      "id": "US-042",
+      "githubIssue": null,
+      "title": "Deploy Admin Portal to Amplify Hosting",
+      "description": "As an admin, I need the portal deployed so I can access it from anywhere.",
+      "acceptanceCriteria": [
+        "Configure Amplify hosting for apps/admin",
+        "Set up build settings for Next.js SSR",
+        "Configure environment variables for Amplify backend",
+        "Deploy to production branch",
+        "Verify admin login works on deployed site",
+        "Document admin portal URL in README",
+        "yarn type-check passes"
+      ],
+      "priority": 42,
+      "passes": false,
+      "notes": "Depends on US-041. Final admin portal deployment."
     }
   ]
 }
