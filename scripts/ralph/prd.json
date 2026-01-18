@@ -301,7 +301,7 @@
         "yarn type-check passes"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-004 hazard categories"
     },
     {
