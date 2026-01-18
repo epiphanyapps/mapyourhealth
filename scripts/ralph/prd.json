@@ -132,7 +132,7 @@
         "yarn type-check passes"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001 for ZipCodeData type"
     },
     {
