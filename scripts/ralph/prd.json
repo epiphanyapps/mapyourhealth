@@ -100,7 +100,7 @@
         "yarn type-check passes"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001 for StatStatus type"
     },
     {

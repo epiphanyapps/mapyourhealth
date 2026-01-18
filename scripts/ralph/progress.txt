@@ -128,3 +128,18 @@ Branch: ralph/safety-dashboard-mvp
   - Barrel export in mock/index.ts re-exports everything from all mock files
 ---
 
+## 2026-01-17 - US-006: Create StatusIndicator component
+- Implemented StatusIndicator component in apps/mobile/app/components/StatusIndicator.tsx
+- Files created:
+  - apps/mobile/app/components/StatusIndicator.tsx
+- Features implemented:
+  - Three status colors: danger (#DC2626 red), warning (#F59E0B yellow), safe (#10B981 green)
+  - Three size presets: small (8px), medium (12px), large (16px)
+  - Uses View with borderRadius for circular indicator
+  - Accessibility label for screen readers
+- **Learnings for future iterations:**
+  - Components import types from "@/data/types/safety"
+  - Components use direct imports (not barrel exports) in this project
+  - Use simple ViewStyle objects for component-specific styles (no need for useAppTheme for simple components)
+---
+
