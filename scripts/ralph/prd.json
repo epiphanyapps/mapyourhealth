@@ -579,7 +579,7 @@
         "yarn type-check passes"
       ],
       "priority": 35,
-      "passes": false,
+      "passes": true,
       "notes": "Phase 8 - Admin Portal. New Next.js app for CMS functionality."
     },
     {
@@ -597,7 +597,7 @@
         "yarn type-check passes"
       ],
       "priority": 36,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-035, US-022"
     },
     {
@@ -615,7 +615,7 @@
         "yarn type-check passes"
       ],
       "priority": 37,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-036, US-021"
     },
     {
@@ -634,7 +634,7 @@
         "yarn type-check passes"
       ],
       "priority": 38,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-037"
     },
     {
@@ -653,7 +653,7 @@
         "yarn type-check passes"
       ],
       "priority": 39,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-038"
     },
     {
@@ -672,7 +672,7 @@
         "yarn type-check passes"
       ],
       "priority": 40,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-036, US-021"
     },
     {
@@ -689,7 +689,7 @@
         "yarn type-check passes"
       ],
       "priority": 41,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-037, US-038, US-040"
     },
     {
