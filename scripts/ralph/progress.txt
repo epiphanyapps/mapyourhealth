@@ -180,3 +180,48 @@ Branch: ralph/safety-dashboard-mvp
   - Safe area edges can be configured via safeAreaEdges prop on Screen
 ---
 
+## 2026-01-17 - US-012: Create WarningBanner component
+- Implemented WarningBanner component in apps/mobile/app/components/WarningBanner.tsx
+- Integrated WarningBanner into DashboardScreen
+- Files created:
+  - apps/mobile/app/components/WarningBanner.tsx
+- Files modified:
+  - apps/mobile/app/screens/DashboardScreen.tsx
+- Features implemented:
+  - Yellow/amber background (#FEF3C7) for warning visibility
+  - Alert circle icon on left (MaterialCommunityIcons "alert-circle")
+  - "Special Warning" label with stat name and current value display
+  - "Full Report" link with chevron icon and onViewDetails callback
+  - Integrated into DashboardScreen above category cards
+  - Uses getAlertStats helper to find danger/warning stats
+  - Prioritizes danger stats over warning stats for display
+- **Learnings for future iterations:**
+  - Use getAlertStats() from @/data/helpers to get all danger/warning stats for a zip code
+  - The WarningBanner requires both statDefinition and stat props (definition for metadata, stat for value)
+  - Amber color palette: background #FEF3C7, accent #D97706, dark #92400E for text hierarchy
+  - Prioritize danger status over warning when multiple alerts exist
+---
+
+## 2026-01-17 - US-028: Create ForgotPasswordScreen
+- Implemented ForgotPasswordScreen with two-step password reset flow
+- Files created:
+  - apps/mobile/app/screens/ForgotPasswordScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/AppNavigator.tsx (added ForgotPasswordScreen to auth flow)
+- Features implemented:
+  - Step 1: Email input for requesting reset code via Amplify Auth resetPassword()
+  - Step 2: Code input (6-digit) and new password input with confirmResetPassword()
+  - Validation for email (format), code (6 digits), and password (min 8 chars)
+  - Password visibility toggle using PressableIcon
+  - Loading states on submit buttons
+  - Error display for validation and API errors
+  - Navigation to Login screen on success
+  - Back to Login button on both steps
+- **Learnings for future iterations:**
+  - Auth screens use aws-amplify/auth imports: signUp, confirmSignUp, resetPassword, confirmResetPassword
+  - Follow existing auth screen patterns: Screen preset="auto", safeAreaEdges, themed styles
+  - Use two-step flow pattern with Step type for multi-phase forms
+  - ForgotPassword route type already defined in navigationTypes.ts (no params needed)
+  - Auth screens go in the non-authenticated section of AppNavigator (isAuthenticated ? ... : ...)
+---
+

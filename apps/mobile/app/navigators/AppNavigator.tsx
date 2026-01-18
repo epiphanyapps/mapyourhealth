@@ -11,6 +11,9 @@ import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
+import { SignupScreen } from "@/screens/SignupScreen"
+import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
+import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
@@ -63,6 +66,9 @@ const AppStack = () => {
       ) : (
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       )}
 

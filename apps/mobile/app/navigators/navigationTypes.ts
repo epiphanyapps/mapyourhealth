@@ -20,6 +20,9 @@ export type DemoTabParamList = {
 export type AppStackParamList = {
   Welcome: undefined
   Login: undefined
+  Signup: undefined
+  ConfirmSignup: { email: string }
+  ForgotPassword: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: undefined
   CategoryDetail: { category: StatCategory }

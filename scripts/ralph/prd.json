@@ -430,7 +430,7 @@
         "yarn type-check passes"
       ],
       "priority": 26,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-022, US-025"
     },
     {
@@ -447,7 +447,7 @@
         "yarn type-check passes"
       ],
       "priority": 27,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-026"
     },
     {
@@ -463,7 +463,7 @@
         "yarn type-check passes"
       ],
       "priority": 28,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-022, US-025"
     },
     {
