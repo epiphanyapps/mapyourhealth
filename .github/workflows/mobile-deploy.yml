@@ -19,7 +19,7 @@ jobs:
   wait-for-checks:
     name: Wait for Lint and Type Check
     runs-on: ubuntu-latest
-    if: ${{ github.event_name == 'push' || github.event.workflow_run.conclusion == 'success' }}
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
     steps:
       - name: Wait for lint workflow
         uses: fountainhead/action-wait-for-check@v1.2.0
