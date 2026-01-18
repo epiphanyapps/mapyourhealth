@@ -14,6 +14,8 @@ Branch: ralph/safety-dashboard-mvp
 - Mock data: import from `apps/mobile/app/data/mock` barrel export (e.g., `import { getZipCodeDataByCode } from "@/data/mock"`)
 - Icons: @expo/vector-icons is bundled with Expo - use MaterialCommunityIcons for category icons
 - Category colors: import `CATEGORY_COLORS` from `@/components/CategoryIcon` for consistent category coloring
+- Amplify outputs: Run `yarn sync:amplify` after backend changes to copy amplify_outputs.json to mobile app
+- Backend deployed to us-east-1 (not ca-central-1) - check amplify_outputs.json for actual region
 
 ---
 
@@ -223,5 +225,23 @@ Branch: ralph/safety-dashboard-mvp
   - Use two-step flow pattern with Step type for multi-phase forms
   - ForgotPassword route type already defined in navigationTypes.ts (no params needed)
   - Auth screens go in the non-authenticated section of AppNavigator (isAuthenticated ? ... : ...)
+---
+
+## 2026-01-17 - US-025: Deploy sandbox and sync Amplify outputs
+- Verified Amplify backend sandbox was already deployed (found real AWS resource IDs)
+- Synced amplify_outputs.json from backend to mobile app using yarn sync:amplify
+- Files modified:
+  - apps/mobile/amplify_outputs.json (updated from PLACEHOLDER to real AWS resource IDs)
+- Resources verified in AWS:
+  - Cognito User Pool: us-east-1_3M3Rzzomr
+  - Cognito Identity Pool: us-east-1:38ac9798-df44-457a-b5c1-4cc817867754
+  - Admin group created with proper IAM role
+  - AppSync GraphQL API with all data models (HealthRecord, StatDefinition, ZipCodeStat, ZipCodeSubscription, HazardReport)
+- **Learnings for future iterations:**
+  - Backend sandbox was deployed earlier - check packages/backend/amplify_outputs.json first
+  - Use yarn sync:amplify to copy outputs from backend to mobile and root directories
+  - Root amplify_outputs.json is gitignored for security (contains AWS resource IDs)
+  - Amplify outputs include password policy requirements (min 8 chars, lowercase, uppercase, numbers, symbols)
+  - The backend region in amplify_outputs.json is us-east-1 (not ca-central-1 from PRD amplify config)
 ---
 
