@@ -22,7 +22,7 @@
         "yarn type-check passes"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Foundation - all other stories depend on these types."
     },
     {
@@ -37,7 +37,7 @@
         "yarn type-check passes"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001"
     },
     {
@@ -53,7 +53,7 @@
         "yarn type-check passes"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-001, US-002"
     },
     {

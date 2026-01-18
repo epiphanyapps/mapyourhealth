@@ -22,3 +22,60 @@ Branch: ralph/safety-dashboard-mvp
 
 ---
 
+## 2026-01-17 - US-001: Create TypeScript types for safety data
+- Implemented all required TypeScript types in apps/mobile/app/data/types/safety.ts
+- Files created:
+  - apps/mobile/app/data/types/safety.ts (main types file)
+  - apps/mobile/app/data/types/index.ts (barrel export)
+- Types implemented:
+  - StatCategory enum (water, air, health, disaster)
+  - StatStatus type ('danger' | 'warning' | 'safe')
+  - StatThresholds interface
+  - StatDefinition interface
+  - ZipCodeStat and ZipCodeData interfaces
+  - HazardCategory and ProductRecommendation interfaces
+  - HazardReport and Subscription interfaces
+- **Learnings for future iterations:**
+  - Data layer lives in apps/mobile/app/data/ (not src/)
+  - Created types/index.ts barrel export for cleaner imports
+  - yarn type-check runs from root and takes ~1 minute
+---
+
+## 2026-01-17 - US-002: Create mock stat definitions
+- Implemented mock stat definitions in apps/mobile/app/data/mock/stat-definitions.ts
+- Files created:
+  - apps/mobile/app/data/mock/stat-definitions.ts
+- Stats defined (11 total across 4 categories):
+  - Water (3): Lead Levels, Nitrate Levels, Bacteria Count
+  - Air (3): Air Quality Index, PM2.5 Levels, Ozone Levels
+  - Health (3): COVID-19 Cases, Flu Cases, Healthcare Access
+  - Disaster (2): Wildfire Risk, Flood Risk
+- Each stat has: id, name, unit, description, category, thresholds
+- Added helper functions: getStatDefinitionById(), getStatDefinitionsByCategory()
+- **Learnings for future iterations:**
+  - Import types from "../types/safety" in mock files
+  - Use grouped exports (e.g., waterStatDefinitions, airStatDefinitions) for organization
+  - Include helper functions in mock files for convenience
+---
+
+## 2026-01-17 - US-003: Create mock zip code data
+- Implemented mock zip code data in apps/mobile/app/data/mock/zip-codes.ts
+- Files created:
+  - apps/mobile/app/data/mock/zip-codes.ts
+- Zip codes defined (5 total):
+  - 90210 (Beverly Hills, CA) - Generally safe with wildfire warning
+  - 10001 (New York, NY) - Mixed with air quality issues and lead warning
+  - 33139 (Miami Beach, FL) - Safe with flood danger
+  - 60601 (Chicago, IL) - Lead danger (old pipes), water warnings
+  - 98101 (Seattle, WA) - Very safe overall
+- Features implemented:
+  - calculateStatus() helper to compute status from value and thresholds
+  - createStat() helper to create ZipCodeStat with auto-calculated status
+  - zipCodeDataMap for quick lookups by zip code
+  - getZipCodeDataByCode() and getAvailableZipCodes() helper functions
+- **Learnings for future iterations:**
+  - Use thresholds.higherIsBad to handle metrics where lower is bad (e.g., healthcare access)
+  - Export individual zip code data objects for direct access in tests
+  - Include a map-based lookup (zipCodeDataMap) for O(1) access by zip code
+---
+
