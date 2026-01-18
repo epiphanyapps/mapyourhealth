@@ -1,5 +1,6 @@
 import { FC } from "react"
-import { View, ViewStyle } from "react-native"
+import { View, ViewStyle, Pressable, TextStyle } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { LocationHeader } from "@/components/LocationHeader"
 import { Screen } from "@/components/Screen"
@@ -7,6 +8,8 @@ import { SearchBar } from "@/components/SearchBar"
 import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { WarningBanner } from "@/components/WarningBanner"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
+import { Text } from "@/components/Text"
+import { useAppTheme } from "@/theme/context"
 import { getZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/data/helpers"
 import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -23,6 +26,8 @@ interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
  */
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
   const { navigation } = props
+  const { theme } = useAppTheme()
+
   // Load mock data for hardcoded zip code 90210
   const zipData = getZipCodeData("90210")
 
@@ -115,6 +120,38 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
       {/* Recommendations Section */}
       {zipData && <RecommendationsSection zipData={zipData} />}
+
+      {/* Report Hazard Button */}
+      <Pressable
+        onPress={() => navigation.navigate("Report")}
+        style={({ pressed }) => [
+          $reportButton,
+          { backgroundColor: theme.colors.tint },
+          pressed && { opacity: 0.8 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel="Report a hazard"
+      >
+        <MaterialCommunityIcons name="alert-circle-outline" size={20} color="#FFFFFF" />
+        <Text style={$reportButtonText}>Report Hazard</Text>
+      </Pressable>
     </Screen>
   )
+}
+
+const $reportButton: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginHorizontal: 16,
+  marginTop: 24,
+  paddingVertical: 14,
+  borderRadius: 12,
+  gap: 8,
+}
+
+const $reportButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#FFFFFF",
 }
