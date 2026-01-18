@@ -6,6 +6,7 @@ import {
   NavigatorScreenParams,
 } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
+import type { StatCategory } from "@/data/types/safety"
 
 // Demo Tab Navigator types
 export type DemoTabParamList = {
@@ -21,6 +22,7 @@ export type AppStackParamList = {
   Login: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: undefined
+  CategoryDetail: { category: StatCategory }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }

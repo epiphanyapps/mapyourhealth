@@ -13,6 +13,7 @@ import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { LoginScreen } from "@/screens/LoginScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
+import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -49,6 +50,8 @@ const AppStack = () => {
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
+
+          <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
 
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
 
