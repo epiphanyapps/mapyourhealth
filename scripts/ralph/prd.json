@@ -349,7 +349,7 @@
         "yarn type-check passes in backend package"
       ],
       "priority": 21,
-      "passes": false,
+      "passes": true,
       "notes": "Backend setup - matches frontend types"
     },
     {
