@@ -165,7 +165,7 @@
         "yarn type-check passes"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-006, US-007"
     },
     {
