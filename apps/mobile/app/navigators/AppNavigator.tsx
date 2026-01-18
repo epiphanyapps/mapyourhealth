@@ -14,6 +14,7 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
+import { ReportScreen } from "@/screens/ReportScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -52,6 +53,8 @@ const AppStack = () => {
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
 
           <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+
+          <Stack.Screen name="Report" component={ReportScreen} />
 
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
 

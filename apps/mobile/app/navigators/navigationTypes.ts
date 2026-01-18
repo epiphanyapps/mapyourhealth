@@ -23,6 +23,7 @@ export type AppStackParamList = {
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: undefined
   CategoryDetail: { category: StatCategory }
+  Report: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }

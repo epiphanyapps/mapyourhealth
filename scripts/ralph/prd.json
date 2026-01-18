@@ -318,7 +318,7 @@
         "yarn type-check passes"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-018"
     },
     {
