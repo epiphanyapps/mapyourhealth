@@ -12,6 +12,8 @@ Branch: ralph/safety-dashboard-mvp
 - Use yarn workspaces - run commands from root or specific app directory
 - Data helpers: import from `apps/mobile/app/data/helpers.ts` for utility functions
 - Mock data: import from `apps/mobile/app/data/mock` barrel export (e.g., `import { getZipCodeDataByCode } from "@/data/mock"`)
+- Icons: @expo/vector-icons is bundled with Expo - use MaterialCommunityIcons for category icons
+- Category colors: import `CATEGORY_COLORS` from `@/components/CategoryIcon` for consistent category coloring
 
 ---
 
@@ -141,5 +143,21 @@ Branch: ralph/safety-dashboard-mvp
   - Components import types from "@/data/types/safety"
   - Components use direct imports (not barrel exports) in this project
   - Use simple ViewStyle objects for component-specific styles (no need for useAppTheme for simple components)
+---
+
+## 2026-01-17 - US-007: Create category icons
+- Implemented CategoryIcon component in apps/mobile/app/components/CategoryIcon.tsx
+- Files created:
+  - apps/mobile/app/components/CategoryIcon.tsx
+- Features implemented:
+  - Uses MaterialCommunityIcons from @expo/vector-icons (bundled with Expo)
+  - Icon mapping for each category: water="water", air="weather-cloudy", health="heart", disaster="fire"
+  - Default colors for each category: water=#3B82F6 (blue), air=#8B5CF6 (purple), health=#EF4444 (red), disaster=#F97316 (orange)
+  - Accepts size prop (default 24) and color prop (defaults to category color)
+  - Accessibility label for screen readers
+- **Learnings for future iterations:**
+  - @expo/vector-icons comes bundled with Expo - no need to add to dependencies
+  - MaterialCommunityIcons has good icon coverage for safety/category themes
+  - Export CATEGORY_COLORS constant so other components can use matching colors
 ---
 
