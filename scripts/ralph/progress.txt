@@ -79,3 +79,30 @@ Branch: ralph/safety-dashboard-mvp
   - Include a map-based lookup (zipCodeDataMap) for O(1) access by zip code
 ---
 
+## 2026-01-17 - US-004: Create mock hazard categories and recommendations
+- Implemented mock hazard categories in apps/mobile/app/data/mock/hazards.ts
+- Implemented product recommendations in apps/mobile/app/data/mock/recommendations.ts
+- Files created:
+  - apps/mobile/app/data/mock/hazards.ts
+  - apps/mobile/app/data/mock/recommendations.ts
+- Hazard categories defined (8 total):
+  - Water: Contaminated Water
+  - Air: Poor Air Quality, Respiratory Health Concerns
+  - Health: Infectious Disease Outbreak, Limited Healthcare Access
+  - Disaster: Wildfire Danger, Flood Danger
+  - Multi-category: General Emergency Preparedness
+- Product recommendations defined (12 total):
+  - Water: Home Water Filtration System, Water Quality Test Kit
+  - Air: HEPA Air Purifier, N95 Respirator Masks, Indoor Air Quality Monitor
+  - Health: Comprehensive First Aid Kit, Infection Prevention Kit, Pulse Oximeter
+  - Disaster: 72-Hour Emergency Survival Kit, Emergency Weather Radio, Evacuation Go Bag, Portable Flood Barriers
+- Helper functions added:
+  - getHazardCategoryById(), getHazardCategoriesByStatCategory()
+  - getRecommendationById(), getRecommendationsByHazardCategory(), getRecommendationsForHazards()
+- **Learnings for future iterations:**
+  - Use relatedCategories array in HazardCategory to link to StatCategory enum values
+  - Use hazardCategoryIds array in ProductRecommendation to link to hazard IDs
+  - Include helper for getting unique recommendations across multiple hazards (getRecommendationsForHazards)
+  - Organize exports by domain (water, air, health, disaster) for readability
+---
+
