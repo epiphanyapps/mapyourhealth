@@ -283,7 +283,7 @@
         "yarn type-check passes"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-016, US-011"
     },
     {

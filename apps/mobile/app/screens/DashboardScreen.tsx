@@ -6,6 +6,7 @@ import { Screen } from "@/components/Screen"
 import { SearchBar } from "@/components/SearchBar"
 import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { WarningBanner } from "@/components/WarningBanner"
+import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { getZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/data/helpers"
 import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -111,6 +112,9 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
           />
         ))}
       </View>
+
+      {/* Recommendations Section */}
+      {zipData && <RecommendationsSection zipData={zipData} />}
     </Screen>
   )
 }
