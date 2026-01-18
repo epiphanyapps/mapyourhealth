@@ -61,19 +61,6 @@ jobs:
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-
-      - name: Enable Corepack
-        run: corepack enable
-
-      - name: Install dependencies
-        run: yarn install --immutable
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -82,7 +69,8 @@ jobs:
           aws-region: ca-central-1
 
       - name: Deploy Amplify backend
-        working-directory: packages/backend
-        run: npx ampx pipeline-deploy --branch ${{ github.ref_name }} --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }}
-        env:
-          CI: true
+        run: |
+          aws amplify start-job \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --branch-name ${{ github.ref_name }} \
+            --job-type RELEASE
