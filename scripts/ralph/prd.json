@@ -267,7 +267,7 @@
         "yarn type-check passes"
       ],
       "priority": 16,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-004 recommendations data"
     },
     {
