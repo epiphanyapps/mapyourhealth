@@ -11,9 +11,7 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": [
-    "**/*"
-  ],
+  "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.mapyourhealth",
@@ -31,7 +29,7 @@
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
-    "bundler": "metro"
+    "bundler": "static"
   },
   "plugins": [
     "expo-localization",
