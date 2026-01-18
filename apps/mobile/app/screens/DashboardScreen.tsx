@@ -1,13 +1,16 @@
 import { FC } from "react"
-import { ScrollView, View, ViewStyle } from "react-native"
+import { View, ViewStyle } from "react-native"
 
-import { Screen } from "@/components/Screen"
 import { LocationHeader } from "@/components/LocationHeader"
+import { Screen } from "@/components/Screen"
 import { SearchBar } from "@/components/SearchBar"
 import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
-import { useAppTheme } from "@/theme/context"
+import { WarningBanner } from "@/components/WarningBanner"
+import { getZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/data/helpers"
 import { StatCategory } from "@/data/types/safety"
-import { getZipCodeData, getWorstStatusForCategory } from "@/data/helpers"
+import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+
+interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
 /**
  * Dashboard Screen - Main screen showing safety overview for a location.
@@ -17,9 +20,8 @@ import { getZipCodeData, getWorstStatusForCategory } from "@/data/helpers"
  * - Search bar for looking up different zip codes
  * - Category cards showing status for water, air, health, and disaster
  */
-export const DashboardScreen: FC = function DashboardScreen() {
-  const { theme } = useAppTheme()
-
+export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
+  const { navigation } = props
   // Load mock data for hardcoded zip code 90210
   const zipData = getZipCodeData("90210")
 
@@ -50,12 +52,17 @@ export const DashboardScreen: FC = function DashboardScreen() {
     gap: 8,
   }
 
+  const $warningBannerContainer: ViewStyle = {
+    marginBottom: 16,
+  }
+
+  // Get alert stats (danger/warning) for the warning banner
+  const alertStats = zipData ? getAlertStats(zipData) : []
+  // Show the first danger stat, or first warning if no danger
+  const priorityAlert = alertStats.find((a) => a.stat.status === "danger") ?? alertStats[0]
+
   return (
-    <Screen
-      preset="scroll"
-      safeAreaEdges={["top"]}
-      contentContainerStyle={$contentContainer}
-    >
+    <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
       {/* Location Header */}
       <LocationHeader
         zipCode={zipData?.zipCode ?? "-----"}
@@ -76,6 +83,20 @@ export const DashboardScreen: FC = function DashboardScreen() {
         />
       </View>
 
+      {/* Warning Banner - shows for danger/warning stats */}
+      {priorityAlert && (
+        <View style={$warningBannerContainer}>
+          <WarningBanner
+            statDefinition={priorityAlert.definition}
+            stat={priorityAlert.stat}
+            onViewDetails={() => {
+              // TODO: Navigate to stat detail or category detail screen
+              console.log("View details for:", priorityAlert.definition.name)
+            }}
+          />
+        </View>
+      )}
+
       {/* Category Cards */}
       <View style={$categoriesContainer}>
         {categories.map((category) => (
@@ -85,8 +106,7 @@ export const DashboardScreen: FC = function DashboardScreen() {
             categoryName={CATEGORY_DISPLAY_NAMES[category]}
             status={getStatusForCategory(category)}
             onPress={() => {
-              // TODO: Navigate to category detail screen
-              console.log("Category pressed:", category)
+              navigation.navigate("CategoryDetail", { category })
             }}
           />
         ))}
