@@ -1,0 +1,24 @@
+# Ralph Progress Log
+Started: 2026-01-17
+Branch: ralph/safety-dashboard-mvp
+
+## Codebase Patterns
+
+(Add reusable patterns discovered during implementation)
+
+- Mobile app uses Ignite template patterns - components in apps/mobile/app/components/
+- Screens follow *Screen.tsx naming convention in apps/mobile/app/screens/
+- Backend is AWS Amplify Gen2 in packages/backend/
+- Use yarn workspaces - run commands from root or specific app directory
+
+---
+
+## Setup Notes
+
+- Ralph configured for Claude Code (adapted from Amp version)
+- PRD generated from GitHub issues at epiphanyapps/mapyourhealth
+- Stories ordered by dependency: mock data → UI components → auth → backend features
+- Each story links to GitHub issue via `githubIssue` field
+
+---
+

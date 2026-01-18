@@ -1,0 +1,569 @@
+{
+  "project": "MapYourHealth",
+  "branchName": "ralph/safety-dashboard-mvp",
+  "description": "MapYourHealth Safety Dashboard - A mobile app showing safety stats for zip codes with warnings, recommendations, and reporting",
+  "githubRepo": "epiphanyapps/mapyourhealth",
+  "amplify": {
+    "region": "us-east-1",
+    "frontendAppId": "d2z5ddqhlc1q5",
+    "backendAppId": "d3jl0ykn4qgj9r"
+  },
+  "userStories": [
+    {
+      "id": "US-001",
+      "githubIssue": 12,
+      "title": "Create TypeScript types for safety data",
+      "description": "As a developer, I need TypeScript types defined so I can build type-safe components.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/types/safety.ts with StatDefinition interface",
+        "Add ZipCodeStat, ZipCodeData interfaces",
+        "Add StatCategory enum (water, air, health, disaster)",
+        "Add StatStatus type ('danger' | 'warning' | 'safe')",
+        "yarn type-check passes"
+      ],
+      "priority": 1,
+      "passes": false,
+      "notes": "Foundation - all other stories depend on these types."
+    },
+    {
+      "id": "US-002",
+      "githubIssue": 13,
+      "title": "Create mock stat definitions",
+      "description": "As a developer, I need mock stat definitions so I can display safety categories.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/mock/stat-definitions.ts",
+        "Define 11 stats across 4 categories (water: 3, air: 3, health: 3, disaster: 2)",
+        "Each stat has: id, name, unit, description, category, thresholds",
+        "yarn type-check passes"
+      ],
+      "priority": 2,
+      "passes": false,
+      "notes": "Depends on US-001"
+    },
+    {
+      "id": "US-003",
+      "githubIssue": 14,
+      "title": "Create mock zip code data",
+      "description": "As a developer, I need mock zip code data so I can test the dashboard with realistic values.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/mock/zip-codes.ts",
+        "Define 5 zip codes with city names (90210, 10001, 33139, 60601, 98101)",
+        "Each zip code has stats with values and calculated statuses",
+        "Include mix of danger/warning/safe statuses",
+        "yarn type-check passes"
+      ],
+      "priority": 3,
+      "passes": false,
+      "notes": "Depends on US-001, US-002"
+    },
+    {
+      "id": "US-004",
+      "githubIssue": 15,
+      "title": "Create mock hazard categories and recommendations",
+      "description": "As a developer, I need mock hazard data and product recommendations for the recommendations section.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/mock/hazards.ts with 8 hazard categories",
+        "Create apps/mobile/app/data/mock/recommendations.ts with product recommendations",
+        "Each recommendation links to relevant hazard categories",
+        "yarn type-check passes"
+      ],
+      "priority": 4,
+      "passes": false,
+      "notes": "Depends on US-001"
+    },
+    {
+      "id": "US-005",
+      "githubIssue": 16,
+      "title": "Create data helper functions and barrel exports",
+      "description": "As a developer, I need helper functions to easily access mock data from components.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/mock/index.ts barrel export",
+        "Create apps/mobile/app/data/helpers.ts with utility functions",
+        "Implement getZipCodeData(zipCode: string) function",
+        "Implement getStatsByCategory(category: StatCategory) function",
+        "Implement getWorstStatusForCategory(zipData, category) function",
+        "yarn type-check passes"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Depends on US-001 through US-004"
+    },
+    {
+      "id": "US-006",
+      "githubIssue": 17,
+      "title": "Create StatusIndicator component",
+      "description": "As a user, I want to see visual indicators for safety levels so I can quickly assess risk.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/StatusIndicator.tsx",
+        "Support danger (red #DC2626), warning (yellow #F59E0B), safe (green #10B981) variants",
+        "Accept size prop (small, medium, large)",
+        "yarn type-check passes"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Depends on US-001 for StatStatus type"
+    },
+    {
+      "id": "US-007",
+      "githubIssue": 18,
+      "title": "Create category icons",
+      "description": "As a user, I want to see distinct icons for each safety category so I can quickly identify them.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/CategoryIcon.tsx",
+        "Support 4 categories: water (droplet), air (cloud), health (heart), disaster (flame)",
+        "Use @expo/vector-icons (Ionicons or MaterialCommunityIcons)",
+        "Accept size and color props",
+        "yarn type-check passes"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Depends on US-001 for StatCategory type"
+    },
+    {
+      "id": "US-008",
+      "githubIssue": 19,
+      "title": "Create LocationHeader component",
+      "description": "As a user, I want to see my current location displayed prominently so I know which area's data I'm viewing.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/LocationHeader.tsx",
+        "Display zip code prominently (large text)",
+        "Display city/area name below zip code",
+        "Include location pin icon",
+        "yarn type-check passes"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Depends on US-001 for ZipCodeData type"
+    },
+    {
+      "id": "US-009",
+      "githubIssue": 20,
+      "title": "Create SearchBar component",
+      "description": "As a user, I want a search bar so I can look up different zip codes.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/SearchBar.tsx",
+        "Include search icon on left",
+        "Include settings/gear icon on right",
+        "Placeholder text: Search zip codes...",
+        "yarn type-check passes"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "No dependencies - standalone component"
+    },
+    {
+      "id": "US-010",
+      "githubIssue": 21,
+      "title": "Create StatCategoryCard component",
+      "description": "As a user, I want to see category cards so I can tap to view details.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/StatCategoryCard.tsx",
+        "Display category icon on left",
+        "Display category name",
+        "Display status indicator on right",
+        "Card is pressable with onPress callback",
+        "yarn type-check passes"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Depends on US-006, US-007"
+    },
+    {
+      "id": "US-011",
+      "githubIssue": 22,
+      "title": "Create DashboardScreen",
+      "description": "As a user, I want a dashboard screen that shows my location's safety overview.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/DashboardScreen.tsx",
+        "Assemble LocationHeader at top",
+        "Include SearchBar below header",
+        "Display StatCategoryCard list for all 4 categories",
+        "Use ScrollView for content",
+        "Load mock data for hardcoded zip code (90210)",
+        "yarn type-check passes"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "Depends on US-005, US-008, US-009, US-010"
+    },
+    {
+      "id": "US-012",
+      "githubIssue": 23,
+      "title": "Create WarningBanner component",
+      "description": "As a user, I want to see prominent warnings for dangerous conditions so I'm immediately alerted.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/WarningBanner.tsx",
+        "Yellow/amber background (#FEF3C7)",
+        "Alert triangle icon on left",
+        "Display Special Warning label and stat name",
+        "Full Report link with onViewDetails callback",
+        "Integrate into DashboardScreen above category cards",
+        "yarn type-check passes"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "Depends on US-011"
+    },
+    {
+      "id": "US-013",
+      "githubIssue": 24,
+      "title": "Create ExpandableCard component",
+      "description": "As a user, I want expandable cards so I can show/hide detailed information.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/ExpandableCard.tsx",
+        "Animated expand/collapse with React Native Animated",
+        "Header always visible, content toggles",
+        "Chevron icon rotates on expand/collapse",
+        "yarn type-check passes"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "No dependencies - standalone component"
+    },
+    {
+      "id": "US-014",
+      "githubIssue": 25,
+      "title": "Create StatItem component",
+      "description": "As a user, I want to see individual stat details so I understand specific measurements.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/StatItem.tsx",
+        "Display stat name on left",
+        "Display value with unit in middle",
+        "Display status indicator on right",
+        "yarn type-check passes"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Depends on US-006"
+    },
+    {
+      "id": "US-015",
+      "githubIssue": 26,
+      "title": "Create CategoryDetailScreen",
+      "description": "As a user, I want to see all stats for a category when I tap on it.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/CategoryDetailScreen.tsx",
+        "Display category header with icon and name",
+        "Back button to return to dashboard",
+        "List all stats for the selected category using StatItem",
+        "Navigate from StatCategoryCard on dashboard",
+        "yarn type-check passes"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Depends on US-013, US-014, US-007, US-005"
+    },
+    {
+      "id": "US-016",
+      "githubIssue": 27,
+      "title": "Create ProductRecommendationCard component",
+      "description": "As a user, I want to see product recommendations so I can protect myself from hazards.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/ProductRecommendationCard.tsx",
+        "Green background (#10B981)",
+        "Heart icon with We Recommend header",
+        "Display product name and description",
+        "Learn More button opens URL via Linking.openURL",
+        "yarn type-check passes"
+      ],
+      "priority": 16,
+      "passes": false,
+      "notes": "Depends on US-004 recommendations data"
+    },
+    {
+      "id": "US-017",
+      "githubIssue": 28,
+      "title": "Create RecommendationsSection and integrate into Dashboard",
+      "description": "As a user, I want to see relevant recommendations on the dashboard based on detected hazards.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/RecommendationsSection.tsx",
+        "Filter recommendations by relevant hazard categories",
+        "Only show if there are danger/warning stats matching",
+        "Integrate into DashboardScreen below category cards",
+        "yarn type-check passes"
+      ],
+      "priority": 17,
+      "passes": false,
+      "notes": "Depends on US-016, US-011"
+    },
+    {
+      "id": "US-018",
+      "githubIssue": 29,
+      "title": "Create HazardReportForm component",
+      "description": "As a user, I want to fill out a hazard report form so I can report issues in my community.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/HazardReportForm.tsx",
+        "Category dropdown/picker for hazard type",
+        "Description text input (multiline, min 10 chars)",
+        "Location text input (required)",
+        "Use react-hook-form for form state",
+        "Show inline error messages",
+        "yarn type-check passes"
+      ],
+      "priority": 18,
+      "passes": false,
+      "notes": "Depends on US-004 hazard categories"
+    },
+    {
+      "id": "US-019",
+      "githubIssue": 30,
+      "title": "Create ReportScreen",
+      "description": "As a user, I want a dedicated screen for submitting hazard reports.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/ReportScreen.tsx",
+        "Include app branding/header",
+        "Display HazardReportForm",
+        "Submit button shows loading state",
+        "Show success message after submission",
+        "yarn type-check passes"
+      ],
+      "priority": 19,
+      "passes": false,
+      "notes": "Depends on US-018"
+    },
+    {
+      "id": "US-020",
+      "githubIssue": 31,
+      "title": "Integrate ReportScreen into navigation",
+      "description": "As a user, I want to access the report feature from the main navigation.",
+      "acceptanceCriteria": [
+        "Add ReportScreen to navigator configuration",
+        "Add tab bar item or menu option for Report",
+        "Use appropriate icon (alert-circle-outline)",
+        "Navigation works from dashboard",
+        "yarn type-check passes"
+      ],
+      "priority": 20,
+      "passes": false,
+      "notes": "Depends on US-019, US-011"
+    },
+    {
+      "id": "US-021",
+      "githubIssue": 32,
+      "title": "Create Amplify data models",
+      "description": "As a developer, I need backend data models so the app can persist and retrieve data.",
+      "acceptanceCriteria": [
+        "Update packages/backend/amplify/data/resource.ts with data models",
+        "Create User, Subscription, StatDefinition, ZipCodeStat, HazardReport models",
+        "Configure proper authorization rules",
+        "yarn type-check passes in backend package"
+      ],
+      "priority": 21,
+      "passes": false,
+      "notes": "Backend setup - matches frontend types"
+    },
+    {
+      "id": "US-022",
+      "githubIssue": 33,
+      "title": "Configure Amplify Auth",
+      "description": "As a developer, I need authentication configured so users can sign up and log in.",
+      "acceptanceCriteria": [
+        "Update packages/backend/amplify/auth/resource.ts with Cognito config",
+        "Enable email/password authentication",
+        "Configure email verification",
+        "Create admin user group for portal access",
+        "yarn type-check passes in backend package"
+      ],
+      "priority": 22,
+      "passes": false,
+      "notes": "Depends on US-021"
+    },
+    {
+      "id": "US-023",
+      "githubIssue": 34,
+      "title": "Create data access service functions",
+      "description": "As a developer, I need service functions to interact with the backend from the mobile app.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/services/amplify/data.ts",
+        "Implement getStatDefinitions(), getZipCodeStats(zipCode)",
+        "Implement createSubscription(zipCode), deleteSubscription(id)",
+        "Implement getUserSubscriptions(), createHazardReport(data)",
+        "yarn type-check passes"
+      ],
+      "priority": 23,
+      "passes": false,
+      "notes": "Depends on US-021, US-022"
+    },
+    {
+      "id": "US-024",
+      "githubIssue": 35,
+      "title": "Create notification Lambda function",
+      "description": "As an admin, I need a Lambda function that can send push notifications to subscribers.",
+      "acceptanceCriteria": [
+        "Create packages/backend/amplify/functions/send-notifications/handler.ts",
+        "Create packages/backend/amplify/functions/send-notifications/resource.ts",
+        "Accept statId, message, zipCodes as input",
+        "Send Expo push notifications to subscriber tokens",
+        "yarn type-check passes"
+      ],
+      "priority": 24,
+      "passes": false,
+      "notes": "Depends on US-021, US-022"
+    },
+    {
+      "id": "US-025",
+      "githubIssue": 36,
+      "title": "Deploy sandbox and sync Amplify outputs",
+      "description": "As a developer, I need the backend deployed so I can test the mobile app with real data.",
+      "acceptanceCriteria": [
+        "Run yarn backend:sandbox successfully",
+        "Verify all resources created in AWS",
+        "Run yarn sync:amplify to copy outputs to mobile app",
+        "Verify apps/mobile/amplify_outputs.json exists",
+        "yarn type-check passes in all packages"
+      ],
+      "priority": 25,
+      "passes": false,
+      "notes": "Depends on US-021 through US-024"
+    },
+    {
+      "id": "US-026",
+      "githubIssue": 37,
+      "title": "Create SignupScreen",
+      "description": "As a new user, I want to sign up for an account so I can save my subscriptions.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/SignupScreen.tsx",
+        "Email input with validation",
+        "Password input with requirements (min 8 chars)",
+        "Sign Up button triggers Amplify Auth signUp",
+        "Navigate to ConfirmSignupScreen on success",
+        "yarn type-check passes"
+      ],
+      "priority": 26,
+      "passes": false,
+      "notes": "Depends on US-022, US-025"
+    },
+    {
+      "id": "US-027",
+      "githubIssue": 38,
+      "title": "Create ConfirmSignupScreen",
+      "description": "As a new user, I want to verify my email so I can complete registration.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/ConfirmSignupScreen.tsx",
+        "6-digit code input",
+        "Confirm button triggers Amplify Auth confirmSignUp",
+        "Resend code link",
+        "Navigate to onboarding/dashboard on success",
+        "yarn type-check passes"
+      ],
+      "priority": 27,
+      "passes": false,
+      "notes": "Depends on US-026"
+    },
+    {
+      "id": "US-028",
+      "githubIssue": 39,
+      "title": "Create ForgotPasswordScreen",
+      "description": "As a user, I want to reset my password if I forget it.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/ForgotPasswordScreen.tsx",
+        "Email input for requesting reset code",
+        "Code input + new password inputs after code sent",
+        "Navigate to login on success",
+        "yarn type-check passes"
+      ],
+      "priority": 28,
+      "passes": false,
+      "notes": "Depends on US-022, US-025"
+    },
+    {
+      "id": "US-029",
+      "githubIssue": 40,
+      "title": "Create AuthGuard component",
+      "description": "As a developer, I need to protect routes that require authentication.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/AuthGuard.tsx",
+        "Check if user is authenticated using Amplify Auth getCurrentUser",
+        "Show loading state while checking",
+        "Redirect to login if not authenticated",
+        "yarn type-check passes"
+      ],
+      "priority": 29,
+      "passes": false,
+      "notes": "Depends on US-022, US-025"
+    },
+    {
+      "id": "US-030",
+      "githubIssue": 41,
+      "title": "Update LoginScreen for Amplify Auth",
+      "description": "As a returning user, I want to log in to access my account.",
+      "acceptanceCriteria": [
+        "Update existing apps/mobile/app/screens/LoginScreen.tsx",
+        "Integrate Amplify Auth signIn",
+        "Link to SignupScreen and ForgotPasswordScreen",
+        "Navigate to dashboard on successful login",
+        "yarn type-check passes"
+      ],
+      "priority": 30,
+      "passes": false,
+      "notes": "Depends on US-025, US-026, US-028"
+    },
+    {
+      "id": "US-031",
+      "githubIssue": 42,
+      "title": "Create ZipCodeSearch component",
+      "description": "As a user, I want to search for zip codes so I can subscribe to them.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/ZipCodeSearch.tsx",
+        "Text input for zip code entry",
+        "Use my location button with geolocation permission",
+        "Show selected zip codes as removable chips",
+        "Enforce max selections (default 10)",
+        "yarn type-check passes"
+      ],
+      "priority": 31,
+      "passes": false,
+      "notes": "Depends on US-005 mock zip code data"
+    },
+    {
+      "id": "US-032",
+      "githubIssue": 43,
+      "title": "Create OnboardingZipCodesScreen",
+      "description": "As a new user, I want to select my initial zip codes during onboarding.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/OnboardingZipCodesScreen.tsx",
+        "Welcome message explaining the feature",
+        "Include ZipCodeSearch component",
+        "Require at least 1 zip code to continue",
+        "Continue button saves subscriptions and navigates to dashboard",
+        "yarn type-check passes"
+      ],
+      "priority": 32,
+      "passes": false,
+      "notes": "Depends on US-031, US-023"
+    },
+    {
+      "id": "US-033",
+      "githubIssue": 44,
+      "title": "Create SubscriptionCard component",
+      "description": "As a user, I want to see my subscriptions displayed as cards so I can manage them.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/SubscriptionCard.tsx",
+        "Display zip code prominently",
+        "Display city name",
+        "Delete/remove button with confirmation",
+        "yarn type-check passes"
+      ],
+      "priority": 33,
+      "passes": false,
+      "notes": "Depends on US-023 deleteSubscription function"
+    },
+    {
+      "id": "US-034",
+      "githubIssue": 45,
+      "title": "Create SubscriptionsSettingsScreen",
+      "description": "As a user, I want to manage my zip code subscriptions from settings.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/SubscriptionsSettingsScreen.tsx",
+        "List current subscriptions using SubscriptionCard",
+        "Add button opens ZipCodeSearch modal",
+        "Enforce maximum 10 subscriptions limit",
+        "Accessible from settings/profile area",
+        "yarn type-check passes"
+      ],
+      "priority": 34,
+      "passes": false,
+      "notes": "Depends on US-031, US-033, US-023"
+    }
+  ]
+}
