@@ -8,7 +8,6 @@ import {
   ActivityIndicator,
   RefreshControl,
   Share,
-  TouchableOpacity,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
@@ -442,14 +441,14 @@ mapyourhealth://zip/${zipData.zipCode}`
         </View>
       )}
 
-      {/* Action Buttons Row: Follow and Share */}
+      {/* Action Buttons Row: Follow, Share, and Compare */}
       <View style={$actionButtonsRow}>
         {/* Follow Button */}
         <Pressable
           onPress={handleFollow}
           disabled={isFollowing}
           style={({ pressed }) => [
-            $followButton,
+            $actionButton,
             { borderColor: theme.colors.tint },
             pressed && { opacity: 0.8 },
             isFollowing && { opacity: 0.6 },
@@ -458,7 +457,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           accessibilityLabel={`Follow ${currentZipCode}`}
         >
           <MaterialCommunityIcons name="heart-plus-outline" size={20} color={theme.colors.tint} />
-          <Text style={[$followButtonText, { color: theme.colors.tint }]}>
+          <Text style={[$actionButtonText, { color: theme.colors.tint }]}>
             {isFollowing ? "Following..." : "Follow"}
           </Text>
         </Pressable>
@@ -467,7 +466,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <Pressable
           onPress={handleShare}
           style={({ pressed }) => [
-            $shareButton,
+            $actionButton,
             { borderColor: theme.colors.tint },
             pressed && { opacity: 0.8 },
           ]}
@@ -479,7 +478,22 @@ mapyourhealth://zip/${zipData.zipCode}`
             size={20}
             color={theme.colors.tint}
           />
-          <Text style={[$shareButtonText, { color: theme.colors.tint }]}>Share</Text>
+          <Text style={[$actionButtonText, { color: theme.colors.tint }]}>Share</Text>
+        </Pressable>
+
+        {/* Compare Button */}
+        <Pressable
+          onPress={() => navigation.navigate("Compare")}
+          style={({ pressed }) => [
+            $actionButton,
+            { borderColor: theme.colors.tint },
+            pressed && { opacity: 0.8 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Compare zip codes"
+        >
+          <MaterialCommunityIcons name="compare" size={20} color={theme.colors.tint} />
+          <Text style={[$actionButtonText, { color: theme.colors.tint }]}>Compare</Text>
         </Pressable>
       </View>
 
@@ -543,35 +557,19 @@ const $actionButtonsRow: ViewStyle = {
   gap: 12,
 }
 
-const $followButton: ViewStyle = {
+const $actionButton: ViewStyle = {
   flex: 1,
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
-  paddingVertical: 12,
+  paddingVertical: 10,
   borderRadius: 12,
   borderWidth: 2,
-  gap: 8,
+  gap: 4,
 }
 
-const $followButtonText: TextStyle = {
-  fontSize: 16,
-  fontWeight: "600",
-}
-
-const $shareButton: ViewStyle = {
-  flex: 1,
-  flexDirection: "row",
-  alignItems: "center",
-  justifyContent: "center",
-  paddingVertical: 12,
-  borderRadius: 12,
-  borderWidth: 2,
-  gap: 8,
-}
-
-const $shareButtonText: TextStyle = {
-  fontSize: 16,
+const $actionButtonText: TextStyle = {
+  fontSize: 14,
   fontWeight: "600",
 }
 

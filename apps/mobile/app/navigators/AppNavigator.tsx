@@ -23,6 +23,7 @@ import { ReportScreen } from "@/screens/ReportScreen"
 import { SubscriptionsSettingsScreen } from "@/screens/SubscriptionsSettingsScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
 import { StatTrendScreen } from "@/screens/StatTrendScreen"
+import { CompareScreen } from "@/screens/CompareScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -69,6 +70,7 @@ const AppStack = () => {
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
+      <Stack.Screen name="Compare" component={CompareScreen} />
 
       {/* Auth screens - available to guests for login/signup flow */}
       <Stack.Screen name="Login" component={LoginScreen} />

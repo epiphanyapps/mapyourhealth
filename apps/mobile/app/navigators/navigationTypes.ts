@@ -41,6 +41,7 @@ export type AppStackParamList = {
     lastUpdated: string
     zipCode: string
   }
+  Compare: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
