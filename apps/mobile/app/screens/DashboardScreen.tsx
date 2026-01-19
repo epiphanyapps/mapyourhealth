@@ -156,6 +156,28 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     }
   }, [isAuthenticated, currentZipCode, setPendingAction, navigation])
 
+  // Handle Notify Me press - for zip codes without data
+  const [isSettingNotify, setIsSettingNotify] = useState(false)
+  const handleNotifyMe = useCallback(async () => {
+    if (isAuthenticated) {
+      setIsSettingNotify(true)
+      try {
+        await addSubscription(currentZipCode, undefined, undefined, { notifyWhenDataAvailable: true })
+        Alert.alert("You're on the list!", `We'll notify you when data for ${currentZipCode} becomes available.`)
+      } catch (error) {
+        Alert.alert("Error", "Failed to set up notification. Please try again.")
+      } finally {
+        setIsSettingNotify(false)
+      }
+    } else {
+      setPendingAction({
+        type: "notify_when_available",
+        payload: { zipCode: currentZipCode },
+      })
+      navigation.navigate("Login")
+    }
+  }, [isAuthenticated, currentZipCode, addSubscription, setPendingAction, navigation])
+
   // Handle Share button press - share safety data
   const handleShare = useCallback(async () => {
     if (!zipData) return
@@ -216,21 +238,6 @@ mapyourhealth://zip/${zipData.zipCode}`
     paddingVertical: 40,
   }
 
-  const $errorContainer: ViewStyle = {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-    paddingHorizontal: 24,
-  }
-
-  const $errorText: TextStyle = {
-    fontSize: 16,
-    color: theme.colors.textDim,
-    textAlign: "center",
-    marginBottom: 16,
-  }
-
   const $retryButton: ViewStyle = {
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -242,13 +249,6 @@ mapyourhealth://zip/${zipData.zipCode}`
     color: "#FFFFFF",
     fontSize: 16,
     fontWeight: "600",
-  }
-
-  const $noDataText: TextStyle = {
-    fontSize: 16,
-    color: theme.colors.textDim,
-    textAlign: "center",
-    marginTop: 40,
   }
 
   const $mockDataBanner: ViewStyle = {
@@ -328,10 +328,11 @@ mapyourhealth://zip/${zipData.zipCode}`
           />
         </View>
         <View style={$emptyStateContainer}>
-          <MaterialCommunityIcons name="map-search-outline" size={64} color={theme.colors.textDim} />
-          <Text style={$emptyStateTitle}>Look up a zip code</Text>
+          <MaterialCommunityIcons name="shield-search" size={64} color={theme.colors.tint} />
+          <Text style={$emptyStateTitle}>Find out how safe your zip code is</Text>
           <Text style={$emptyStateSubtitle}>
-            Enter a 5-digit zip code above to view safety data for that area
+            Search above to get safety insights on water quality, air pollution, health risks, and
+            natural disasters in any area
           </Text>
         </View>
       </Screen>
@@ -368,7 +369,6 @@ mapyourhealth://zip/${zipData.zipCode}`
   if (error && !zipData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
-        <LocationHeader zipCode={currentZipCode} cityName="Error" />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
@@ -382,26 +382,30 @@ mapyourhealth://zip/${zipData.zipCode}`
             }}
           />
         </View>
-        <View style={$errorContainer}>
-          <MaterialCommunityIcons
-            name="alert-circle-outline"
-            size={48}
-            color={theme.colors.textDim}
-          />
-          <Text style={$errorText}>{error}</Text>
-          <Pressable style={$retryButton} onPress={refresh}>
-            <Text style={$retryButtonText}>Retry</Text>
+        <View style={$emptyStateContainer}>
+          <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
+          <Text style={$emptyStateTitle}>Unable to load data</Text>
+          <Text style={$emptyStateSubtitle}>
+            We couldn't fetch safety data for {currentZipCode}. Check your connection and try again.
+          </Text>
+          <Pressable
+            style={[
+              $retryButton,
+              { marginTop: 24, backgroundColor: theme.colors.tint, paddingHorizontal: 32 },
+            ]}
+            onPress={refresh}
+          >
+            <Text style={$retryButtonText}>Try Again</Text>
           </Pressable>
         </View>
       </Screen>
     )
   }
 
-  // No data state
+  // No data state - zip code exists but no safety data available yet
   if (!zipData) {
     return (
       <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
-        <LocationHeader zipCode={currentZipCode} cityName="No Data" />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
@@ -415,11 +419,25 @@ mapyourhealth://zip/${zipData.zipCode}`
             }}
           />
         </View>
-        <View style={{ paddingHorizontal: 16 }}>
-          <Text style={$noDataText}>No safety data available for zip code {currentZipCode}.</Text>
-          <Text style={[{ marginTop: 8 }, $noDataText]}>
-            Try searching for a different zip code.
+        <View style={$emptyStateContainer}>
+          <MaterialCommunityIcons name="map-marker-question" size={64} color={theme.colors.textDim} />
+          <Text style={$emptyStateTitle}>No data for {currentZipCode} yet</Text>
+          <Text style={$emptyStateSubtitle}>
+            We're working on expanding our coverage. Want to know when safety data becomes available?
           </Text>
+          <Pressable
+            onPress={handleNotifyMe}
+            disabled={isSettingNotify}
+            style={({ pressed }) => [
+              $notifyButton,
+              { backgroundColor: theme.colors.tint },
+              pressed && { opacity: 0.8 },
+              isSettingNotify && { opacity: 0.6 },
+            ]}
+          >
+            <MaterialCommunityIcons name="bell-outline" size={20} color="#FFFFFF" />
+            <Text style={$notifyButtonText}>{isSettingNotify ? "Setting up..." : "Notify Me"}</Text>
+          </Pressable>
         </View>
       </Screen>
     )
@@ -630,6 +648,23 @@ const $reportButton: ViewStyle = {
 }
 
 const $reportButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+  color: "#FFFFFF",
+}
+
+const $notifyButton: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginTop: 24,
+  paddingVertical: 14,
+  paddingHorizontal: 24,
+  borderRadius: 12,
+  gap: 8,
+}
+
+const $notifyButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: "#FFFFFF",

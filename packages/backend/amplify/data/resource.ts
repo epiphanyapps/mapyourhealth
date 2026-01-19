@@ -90,6 +90,7 @@ const schema = a.schema({
       state: a.string(),
       enableNotifications: a.boolean().default(true),
       emailNotifications: a.boolean().default(true),
+      notifyWhenDataAvailable: a.boolean().default(false),
     })
     .authorization((allow) => [allow.owner()]),
 

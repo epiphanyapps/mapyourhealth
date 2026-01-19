@@ -43,18 +43,27 @@ export async function getZipCodeStats(zipCode: string): Promise<ZipCodeStat[]> {
 }
 
 /**
+ * Options for creating a subscription
+ */
+export interface CreateSubscriptionOptions {
+  notifyWhenDataAvailable?: boolean
+}
+
+/**
  * Create a new subscription for the current user
  */
 export async function createZipCodeSubscription(
   zipCode: string,
   cityName?: string,
   state?: string,
+  options?: CreateSubscriptionOptions,
 ): Promise<ZipCodeSubscription> {
   const { data, errors } = await client.models.ZipCodeSubscription.create({
     zipCode,
     cityName,
     state,
     enableNotifications: true,
+    notifyWhenDataAvailable: options?.notifyWhenDataAvailable ?? false,
   })
   if (errors) {
     console.error('Error creating subscription:', errors)

@@ -16,7 +16,7 @@ import {
 } from "react"
 import { createZipCodeSubscription } from "@/services/amplify/data"
 
-export type PendingActionType = "follow_zip_code" | "report_hazard"
+export type PendingActionType = "follow_zip_code" | "report_hazard" | "notify_when_available"
 
 export interface PendingAction {
   type: PendingActionType
@@ -71,6 +71,14 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
         case "report_hazard": {
           // Report hazard flow - just clear and navigate to Report screen
           // The actual report will be created on the Report screen
+          clearPendingAction()
+          return true
+        }
+        case "notify_when_available": {
+          const { zipCode } = pendingAction.payload
+          await createZipCodeSubscription(zipCode, undefined, undefined, {
+            notifyWhenDataAvailable: true,
+          })
           clearPendingAction()
           return true
         }

@@ -22,6 +22,7 @@ import {
   ZipCodeSubscription,
   createZipCodeSubscription,
   deleteZipCodeSubscription,
+  CreateSubscriptionOptions,
 } from "@/services/amplify/data"
 
 interface SubscriptionsContextType {
@@ -36,7 +37,12 @@ interface SubscriptionsContextType {
   /** Refresh subscriptions from the backend */
   refresh: () => Promise<void>
   /** Add a new subscription */
-  addSubscription: (zipCode: string, cityName?: string, state?: string) => Promise<void>
+  addSubscription: (
+    zipCode: string,
+    cityName?: string,
+    state?: string,
+    options?: CreateSubscriptionOptions,
+  ) => Promise<void>
   /** Remove a subscription by ID */
   removeSubscription: (id: string) => Promise<void>
 }
@@ -98,13 +104,18 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
    * Add a new subscription
    */
   const addSubscription = useCallback(
-    async (zipCode: string, cityName?: string, state?: string) => {
+    async (
+      zipCode: string,
+      cityName?: string,
+      state?: string,
+      options?: CreateSubscriptionOptions,
+    ) => {
       if (!isAuthenticated) {
         throw new Error("Must be authenticated to add subscription")
       }
 
       try {
-        const newSub = await createZipCodeSubscription(zipCode, cityName, state)
+        const newSub = await createZipCodeSubscription(zipCode, cityName, state, options)
         setSubscriptions((prev) => [...prev, newSub])
       } catch (err) {
         console.error("Failed to add subscription:", err)
