@@ -1,4 +1,4 @@
-import { FC, useState, useCallback } from "react"
+import { FC, useState, useCallback, useEffect } from "react"
 import { View, ViewStyle, Pressable, TextStyle, Alert, ActivityIndicator } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
@@ -13,8 +13,8 @@ import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
+import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
-import { createZipCodeSubscription } from "@/services/amplify/data"
 import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 
@@ -28,17 +28,38 @@ interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
  * - Search bar for looking up different zip codes
  * - Category cards showing status for water, air, health, and disaster
  */
+const DEFAULT_ZIP_CODE = "90210"
+
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
   const { navigation, route } = props
   const { theme } = useAppTheme()
   const { isAuthenticated } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
+  const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
 
-  // State for current zip code - defaults to 90210 or passed from params
-  const [currentZipCode, setCurrentZipCode] = useState(route.params?.zipCode ?? "90210")
+  // Determine the default zip code:
+  // 1. Route param takes priority (for navigation from other screens)
+  // 2. For authenticated users, use their primary subscription
+  // 3. For guests, default to 90210
+  const getDefaultZipCode = () => {
+    if (route.params?.zipCode) return route.params.zipCode
+    if (isAuthenticated && primarySubscription) return primarySubscription.zipCode
+    return DEFAULT_ZIP_CODE
+  }
+
+  // State for current zip code
+  const [currentZipCode, setCurrentZipCode] = useState(getDefaultZipCode())
   const [searchText, setSearchText] = useState("")
   const [isFollowing, setIsFollowing] = useState(false)
+
+  // Update zip code when primary subscription loads (for authenticated users)
+  useEffect(() => {
+    // Only auto-update if no route param was provided
+    if (!route.params?.zipCode && isAuthenticated && primarySubscription && !subsLoading) {
+      setCurrentZipCode(primarySubscription.zipCode)
+    }
+  }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
 
   // Fetch data for current zip code from Amplify (with mock fallback)
   const { zipData, isLoading, error, isMockData, refresh } = useZipCodeData(currentZipCode)
@@ -73,10 +94,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (!zipData) return
 
     if (isAuthenticated) {
-      // User is authenticated - create subscription directly
+      // User is authenticated - create subscription via context
       setIsFollowing(true)
       try {
-        await createZipCodeSubscription(
+        await addSubscription(
           zipData.zipCode,
           zipData.cityName,
           zipData.state,
@@ -100,7 +121,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       })
       navigation.navigate("Login")
     }
-  }, [isAuthenticated, zipData, setPendingAction, navigation])
+  }, [isAuthenticated, zipData, setPendingAction, navigation, addSubscription])
 
   // Handle Report Hazard press - auth gated
   const handleReportHazard = useCallback(() => {
