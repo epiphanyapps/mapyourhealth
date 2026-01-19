@@ -806,7 +806,7 @@
         "yarn type-check passes"
       ],
       "priority": 47,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-045. Improves UX by showing relevant data immediately on app open."
     },
     {
