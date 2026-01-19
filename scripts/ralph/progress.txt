@@ -350,3 +350,29 @@ Branch: ralph/safety-dashboard-mvp
   - Use theme.colors.error for delete/destructive actions
 ---
 
+## 2026-01-19 - US-034: Create SubscriptionsSettingsScreen
+- Created SubscriptionsSettingsScreen for managing zip code subscriptions
+- Files created:
+  - apps/mobile/app/screens/SubscriptionsSettingsScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added SubscriptionsSettings route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added screen to authenticated stack)
+- Features implemented:
+  - Lists current subscriptions using SubscriptionCard component
+  - Header with back button and "My Subscriptions" title
+  - Shows subscription count (X of 10)
+  - "Add" button to open modal for adding new zip codes
+  - Modal with ZipCodeSearch component for adding subscriptions
+  - Enforces maximum 10 subscriptions limit
+  - Empty state with icon when no subscriptions
+  - Loading state while fetching subscriptions
+  - Error handling with visual feedback
+  - Uses Amplify data service functions (getUserZipCodeSubscriptions, createZipCodeSubscription, deleteZipCodeSubscription)
+- **Learnings for future iterations:**
+  - Modal animationType="slide" + transparent for bottom sheet effect
+  - Use FlatList with ListEmptyComponent for empty state handling
+  - Reuse ZipCodeSearch component for consistent zip code selection UI
+  - Pass remainingSlots to ZipCodeSearch maxSelections to enforce limits
+  - Screen needs to be added to both navigationTypes.ts and AppNavigator.tsx
+---
+

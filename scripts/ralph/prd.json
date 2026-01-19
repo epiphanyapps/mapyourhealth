@@ -562,7 +562,7 @@
         "yarn type-check passes"
       ],
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-031, US-033, US-023"
     },
     {
