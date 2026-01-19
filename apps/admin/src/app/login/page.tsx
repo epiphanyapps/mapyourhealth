@@ -49,8 +49,8 @@ export default function LoginPage() {
             [];
 
           if (groups.includes("admin")) {
-            // Already signed in as admin, redirect to home
-            router.push("/");
+            // Already signed in as admin, redirect to home with full reload
+            window.location.href = "/";
             return;
           } else {
             // Signed in but not admin, sign out
@@ -109,8 +109,8 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/");
-      router.refresh();
+      // Use full page reload to re-initialize AuthProvider with new auth state
+      window.location.href = "/";
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to sign in";
