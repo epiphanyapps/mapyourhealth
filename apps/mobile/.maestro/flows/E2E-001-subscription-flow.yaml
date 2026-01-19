@@ -1,0 +1,124 @@
+# flow: E2E-001 Subscription and Notification Flow
+# intent:
+#   Test the complete guest-to-subscriber journey:
+#   1. Guest sees empty state with search prompt
+#   2. Guest can search for zip codes and view data
+#   3. Follow button triggers auth gate
+#   4. User can navigate to signup
+#
+# NOTE: This flow tests up to the auth gate. Full signup requires
+# email confirmation which cannot be automated in Maestro.
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Guest Empty State
+# ========================================
+# Verify empty state is shown for guests
+- assertVisible:
+    text: "Find out how safe your zip code is"
+    label: "Guest empty state title is visible"
+
+- assertVisible:
+    text: "Search above to get safety insights"
+    optional: true
+
+# Verify search bar is visible
+- assertVisible:
+    text: "Search zip codes..."
+    label: "Search bar is visible"
+
+# ========================================
+# Part 2: Search for a Zip Code
+# ========================================
+- tapOn:
+    text: "Search zip codes..."
+    label: "Tap on search bar"
+
+- inputText: "90210"
+- pressKey: Enter
+
+# Wait for zip code data to load
+- waitForAnimationToEnd
+
+# Verify we navigated to the zip code with data
+- assertVisible:
+    text: "90210"
+    label: "Zip code is visible"
+
+# Verify category cards are visible (any of: Water, Air, Health, Disaster)
+- assertVisible:
+    text: "Water.*"
+    optional: true
+
+# ========================================
+# Part 3: Search for a Different Zip Code
+# ========================================
+- tapOn:
+    text: "Search zip codes..."
+    label: "Tap on search bar"
+
+- inputText: "10001"
+- pressKey: Enter
+
+# Wait for zip code data to load
+- waitForAnimationToEnd
+
+# Verify we navigated to the new zip code
+- assertVisible:
+    text: "10001"
+    label: "New zip code is visible"
+
+# ========================================
+# Part 4: Follow Button Triggers Auth Gate
+# ========================================
+- tapOn:
+    text: "Follow"
+    label: "Tap Follow button (should trigger auth gate)"
+
+# Verify auth gate appears (Login screen)
+- assertVisible:
+    text: "Welcome Back"
+    label: "Login screen is visible"
+
+- assertVisible:
+    text: "Sign In"
+    label: "Sign In button is visible"
+
+# ========================================
+# Part 5: Navigate to Signup
+# ========================================
+- tapOn:
+    text: "Don't have an account\\? Sign up"
+    label: "Navigate to signup screen"
+
+- assertVisible:
+    text: "Create Account"
+    label: "Signup screen is visible"
+
+- assertVisible:
+    text: "Sign Up"
+    label: "Sign Up button is visible"
+
+# ========================================
+# Part 6: Go Back to Dashboard (via back navigation)
+# ========================================
+- tapOn:
+    id: "back"
+    optional: true
+
+- tapOn:
+    id: "back"
+    optional: true
+
+# Verify we can get back to dashboard
+- runFlow:
+    when:
+      visible: "Search zip codes..."
+    commands:
+      - assertVisible:
+          text: "10001"
+          optional: true

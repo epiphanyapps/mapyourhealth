@@ -1,0 +1,77 @@
+# flow: Shared _auth
+# intent:
+#   Reusable authentication flows for tests that need to log in or sign up.
+#   These flows expect to already be on the Login or Signup screen.
+#
+# Usage:
+#   - runFlow:
+#       file: ../shared/_auth.yaml
+#       env:
+#         AUTH_EMAIL: "test@example.com"
+#         AUTH_PASSWORD: "TestPass123!"
+#         AUTH_ACTION: "login" # or "signup"
+
+appId: ${MAESTRO_APP_ID}
+---
+
+# ========================================
+# Login Flow
+# ========================================
+- runFlow:
+    when:
+      visible: "Welcome Back"
+    env:
+      AUTH_ACTION: ${AUTH_ACTION}
+    commands:
+      - runFlow:
+          when:
+            env:
+              AUTH_ACTION: "login"
+          commands:
+            # Enter email
+            - tapOn:
+                text: "Enter your email"
+            - inputText: ${AUTH_EMAIL}
+
+            # Enter password
+            - tapOn:
+                text: "Enter your password"
+            - inputText: ${AUTH_PASSWORD}
+
+            # Submit
+            - tapOn:
+                text: "Sign In"
+
+            # Wait for navigation
+            - waitForAnimationToEnd
+
+# ========================================
+# Signup Flow
+# ========================================
+- runFlow:
+    when:
+      visible: "Create Account"
+    env:
+      AUTH_ACTION: ${AUTH_ACTION}
+    commands:
+      - runFlow:
+          when:
+            env:
+              AUTH_ACTION: "signup"
+          commands:
+            # Enter email
+            - tapOn:
+                text: "Enter your email"
+            - inputText: ${AUTH_EMAIL}
+
+            # Enter password
+            - tapOn:
+                text: "At least 8 characters"
+            - inputText: ${AUTH_PASSWORD}
+
+            # Submit
+            - tapOn:
+                text: "Sign Up"
+
+            # Wait for confirmation screen
+            - waitForAnimationToEnd
