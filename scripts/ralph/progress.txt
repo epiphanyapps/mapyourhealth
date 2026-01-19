@@ -654,3 +654,25 @@ Branch: ralph/safety-dashboard-mvp
   - Admin portal preserves max 12 history entries (for 12 months of data)
   - Trend calculation: higher values increasing = worsening (if higherIsBad=true)
 ---
+
+## 2026-01-19 - US-054: Compare zip codes feature
+- Created CompareScreen for side-by-side zip code safety comparison
+- Two zip code input fields with search validation (5-digit)
+- Side-by-side category comparison showing status for each zip code
+- Safer zip highlighting: categories highlight with light green background for safer zip
+- Overall safety score (0-100) calculated from category statuses
+- Winner badge displayed on higher scoring zip code
+- Added Compare button to Dashboard action row alongside Follow and Share
+- Files created:
+  - apps/mobile/app/screens/CompareScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added Compare route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added CompareScreen, available to all users)
+  - apps/mobile/app/screens/DashboardScreen.tsx (added Compare button, refactored action buttons)
+- **Learnings for future iterations:**
+  - Compare screen is available to all users (guests + authenticated) since it's a browsing feature
+  - Safety score calculation: safe=100pts, warning=50pts, danger=0pts, averaged across categories
+  - useZipCodeData hook can be used with empty string to fetch no data initially
+  - Action buttons row uses flex:1 for equal width buttons - works well for 2-3 buttons
+  - StatusIndicator component accepts "medium" size for inline use in comparison rows
+---
