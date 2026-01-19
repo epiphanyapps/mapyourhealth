@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback } from "react"
 
 import { getZipCodeStats, ZipCodeStat as AmplifyZipCodeStat } from "@/services/amplify/data"
-import { getZipCodeData as getMockZipCodeData } from "@/data/helpers"
+import { getZipCodeData as getMockZipCodeData, getZipCodeMetadata } from "@/data/helpers"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import type { ZipCodeData, ZipCodeStat, StatStatus, StatCategory, StatDefinition } from "@/data/types/safety"
 
@@ -38,18 +38,25 @@ function mapAmplifyStatToFrontend(amplifyStat: AmplifyZipCodeStat): ZipCodeStat 
 }
 
 /**
- * Look up city/state from mock data or return defaults
- * In the future, this could use a bundled zip code metadata file (US-046)
+ * Look up city/state from bundled metadata or mock data as fallback.
+ * Uses bundled zip code metadata for instant lookup without API calls.
  */
 function getCityStateForZipCode(zipCode: string): { cityName: string; state: string } {
-  // Try to get from mock data first
+  // First try bundled metadata (covers most US zip codes)
+  const metadata = getZipCodeMetadata(zipCode)
+  if (metadata) {
+    return { cityName: metadata.city, state: metadata.state }
+  }
+
+  // Fall back to mock data for any zip codes not in bundled metadata
   const mockData = getMockZipCodeData(zipCode)
   if (mockData) {
     return { cityName: mockData.cityName, state: mockData.state }
   }
 
-  // Return generic placeholders for unknown zip codes
-  return { cityName: "Unknown City", state: "" }
+  // Return generic placeholders for truly unknown zip codes
+  // This handles zip codes gracefully by showing just the zip code
+  return { cityName: "", state: "" }
 }
 
 /**

@@ -309,7 +309,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       {/* Location Header */}
       <LocationHeader
         zipCode={zipData.zipCode}
-        cityName={zipData.state ? `${zipData.cityName}, ${zipData.state}` : zipData.cityName}
+        cityName={
+          zipData.cityName && zipData.state
+            ? `${zipData.cityName}, ${zipData.state}`
+            : zipData.cityName || zipData.state || "United States"
+        }
       />
 
       {/* Search Bar */}
