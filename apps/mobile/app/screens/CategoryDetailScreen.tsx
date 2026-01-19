@@ -1,6 +1,7 @@
-import { FC } from "react"
-import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator } from "react-native"
+import { FC, useState, useCallback } from "react"
+import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { formatDistanceToNow } from "date-fns"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -29,11 +30,29 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
 
-  // Fetch data for the passed zip code from Amplify (with mock fallback)
-  const { zipData, isLoading, error, isMockData, refresh } = useZipCodeData(zipCode)
+  // Fetch data for the passed zip code from Amplify (with caching and offline support)
+  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } = useZipCodeData(zipCode)
+
+  // State for pull-to-refresh
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Handle pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      await refresh()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [refresh])
 
   // Get stats for this category
   const stats = zipData ? getStatsForCategory(zipData, category, statDefinitions) : []
+
+  // Format last updated time for offline banner
+  const lastUpdatedText = lastUpdated
+    ? formatDistanceToNow(lastUpdated, { addSuffix: true })
+    : null
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
   const categoryColor = CATEGORY_COLORS[category]
@@ -126,6 +145,26 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     textAlign: "center",
   }
 
+  const $offlineBanner: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF3C7",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 6,
+    gap: 8,
+  }
+
+  const $offlineBannerText: TextStyle = {
+    fontSize: 12,
+    color: "#92400E",
+    textAlign: "center",
+    flex: 1,
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -177,7 +216,17 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         onLeftPress={() => navigation.goBack()}
       />
 
-      <ScrollView contentContainerStyle={$contentContainer}>
+      <ScrollView
+        contentContainerStyle={$contentContainer}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.tint}
+            colors={[theme.colors.tint]}
+          />
+        }
+      >
         {/* Category Header */}
         <View style={$categoryHeader}>
           <View style={$categoryIcon}>
@@ -185,6 +234,16 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
           </View>
           <Text style={$categoryName}>{categoryName}</Text>
         </View>
+
+        {/* Offline Banner - shown when using cached data while offline */}
+        {isOffline && isCachedData && (
+          <View style={$offlineBanner}>
+            <MaterialCommunityIcons name="wifi-off" size={16} color="#92400E" />
+            <Text style={$offlineBannerText}>
+              Offline - Last updated {lastUpdatedText ?? "recently"}
+            </Text>
+          </View>
+        )}
 
         {/* Mock Data Banner - only shown in development when using mock data */}
         {isMockData && __DEV__ && (

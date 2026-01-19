@@ -1,6 +1,7 @@
 import { FC, useState, useCallback, useEffect } from "react"
-import { View, ViewStyle, Pressable, TextStyle, Alert, ActivityIndicator } from "react-native"
+import { View, ViewStyle, Pressable, TextStyle, Alert, ActivityIndicator, RefreshControl } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { formatDistanceToNow } from "date-fns"
 
 import { LocationHeader } from "@/components/LocationHeader"
 import { Screen } from "@/components/Screen"
@@ -61,8 +62,21 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
 
-  // Fetch data for current zip code from Amplify (with mock fallback)
-  const { zipData, isLoading, error, isMockData, refresh } = useZipCodeData(currentZipCode)
+  // Fetch data for current zip code from Amplify (with caching and offline support)
+  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } = useZipCodeData(currentZipCode)
+
+  // State for pull-to-refresh
+  const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Handle pull-to-refresh
+  const onRefresh = useCallback(async () => {
+    setIsRefreshing(true)
+    try {
+      await refresh()
+    } finally {
+      setIsRefreshing(false)
+    }
+  }, [refresh])
 
   // Get the worst status for each category
   const getStatusForCategory = (category: StatCategory) => {
@@ -212,6 +226,26 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     textAlign: "center",
   }
 
+  const $offlineBanner: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: "#FEF3C7",
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 6,
+    gap: 8,
+  }
+
+  const $offlineBannerText: TextStyle = {
+    fontSize: 12,
+    color: "#92400E",
+    textAlign: "center",
+    flex: 1,
+  }
+
   // Get alert stats (danger/warning) for the warning banner
   const alertStats = zipData ? getAlertStats(zipData, statDefinitions) : []
   // Show the first danger stat, or first warning if no danger
@@ -304,8 +338,27 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     )
   }
 
+  // Format last updated time for offline banner
+  const lastUpdatedText = lastUpdated
+    ? formatDistanceToNow(lastUpdated, { addSuffix: true })
+    : null
+
   return (
-    <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+    <Screen
+      preset="scroll"
+      safeAreaEdges={["top"]}
+      contentContainerStyle={$contentContainer}
+      ScrollViewProps={{
+        refreshControl: (
+          <RefreshControl
+            refreshing={isRefreshing}
+            onRefresh={onRefresh}
+            tintColor={theme.colors.tint}
+            colors={[theme.colors.tint]}
+          />
+        ),
+      }}
+    >
       {/* Location Header */}
       <LocationHeader
         zipCode={zipData.zipCode}
@@ -330,6 +383,16 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
           }}
         />
       </View>
+
+      {/* Offline Banner - shown when using cached data while offline */}
+      {isOffline && isCachedData && (
+        <View style={$offlineBanner}>
+          <MaterialCommunityIcons name="wifi-off" size={16} color="#92400E" />
+          <Text style={$offlineBannerText}>
+            Offline - Last updated {lastUpdatedText ?? "recently"}
+          </Text>
+        </View>
+      )}
 
       {/* Mock Data Banner - only shown in development when using mock data */}
       {isMockData && __DEV__ && (
