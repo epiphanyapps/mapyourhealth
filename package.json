@@ -20,7 +20,10 @@
     "type-check": "yarn workspaces foreach -A run compile",
     "clean": "yarn workspaces foreach -A run clean && rm -rf node_modules",
     "esbuild": "esbuild",
-    "seed:data": "npx tsx apps/admin/scripts/seed-data.ts"
+    "seed:data": "npx tsx apps/admin/scripts/seed-data.ts",
+    "test:e2e:mobile": "yarn workspace @mapyourhealth/mobile test:maestro",
+    "test:e2e:web": "yarn workspace admin test:e2e",
+    "test:e2e": "yarn test:e2e:mobile && yarn test:e2e:web"
   },
   "devDependencies": {
     "esbuild": "^0.24.2"

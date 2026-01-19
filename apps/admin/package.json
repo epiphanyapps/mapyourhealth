@@ -6,7 +6,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:e2e": "playwright test",
+    "test:e2e:admin": "playwright test --project=admin-chromium",
+    "test:e2e:mobile-web": "playwright test --project=mobile-web-chromium",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.13.2",
@@ -32,6 +36,7 @@
     "zod": "^4.3.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
