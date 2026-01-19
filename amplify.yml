@@ -46,3 +46,28 @@ applications:
         paths:
           - node_modules/**/*
           - ../../node_modules/**/*
+
+  # Admin portal deployment (app: d1810hifpx5957 in us-east-1)
+  - appRoot: apps/admin
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - corepack enable
+            - corepack prepare yarn@4.5.3 --activate
+            # Install from monorepo root, then return to admin dir
+            - cd ../.. && yarn install --immutable && cd apps/admin
+            # Generate Amplify outputs from backend app (us-east-1)
+            - npx ampx generate outputs --branch $AWS_BRANCH --app-id d60z6evrscdvy
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - ../../node_modules/**/*
+          - .next/cache/**/*
