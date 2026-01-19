@@ -29,7 +29,7 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => 
   const [error, setError] = useState("")
   const [resendSuccess, setResendSuccess] = useState(false)
 
-  const { setAuthToken } = useAuth()
+  const { refreshAuthState } = useAuth()
   const { themed } = useAppTheme()
 
   function validateCode(value: string): boolean {
@@ -66,10 +66,12 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => 
       // Try to auto sign in after confirmation
       try {
         await autoSignIn()
-        setAuthToken(String(Date.now()))
+        // Refresh auth state to update the navigator
+        await refreshAuthState()
       } catch {
         // Auto sign in not enabled, user will need to log in manually
-        setAuthToken(String(Date.now()))
+        // Refresh auth state anyway - navigation will show login screen
+        await refreshAuthState()
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Verification failed. Please try again."

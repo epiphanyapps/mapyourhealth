@@ -1,6 +1,13 @@
-import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
-// eslint-disable-next-line no-restricted-imports
+/**
+ * LoginScreen
+ *
+ * User login screen with email and password input.
+ * Integrates with Amplify Auth signIn and navigates to dashboard on success.
+ */
+
+import { ComponentType, FC, useMemo, useRef, useState } from "react"
 import { TextInput, TextStyle, ViewStyle } from "react-native"
+import { signIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
 import { PressableIcon } from "@/components/Icon"
@@ -14,43 +21,77 @@ import type { ThemedStyle } from "@/theme/types"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = () => {
-  const authPasswordInput = useRef<TextInput>(null)
+export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
+  const passwordInput = useRef<TextInput>(null)
 
-  const [authPassword, setAuthPassword] = useState("")
-  const [isAuthPasswordHidden, setIsAuthPasswordHidden] = useState(true)
-  const [isSubmitted, setIsSubmitted] = useState(false)
-  const [attemptsCount, setAttemptsCount] = useState(0)
-  const { authEmail, setAuthEmail, setAuthToken, validationError } = useAuth()
+  const [email, setEmail] = useState("")
+  const [password, setPassword] = useState("")
+  const [isPasswordHidden, setIsPasswordHidden] = useState(true)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [emailError, setEmailError] = useState("")
+  const [passwordError, setPasswordError] = useState("")
+  const [generalError, setGeneralError] = useState("")
+
+  const { refreshAuthState } = useAuth()
 
   const {
     themed,
     theme: { colors },
   } = useAppTheme()
 
-  useEffect(() => {
-    // Here is where you could fetch credentials from keychain or storage
-    // and pre-fill the form fields.
-    setAuthEmail("ignite@infinite.red")
-    setAuthPassword("ign1teIsAwes0m3")
-  }, [setAuthEmail])
+  function validateEmail(value: string): boolean {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!value.trim()) {
+      setEmailError("Email is required")
+      return false
+    }
+    if (!emailRegex.test(value)) {
+      setEmailError("Please enter a valid email address")
+      return false
+    }
+    setEmailError("")
+    return true
+  }
 
-  const error = isSubmitted ? validationError : ""
+  function validatePassword(value: string): boolean {
+    if (!value) {
+      setPasswordError("Password is required")
+      return false
+    }
+    setPasswordError("")
+    return true
+  }
 
-  function login() {
-    setIsSubmitted(true)
-    setAttemptsCount(attemptsCount + 1)
+  async function handleLogin() {
+    setGeneralError("")
+    const isEmailValid = validateEmail(email)
+    const isPasswordValid = validatePassword(password)
 
-    if (validationError) return
+    if (!isEmailValid || !isPasswordValid) {
+      return
+    }
 
-    // Make a request to your server to get an authentication token.
-    // If successful, reset the fields and set the token.
-    setIsSubmitted(false)
-    setAuthPassword("")
-    setAuthEmail("")
+    setIsSubmitting(true)
+    try {
+      const result = await signIn({ username: email, password })
 
-    // We'll mock this with a fake token.
-    setAuthToken(String(Date.now()))
+      if (result.isSignedIn) {
+        // Refresh auth state to update the navigator
+        await refreshAuthState()
+        // Navigation happens automatically when isAuthenticated becomes true
+      } else if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
+        // User hasn't confirmed their email yet
+        navigation.navigate("ConfirmSignup", { email })
+      } else {
+        // Handle other sign-in steps if needed
+        setGeneralError(`Additional step required: ${result.nextStep?.signInStep}`)
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Login failed. Please try again."
+      setGeneralError(message)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const PasswordRightAccessory: ComponentType<TextFieldAccessoryProps> = useMemo(
@@ -58,15 +99,15 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
       function PasswordRightAccessory(props: TextFieldAccessoryProps) {
         return (
           <PressableIcon
-            icon={isAuthPasswordHidden ? "view" : "hidden"}
+            icon={isPasswordHidden ? "view" : "hidden"}
             color={colors.palette.neutral800}
             containerStyle={props.style}
             size={20}
-            onPress={() => setIsAuthPasswordHidden(!isAuthPasswordHidden)}
+            onPress={() => setIsPasswordHidden(!isPasswordHidden)}
           />
         )
       },
-    [isAuthPasswordHidden, colors.palette.neutral800],
+    [isPasswordHidden, colors.palette.neutral800],
   )
 
   return (
@@ -75,48 +116,74 @@ export const LoginScreen: FC<LoginScreenProps> = () => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Text testID="login-heading" tx="loginScreen:logIn" preset="heading" style={themed($logIn)} />
-      <Text tx="loginScreen:enterDetails" preset="subheading" style={themed($enterDetails)} />
-      {attemptsCount > 2 && (
-        <Text tx="loginScreen:hint" size="sm" weight="light" style={themed($hint)} />
-      )}
+      <Text text="Welcome Back" preset="heading" style={themed($heading)} />
+      <Text
+        text="Sign in to access your safety alerts and subscriptions"
+        preset="subheading"
+        style={themed($subheading)}
+      />
+
+      {generalError ? <Text text={generalError} style={themed($errorText)} size="sm" /> : null}
 
       <TextField
-        value={authEmail}
-        onChangeText={setAuthEmail}
+        value={email}
+        onChangeText={(text) => {
+          setEmail(text)
+          if (emailError) validateEmail(text)
+        }}
         containerStyle={themed($textField)}
         autoCapitalize="none"
         autoComplete="email"
         autoCorrect={false}
         keyboardType="email-address"
-        labelTx="loginScreen:emailFieldLabel"
-        placeholderTx="loginScreen:emailFieldPlaceholder"
-        helper={error}
-        status={error ? "error" : undefined}
-        onSubmitEditing={() => authPasswordInput.current?.focus()}
+        label="Email"
+        placeholder="Enter your email"
+        helper={emailError}
+        status={emailError ? "error" : undefined}
+        onSubmitEditing={() => passwordInput.current?.focus()}
       />
 
       <TextField
-        ref={authPasswordInput}
-        value={authPassword}
-        onChangeText={setAuthPassword}
+        ref={passwordInput}
+        value={password}
+        onChangeText={(text) => {
+          setPassword(text)
+          if (passwordError) validatePassword(text)
+        }}
         containerStyle={themed($textField)}
         autoCapitalize="none"
         autoComplete="password"
         autoCorrect={false}
-        secureTextEntry={isAuthPasswordHidden}
-        labelTx="loginScreen:passwordFieldLabel"
-        placeholderTx="loginScreen:passwordFieldPlaceholder"
-        onSubmitEditing={login}
+        secureTextEntry={isPasswordHidden}
+        label="Password"
+        placeholder="Enter your password"
+        helper={passwordError}
+        status={passwordError ? "error" : undefined}
+        onSubmitEditing={handleLogin}
         RightAccessory={PasswordRightAccessory}
       />
 
       <Button
-        testID="login-button"
-        tx="loginScreen:tapToLogIn"
-        style={themed($tapButton)}
+        text="Forgot Password?"
+        style={themed($forgotPasswordButton)}
+        preset="default"
+        textStyle={themed($forgotPasswordText)}
+        onPress={() => navigation.navigate("ForgotPassword")}
+      />
+
+      <Button
+        text={isSubmitting ? "Signing In..." : "Sign In"}
+        style={themed($loginButton)}
         preset="reversed"
-        onPress={login}
+        onPress={handleLogin}
+        disabled={isSubmitting}
+      />
+
+      <Button
+        text="Don't have an account? Sign up"
+        style={themed($signupButton)}
+        preset="default"
+        onPress={() => navigation.navigate("Signup")}
       />
     </Screen>
   )
@@ -127,16 +194,16 @@ const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.lg,
 })
 
-const $logIn: ThemedStyle<TextStyle> = ({ spacing }) => ({
+const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
   marginBottom: spacing.sm,
 })
 
-const $enterDetails: ThemedStyle<TextStyle> = ({ spacing }) => ({
+const $subheading: ThemedStyle<TextStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
 })
 
-const $hint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.tint,
+const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.error,
   marginBottom: spacing.md,
 })
 
@@ -144,6 +211,21 @@ const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
 })
 
-const $tapButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+const $forgotPasswordButton: ThemedStyle<ViewStyle> = () => ({
+  alignSelf: "flex-end",
+  marginTop: -8,
+  marginBottom: 16,
+})
+
+const $forgotPasswordText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.tint,
+  fontSize: 14,
+})
+
+const $loginButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.xs,
+})
+
+const $signupButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.md,
 })

@@ -1,13 +1,24 @@
-import { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo } from "react"
+import {
+  createContext,
+  FC,
+  PropsWithChildren,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from "react"
 import { useMMKVString } from "react-native-mmkv"
+import { getCurrentUser, signOut as amplifySignOut, AuthUser } from "aws-amplify/auth"
 
 export type AuthContextType = {
   isAuthenticated: boolean
-  authToken?: string
+  isLoading: boolean
+  user: AuthUser | null
   authEmail?: string
-  setAuthToken: (token?: string) => void
   setAuthEmail: (email: string) => void
-  logout: () => void
+  logout: () => Promise<void>
+  refreshAuthState: () => Promise<void>
   validationError: string
 }
 
@@ -16,13 +27,52 @@ export const AuthContext = createContext<AuthContextType | null>(null)
 export interface AuthProviderProps {}
 
 export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ children }) => {
-  const [authToken, setAuthToken] = useMMKVString("AuthProvider.authToken")
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
+  const [user, setUser] = useState<AuthUser | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
-  const logout = useCallback(() => {
-    setAuthToken(undefined)
-    setAuthEmail("")
-  }, [setAuthEmail, setAuthToken])
+  /**
+   * Check the current Amplify auth state
+   * This is called on mount and after login/logout
+   */
+  const checkAuthState = useCallback(async () => {
+    try {
+      const currentUser = await getCurrentUser()
+      setUser(currentUser)
+    } catch {
+      // getCurrentUser throws when no user is signed in
+      setUser(null)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Check auth state on mount
+  useEffect(() => {
+    checkAuthState()
+  }, [checkAuthState])
+
+  /**
+   * Refresh auth state - call this after successful login
+   */
+  const refreshAuthState = useCallback(async () => {
+    setIsLoading(true)
+    await checkAuthState()
+  }, [checkAuthState])
+
+  /**
+   * Logout the user via Amplify Auth
+   */
+  const logout = useCallback(async () => {
+    try {
+      await amplifySignOut()
+    } catch (error) {
+      console.error("Logout error:", error)
+    } finally {
+      setUser(null)
+      setAuthEmail("")
+    }
+  }, [setAuthEmail])
 
   const validationError = useMemo(() => {
     if (!authEmail || authEmail.length === 0) return "can't be blank"
@@ -32,12 +82,13 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   }, [authEmail])
 
   const value = {
-    isAuthenticated: !!authToken,
-    authToken,
+    isAuthenticated: !!user,
+    isLoading,
+    user,
     authEmail,
-    setAuthToken,
     setAuthEmail,
     logout,
+    refreshAuthState,
     validationError,
   }
 
