@@ -488,3 +488,25 @@ Branch: ralph/safety-dashboard-mvp
   - Context provides addSubscription/removeSubscription methods to keep state in sync
   - Sort subscriptions by createdAt for consistent "primary" definition
 ---
+
+## 2026-01-19 - US-048: Create ProfileScreen with account management
+- Created ProfileScreen for user account management
+- Display user email from Amplify user.signInDetails.loginId or user.username
+- Manage Subscriptions link navigates to SubscriptionsSettingsScreen
+- Email notifications toggle (local state for now, ready for backend integration)
+- Logout button with confirmation Alert
+- Delete Account link showing support contact info
+- Updated DashboardScreen settings icon to navigate to Profile (instead of SubscriptionsSettings)
+- Files created:
+  - apps/mobile/app/screens/ProfileScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added Profile route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added ProfileScreen import and route)
+  - apps/mobile/app/screens/DashboardScreen.tsx (settings icon now navigates to Profile)
+- **Learnings for future iterations:**
+  - Amplify AuthUser has signInDetails.loginId for email (preferred) or fallback to username
+  - Profile is accessible via settings icon on Dashboard for authenticated users
+  - Profile screen links to SubscriptionsSettings for managing zip codes
+  - Use Alert.alert with destructive style for logout/delete actions
+  - Switch component uses trackColor and thumbColor for styling
+---

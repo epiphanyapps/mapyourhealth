@@ -825,7 +825,7 @@
         "yarn type-check passes"
       ],
       "priority": 48,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-043 (guest browsing). Profile only accessible when authenticated."
     },
     {
