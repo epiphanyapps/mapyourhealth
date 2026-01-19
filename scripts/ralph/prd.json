@@ -882,7 +882,7 @@
         "yarn type-check passes"
       ],
       "priority": 51,
-      "passes": false,
+      "passes": true,
       "notes": "Future feature. Requires SES setup in AWS. Push notifications can be added later."
     },
     {
