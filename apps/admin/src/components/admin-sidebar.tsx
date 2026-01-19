@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/providers/auth-provider";
+import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import {
   LayoutDashboard,
   ListChecks,
@@ -24,6 +25,7 @@ import {
   AlertTriangle,
   LogOut,
   Shield,
+  KeyRound,
 } from "lucide-react";
 
 const menuItems = [
@@ -93,6 +95,14 @@ export function AdminSidebar() {
           <p className="text-sm text-muted-foreground truncate">
             {user?.email || user?.username}
           </p>
+          <ChangePasswordDialog
+            trigger={
+              <Button variant="ghost" size="sm" className="w-full justify-start">
+                <KeyRound className="mr-2 h-4 w-4" />
+                Change Password
+              </Button>
+            }
+          />
           <Button
             variant="outline"
             size="sm"

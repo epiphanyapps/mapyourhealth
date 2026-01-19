@@ -1,21 +1,22 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import { Amplify } from "aws-amplify";
-import { signIn, signOut, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
+import {
+  signIn,
+  signOut,
+  fetchAuthSession,
+  getCurrentUser,
+  confirmSignIn,
+  resetPassword,
+  confirmResetPassword,
+  type ResetPasswordOutput,
+} from "aws-amplify/auth";
 import outputs from "../../../amplify_outputs.json";
-
-// DEBUG: Log and configure Amplify
-console.log("=== LOGIN PAGE DEBUG ===");
-console.log("Outputs loaded:", outputs);
-console.log("Auth config:", outputs?.auth);
-console.log("User Pool ID:", outputs?.auth?.user_pool_id);
-console.log("AWS Region:", outputs?.auth?.aws_region);
-console.log("=== END LOGIN PAGE DEBUG ===");
 
 // Configure Amplify
 Amplify.configure(outputs, { ssr: true });
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -26,70 +27,76 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Shield, Loader2 } from "lucide-react";
+import { Shield, Loader2, ArrowLeft, KeyRound, Mail } from "lucide-react";
+
+type AuthStep =
+  | "SIGN_IN"
+  | "NEW_PASSWORD_REQUIRED"
+  | "FORGOT_PASSWORD"
+  | "CONFIRM_RESET_PASSWORD";
 
 export default function LoginPage() {
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [resetCode, setResetCode] = useState("");
   const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  const [authStep, setAuthStep] = useState<AuthStep>("SIGN_IN");
+  const [resetPasswordOutput, setResetPasswordOutput] =
+    useState<ResetPasswordOutput | null>(null);
 
   // Check if user is already authenticated on mount
   useEffect(() => {
     const checkExistingAuth = async () => {
-      console.log("=== LOGIN PAGE: checkExistingAuth starting ===");
       try {
         const user = await getCurrentUser();
-        console.log("=== LOGIN PAGE: getCurrentUser ===", user);
         if (user) {
-          // User is signed in, check if admin
           const session = await fetchAuthSession();
-          console.log("=== LOGIN PAGE: fetchAuthSession ===", session);
           const groups =
             (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
             [];
-          console.log("=== LOGIN PAGE: groups ===", groups);
 
           if (groups.includes("admin")) {
-            // Already signed in as admin, redirect to home with full reload
-            console.log("=== LOGIN PAGE: User is admin, redirecting to / ===");
             window.location.href = "/";
             return;
           } else {
-            // Signed in but not admin, sign out
-            console.log("=== LOGIN PAGE: User not admin, signing out ===");
             await signOut();
           }
         }
-      } catch (error) {
+      } catch {
         // Not signed in, continue showing login form
-        console.log("=== LOGIN PAGE: checkExistingAuth error ===", error);
       } finally {
         setIsCheckingAuth(false);
-        console.log("=== LOGIN PAGE: checkExistingAuth complete ===");
       }
     };
 
     checkExistingAuth();
-  }, [router]);
+  }, []);
 
-  const handleSignOut = async () => {
-    setIsLoading(true);
-    try {
+  const validateAdminAndRedirect = async () => {
+    const session = await fetchAuthSession();
+    const groups =
+      (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || [];
+
+    if (!groups.includes("admin")) {
       await signOut();
-      setError("");
-    } catch (err) {
-      console.error("Sign out error:", err);
-    } finally {
-      setIsLoading(false);
+      setError("Access denied. You must be an admin to access this portal.");
+      setAuthStep("SIGN_IN");
+      return false;
     }
+
+    window.location.href = "/";
+    return true;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setSuccess("");
     setIsLoading(true);
 
     try {
@@ -101,34 +108,22 @@ export default function LoginPage() {
       }
 
       const signInResult = await signIn({ username: email, password });
-      console.log("=== LOGIN: signIn result ===", signInResult);
 
-      // Check if sign in is complete
-      if (signInResult.nextStep?.signInStep !== "DONE") {
-        console.log("=== LOGIN: signIn not complete, nextStep ===", signInResult.nextStep);
-        setError(`Sign in requires additional step: ${signInResult.nextStep?.signInStep}`);
-        setIsLoading(false);
-        return;
+      // Handle different sign-in steps
+      switch (signInResult.nextStep?.signInStep) {
+        case "DONE":
+          await validateAdminAndRedirect();
+          break;
+
+        case "CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED":
+          setAuthStep("NEW_PASSWORD_REQUIRED");
+          break;
+
+        default:
+          setError(
+            `Sign in requires additional step: ${signInResult.nextStep?.signInStep}. Please contact your administrator.`
+          );
       }
-
-      // Check if user is in admin group
-      const session = await fetchAuthSession();
-      console.log("=== LOGIN: fetchAuthSession result ===", session);
-      const groups =
-        (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
-        [];
-
-      if (!groups.includes("admin")) {
-        await signOut();
-        setError(
-          "Access denied. You must be an admin to access this portal."
-        );
-        setIsLoading(false);
-        return;
-      }
-
-      // Use full page reload to re-initialize AuthProvider with new auth state
-      window.location.href = "/";
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to sign in";
@@ -136,6 +131,124 @@ export default function LoginPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleNewPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setIsLoading(true);
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const result = await confirmSignIn({ challengeResponse: newPassword });
+
+      if (result.nextStep?.signInStep === "DONE") {
+        await validateAdminAndRedirect();
+      } else {
+        setError(
+          `Additional step required: ${result.nextStep?.signInStep}. Please contact your administrator.`
+        );
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to set new password";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
+
+    if (!email) {
+      setError("Please enter your email address");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      const output = await resetPassword({ username: email });
+      setResetPasswordOutput(output);
+
+      if (output.nextStep.resetPasswordStep === "CONFIRM_RESET_PASSWORD_WITH_CODE") {
+        setAuthStep("CONFIRM_RESET_PASSWORD");
+        const destination = output.nextStep.codeDeliveryDetails?.destination;
+        setSuccess(`A reset code has been sent to ${destination}`);
+      } else if (output.nextStep.resetPasswordStep === "DONE") {
+        setSuccess("Password reset complete. Please sign in.");
+        setAuthStep("SIGN_IN");
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to initiate password reset";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleConfirmResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    setIsLoading(true);
+
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      setIsLoading(false);
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      setError("Password must be at least 8 characters");
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      await confirmResetPassword({
+        username: email,
+        confirmationCode: resetCode,
+        newPassword: newPassword,
+      });
+
+      setSuccess("Password reset successful! Please sign in with your new password.");
+      setAuthStep("SIGN_IN");
+      setPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      setResetCode("");
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to reset password";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const goBackToSignIn = () => {
+    setAuthStep("SIGN_IN");
+    setError("");
+    setSuccess("");
+    setNewPassword("");
+    setConfirmPassword("");
+    setResetCode("");
   };
 
   if (isCheckingAuth) {
@@ -146,6 +259,259 @@ export default function LoginPage() {
     );
   }
 
+  // New Password Required Step
+  if (authStep === "NEW_PASSWORD_REQUIRED") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <KeyRound className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Set New Password</CardTitle>
+            <CardDescription>
+              You need to set a new password to continue
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleNewPassword} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="newPassword">New Password</Label>
+                <Input
+                  id="newPassword"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  minLength={8}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 8 characters with uppercase, lowercase, numbers, and symbols
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Setting password...
+                  </>
+                ) : (
+                  "Set Password"
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={goBackToSignIn}
+                disabled={isLoading}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Forgot Password Step
+  if (authStep === "FORGOT_PASSWORD") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Reset Password</CardTitle>
+            <CardDescription>
+              Enter your email to receive a password reset code
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleForgotPassword} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+                  {success}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="resetEmail">Email</Label>
+                <Input
+                  id="resetEmail"
+                  type="email"
+                  placeholder="admin@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Sending code...
+                  </>
+                ) : (
+                  "Send Reset Code"
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={goBackToSignIn}
+                disabled={isLoading}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Confirm Reset Password Step
+  if (authStep === "CONFIRM_RESET_PASSWORD") {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex justify-center mb-4">
+              <div className="p-3 bg-primary/10 rounded-full">
+                <KeyRound className="h-8 w-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Enter Reset Code</CardTitle>
+            <CardDescription>
+              Enter the code sent to your email and choose a new password
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleConfirmResetPassword} className="space-y-4">
+              {error && (
+                <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
+                  {error}
+                </div>
+              )}
+              {success && (
+                <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+                  {success}
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="resetCode">Reset Code</Label>
+                <Input
+                  id="resetCode"
+                  type="text"
+                  placeholder="Enter the code from your email"
+                  value={resetCode}
+                  onChange={(e) => setResetCode(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="newPasswordReset">New Password</Label>
+                <Input
+                  id="newPasswordReset"
+                  type="password"
+                  placeholder="Enter new password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                  minLength={8}
+                />
+                <p className="text-xs text-muted-foreground">
+                  Must be at least 8 characters with uppercase, lowercase, numbers, and symbols
+                </p>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="confirmPasswordReset">Confirm Password</Label>
+                <Input
+                  id="confirmPasswordReset"
+                  type="password"
+                  placeholder="Confirm new password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Resetting password...
+                  </>
+                ) : (
+                  "Reset Password"
+                )}
+              </Button>
+
+              <Button
+                type="button"
+                variant="ghost"
+                className="w-full"
+                onClick={goBackToSignIn}
+                disabled={isLoading}
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Sign In
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Default Sign In Step
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50">
       <Card className="w-full max-w-md">
@@ -161,10 +527,15 @@ export default function LoginPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSignIn} className="space-y-4">
             {error && (
               <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-200 rounded-md">
                 {error}
+              </div>
+            )}
+            {success && (
+              <div className="p-3 text-sm text-green-600 bg-green-50 border border-green-200 rounded-md">
+                {success}
               </div>
             )}
 
@@ -203,6 +574,20 @@ export default function LoginPage() {
               ) : (
                 "Sign In"
               )}
+            </Button>
+
+            <Button
+              type="button"
+              variant="link"
+              className="w-full text-sm"
+              onClick={() => {
+                setError("");
+                setSuccess("");
+                setAuthStep("FORGOT_PASSWORD");
+              }}
+              disabled={isLoading}
+            >
+              Forgot your password?
             </Button>
           </form>
         </CardContent>
