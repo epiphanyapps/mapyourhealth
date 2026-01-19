@@ -38,8 +38,6 @@ interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
  * - Search bar for looking up different zip codes
  * - Category cards showing status for water, air, health, and disaster
  */
-const DEFAULT_ZIP_CODE = "90210"
-
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
   const { navigation, route } = props
   const { theme } = useAppTheme()
@@ -51,11 +49,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Determine the default zip code:
   // 1. Route param takes priority (for navigation from other screens)
   // 2. For authenticated users, use their primary subscription
-  // 3. For guests, default to 90210
+  // 3. For guests, show empty state to prompt zip code lookup
   const getDefaultZipCode = () => {
     if (route.params?.zipCode) return route.params.zipCode
     if (isAuthenticated && primarySubscription) return primarySubscription.zipCode
-    return DEFAULT_ZIP_CODE
+    return ""
   }
 
   // State for current zip code
@@ -292,6 +290,53 @@ mapyourhealth://zip/${zipData.zipCode}`
   const alertStats = zipData ? getAlertStats(zipData, statDefinitions) : []
   // Show the first danger stat, or first warning if no danger
   const priorityAlert = alertStats.find((a) => a.stat.status === "danger") ?? alertStats[0]
+
+  const $emptyStateContainer: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+  }
+
+  const $emptyStateTitle: TextStyle = {
+    fontSize: 24,
+    fontWeight: "700",
+    color: theme.colors.text,
+    textAlign: "center",
+    marginTop: 16,
+  }
+
+  const $emptyStateSubtitle: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginTop: 8,
+  }
+
+  // Empty state for guests - prompt to look up a zip code
+  if (!currentZipCode) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <View style={$searchBarContainer}>
+          <SearchBar
+            value={searchText}
+            onChangeText={handleSearch}
+            onSettingsPress={() => {
+              navigation.navigate("Login")
+            }}
+          />
+        </View>
+        <View style={$emptyStateContainer}>
+          <MaterialCommunityIcons name="map-search-outline" size={64} color={theme.colors.textDim} />
+          <Text style={$emptyStateTitle}>Look up a zip code</Text>
+          <Text style={$emptyStateSubtitle}>
+            Enter a 5-digit zip code above to view safety data for that area
+          </Text>
+        </View>
+      </Screen>
+    )
+  }
 
   // Loading state
   if (isLoading) {

@@ -56,6 +56,8 @@ export function SearchBar(props: SearchBarProps) {
     alignItems: "center",
     backgroundColor: theme.colors.palette.neutral200,
     borderRadius: 12,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 10,
     marginHorizontal: 16,
