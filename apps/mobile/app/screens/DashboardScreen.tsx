@@ -1,5 +1,5 @@
 import { FC, useState, useCallback } from "react"
-import { View, ViewStyle, Pressable, TextStyle, Alert } from "react-native"
+import { View, ViewStyle, Pressable, TextStyle, Alert, ActivityIndicator } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { LocationHeader } from "@/components/LocationHeader"
@@ -12,7 +12,8 @@ import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
 import { useAuth } from "@/context/AuthContext"
 import { usePendingAction } from "@/context/PendingActionContext"
-import { getZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/data/helpers"
+import { useStatDefinitions } from "@/context/StatDefinitionsContext"
+import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import { createZipCodeSubscription } from "@/services/amplify/data"
 import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -32,19 +33,20 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { theme } = useAppTheme()
   const { isAuthenticated } = useAuth()
   const { setPendingAction } = usePendingAction()
+  const { statDefinitions } = useStatDefinitions()
 
   // State for current zip code - defaults to 90210 or passed from params
   const [currentZipCode, setCurrentZipCode] = useState(route.params?.zipCode ?? "90210")
   const [searchText, setSearchText] = useState("")
   const [isFollowing, setIsFollowing] = useState(false)
 
-  // Load data for current zip code
-  const zipData = getZipCodeData(currentZipCode)
+  // Fetch data for current zip code from Amplify (with mock fallback)
+  const { zipData, isLoading, error, isMockData, refresh } = useZipCodeData(currentZipCode)
 
   // Get the worst status for each category
   const getStatusForCategory = (category: StatCategory) => {
     if (!zipData) return "safe" as const
-    return getWorstStatusForCategory(zipData, category)
+    return getWorstStatusForCategory(zipData, category, statDefinitions)
   }
 
   // All four categories to display
@@ -61,14 +63,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     // Simple 5-digit zip code validation
     if (/^\d{5}$/.test(text.trim())) {
       const newZipCode = text.trim()
-      // Check if we have data for this zip code
-      const newZipData = getZipCodeData(newZipCode)
-      if (newZipData) {
-        setCurrentZipCode(newZipCode)
-        setSearchText("")
-      } else {
-        Alert.alert("Zip Code Not Found", `No safety data available for zip code ${newZipCode}.`)
-      }
+      setCurrentZipCode(newZipCode)
+      setSearchText("")
     }
   }, [])
 
@@ -138,17 +134,161 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     marginBottom: 16,
   }
 
+  const $loadingContainer: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  }
+
+  const $errorContainer: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+  }
+
+  const $errorText: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginBottom: 16,
+  }
+
+  const $retryButton: ViewStyle = {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.tint,
+    borderRadius: 8,
+  }
+
+  const $retryButtonText: TextStyle = {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  }
+
+  const $noDataText: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginTop: 40,
+  }
+
+  const $mockDataBanner: ViewStyle = {
+    backgroundColor: theme.colors.palette.neutral200,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginBottom: 8,
+    borderRadius: 6,
+  }
+
+  const $mockDataText: TextStyle = {
+    fontSize: 12,
+    color: theme.colors.textDim,
+    textAlign: "center",
+  }
+
   // Get alert stats (danger/warning) for the warning banner
-  const alertStats = zipData ? getAlertStats(zipData) : []
+  const alertStats = zipData ? getAlertStats(zipData, statDefinitions) : []
   // Show the first danger stat, or first warning if no danger
   const priorityAlert = alertStats.find((a) => a.stat.status === "danger") ?? alertStats[0]
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <LocationHeader zipCode={currentZipCode} cityName="Loading..." />
+        <View style={$searchBarContainer}>
+          <SearchBar
+            value={searchText}
+            onChangeText={handleSearch}
+            onSettingsPress={() => {
+              if (isAuthenticated) {
+                navigation.navigate("SubscriptionsSettings")
+              } else {
+                navigation.navigate("Login")
+              }
+            }}
+          />
+        </View>
+        <View style={$loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.tint} />
+          <Text style={{ marginTop: 12, color: theme.colors.textDim }}>Loading safety data...</Text>
+        </View>
+      </Screen>
+    )
+  }
+
+  // Error state with retry
+  if (error && !zipData) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <LocationHeader zipCode={currentZipCode} cityName="Error" />
+        <View style={$searchBarContainer}>
+          <SearchBar
+            value={searchText}
+            onChangeText={handleSearch}
+            onSettingsPress={() => {
+              if (isAuthenticated) {
+                navigation.navigate("SubscriptionsSettings")
+              } else {
+                navigation.navigate("Login")
+              }
+            }}
+          />
+        </View>
+        <View style={$errorContainer}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color={theme.colors.textDim}
+          />
+          <Text style={$errorText}>{error}</Text>
+          <Pressable style={$retryButton} onPress={refresh}>
+            <Text style={$retryButtonText}>Retry</Text>
+          </Pressable>
+        </View>
+      </Screen>
+    )
+  }
+
+  // No data state
+  if (!zipData) {
+    return (
+      <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <LocationHeader zipCode={currentZipCode} cityName="No Data" />
+        <View style={$searchBarContainer}>
+          <SearchBar
+            value={searchText}
+            onChangeText={handleSearch}
+            onSettingsPress={() => {
+              if (isAuthenticated) {
+                navigation.navigate("SubscriptionsSettings")
+              } else {
+                navigation.navigate("Login")
+              }
+            }}
+          />
+        </View>
+        <View style={{ paddingHorizontal: 16 }}>
+          <Text style={$noDataText}>No safety data available for zip code {currentZipCode}.</Text>
+          <Text style={[{ marginTop: 8 }, $noDataText]}>
+            Try searching for a different zip code.
+          </Text>
+        </View>
+      </Screen>
+    )
+  }
 
   return (
     <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
       {/* Location Header */}
       <LocationHeader
-        zipCode={zipData?.zipCode ?? "-----"}
-        cityName={zipData ? `${zipData.cityName}, ${zipData.state}` : "Loading..."}
+        zipCode={zipData.zipCode}
+        cityName={zipData.state ? `${zipData.cityName}, ${zipData.state}` : zipData.cityName}
       />
 
       {/* Search Bar */}
@@ -165,6 +305,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
           }}
         />
       </View>
+
+      {/* Mock Data Banner - only shown in development when using mock data */}
+      {isMockData && __DEV__ && (
+        <View style={$mockDataBanner}>
+          <Text style={$mockDataText}>Using local data (offline or no backend data)</Text>
+        </View>
+      )}
 
       {/* Follow Button */}
       <Pressable
@@ -196,8 +343,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
             statDefinition={priorityAlert.definition}
             stat={priorityAlert.stat}
             onViewDetails={() => {
-              // TODO: Navigate to stat detail or category detail screen
-              console.log("View details for:", priorityAlert.definition.name)
+              // Navigate to category detail for this stat
+              navigation.navigate("CategoryDetail", {
+                category: priorityAlert.definition.category,
+                zipCode: currentZipCode,
+              })
             }}
           />
         </View>

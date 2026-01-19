@@ -1,5 +1,6 @@
 import { FC } from "react"
-import { View, ViewStyle, TextStyle, ScrollView } from "react-native"
+import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -7,8 +8,8 @@ import { CategoryIcon, CATEGORY_COLORS } from "@/components/CategoryIcon"
 import { StatItem } from "@/components/StatItem"
 import { Header } from "@/components/Header"
 import { useAppTheme } from "@/theme/context"
-import { StatCategory } from "@/data/types/safety"
-import { getZipCodeData, getStatsForCategory } from "@/data/helpers"
+import { useStatDefinitions } from "@/context/StatDefinitionsContext"
+import { useZipCodeData, getStatsForCategory } from "@/hooks/useZipCodeData"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 
@@ -26,10 +27,13 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { navigation, route } = props
   const { category, zipCode } = route.params
   const { theme } = useAppTheme()
+  const { statDefinitions } = useStatDefinitions()
 
-  // Load data for the passed zip code
-  const zipData = getZipCodeData(zipCode)
-  const stats = zipData ? getStatsForCategory(zipData, category) : []
+  // Fetch data for the passed zip code from Amplify (with mock fallback)
+  const { zipData, isLoading, error, isMockData, refresh } = useZipCodeData(zipCode)
+
+  // Get stats for this category
+  const stats = zipData ? getStatsForCategory(zipData, category, statDefinitions) : []
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
   const categoryColor = CATEGORY_COLORS[category]
@@ -71,6 +75,100 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     marginTop: 40,
   }
 
+  const $loadingContainer: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+  }
+
+  const $errorContainer: ViewStyle = {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingVertical: 40,
+    paddingHorizontal: 24,
+  }
+
+  const $errorText: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.textDim,
+    textAlign: "center",
+    marginTop: 12,
+    marginBottom: 16,
+  }
+
+  const $retryButton: ViewStyle = {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: theme.colors.tint,
+    borderRadius: 8,
+  }
+
+  const $retryButtonText: TextStyle = {
+    color: "#FFFFFF",
+    fontSize: 16,
+    fontWeight: "600",
+  }
+
+  const $mockDataBanner: ViewStyle = {
+    backgroundColor: theme.colors.palette.neutral200,
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: 8,
+    borderRadius: 6,
+  }
+
+  const $mockDataText: TextStyle = {
+    fontSize: 12,
+    color: theme.colors.textDim,
+    textAlign: "center",
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header
+          title={categoryName}
+          leftIcon="back"
+          onLeftPress={() => navigation.goBack()}
+        />
+        <View style={$loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.tint} />
+          <Text style={{ marginTop: 12, color: theme.colors.textDim }}>Loading...</Text>
+        </View>
+      </Screen>
+    )
+  }
+
+  // Error state (only if no fallback data)
+  if (error && !zipData) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header
+          title={categoryName}
+          leftIcon="back"
+          onLeftPress={() => navigation.goBack()}
+        />
+        <View style={$errorContainer}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={48}
+            color={theme.colors.textDim}
+          />
+          <Text style={$errorText}>{error}</Text>
+          <View style={$retryButton}>
+            <Text style={$retryButtonText} onPress={refresh}>
+              Retry
+            </Text>
+          </View>
+        </View>
+      </Screen>
+    )
+  }
+
   return (
     <Screen preset="fixed" safeAreaEdges={["top"]}>
       <Header
@@ -87,6 +185,13 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
           </View>
           <Text style={$categoryName}>{categoryName}</Text>
         </View>
+
+        {/* Mock Data Banner - only shown in development when using mock data */}
+        {isMockData && __DEV__ && (
+          <View style={$mockDataBanner}>
+            <Text style={$mockDataText}>Using local data</Text>
+          </View>
+        )}
 
         {/* Stats List */}
         <View style={$statsContainer}>
