@@ -331,3 +331,22 @@ Branch: ralph/safety-dashboard-mvp
   - Import ZipCodeSelection type from ZipCodeSearch component
 ---
 
+## 2026-01-19 - US-033: Create SubscriptionCard component
+- Created SubscriptionCard component for displaying/managing subscriptions
+- Files created:
+  - apps/mobile/app/components/SubscriptionCard.tsx
+- Features implemented:
+  - Displays zip code prominently (large, bold text)
+  - Shows city name and state below zip code
+  - Location marker icon on left
+  - Delete button with trash icon
+  - Alert.alert confirmation dialog before deletion
+  - isDeleting prop for loading state during deletion
+  - Accessible with proper labels and hints
+- **Learnings for future iterations:**
+  - Use Alert.alert for confirmation dialogs with destructive actions
+  - Style "destructive" on alert button shows it in red on iOS
+  - Export SubscriptionCardProps interface for type reuse
+  - Use theme.colors.error for delete/destructive actions
+---
+

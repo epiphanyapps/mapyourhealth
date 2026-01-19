@@ -545,7 +545,7 @@
         "yarn type-check passes"
       ],
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-023 deleteSubscription function"
     },
     {
