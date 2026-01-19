@@ -1,5 +1,5 @@
-import { FC } from "react"
-import { View, ViewStyle, Pressable, TextStyle } from "react-native"
+import { FC, useState, useCallback } from "react"
+import { View, ViewStyle, Pressable, TextStyle, Alert } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { LocationHeader } from "@/components/LocationHeader"
@@ -10,7 +10,10 @@ import { WarningBanner } from "@/components/WarningBanner"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
+import { useAuth } from "@/context/AuthContext"
+import { usePendingAction } from "@/context/PendingActionContext"
 import { getZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/data/helpers"
+import { createZipCodeSubscription } from "@/services/amplify/data"
 import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 
@@ -25,11 +28,18 @@ interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
  * - Category cards showing status for water, air, health, and disaster
  */
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
-  const { navigation } = props
+  const { navigation, route } = props
   const { theme } = useAppTheme()
+  const { isAuthenticated } = useAuth()
+  const { setPendingAction } = usePendingAction()
 
-  // Load mock data for hardcoded zip code 90210
-  const zipData = getZipCodeData("90210")
+  // State for current zip code - defaults to 90210 or passed from params
+  const [currentZipCode, setCurrentZipCode] = useState(route.params?.zipCode ?? "90210")
+  const [searchText, setSearchText] = useState("")
+  const [isFollowing, setIsFollowing] = useState(false)
+
+  // Load data for current zip code
+  const zipData = getZipCodeData(currentZipCode)
 
   // Get the worst status for each category
   const getStatusForCategory = (category: StatCategory) => {
@@ -44,6 +54,72 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     StatCategory.health,
     StatCategory.disaster,
   ]
+
+  // Handle search - validate and update current zip code
+  const handleSearch = useCallback((text: string) => {
+    setSearchText(text)
+    // Simple 5-digit zip code validation
+    if (/^\d{5}$/.test(text.trim())) {
+      const newZipCode = text.trim()
+      // Check if we have data for this zip code
+      const newZipData = getZipCodeData(newZipCode)
+      if (newZipData) {
+        setCurrentZipCode(newZipCode)
+        setSearchText("")
+      } else {
+        Alert.alert("Zip Code Not Found", `No safety data available for zip code ${newZipCode}.`)
+      }
+    }
+  }, [])
+
+  // Handle Follow button press - auth gated
+  const handleFollow = useCallback(async () => {
+    if (!zipData) return
+
+    if (isAuthenticated) {
+      // User is authenticated - create subscription directly
+      setIsFollowing(true)
+      try {
+        await createZipCodeSubscription(
+          zipData.zipCode,
+          zipData.cityName,
+          zipData.state,
+        )
+        Alert.alert("Success", `You are now following ${zipData.zipCode}`)
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Failed to follow zip code"
+        Alert.alert("Error", message)
+      } finally {
+        setIsFollowing(false)
+      }
+    } else {
+      // Guest user - set pending action and navigate to login
+      setPendingAction({
+        type: "follow_zip_code",
+        payload: {
+          zipCode: zipData.zipCode,
+          cityName: zipData.cityName,
+          state: zipData.state,
+        },
+      })
+      navigation.navigate("Login")
+    }
+  }, [isAuthenticated, zipData, setPendingAction, navigation])
+
+  // Handle Report Hazard press - auth gated
+  const handleReportHazard = useCallback(() => {
+    if (isAuthenticated) {
+      navigation.navigate("Report")
+    } else {
+      setPendingAction({
+        type: "report_hazard",
+        payload: {
+          zipCode: currentZipCode,
+        },
+      })
+      navigation.navigate("Login")
+    }
+  }, [isAuthenticated, currentZipCode, setPendingAction, navigation])
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -78,16 +154,40 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       {/* Search Bar */}
       <View style={$searchBarContainer}>
         <SearchBar
-          onChangeText={(text) => {
-            // TODO: Implement search functionality
-            console.log("Search:", text)
-          }}
+          value={searchText}
+          onChangeText={handleSearch}
           onSettingsPress={() => {
-            // TODO: Navigate to settings
-            console.log("Settings pressed")
+            if (isAuthenticated) {
+              navigation.navigate("SubscriptionsSettings")
+            } else {
+              navigation.navigate("Login")
+            }
           }}
         />
       </View>
+
+      {/* Follow Button */}
+      <Pressable
+        onPress={handleFollow}
+        disabled={isFollowing}
+        style={({ pressed }) => [
+          $followButton,
+          { borderColor: theme.colors.tint },
+          pressed && { opacity: 0.8 },
+          isFollowing && { opacity: 0.6 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`Follow ${currentZipCode}`}
+      >
+        <MaterialCommunityIcons
+          name="heart-plus-outline"
+          size={20}
+          color={theme.colors.tint}
+        />
+        <Text style={[$followButtonText, { color: theme.colors.tint }]}>
+          {isFollowing ? "Following..." : "Follow This Zip Code"}
+        </Text>
+      </Pressable>
 
       {/* Warning Banner - shows for danger/warning stats */}
       {priorityAlert && (
@@ -112,7 +212,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
             categoryName={CATEGORY_DISPLAY_NAMES[category]}
             status={getStatusForCategory(category)}
             onPress={() => {
-              navigation.navigate("CategoryDetail", { category })
+              navigation.navigate("CategoryDetail", { category, zipCode: currentZipCode })
             }}
           />
         ))}
@@ -123,7 +223,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
       {/* Report Hazard Button */}
       <Pressable
-        onPress={() => navigation.navigate("Report")}
+        onPress={handleReportHazard}
         style={({ pressed }) => [
           $reportButton,
           { backgroundColor: theme.colors.tint },
@@ -137,6 +237,23 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       </Pressable>
     </Screen>
   )
+}
+
+const $followButton: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  marginHorizontal: 16,
+  marginBottom: 16,
+  paddingVertical: 12,
+  borderRadius: 12,
+  borderWidth: 2,
+  gap: 8,
+}
+
+const $followButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
 }
 
 const $reportButton: ViewStyle = {

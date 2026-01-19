@@ -25,8 +25,8 @@ export type AppStackParamList = {
   ForgotPassword: undefined
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
-  Dashboard: undefined
-  CategoryDetail: { category: StatCategory }
+  Dashboard: { zipCode?: string } | undefined
+  CategoryDetail: { category: StatCategory; zipCode: string }
   Report: undefined
   SubscriptionsSettings: undefined
   // 🔥 Your screens go here

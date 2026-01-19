@@ -61,30 +61,26 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Dashboard" : "Login"}
+      initialRouteName="Dashboard"
     >
-      {isAuthenticated ? (
-        <>
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      {/* Screens available to all users (guests and authenticated) */}
+      <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
 
+      {/* Auth screens - available to guests for login/signup flow */}
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+
+      {/* Authenticated-only screens */}
+      {isAuthenticated && (
+        <>
           <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
-
-          <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
-
           <Stack.Screen name="Report" component={ReportScreen} />
-
           <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
-
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
-
           <Stack.Screen name="Demo" component={DemoNavigator} />
-        </>
-      ) : (
-        <>
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-          <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
         </>
       )}
 

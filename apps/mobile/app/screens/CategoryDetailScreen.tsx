@@ -24,11 +24,11 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   props,
 ) {
   const { navigation, route } = props
-  const { category } = route.params
+  const { category, zipCode } = route.params
   const { theme } = useAppTheme()
 
-  // Load mock data for hardcoded zip code 90210
-  const zipData = getZipCodeData("90210")
+  // Load data for the passed zip code
+  const zipData = getZipCodeData(zipCode)
   const stats = zipData ? getStatsForCategory(zipData, category) : []
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
