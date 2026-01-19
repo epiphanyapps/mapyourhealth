@@ -106,3 +106,7 @@ coverage
 app-dependency-graph.svg
 app-dependency-graph.png
 apps/mobile/.expo
+
+# Playwright test artifacts
+playwright-report/
+test-results/
