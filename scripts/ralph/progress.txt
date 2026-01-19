@@ -623,3 +623,34 @@ Branch: ralph/safety-dashboard-mvp
   - Variables used in useCallback dependencies must be declared before the callback
   - Follow and Share buttons work well in a horizontal flex row with gap spacing
 ---
+
+## 2026-01-19 - US-053: Historical trends for safety stats
+- Added history field to ZipCodeStat model (StatHistoryEntry custom type with value/status/recordedAt)
+- Created TrendChart component using react-native-chart-kit with bezier line chart
+- Implemented calculateTrendDirection function comparing recent history to current value
+- Added trend direction indicators: improving (green down arrow), worsening (red up arrow), stable (gray right arrow)
+- Added "Trends" button on StatItem component (only shows when history data exists)
+- Created StatTrendScreen with full chart, trend explanation, and historical readings list
+- Updated admin portal to preserve history when updating stats (adds previous value to history array)
+- Added StatHistoryEntry and TrendDirection types to safety.ts
+- Files created:
+  - apps/mobile/app/components/TrendChart.tsx
+  - apps/mobile/app/screens/StatTrendScreen.tsx
+- Files modified:
+  - packages/backend/amplify/data/resource.ts (added StatHistoryEntry custom type, history field)
+  - apps/mobile/app/data/types/safety.ts (added StatHistoryEntry, TrendDirection)
+  - apps/mobile/app/components/StatItem.tsx (added Trends button)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (navigation to StatTrendScreen)
+  - apps/mobile/app/navigators/navigationTypes.ts (added StatTrend route params)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added StatTrendScreen)
+  - apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx (history preservation)
+  - apps/mobile/package.json (added react-native-chart-kit, react-native-svg)
+- **Learnings for future iterations:**
+  - react-native-chart-kit requires react-native-svg as peer dependency
+  - Use Expo's recommended SVG version (15.12.1 for SDK 54)
+  - StatHistoryEntry uses a.customType() in Amplify Gen2 for nested array items
+  - History field uses a.ref("StatHistoryEntry").array() to reference custom type
+  - calculateTrendDirection uses 5% threshold to avoid noise in trend detection
+  - Admin portal preserves max 12 history entries (for 12 months of data)
+  - Trend calculation: higher values increasing = worsening (if higherIsBad=true)
+---
