@@ -41,6 +41,12 @@ import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Pencil, Trash2, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 
+interface StatHistoryEntry {
+  value: number;
+  status: "danger" | "warning" | "safe";
+  recordedAt: string;
+}
+
 interface ZipCodeStat {
   id: string;
   zipCode: string;
@@ -49,6 +55,7 @@ interface ZipCodeStat {
   status: "danger" | "warning" | "safe" | null;
   lastUpdated: string;
   source?: string | null;
+  history?: StatHistoryEntry[] | null;
 }
 
 interface StatDefinition {
@@ -173,23 +180,49 @@ export default function ZipCodeDetailPage({
       const client = generateClient<Schema>();
       const value = parseFloat(formData.value);
       const status = calculateStatus(value, def);
-
-      const statData = {
-        zipCode,
-        statId: formData.statId,
-        value,
-        status,
-        lastUpdated: new Date().toISOString(),
-        source: formData.source || null,
-      };
+      const now = new Date().toISOString();
 
       if (editingStat) {
+        // When updating, preserve history by adding the previous value to history
+        const existingHistory = editingStat.history || [];
+
+        // Add the previous value to history if it differs from new value
+        const newHistoryEntry: StatHistoryEntry = {
+          value: editingStat.value,
+          status: (editingStat.status || "safe") as "danger" | "warning" | "safe",
+          recordedAt: editingStat.lastUpdated,
+        };
+
+        // Keep last 12 entries plus the new one (for 12 months of history)
+        const updatedHistory = [...existingHistory, newHistoryEntry].slice(-12);
+
+        const statData = {
+          zipCode,
+          statId: formData.statId,
+          value,
+          status,
+          lastUpdated: now,
+          source: formData.source || null,
+          history: updatedHistory,
+        };
+
         await client.models.ZipCodeStat.update({
           id: editingStat.id,
           ...statData,
         });
-        toast.success("Stat updated");
+        toast.success("Stat updated (previous value preserved in history)");
       } else {
+        // For new stats, start with empty history
+        const statData = {
+          zipCode,
+          statId: formData.statId,
+          value,
+          status,
+          lastUpdated: now,
+          source: formData.source || null,
+          history: [],
+        };
+
         await client.models.ZipCodeStat.create(statData);
         toast.success("Stat created");
       }

@@ -709,6 +709,237 @@
       "priority": 42,
       "passes": true,
       "notes": "Depends on US-041. Final admin portal deployment. App ID: d1810hifpx5957, URL: https://main.d1810hifpx5957.amplifyapp.com"
+    },
+    {
+      "id": "US-043",
+      "githubIssue": null,
+      "title": "Guest Browsing for Mobile App",
+      "description": "As a guest user, I want to browse zip code safety data without logging in so I can explore the app before committing to an account.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/context/PendingActionContext.tsx for deferred actions",
+        "PendingActionContext stores pending actions (follow_zip_code, report_hazard) with payload",
+        "PendingActionContext provides setPendingAction, clearPendingAction, executePendingAction",
+        "Restructure AppNavigator to make Dashboard and CategoryDetail available to all users",
+        "Initial route is always Dashboard (not Login)",
+        "DashboardScreen has working search functionality that validates 5-digit zip codes",
+        "DashboardScreen has Follow button that creates subscription (auth) or sets pending action (guest)",
+        "DashboardScreen Report Hazard button navigates to Report (auth) or sets pending action (guest)",
+        "CategoryDetailScreen accepts zipCode as navigation param",
+        "LoginScreen executes pending action after successful login",
+        "LoginScreen has back button to return to Dashboard",
+        "LoginScreen shows hint when redirected from guest flow with pending action",
+        "SignupScreen has back button and pending action hint",
+        "ConfirmSignupScreen executes pending action after successful signup confirmation",
+        "App.tsx wraps with PendingActionProvider in provider hierarchy",
+        "Update navigationTypes.ts: Dashboard accepts optional zipCode, CategoryDetail requires zipCode",
+        "yarn type-check passes"
+      ],
+      "priority": 43,
+      "passes": true,
+      "notes": "Allows unauthenticated users to browse safety data. Auth only required for Follow and Report actions. Pending actions execute automatically after login/signup."
+    },
+    {
+      "id": "US-044",
+      "githubIssue": null,
+      "title": "Create seed data script for admin portal",
+      "description": "As a developer, I need seed data so I can test the app with realistic safety statistics.",
+      "acceptanceCriteria": [
+        "Create apps/admin/scripts/seed-data.ts with seed functions",
+        "Seed 11 StatDefinitions matching mock data (water: 3, air: 3, health: 3, disaster: 2)",
+        "Seed ZipCodeStats for 10 zip codes with varied statuses (danger/warning/safe mix)",
+        "Include major cities: 90210 (Beverly Hills), 10001 (NYC), 33139 (Miami), 60601 (Chicago), 98101 (Seattle), 30301 (Atlanta), 75201 (Dallas), 85001 (Phoenix), 80202 (Denver), 02101 (Boston)",
+        "Script can be run via: npx ts-node apps/admin/scripts/seed-data.ts",
+        "Add seed script to package.json: yarn seed:data",
+        "yarn type-check passes"
+      ],
+      "priority": 44,
+      "passes": true,
+      "notes": "Creates initial dataset for testing. Run against sandbox or production backend."
+    },
+    {
+      "id": "US-045",
+      "githubIssue": null,
+      "title": "Switch mobile app from mock data to Amplify backend",
+      "description": "As a user, I want to see real safety data so I get accurate information for my area.",
+      "acceptanceCriteria": [
+        "Update DashboardScreen to fetch ZipCodeStats from Amplify via data service",
+        "Update CategoryDetailScreen to fetch stats from Amplify",
+        "Create useZipCodeData hook for data fetching with loading/error states",
+        "Fetch StatDefinitions on app startup and cache in context",
+        "Fall back to showing 'No data available' if zip code has no stats",
+        "Keep mock data as fallback for development/offline",
+        "yarn type-check passes"
+      ],
+      "priority": 45,
+      "passes": true,
+      "notes": "Depends on US-044 for seed data. Major change - screens switch from sync mock data to async API calls."
+    },
+    {
+      "id": "US-046",
+      "githubIssue": null,
+      "title": "Bundle zip code metadata for city/state lookup",
+      "description": "As a user, I want to see city names for any zip code I search so I know where the data is from.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/data/zip-codes-metadata.json with US zip codes",
+        "Include fields: zipCode, city, state, latitude, longitude",
+        "Create getZipCodeMetadata(zipCode) helper function",
+        "Update DashboardScreen to use metadata for city/state display",
+        "Handle unknown zip codes gracefully (show zip only, no city)",
+        "File size should be under 500KB (compressed)",
+        "yarn type-check passes"
+      ],
+      "priority": 46,
+      "passes": true,
+      "notes": "Bundled data provides instant lookup without API calls. Source: US Census or similar public dataset."
+    },
+    {
+      "id": "US-047",
+      "githubIssue": null,
+      "title": "Show primary subscribed zip code on Dashboard",
+      "description": "As an authenticated user, I want to see my primary zip code when I open the app so I immediately see relevant data.",
+      "acceptanceCriteria": [
+        "Fetch user's subscriptions on app startup when authenticated",
+        "Store subscriptions in context (SubscriptionsContext or extend AuthContext)",
+        "DashboardScreen shows first subscription's zip code by default for authenticated users",
+        "Guest users still see default zip code (90210) or last searched",
+        "Add 'primary' flag to subscription or use first by createdAt",
+        "yarn type-check passes"
+      ],
+      "priority": 47,
+      "passes": true,
+      "notes": "Depends on US-045. Improves UX by showing relevant data immediately on app open."
+    },
+    {
+      "id": "US-048",
+      "githubIssue": null,
+      "title": "Create ProfileScreen with account management",
+      "description": "As a user, I want to manage my account settings and log out from a profile screen.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/ProfileScreen.tsx",
+        "Display user email at top",
+        "Manage Subscriptions link → navigates to SubscriptionsSettingsScreen",
+        "Notification Preferences section (email toggle for now)",
+        "Logout button with confirmation",
+        "Delete Account link (shows info about contacting support for now)",
+        "Add ProfileScreen to navigator, accessible from Dashboard header or settings icon",
+        "yarn type-check passes"
+      ],
+      "priority": 48,
+      "passes": true,
+      "notes": "Depends on US-043 (guest browsing). Profile only accessible when authenticated."
+    },
+    {
+      "id": "US-049",
+      "githubIssue": null,
+      "title": "Add loading and error states to data screens",
+      "description": "As a user, I want to see loading indicators and error messages so I know when data is being fetched or if something went wrong.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/components/LoadingState.tsx with spinner and message",
+        "Create apps/mobile/app/components/ErrorState.tsx with error message and retry button",
+        "Create apps/mobile/app/components/EmptyState.tsx for no data scenarios",
+        "Update DashboardScreen to show LoadingState while fetching",
+        "Update DashboardScreen to show ErrorState on API failure with retry",
+        "Update DashboardScreen to show EmptyState when zip code has no data",
+        "Update CategoryDetailScreen with same loading/error/empty patterns",
+        "yarn type-check passes"
+      ],
+      "priority": 49,
+      "passes": true,
+      "notes": "Depends on US-045. Essential for good UX with async data fetching."
+    },
+    {
+      "id": "US-050",
+      "githubIssue": null,
+      "title": "Cache zip code data for offline viewing",
+      "description": "As a user, I want to see previously loaded data when offline so I can still access safety information.",
+      "acceptanceCriteria": [
+        "Use MMKV to cache ZipCodeStats for viewed zip codes",
+        "Cache key format: zipcode_stats_{zipCode}",
+        "Store lastUpdated timestamp with cached data",
+        "Show cached data when offline with 'Offline - Last updated X ago' banner",
+        "Create useNetworkStatus hook to detect online/offline state",
+        "Invalidate cache after 24 hours or on manual refresh",
+        "Add pull-to-refresh on DashboardScreen to force data refresh",
+        "yarn type-check passes"
+      ],
+      "priority": 50,
+      "passes": true,
+      "notes": "Depends on US-045, US-049. MMKV already in project for storage."
+    },
+    {
+      "id": "US-051",
+      "githubIssue": null,
+      "title": "Email notifications for safety alerts",
+      "description": "As a user, I want to receive email notifications when safety conditions change in my subscribed zip codes.",
+      "acceptanceCriteria": [
+        "Create packages/backend/amplify/functions/send-email-alert/handler.ts",
+        "Use Amazon SES to send emails",
+        "Email template includes: zip code, stat name, old status, new status, current value",
+        "Create Lambda trigger on ZipCodeStat update (or manual admin trigger)",
+        "Query subscribers for affected zip code",
+        "Only send if status changed to danger or warning",
+        "Add emailNotifications boolean field to ZipCodeSubscription model",
+        "yarn type-check passes"
+      ],
+      "priority": 51,
+      "passes": true,
+      "notes": "Future feature. Requires SES setup in AWS. Push notifications can be added later."
+    },
+    {
+      "id": "US-052",
+      "githubIssue": null,
+      "title": "Share safety data feature",
+      "description": "As a user, I want to share safety information with friends and family so they can be informed about conditions in their area.",
+      "acceptanceCriteria": [
+        "Add Share button to DashboardScreen header",
+        "Add Share button to CategoryDetailScreen",
+        "Use React Native Share API",
+        "Share text format: 'Safety Alert for [Zip Code] ([City]): [Status summary]. Check MapYourHealth for details.'",
+        "Include category breakdown in share text if sharing from category detail",
+        "Deep link URL for future: mapyourhealth://zip/{zipCode}",
+        "yarn type-check passes"
+      ],
+      "priority": 52,
+      "passes": true,
+      "notes": "Social feature. Simple text sharing first, deep links can be added later."
+    },
+    {
+      "id": "US-053",
+      "githubIssue": null,
+      "title": "Historical trends for safety stats",
+      "description": "As a user, I want to see how safety conditions have changed over time so I can understand trends in my area.",
+      "acceptanceCriteria": [
+        "Add history field to ZipCodeStat model: array of {value, status, recordedAt}",
+        "Create apps/mobile/app/components/TrendChart.tsx using react-native-chart-kit or victory-native",
+        "Show last 12 months of data points",
+        "Display trend direction indicator (improving/worsening/stable)",
+        "Add 'View Trends' button on StatItem component",
+        "Create StatTrendScreen or modal to show full chart",
+        "Update admin portal to preserve history when updating stats",
+        "yarn type-check passes"
+      ],
+      "priority": 53,
+      "passes": true,
+      "notes": "Completed. Uses react-native-chart-kit for trend visualization. History stored in ZipCodeStat model."
+    },
+    {
+      "id": "US-054",
+      "githubIssue": null,
+      "title": "Compare zip codes feature",
+      "description": "As a user, I want to compare safety data between two zip codes so I can make informed decisions about where to live or visit.",
+      "acceptanceCriteria": [
+        "Create apps/mobile/app/screens/CompareScreen.tsx",
+        "Two zip code input fields with search",
+        "Side-by-side comparison of all categories",
+        "Show status indicators for each zip code per category",
+        "Highlight which zip code is safer for each category",
+        "Overall safety score comparison",
+        "Add Compare button to Dashboard or navigation",
+        "yarn type-check passes"
+      ],
+      "priority": 54,
+      "passes": true,
+      "notes": "Completed. Compare screen with two zip code inputs, side-by-side category comparison with status indicators, safer zip highlighting, and overall safety score (0-100)."
     }
   ]
 }

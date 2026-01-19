@@ -51,6 +51,18 @@ export interface StatDefinition {
 }
 
 /**
+ * Historical data point for a stat
+ */
+export interface StatHistoryEntry {
+  /** The measured value at this point in time */
+  value: number
+  /** Status at the time of measurement */
+  status: StatStatus
+  /** When this measurement was recorded */
+  recordedAt: string
+}
+
+/**
  * A single stat value for a specific zip code
  */
 export interface ZipCodeStat {
@@ -62,7 +74,14 @@ export interface ZipCodeStat {
   status: StatStatus
   /** Timestamp when this measurement was taken */
   lastUpdated: string
+  /** Historical data points for trend analysis */
+  history?: StatHistoryEntry[]
 }
+
+/**
+ * Trend direction for a stat
+ */
+export type TrendDirection = "improving" | "worsening" | "stable"
 
 /**
  * Complete safety data for a zip code

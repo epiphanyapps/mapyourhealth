@@ -6,7 +6,7 @@ import {
   NavigatorScreenParams,
 } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
-import type { StatCategory } from "@/data/types/safety"
+import type { StatCategory, StatHistoryEntry, StatStatus } from "@/data/types/safety"
 
 // Demo Tab Navigator types
 export type DemoTabParamList = {
@@ -25,10 +25,23 @@ export type AppStackParamList = {
   ForgotPassword: undefined
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
-  Dashboard: undefined
-  CategoryDetail: { category: StatCategory }
+  Dashboard: { zipCode?: string } | undefined
+  CategoryDetail: { category: StatCategory; zipCode: string }
   Report: undefined
   SubscriptionsSettings: undefined
+  Profile: undefined
+  StatTrend: {
+    statName: string
+    statId: string
+    unit: string
+    currentValue: number
+    currentStatus: StatStatus
+    history: StatHistoryEntry[]
+    higherIsBad: boolean
+    lastUpdated: string
+    zipCode: string
+  }
+  Compare: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }

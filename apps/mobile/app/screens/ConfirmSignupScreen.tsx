@@ -14,6 +14,7 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
+import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
@@ -30,6 +31,7 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
   const [resendSuccess, setResendSuccess] = useState(false)
 
   const { refreshAuthState } = useAuth()
+  const { pendingAction, executePendingAction } = usePendingAction()
   const { themed } = useAppTheme()
 
   function validateCode(value: string): boolean {
@@ -68,11 +70,18 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
         await autoSignIn()
         // Refresh auth state to update the navigator
         await refreshAuthState()
-        // Navigate new users to onboarding to select zip codes
-        navigation.reset({
-          index: 0,
-          routes: [{ name: "OnboardingZipCodes" }],
-        })
+        // Execute any pending action (e.g., follow zip code from guest flow)
+        const hadPendingAction = await executePendingAction()
+        if (hadPendingAction) {
+          // Navigate back to Dashboard if we had a pending action
+          navigation.navigate("Dashboard")
+        } else {
+          // Navigate new users to onboarding to select zip codes
+          navigation.reset({
+            index: 0,
+            routes: [{ name: "OnboardingZipCodes" }],
+          })
+        }
       } catch {
         // Auto sign in not enabled, user will need to log in manually
         // Refresh auth state anyway - navigation will show login screen

@@ -10,11 +10,13 @@ import { TextInput, TextStyle, ViewStyle } from "react-native"
 import { signIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
+import { Header } from "@/components/Header"
 import { PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
+import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
@@ -33,6 +35,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
   const [generalError, setGeneralError] = useState("")
 
   const { refreshAuthState } = useAuth()
+  const { pendingAction, executePendingAction } = usePendingAction()
 
   const {
     themed,
@@ -78,7 +81,10 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       if (result.isSignedIn) {
         // Refresh auth state to update the navigator
         await refreshAuthState()
-        // Navigation happens automatically when isAuthenticated becomes true
+        // Execute any pending action (e.g., follow zip code from guest flow)
+        await executePendingAction()
+        // Navigate back to Dashboard
+        navigation.navigate("Dashboard")
       } else if (result.nextStep?.signInStep === "CONFIRM_SIGN_UP") {
         // User hasn't confirmed their email yet
         navigation.navigate("ConfirmSignup", { email })
@@ -116,7 +122,20 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
+      <Header
+        title=""
+        leftIcon="back"
+        onLeftPress={() => navigation.goBack()}
+      />
+
       <Text text="Welcome Back" preset="heading" style={themed($heading)} />
+      {pendingAction && (
+        <Text
+          text="Sign in to complete your action"
+          preset="formHelper"
+          style={themed($pendingActionHint)}
+        />
+      )}
       <Text
         text="Sign in to access your safety alerts and subscriptions"
         preset="subheading"
@@ -200,6 +219,11 @@ const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
 
 const $subheading: ThemedStyle<TextStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
+})
+
+const $pendingActionHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.tint,
+  marginBottom: spacing.xs,
 })
 
 const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

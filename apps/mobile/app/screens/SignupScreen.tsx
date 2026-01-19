@@ -10,10 +10,12 @@ import { TextInput, TextStyle, ViewStyle } from "react-native"
 import { signUp } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
+import { Header } from "@/components/Header"
 import { PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
+import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
@@ -30,6 +32,8 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [generalError, setGeneralError] = useState("")
+
+  const { pendingAction } = usePendingAction()
 
   const {
     themed,
@@ -115,7 +119,20 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
+      <Header
+        title=""
+        leftIcon="back"
+        onLeftPress={() => navigation.goBack()}
+      />
+
       <Text text="Create Account" preset="heading" style={themed($heading)} />
+      {pendingAction && (
+        <Text
+          text="Create an account to complete your action"
+          preset="formHelper"
+          style={themed($pendingActionHint)}
+        />
+      )}
       <Text
         text="Sign up to save your subscriptions and get personalized alerts"
         preset="subheading"
@@ -191,6 +208,11 @@ const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
 
 const $subheading: ThemedStyle<TextStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
+})
+
+const $pendingActionHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.tint,
+  marginBottom: spacing.xs,
 })
 
 const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

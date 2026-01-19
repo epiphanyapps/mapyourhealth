@@ -1,8 +1,11 @@
-import { View, ViewStyle, TextStyle, StyleProp } from "react-native"
-import { Text } from "./Text"
-import { StatusIndicator } from "./StatusIndicator"
+import { View, ViewStyle, TextStyle, StyleProp, Pressable } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
+
+import type { StatStatus, StatHistoryEntry } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
-import type { StatStatus } from "@/data/types/safety"
+
+import { StatusIndicator } from "./StatusIndicator"
+import { Text } from "./Text"
 
 export interface StatItemProps {
   /**
@@ -25,6 +28,14 @@ export interface StatItemProps {
    * Optional style override for the container
    */
   style?: StyleProp<ViewStyle>
+  /**
+   * Historical data for trend display
+   */
+  history?: StatHistoryEntry[]
+  /**
+   * Callback when View Trends button is pressed
+   */
+  onViewTrends?: () => void
 }
 
 /**
@@ -36,11 +47,15 @@ export interface StatItemProps {
  *   value={2.5}
  *   unit="ppb"
  *   status="safe"
+ *   history={[...]}
+ *   onViewTrends={() => navigation.navigate('StatTrend', { ... })}
  * />
  */
 export function StatItem(props: StatItemProps) {
-  const { name, value, unit, status, style } = props
+  const { name, value, unit, status, style, history, onViewTrends } = props
   const { theme } = useAppTheme()
+
+  const hasHistory = history && history.length > 0
 
   const $container: ViewStyle = {
     flexDirection: "row",
@@ -77,6 +92,22 @@ export function StatItem(props: StatItemProps) {
     marginLeft: 4,
   }
 
+  const $trendsButton: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    marginRight: 8,
+    borderRadius: 6,
+    backgroundColor: theme.colors.palette.neutral100,
+  }
+
+  const $trendsButtonText: TextStyle = {
+    fontSize: 12,
+    color: theme.colors.tint,
+    marginLeft: 4,
+  }
+
   return (
     <View style={[$container, style]}>
       <View style={$nameContainer}>
@@ -86,6 +117,17 @@ export function StatItem(props: StatItemProps) {
         <Text style={$valueText}>{value}</Text>
         <Text style={$unitText}>{unit}</Text>
       </View>
+      {hasHistory && onViewTrends && (
+        <Pressable
+          style={$trendsButton}
+          onPress={onViewTrends}
+          accessibilityLabel={`View trends for ${name}`}
+          accessibilityRole="button"
+        >
+          <MaterialCommunityIcons name="chart-line" size={14} color={theme.colors.tint} />
+          <Text style={$trendsButtonText}>Trends</Text>
+        </Pressable>
+      )}
       <StatusIndicator status={status} size="medium" />
     </View>
   )

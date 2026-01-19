@@ -404,3 +404,275 @@ Branch: ralph/safety-dashboard-mvp
   - Admin portal requires user to be in 'admin' Cognito group
 ---
 
+
+## 2026-01-19 - US-044: Create seed data script for admin portal
+- Created apps/admin/scripts/seed-data.ts with full seed functionality
+- Seeds 11 StatDefinitions matching the mobile app mock data structure
+- Seeds ZipCodeStats for 10 major US cities:
+  - 90210 (Beverly Hills, CA) - Generally safe with wildfire warning
+  - 10001 (New York, NY) - Mixed with air quality issues and lead warning
+  - 33139 (Miami Beach, FL) - Safe with flood danger
+  - 60601 (Chicago, IL) - Lead danger from old infrastructure
+  - 98101 (Seattle, WA) - Very safe overall
+  - 30301 (Atlanta, GA) - Urban area with mixed conditions
+  - 75201 (Dallas, TX) - Hot climate with ozone issues
+  - 85001 (Phoenix, AZ) - Extreme heat and air quality danger
+  - 80202 (Denver, CO) - Clean air but wildfire danger
+  - 02101 (Boston, MA) - Old infrastructure with lead warning
+- Added seed:data script to root package.json
+- Script uses tsx to run TypeScript directly
+- Files created:
+  - apps/admin/scripts/seed-data.ts
+- Files modified:
+  - package.json (added seed:data script)
+- **Learnings for future iterations:**
+  - Amplify data client requires authentication for admin operations
+  - Use environment variables (ADMIN_EMAIL, ADMIN_PASSWORD) for credentials
+  - Script checks for existing records and skips duplicates to be idempotent
+  - calculateStatus helper matches mobile mock data logic for consistency
+  - Use tsx (not ts-node) for modern ESM-based TypeScript execution
+---
+
+## 2026-01-19 - US-045: Switch mobile app from mock data to Amplify backend
+- Created StatDefinitionsContext to cache stat definitions from Amplify on app startup
+- Created useZipCodeData hook for async data fetching with loading/error states
+- Updated DashboardScreen to use async data fetching from Amplify with fallback to mock data
+- Updated CategoryDetailScreen to use async data fetching with loading/error/empty states
+- Added StatDefinitionsProvider to App.tsx provider hierarchy
+- Files created:
+  - apps/mobile/app/context/StatDefinitionsContext.tsx
+  - apps/mobile/app/hooks/useZipCodeData.ts
+- Files modified:
+  - apps/mobile/app/App.tsx (added StatDefinitionsProvider)
+  - apps/mobile/app/screens/DashboardScreen.tsx (async data, loading/error states)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (async data, loading/error states)
+- Features implemented:
+  - Loading spinner while fetching data
+  - Error state with retry button when API fails
+  - "No data" state when zip code has no stats in backend
+  - Mock data fallback banner shown in __DEV__ mode when using local data
+  - Stat definitions cached in context for use across screens
+- **Learnings for future iterations:**
+  - Amplify types have nullable fields (category, higherIsBad, status) - use ?? for defaults
+  - Use `import type { X } from "@/services/amplify/data"` to get Amplify model types
+  - StatDefinitionsProvider should wrap ThemeProvider so screens can use both contexts
+  - useZipCodeData hook depends on statDefinitions context - waits for defs before fetching
+  - Keep mock data as fallback: import getMockZipCodeData from @/data/helpers
+  - Helper functions (getWorstStatusForCategory, getStatsForCategory, getAlertStats) now take statDefinitions as param
+---
+
+## 2026-01-19 - US-046: Bundle zip code metadata - BLOCKED
+- **Status: BLOCKED** - Requires external US zip code dataset
+- This story requires downloading a comprehensive US zip codes dataset (e.g., from US Census)
+- The dataset needs to be under 500KB compressed with fields: zipCode, city, state, latitude, longitude
+- Current implementation falls back to mock data for city/state lookup for known zip codes
+- Recommendation: Download zip code data from https://simplemaps.com/data/us-zips or US Census ZCTA data
+- Moving to next story (US-047) which depends on US-045 (now complete)
+---
+
+## 2026-01-19 - US-047: Show primary subscribed zip code on Dashboard
+- Created SubscriptionsContext to manage user's zip code subscriptions
+- Context fetches subscriptions when user is authenticated
+- Primary subscription determined by sorting by createdAt (oldest first)
+- Updated DashboardScreen to use primary subscription's zipCode for authenticated users
+- Guest users still default to 90210 or last searched zip code
+- Route params take priority over primary subscription (for navigating from other screens)
+- Files created:
+  - apps/mobile/app/context/SubscriptionsContext.tsx
+- Files modified:
+  - apps/mobile/app/App.tsx (added SubscriptionsProvider)
+  - apps/mobile/app/screens/DashboardScreen.tsx (use primary subscription)
+- **Learnings for future iterations:**
+  - SubscriptionsProvider should be inside AuthProvider but outside other providers (needs auth context)
+  - Use useEffect to update zip code when primary subscription loads (not on every render)
+  - Context provides addSubscription/removeSubscription methods to keep state in sync
+  - Sort subscriptions by createdAt for consistent "primary" definition
+---
+
+## 2026-01-19 - US-048: Create ProfileScreen with account management
+- Created ProfileScreen for user account management
+- Display user email from Amplify user.signInDetails.loginId or user.username
+- Manage Subscriptions link navigates to SubscriptionsSettingsScreen
+- Email notifications toggle (local state for now, ready for backend integration)
+- Logout button with confirmation Alert
+- Delete Account link showing support contact info
+- Updated DashboardScreen settings icon to navigate to Profile (instead of SubscriptionsSettings)
+- Files created:
+  - apps/mobile/app/screens/ProfileScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added Profile route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added ProfileScreen import and route)
+  - apps/mobile/app/screens/DashboardScreen.tsx (settings icon now navigates to Profile)
+- **Learnings for future iterations:**
+  - Amplify AuthUser has signInDetails.loginId for email (preferred) or fallback to username
+  - Profile is accessible via settings icon on Dashboard for authenticated users
+  - Profile screen links to SubscriptionsSettings for managing zip codes
+  - Use Alert.alert with destructive style for logout/delete actions
+  - Switch component uses trackColor and thumbColor for styling
+---
+
+## 2026-01-19 - US-046: Bundle zip code metadata for city/state lookup
+- Created apps/mobile/app/data/zip-codes-metadata.json with US zip codes
+- File size: 40KB uncompressed, ~5KB compressed (well under 500KB limit)
+- Includes major US cities and surrounding zip codes (LA, NYC, Miami, Chicago, Seattle, Atlanta, Dallas, Phoenix, Denver, Boston)
+- Created getZipCodeMetadata(zipCode) helper function in data/helpers.ts
+- Updated useZipCodeData hook to use bundled metadata for city/state lookup
+- Updated DashboardScreen to display "United States" for unknown zip codes
+- Files created:
+  - apps/mobile/app/data/zip-codes-metadata.json
+- Files modified:
+  - apps/mobile/app/data/helpers.ts (added ZipCodeMetadata interface and getZipCodeMetadata function)
+  - apps/mobile/app/hooks/useZipCodeData.ts (updated getCityStateForZipCode to use bundled metadata)
+  - apps/mobile/app/screens/DashboardScreen.tsx (graceful handling of unknown zip codes)
+- **Learnings for future iterations:**
+  - JSON files can be imported directly in TypeScript with proper typing via `as Record<string, T>`
+  - Compact JSON format (city/state/lat/lng) keeps file size small while providing all needed data
+  - For unknown zip codes, show "United States" as a fallback rather than "Unknown City"
+  - getZipCodeMetadata returns null for unknown zips, letting callers decide how to handle
+---
+
+## 2026-01-19 - US-050: Cache zip code data for offline viewing
+- Installed @react-native-community/netinfo for network status detection
+- Created useNetworkStatus hook to detect online/offline state
+- Updated useZipCodeData hook with MMKV caching and offline support:
+  - Cache key format: zipcode_stats_{zipCode}
+  - Stores data with cachedAt timestamp for invalidation
+  - Automatically invalidates cache after 24 hours
+  - Falls back to cached data when offline or API fails
+  - Returns isCachedData, lastUpdated, and isOffline flags
+  - Added clearCachedZipCodeData export for manual cache clearing
+- Updated DashboardScreen:
+  - Added pull-to-refresh using RefreshControl
+  - Shows offline banner with "Last updated X ago" when using cached data offline
+- Updated CategoryDetailScreen:
+  - Added pull-to-refresh using RefreshControl
+  - Shows offline banner when using cached data offline
+- Files created:
+  - apps/mobile/app/hooks/useNetworkStatus.ts
+- Files modified:
+  - apps/mobile/app/hooks/useZipCodeData.ts (MMKV caching, offline support)
+  - apps/mobile/app/screens/DashboardScreen.tsx (pull-to-refresh, offline banner)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (pull-to-refresh, offline banner)
+  - apps/mobile/package.json (added @react-native-community/netinfo)
+  - yarn.lock (updated dependencies)
+- **Learnings for future iterations:**
+  - @react-native-community/netinfo provides NetInfo.addEventListener for real-time network changes
+  - MMKV load/save functions handle JSON serialization, use load<T> for typed retrieval
+  - Use formatDistanceToNow from date-fns for human-readable "X ago" timestamps
+  - RefreshControl can be passed through Screen component's ScrollViewProps
+  - Cache invalidation: check cachedAt against CACHE_DURATION_MS (24 hours = 24 * 60 * 60 * 1000)
+  - useZipCodeData now returns more properties: isCachedData, lastUpdated, isOffline
+---
+
+## 2026-01-19 - US-051: Email notifications for safety alerts
+- Created send-email-alert Lambda function using Amazon SES
+- Created on-zipcode-stat-update Lambda function triggered by DynamoDB Streams
+- Added emailNotifications boolean field to ZipCodeSubscription model
+- Configured DynamoDB Stream event source mapping for ZipCodeStat table
+- Files created:
+  - packages/backend/amplify/functions/send-email-alert/resource.ts
+  - packages/backend/amplify/functions/send-email-alert/handler.ts
+  - packages/backend/amplify/functions/on-zipcode-stat-update/resource.ts
+  - packages/backend/amplify/functions/on-zipcode-stat-update/handler.ts
+- Files modified:
+  - packages/backend/amplify/data/resource.ts (added emailNotifications field)
+  - packages/backend/amplify/backend.ts (added Lambda functions, policies, stream trigger)
+  - packages/backend/package.json (added AWS SDK dependencies)
+- Features implemented:
+  - HTML and plain text email templates with status change visualization
+  - Status colors in email: danger (#DC2626), warning (#F59E0B), safe (#10B981)
+  - Stream handler processes MODIFY events and detects status changes
+  - Only sends alerts when status changes to danger or warning (not safe)
+  - Queries subscribers with emailNotifications=true for affected zip codes
+  - IAM policies for DynamoDB stream access, table queries, Lambda invoke, SES
+  - Environment variables for table names and function references
+- Dependencies added:
+  - @aws-sdk/client-dynamodb
+  - @aws-sdk/client-lambda
+  - @aws-sdk/client-ses
+  - @aws-sdk/lib-dynamodb
+  - @aws-sdk/util-dynamodb
+  - @types/aws-lambda (dev)
+- **Learnings for future iterations:**
+  - Amplify Gen2 DynamoDB Stream triggers use CDK constructs (EventSourceMapping, Policy)
+  - Use `defineFunction({ resourceGroupName: 'data' })` for functions that access data resources
+  - Lambda functions need explicit IAM policies for DynamoDB streams, table queries, invoking other Lambdas
+  - Cast `backend.function.resources.lambda as LambdaFunction` to access addEnvironment method
+  - Use unmarshall from @aws-sdk/util-dynamodb to convert DynamoDB stream records to plain objects
+  - SES requires verified sender email in production (configured via SES_SENDER_EMAIL env var)
+  - Stream handler returns batchItemFailures array for partial batch failure handling
+  - ZipCodeSubscription model needs secondary index on zipCode for efficient subscriber queries
+---
+
+## 2026-01-19 - US-052: Share safety data feature
+- Added share functionality to DashboardScreen and CategoryDetailScreen
+- Implemented using React Native Share API
+- Share text includes status emojis (🔴🟡🟢), location name, and deep link URL
+- Files modified:
+  - apps/mobile/app/screens/DashboardScreen.tsx (added Share button in action row with Follow)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (added Share button in header)
+- Features implemented:
+  - DashboardScreen: Share button in horizontal action row next to Follow button
+  - CategoryDetailScreen: Share button via Header RightActionComponent
+  - Share text format includes all category statuses with emojis
+  - Category detail share includes individual stat values and units
+  - Deep link URL format: mapyourhealth://zip/{zipCode}
+- **Learnings for future iterations:**
+  - Header component supports RightActionComponent prop for custom header actions
+  - React Native Share API works cross-platform: Share.share({ message, title })
+  - Variables used in useCallback dependencies must be declared before the callback
+  - Follow and Share buttons work well in a horizontal flex row with gap spacing
+---
+
+## 2026-01-19 - US-053: Historical trends for safety stats
+- Added history field to ZipCodeStat model (StatHistoryEntry custom type with value/status/recordedAt)
+- Created TrendChart component using react-native-chart-kit with bezier line chart
+- Implemented calculateTrendDirection function comparing recent history to current value
+- Added trend direction indicators: improving (green down arrow), worsening (red up arrow), stable (gray right arrow)
+- Added "Trends" button on StatItem component (only shows when history data exists)
+- Created StatTrendScreen with full chart, trend explanation, and historical readings list
+- Updated admin portal to preserve history when updating stats (adds previous value to history array)
+- Added StatHistoryEntry and TrendDirection types to safety.ts
+- Files created:
+  - apps/mobile/app/components/TrendChart.tsx
+  - apps/mobile/app/screens/StatTrendScreen.tsx
+- Files modified:
+  - packages/backend/amplify/data/resource.ts (added StatHistoryEntry custom type, history field)
+  - apps/mobile/app/data/types/safety.ts (added StatHistoryEntry, TrendDirection)
+  - apps/mobile/app/components/StatItem.tsx (added Trends button)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (navigation to StatTrendScreen)
+  - apps/mobile/app/navigators/navigationTypes.ts (added StatTrend route params)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added StatTrendScreen)
+  - apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx (history preservation)
+  - apps/mobile/package.json (added react-native-chart-kit, react-native-svg)
+- **Learnings for future iterations:**
+  - react-native-chart-kit requires react-native-svg as peer dependency
+  - Use Expo's recommended SVG version (15.12.1 for SDK 54)
+  - StatHistoryEntry uses a.customType() in Amplify Gen2 for nested array items
+  - History field uses a.ref("StatHistoryEntry").array() to reference custom type
+  - calculateTrendDirection uses 5% threshold to avoid noise in trend detection
+  - Admin portal preserves max 12 history entries (for 12 months of data)
+  - Trend calculation: higher values increasing = worsening (if higherIsBad=true)
+---
+
+## 2026-01-19 - US-054: Compare zip codes feature
+- Created CompareScreen for side-by-side zip code safety comparison
+- Two zip code input fields with search validation (5-digit)
+- Side-by-side category comparison showing status for each zip code
+- Safer zip highlighting: categories highlight with light green background for safer zip
+- Overall safety score (0-100) calculated from category statuses
+- Winner badge displayed on higher scoring zip code
+- Added Compare button to Dashboard action row alongside Follow and Share
+- Files created:
+  - apps/mobile/app/screens/CompareScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added Compare route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added CompareScreen, available to all users)
+  - apps/mobile/app/screens/DashboardScreen.tsx (added Compare button, refactored action buttons)
+- **Learnings for future iterations:**
+  - Compare screen is available to all users (guests + authenticated) since it's a browsing feature
+  - Safety score calculation: safe=100pts, warning=50pts, danger=0pts, averaged across categories
+  - useZipCodeData hook can be used with empty string to fetch no data initially
+  - Action buttons row uses flex:1 for equal width buttons - works well for 2-3 buttons
+  - StatusIndicator component accepts "medium" size for inline use in comparison rows
+---
