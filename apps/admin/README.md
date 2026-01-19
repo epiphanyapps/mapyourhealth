@@ -4,7 +4,7 @@ Admin portal for managing safety data, stat definitions, and hazard reports.
 
 ## Deployed URL
 
-**Production:** https://main.d1810hifpx5957.amplifyapp.com
+**Production:** https://main.d26q32gc98goap.amplifyapp.com
 
 ## Features
 
@@ -42,8 +42,8 @@ The admin portal requires authentication via AWS Cognito. Users must be in the `
 
 The admin portal is deployed to AWS Amplify Hosting.
 
-- **App ID:** d1810hifpx5957
-- **Region:** us-east-1
+- **App ID:** d26q32gc98goap
+- **Region:** ca-central-1
 - **Platform:** WEB_COMPUTE (Next.js SSR)
 
 Build configuration is defined in the root `amplify.yml` file.
