@@ -264,3 +264,26 @@ Branch: ralph/safety-dashboard-mvp
   - Use useCallback with proper dependencies for async functions called in useEffect
 ---
 
+## 2026-01-19 - US-030: Update LoginScreen for Amplify Auth
+- Updated LoginScreen to use Amplify Auth signIn instead of mock token
+- Added navigation links to SignupScreen and ForgotPasswordScreen
+- Updated AuthContext for proper Amplify integration:
+  - Now uses getCurrentUser() to determine auth state on mount
+  - Added isLoading state for initial auth check
+  - Added refreshAuthState() function for post-login state refresh
+  - Logout now calls Amplify signOut()
+- Updated AppNavigator to show loading screen while checking auth
+- Updated ConfirmSignupScreen to use refreshAuthState instead of setAuthToken
+- Files modified:
+  - apps/mobile/app/context/AuthContext.tsx
+  - apps/mobile/app/screens/LoginScreen.tsx
+  - apps/mobile/app/navigators/AppNavigator.tsx
+  - apps/mobile/app/screens/ConfirmSignupScreen.tsx
+- **Learnings for future iterations:**
+  - AuthContext should use Amplify getCurrentUser() for auth state, not manual token storage
+  - After Amplify signIn, check result.isSignedIn before refreshing auth state
+  - signIn result.nextStep?.signInStep tells you if additional steps are needed (CONFIRM_SIGN_UP, etc.)
+  - Always show loading state while checking initial auth to prevent flash of wrong screen
+  - Navigation automatically updates when isAuthenticated changes in context
+---
+
