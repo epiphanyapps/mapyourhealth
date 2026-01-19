@@ -512,7 +512,7 @@
         "yarn type-check passes"
       ],
       "priority": 31,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-005 mock zip code data"
     },
     {

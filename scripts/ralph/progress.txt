@@ -287,3 +287,26 @@ Branch: ralph/safety-dashboard-mvp
   - Navigation automatically updates when isAuthenticated changes in context
 ---
 
+## 2026-01-19 - US-031: Create ZipCodeSearch component
+- Created ZipCodeSearch component with full feature set
+- Files created:
+  - apps/mobile/app/components/ZipCodeSearch.tsx
+- Features implemented:
+  - Text input for zip code entry with 5-digit validation
+  - "Use my location" button using expo-location
+  - Requests foreground location permission
+  - Reverse geocodes coordinates to get zip code
+  - Selected zip codes displayed as removable chips with city/state info
+  - Enforces max selections (default 10) with count display
+  - Error handling for invalid zip codes, duplicates, max limit
+  - Looks up city/state from mock data when available
+- Dependencies added:
+  - expo-location@~19.0.8
+- **Learnings for future iterations:**
+  - expo-location: Use `npx expo install expo-location` for SDK-compatible version
+  - Location.requestForegroundPermissionsAsync() for permission request
+  - Location.reverseGeocodeAsync() returns address with postalCode property
+  - Export ZipCodeSelection interface for use in parent components
+  - Use ScrollView horizontal for chips to handle many selections
+---
+
