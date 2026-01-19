@@ -404,3 +404,31 @@ Branch: ralph/safety-dashboard-mvp
   - Admin portal requires user to be in 'admin' Cognito group
 ---
 
+
+## 2026-01-19 - US-044: Create seed data script for admin portal
+- Created apps/admin/scripts/seed-data.ts with full seed functionality
+- Seeds 11 StatDefinitions matching the mobile app mock data structure
+- Seeds ZipCodeStats for 10 major US cities:
+  - 90210 (Beverly Hills, CA) - Generally safe with wildfire warning
+  - 10001 (New York, NY) - Mixed with air quality issues and lead warning
+  - 33139 (Miami Beach, FL) - Safe with flood danger
+  - 60601 (Chicago, IL) - Lead danger from old infrastructure
+  - 98101 (Seattle, WA) - Very safe overall
+  - 30301 (Atlanta, GA) - Urban area with mixed conditions
+  - 75201 (Dallas, TX) - Hot climate with ozone issues
+  - 85001 (Phoenix, AZ) - Extreme heat and air quality danger
+  - 80202 (Denver, CO) - Clean air but wildfire danger
+  - 02101 (Boston, MA) - Old infrastructure with lead warning
+- Added seed:data script to root package.json
+- Script uses tsx to run TypeScript directly
+- Files created:
+  - apps/admin/scripts/seed-data.ts
+- Files modified:
+  - package.json (added seed:data script)
+- **Learnings for future iterations:**
+  - Amplify data client requires authentication for admin operations
+  - Use environment variables (ADMIN_EMAIL, ADMIN_PASSWORD) for credentials
+  - Script checks for existing records and skips duplicates to be idempotent
+  - calculateStatus helper matches mobile mock data logic for consistency
+  - Use tsx (not ts-node) for modern ESM-based TypeScript execution
+---
