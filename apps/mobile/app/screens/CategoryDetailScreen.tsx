@@ -1,5 +1,5 @@
 import { FC, useState, useCallback } from "react"
-import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl } from "react-native"
+import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
@@ -49,13 +49,57 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   // Get stats for this category
   const stats = zipData ? getStatsForCategory(zipData, category, statDefinitions) : []
 
+  const categoryName = CATEGORY_DISPLAY_NAMES[category]
+  const categoryColor = CATEGORY_COLORS[category]
+
+  // Handle Share button press - share category-specific safety data
+  const handleShare = useCallback(async () => {
+    if (!zipData) return
+
+    // Build stat details for this category
+    const statDetails = stats.map(({ stat, definition }) => {
+      const statusEmoji = stat.status === "danger" ? "🔴" : stat.status === "warning" ? "🟡" : "🟢"
+      return `${statusEmoji} ${definition.name}: ${stat.value} ${definition.unit}`
+    }).join("\n")
+
+    const locationName = zipData.cityName && zipData.state
+      ? `${zipData.cityName}, ${zipData.state}`
+      : zipData.cityName || zipData.state || "Unknown Location"
+
+    const shareMessage = `${categoryName} Safety Report for ${zipData.zipCode} (${locationName})
+
+${statDetails || "No data available"}
+
+Check MapYourHealth for details.
+mapyourhealth://zip/${zipData.zipCode}`
+
+    try {
+      await Share.share({
+        message: shareMessage,
+        title: `${categoryName} Safety Report - ${zipData.zipCode}`,
+      })
+    } catch (error) {
+      // User cancelled or share failed - no need to show error
+      console.log("Share cancelled or failed:", error)
+    }
+  }, [zipData, stats, categoryName])
+
+  // Custom share button component for header
+  const ShareButton = (
+    <TouchableOpacity
+      onPress={handleShare}
+      style={$headerShareButton}
+      accessibilityRole="button"
+      accessibilityLabel="Share category data"
+    >
+      <MaterialCommunityIcons name="share-variant-outline" size={24} color={theme.colors.tint} />
+    </TouchableOpacity>
+  )
+
   // Format last updated time for offline banner
   const lastUpdatedText = lastUpdated
     ? formatDistanceToNow(lastUpdated, { addSuffix: true })
     : null
-
-  const categoryName = CATEGORY_DISPLAY_NAMES[category]
-  const categoryColor = CATEGORY_COLORS[category]
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -214,6 +258,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         title={categoryName}
         leftIcon="back"
         onLeftPress={() => navigation.goBack()}
+        RightActionComponent={ShareButton}
       />
 
       <ScrollView
@@ -271,4 +316,11 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
       </ScrollView>
     </Screen>
   )
+}
+
+const $headerShareButton: ViewStyle = {
+  paddingHorizontal: 16,
+  paddingVertical: 8,
+  justifyContent: "center",
+  alignItems: "center",
 }

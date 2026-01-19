@@ -1,23 +1,33 @@
 import { FC, useState, useCallback, useEffect } from "react"
-import { View, ViewStyle, Pressable, TextStyle, Alert, ActivityIndicator, RefreshControl } from "react-native"
+import {
+  View,
+  ViewStyle,
+  Pressable,
+  TextStyle,
+  Alert,
+  ActivityIndicator,
+  RefreshControl,
+  Share,
+  TouchableOpacity,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
 import { LocationHeader } from "@/components/LocationHeader"
+import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
 import { SearchBar } from "@/components/SearchBar"
 import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
-import { WarningBanner } from "@/components/WarningBanner"
-import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Text } from "@/components/Text"
-import { useAppTheme } from "@/theme/context"
+import { WarningBanner } from "@/components/WarningBanner"
 import { useAuth } from "@/context/AuthContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
-import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import { StatCategory } from "@/data/types/safety"
+import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import { useAppTheme } from "@/theme/context"
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -63,7 +73,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
 
   // Fetch data for current zip code from Amplify (with caching and offline support)
-  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } = useZipCodeData(currentZipCode)
+  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
+    useZipCodeData(currentZipCode)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -111,11 +122,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       // User is authenticated - create subscription via context
       setIsFollowing(true)
       try {
-        await addSubscription(
-          zipData.zipCode,
-          zipData.cityName,
-          zipData.state,
-        )
+        await addSubscription(zipData.zipCode, zipData.cityName, zipData.state)
         Alert.alert("Success", `You are now following ${zipData.zipCode}`)
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to follow zip code"
@@ -151,6 +158,42 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       navigation.navigate("Login")
     }
   }, [isAuthenticated, currentZipCode, setPendingAction, navigation])
+
+  // Handle Share button press - share safety data
+  const handleShare = useCallback(async () => {
+    if (!zipData) return
+
+    // Build status summary for all categories
+    const categoryStatuses = categories
+      .map((category) => {
+        const status = getStatusForCategory(category)
+        const statusEmoji = status === "danger" ? "🔴" : status === "warning" ? "🟡" : "🟢"
+        return `${statusEmoji} ${CATEGORY_DISPLAY_NAMES[category]}: ${status.charAt(0).toUpperCase() + status.slice(1)}`
+      })
+      .join("\n")
+
+    const locationName =
+      zipData.cityName && zipData.state
+        ? `${zipData.cityName}, ${zipData.state}`
+        : zipData.cityName || zipData.state || "Unknown Location"
+
+    const shareMessage = `Safety Alert for ${zipData.zipCode} (${locationName})
+
+${categoryStatuses}
+
+Check MapYourHealth for details.
+mapyourhealth://zip/${zipData.zipCode}`
+
+    try {
+      await Share.share({
+        message: shareMessage,
+        title: `Safety Report - ${zipData.zipCode}`,
+      })
+    } catch (error) {
+      // User cancelled or share failed - no need to show error
+      console.log("Share cancelled or failed:", error)
+    }
+  }, [zipData, categories, getStatusForCategory])
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -339,9 +382,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }
 
   // Format last updated time for offline banner
-  const lastUpdatedText = lastUpdated
-    ? formatDistanceToNow(lastUpdated, { addSuffix: true })
-    : null
+  const lastUpdatedText = lastUpdated ? formatDistanceToNow(lastUpdated, { addSuffix: true }) : null
 
   return (
     <Screen
@@ -401,28 +442,46 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         </View>
       )}
 
-      {/* Follow Button */}
-      <Pressable
-        onPress={handleFollow}
-        disabled={isFollowing}
-        style={({ pressed }) => [
-          $followButton,
-          { borderColor: theme.colors.tint },
-          pressed && { opacity: 0.8 },
-          isFollowing && { opacity: 0.6 },
-        ]}
-        accessibilityRole="button"
-        accessibilityLabel={`Follow ${currentZipCode}`}
-      >
-        <MaterialCommunityIcons
-          name="heart-plus-outline"
-          size={20}
-          color={theme.colors.tint}
-        />
-        <Text style={[$followButtonText, { color: theme.colors.tint }]}>
-          {isFollowing ? "Following..." : "Follow This Zip Code"}
-        </Text>
-      </Pressable>
+      {/* Action Buttons Row: Follow and Share */}
+      <View style={$actionButtonsRow}>
+        {/* Follow Button */}
+        <Pressable
+          onPress={handleFollow}
+          disabled={isFollowing}
+          style={({ pressed }) => [
+            $followButton,
+            { borderColor: theme.colors.tint },
+            pressed && { opacity: 0.8 },
+            isFollowing && { opacity: 0.6 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`Follow ${currentZipCode}`}
+        >
+          <MaterialCommunityIcons name="heart-plus-outline" size={20} color={theme.colors.tint} />
+          <Text style={[$followButtonText, { color: theme.colors.tint }]}>
+            {isFollowing ? "Following..." : "Follow"}
+          </Text>
+        </Pressable>
+
+        {/* Share Button */}
+        <Pressable
+          onPress={handleShare}
+          style={({ pressed }) => [
+            $shareButton,
+            { borderColor: theme.colors.tint },
+            pressed && { opacity: 0.8 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="Share safety data"
+        >
+          <MaterialCommunityIcons
+            name="share-variant-outline"
+            size={20}
+            color={theme.colors.tint}
+          />
+          <Text style={[$shareButtonText, { color: theme.colors.tint }]}>Share</Text>
+        </Pressable>
+      </View>
 
       {/* Warning Banner - shows for danger/warning stats */}
       {priorityAlert && (
@@ -477,12 +536,18 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   )
 }
 
+const $actionButtonsRow: ViewStyle = {
+  flexDirection: "row",
+  marginHorizontal: 16,
+  marginBottom: 16,
+  gap: 12,
+}
+
 const $followButton: ViewStyle = {
+  flex: 1,
   flexDirection: "row",
   alignItems: "center",
   justifyContent: "center",
-  marginHorizontal: 16,
-  marginBottom: 16,
   paddingVertical: 12,
   borderRadius: 12,
   borderWidth: 2,
@@ -490,6 +555,22 @@ const $followButton: ViewStyle = {
 }
 
 const $followButtonText: TextStyle = {
+  fontSize: 16,
+  fontWeight: "600",
+}
+
+const $shareButton: ViewStyle = {
+  flex: 1,
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "center",
+  paddingVertical: 12,
+  borderRadius: 12,
+  borderWidth: 2,
+  gap: 8,
+}
+
+const $shareButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
 }
