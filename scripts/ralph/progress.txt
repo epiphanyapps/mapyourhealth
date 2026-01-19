@@ -310,3 +310,24 @@ Branch: ralph/safety-dashboard-mvp
   - Use ScrollView horizontal for chips to handle many selections
 ---
 
+## 2026-01-19 - US-032: Create OnboardingZipCodesScreen
+- Created OnboardingZipCodesScreen for new user zip code selection
+- Files created:
+  - apps/mobile/app/screens/OnboardingZipCodesScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added OnboardingZipCodes route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added screen to authenticated stack)
+  - apps/mobile/app/screens/ConfirmSignupScreen.tsx (navigate to onboarding after signup)
+- Features implemented:
+  - Welcome message explaining the feature
+  - ZipCodeSearch component integration
+  - Requires at least 1 zip code to continue
+  - Saves subscriptions via createZipCodeSubscription() from data service
+  - Navigates to Dashboard using navigation.reset() after saving
+- **Learnings for future iterations:**
+  - OnboardingZipCodes goes in authenticated stack (needs auth for backend calls)
+  - Use navigation.reset() to prevent back navigation to onboarding
+  - ConfirmSignupScreen navigates new users to OnboardingZipCodes after autoSignIn
+  - Import ZipCodeSelection type from ZipCodeSearch component
+---
+
