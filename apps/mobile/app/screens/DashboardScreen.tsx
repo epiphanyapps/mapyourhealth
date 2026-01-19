@@ -228,7 +228,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
             onChangeText={handleSearch}
             onSettingsPress={() => {
               if (isAuthenticated) {
-                navigation.navigate("SubscriptionsSettings")
+                navigation.navigate("Profile")
               } else {
                 navigation.navigate("Login")
               }
@@ -254,7 +254,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
             onChangeText={handleSearch}
             onSettingsPress={() => {
               if (isAuthenticated) {
-                navigation.navigate("SubscriptionsSettings")
+                navigation.navigate("Profile")
               } else {
                 navigation.navigate("Login")
               }
@@ -287,7 +287,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
             onChangeText={handleSearch}
             onSettingsPress={() => {
               if (isAuthenticated) {
-                navigation.navigate("SubscriptionsSettings")
+                navigation.navigate("Profile")
               } else {
                 navigation.navigate("Login")
               }

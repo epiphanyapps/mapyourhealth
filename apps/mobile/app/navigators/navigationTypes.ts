@@ -29,6 +29,7 @@ export type AppStackParamList = {
   CategoryDetail: { category: StatCategory; zipCode: string }
   Report: undefined
   SubscriptionsSettings: undefined
+  Profile: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
