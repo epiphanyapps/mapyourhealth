@@ -376,3 +376,31 @@ Branch: ralph/safety-dashboard-mvp
   - Screen needs to be added to both navigationTypes.ts and AppNavigator.tsx
 ---
 
+## 2026-01-19 - US-042: Deploy Admin Portal to Amplify Hosting
+- Created Amplify Hosting app for admin portal
+- Configured build settings for Next.js SSR deployment
+- Documented admin portal URL in README
+- AWS Resources created:
+  - Amplify App ID: d1810hifpx5957
+  - Region: us-east-1
+  - Platform: WEB_COMPUTE (Next.js SSR)
+  - Production URL: https://main.d1810hifpx5957.amplifyapp.com
+- Files modified:
+  - amplify.yml (added admin portal build configuration)
+  - apps/admin/README.md (updated with deployment info)
+- Environment variables configured:
+  - AMPLIFY_MONOREPO_APP_ROOT=apps/admin
+  - AMPLIFY_DIFF_DEPLOY=false
+- Build process:
+  - Uses corepack with yarn 4.5.3
+  - Generates amplify_outputs.json from backend app (d60z6evrscdvy)
+  - Runs npm run build for Next.js
+  - Deploys .next directory as artifacts
+- **Learnings for future iterations:**
+  - Amplify WEB_COMPUTE platform is required for Next.js SSR apps
+  - GitHub connection requires OAuth flow through AWS Console (CLI cannot complete this)
+  - Use `npx ampx generate outputs` to get amplify_outputs.json at build time
+  - For monorepo apps, set AMPLIFY_MONOREPO_APP_ROOT environment variable
+  - Admin portal requires user to be in 'admin' Cognito group
+---
+

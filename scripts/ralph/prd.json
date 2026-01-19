@@ -707,8 +707,8 @@
         "yarn type-check passes"
       ],
       "priority": 42,
-      "passes": false,
-      "notes": "Depends on US-041. Final admin portal deployment."
+      "passes": true,
+      "notes": "Depends on US-041. Final admin portal deployment. App ID: d1810hifpx5957, URL: https://main.d1810hifpx5957.amplifyapp.com"
     }
   ]
 }
