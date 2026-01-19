@@ -4,6 +4,7 @@
  * Generally speaking, it will contain an auth flow (registration, login, forgot password)
  * and a "main" flow which the user will use once logged in.
  */
+import { ActivityIndicator, View, ViewStyle } from "react-native"
 import { NavigationContainer } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
@@ -14,10 +15,12 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
+import { OnboardingZipCodesScreen } from "@/screens/OnboardingZipCodesScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { ReportScreen } from "@/screens/ReportScreen"
+import { SubscriptionsSettingsScreen } from "@/screens/SubscriptionsSettingsScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -34,11 +37,20 @@ const exitRoutes = Config.exitRoutes
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, isLoading } = useAuth()
 
   const {
     theme: { colors },
   } = useAppTheme()
+
+  // Show loading screen while checking auth state
+  if (isLoading) {
+    return (
+      <View style={[$loadingContainer, { backgroundColor: colors.background }]}>
+        <ActivityIndicator size="large" color={colors.tint} />
+      </View>
+    )
+  }
 
   return (
     <Stack.Navigator
@@ -55,9 +67,13 @@ const AppStack = () => {
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
 
+          <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
+
           <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
 
           <Stack.Screen name="Report" component={ReportScreen} />
+
+          <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
 
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
 
@@ -76,6 +92,12 @@ const AppStack = () => {
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
     </Stack.Navigator>
   )
+}
+
+const $loadingContainer: ViewStyle = {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
 }
 
 export const AppNavigator = (props: NavigationProps) => {

@@ -50,7 +50,7 @@ applications:
           - node_modules/**/*
           - ../../node_modules/**/*
 
-  # Admin portal deployment (app: d26q32gc98goap in ca-central-1)
+  # Admin portal deployment (app: d1810hifpx5957 in us-east-1)
   - appRoot: apps/admin
     frontend:
       phases:
@@ -60,14 +60,11 @@ applications:
             - corepack prepare yarn@4.5.3 --activate
             # Install from monorepo root, then return to admin dir
             - cd ../.. && yarn install --immutable && cd apps/admin
-            # Generate amplify_outputs.json from backend app
-            - export AWS_REGION=ca-central-1
-            - npx ampx generate outputs --branch main --app-id d3jl0ykn4qgj9r
-            - echo "=== amplify_outputs.json contents ==="
-            - cat amplify_outputs.json
+            # Generate Amplify outputs from backend app (us-east-1)
+            - npx ampx generate outputs --branch $AWS_BRANCH --app-id d60z6evrscdvy
         build:
           commands:
-            - yarn build
+            - npm run build
       artifacts:
         baseDirectory: .next
         files:

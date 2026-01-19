@@ -20,7 +20,7 @@ import type { ThemedStyle } from "@/theme/types"
 
 interface ConfirmSignupScreenProps extends AppStackScreenProps<"ConfirmSignup"> {}
 
-export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => {
+export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navigation }) => {
   const { email } = route.params
 
   const [code, setCode] = useState("")
@@ -29,7 +29,7 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => 
   const [error, setError] = useState("")
   const [resendSuccess, setResendSuccess] = useState(false)
 
-  const { setAuthToken } = useAuth()
+  const { refreshAuthState } = useAuth()
   const { themed } = useAppTheme()
 
   function validateCode(value: string): boolean {
@@ -66,10 +66,17 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => 
       // Try to auto sign in after confirmation
       try {
         await autoSignIn()
-        setAuthToken(String(Date.now()))
+        // Refresh auth state to update the navigator
+        await refreshAuthState()
+        // Navigate new users to onboarding to select zip codes
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "OnboardingZipCodes" }],
+        })
       } catch {
         // Auto sign in not enabled, user will need to log in manually
-        setAuthToken(String(Date.now()))
+        // Refresh auth state anyway - navigation will show login screen
+        await refreshAuthState()
       }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Verification failed. Please try again."

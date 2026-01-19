@@ -1,36 +1,56 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MapYourHealth Admin Portal
 
-## Getting Started
+Admin portal for managing safety data, stat definitions, and hazard reports.
 
-First, run the development server:
+## Deployed URL
+
+**Production:** https://main.d1810hifpx5957.amplifyapp.com
+
+## Features
+
+- **Dashboard** - Overview of system stats and recent activity
+- **Stat Definitions** - Manage safety metrics (water, air, health, disaster)
+- **Zip Code Data** - Add and edit safety stats for specific zip codes
+- **Bulk Import** - Import stats data via CSV/JSON upload
+- **Hazard Reports** - Review and moderate user-submitted reports
+
+## Development
+
+### Prerequisites
+
+- Node.js 18+
+- Yarn 4.x (via corepack)
+
+### Getting Started
 
 ```bash
+# From the monorepo root
+yarn install
+
+# Run development server
+cd apps/admin
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) with your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Authentication
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The admin portal requires authentication via AWS Cognito. Users must be in the `admin` group to access the portal.
 
-## Learn More
+## Deployment
 
-To learn more about Next.js, take a look at the following resources:
+The admin portal is deployed to AWS Amplify Hosting.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- **App ID:** d1810hifpx5957
+- **Region:** us-east-1
+- **Platform:** WEB_COMPUTE (Next.js SSR)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Build configuration is defined in the root `amplify.yml` file.
 
-## Deploy on Vercel
+## Tech Stack
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [Next.js 16](https://nextjs.org/) - React framework with App Router
+- [Tailwind CSS](https://tailwindcss.com/) - Utility-first CSS
+- [shadcn/ui](https://ui.shadcn.com/) - UI components
+- [AWS Amplify](https://docs.amplify.aws/) - Authentication and data

@@ -264,3 +264,143 @@ Branch: ralph/safety-dashboard-mvp
   - Use useCallback with proper dependencies for async functions called in useEffect
 ---
 
+## 2026-01-19 - US-030: Update LoginScreen for Amplify Auth
+- Updated LoginScreen to use Amplify Auth signIn instead of mock token
+- Added navigation links to SignupScreen and ForgotPasswordScreen
+- Updated AuthContext for proper Amplify integration:
+  - Now uses getCurrentUser() to determine auth state on mount
+  - Added isLoading state for initial auth check
+  - Added refreshAuthState() function for post-login state refresh
+  - Logout now calls Amplify signOut()
+- Updated AppNavigator to show loading screen while checking auth
+- Updated ConfirmSignupScreen to use refreshAuthState instead of setAuthToken
+- Files modified:
+  - apps/mobile/app/context/AuthContext.tsx
+  - apps/mobile/app/screens/LoginScreen.tsx
+  - apps/mobile/app/navigators/AppNavigator.tsx
+  - apps/mobile/app/screens/ConfirmSignupScreen.tsx
+- **Learnings for future iterations:**
+  - AuthContext should use Amplify getCurrentUser() for auth state, not manual token storage
+  - After Amplify signIn, check result.isSignedIn before refreshing auth state
+  - signIn result.nextStep?.signInStep tells you if additional steps are needed (CONFIRM_SIGN_UP, etc.)
+  - Always show loading state while checking initial auth to prevent flash of wrong screen
+  - Navigation automatically updates when isAuthenticated changes in context
+---
+
+## 2026-01-19 - US-031: Create ZipCodeSearch component
+- Created ZipCodeSearch component with full feature set
+- Files created:
+  - apps/mobile/app/components/ZipCodeSearch.tsx
+- Features implemented:
+  - Text input for zip code entry with 5-digit validation
+  - "Use my location" button using expo-location
+  - Requests foreground location permission
+  - Reverse geocodes coordinates to get zip code
+  - Selected zip codes displayed as removable chips with city/state info
+  - Enforces max selections (default 10) with count display
+  - Error handling for invalid zip codes, duplicates, max limit
+  - Looks up city/state from mock data when available
+- Dependencies added:
+  - expo-location@~19.0.8
+- **Learnings for future iterations:**
+  - expo-location: Use `npx expo install expo-location` for SDK-compatible version
+  - Location.requestForegroundPermissionsAsync() for permission request
+  - Location.reverseGeocodeAsync() returns address with postalCode property
+  - Export ZipCodeSelection interface for use in parent components
+  - Use ScrollView horizontal for chips to handle many selections
+---
+
+## 2026-01-19 - US-032: Create OnboardingZipCodesScreen
+- Created OnboardingZipCodesScreen for new user zip code selection
+- Files created:
+  - apps/mobile/app/screens/OnboardingZipCodesScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added OnboardingZipCodes route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added screen to authenticated stack)
+  - apps/mobile/app/screens/ConfirmSignupScreen.tsx (navigate to onboarding after signup)
+- Features implemented:
+  - Welcome message explaining the feature
+  - ZipCodeSearch component integration
+  - Requires at least 1 zip code to continue
+  - Saves subscriptions via createZipCodeSubscription() from data service
+  - Navigates to Dashboard using navigation.reset() after saving
+- **Learnings for future iterations:**
+  - OnboardingZipCodes goes in authenticated stack (needs auth for backend calls)
+  - Use navigation.reset() to prevent back navigation to onboarding
+  - ConfirmSignupScreen navigates new users to OnboardingZipCodes after autoSignIn
+  - Import ZipCodeSelection type from ZipCodeSearch component
+---
+
+## 2026-01-19 - US-033: Create SubscriptionCard component
+- Created SubscriptionCard component for displaying/managing subscriptions
+- Files created:
+  - apps/mobile/app/components/SubscriptionCard.tsx
+- Features implemented:
+  - Displays zip code prominently (large, bold text)
+  - Shows city name and state below zip code
+  - Location marker icon on left
+  - Delete button with trash icon
+  - Alert.alert confirmation dialog before deletion
+  - isDeleting prop for loading state during deletion
+  - Accessible with proper labels and hints
+- **Learnings for future iterations:**
+  - Use Alert.alert for confirmation dialogs with destructive actions
+  - Style "destructive" on alert button shows it in red on iOS
+  - Export SubscriptionCardProps interface for type reuse
+  - Use theme.colors.error for delete/destructive actions
+---
+
+## 2026-01-19 - US-034: Create SubscriptionsSettingsScreen
+- Created SubscriptionsSettingsScreen for managing zip code subscriptions
+- Files created:
+  - apps/mobile/app/screens/SubscriptionsSettingsScreen.tsx
+- Files modified:
+  - apps/mobile/app/navigators/navigationTypes.ts (added SubscriptionsSettings route)
+  - apps/mobile/app/navigators/AppNavigator.tsx (added screen to authenticated stack)
+- Features implemented:
+  - Lists current subscriptions using SubscriptionCard component
+  - Header with back button and "My Subscriptions" title
+  - Shows subscription count (X of 10)
+  - "Add" button to open modal for adding new zip codes
+  - Modal with ZipCodeSearch component for adding subscriptions
+  - Enforces maximum 10 subscriptions limit
+  - Empty state with icon when no subscriptions
+  - Loading state while fetching subscriptions
+  - Error handling with visual feedback
+  - Uses Amplify data service functions (getUserZipCodeSubscriptions, createZipCodeSubscription, deleteZipCodeSubscription)
+- **Learnings for future iterations:**
+  - Modal animationType="slide" + transparent for bottom sheet effect
+  - Use FlatList with ListEmptyComponent for empty state handling
+  - Reuse ZipCodeSearch component for consistent zip code selection UI
+  - Pass remainingSlots to ZipCodeSearch maxSelections to enforce limits
+  - Screen needs to be added to both navigationTypes.ts and AppNavigator.tsx
+---
+
+## 2026-01-19 - US-042: Deploy Admin Portal to Amplify Hosting
+- Created Amplify Hosting app for admin portal
+- Configured build settings for Next.js SSR deployment
+- Documented admin portal URL in README
+- AWS Resources created:
+  - Amplify App ID: d1810hifpx5957
+  - Region: us-east-1
+  - Platform: WEB_COMPUTE (Next.js SSR)
+  - Production URL: https://main.d1810hifpx5957.amplifyapp.com
+- Files modified:
+  - amplify.yml (added admin portal build configuration)
+  - apps/admin/README.md (updated with deployment info)
+- Environment variables configured:
+  - AMPLIFY_MONOREPO_APP_ROOT=apps/admin
+  - AMPLIFY_DIFF_DEPLOY=false
+- Build process:
+  - Uses corepack with yarn 4.5.3
+  - Generates amplify_outputs.json from backend app (d60z6evrscdvy)
+  - Runs npm run build for Next.js
+  - Deploys .next directory as artifacts
+- **Learnings for future iterations:**
+  - Amplify WEB_COMPUTE platform is required for Next.js SSR apps
+  - GitHub connection requires OAuth flow through AWS Console (CLI cannot complete this)
+  - Use `npx ampx generate outputs` to get amplify_outputs.json at build time
+  - For monorepo apps, set AMPLIFY_MONOREPO_APP_ROOT environment variable
+  - Admin portal requires user to be in 'admin' Cognito group
+---
+

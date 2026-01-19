@@ -495,7 +495,7 @@
         "yarn type-check passes"
       ],
       "priority": 30,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-025, US-026, US-028"
     },
     {
@@ -512,7 +512,7 @@
         "yarn type-check passes"
       ],
       "priority": 31,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-005 mock zip code data"
     },
     {
@@ -529,7 +529,7 @@
         "yarn type-check passes"
       ],
       "priority": 32,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-031, US-023"
     },
     {
@@ -545,7 +545,7 @@
         "yarn type-check passes"
       ],
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-023 deleteSubscription function"
     },
     {
@@ -562,7 +562,7 @@
         "yarn type-check passes"
       ],
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-031, US-033, US-023"
     },
     {
@@ -707,8 +707,8 @@
         "yarn type-check passes"
       ],
       "priority": 42,
-      "passes": false,
-      "notes": "Depends on US-041. Final admin portal deployment."
+      "passes": true,
+      "notes": "Depends on US-041. Final admin portal deployment. App ID: d1810hifpx5957, URL: https://main.d1810hifpx5957.amplifyapp.com"
     }
   ]
 }
