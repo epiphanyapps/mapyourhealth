@@ -844,7 +844,7 @@
         "yarn type-check passes"
       ],
       "priority": 49,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-045. Essential for good UX with async data fetching."
     },
     {
