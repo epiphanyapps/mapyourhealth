@@ -20,7 +20,7 @@ import type { ThemedStyle } from "@/theme/types"
 
 interface ConfirmSignupScreenProps extends AppStackScreenProps<"ConfirmSignup"> {}
 
-export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => {
+export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navigation }) => {
   const { email } = route.params
 
   const [code, setCode] = useState("")
@@ -68,6 +68,11 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route }) => 
         await autoSignIn()
         // Refresh auth state to update the navigator
         await refreshAuthState()
+        // Navigate new users to onboarding to select zip codes
+        navigation.reset({
+          index: 0,
+          routes: [{ name: "OnboardingZipCodes" }],
+        })
       } catch {
         // Auto sign in not enabled, user will need to log in manually
         // Refresh auth state anyway - navigation will show login screen

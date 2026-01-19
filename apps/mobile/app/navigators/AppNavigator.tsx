@@ -15,6 +15,7 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
+import { OnboardingZipCodesScreen } from "@/screens/OnboardingZipCodesScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
@@ -64,6 +65,8 @@ const AppStack = () => {
       {isAuthenticated ? (
         <>
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
+
+          <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
 
           <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
 

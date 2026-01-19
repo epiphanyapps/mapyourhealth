@@ -23,6 +23,7 @@ export type AppStackParamList = {
   Signup: undefined
   ConfirmSignup: { email: string }
   ForgotPassword: undefined
+  OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: undefined
   CategoryDetail: { category: StatCategory }
