@@ -5,8 +5,6 @@
 # Amplify
 .amplify/
 amplify_outputs.json
-!apps/mobile/amplify_outputs.json
-!apps/admin/amplify_outputs.json
 
 # Yarn
 .yarn/*
