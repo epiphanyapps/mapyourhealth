@@ -863,7 +863,7 @@
         "yarn type-check passes"
       ],
       "priority": 50,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-045, US-049. MMKV already in project for storage."
     },
     {

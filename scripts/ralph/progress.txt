@@ -530,3 +530,36 @@ Branch: ralph/safety-dashboard-mvp
   - For unknown zip codes, show "United States" as a fallback rather than "Unknown City"
   - getZipCodeMetadata returns null for unknown zips, letting callers decide how to handle
 ---
+
+## 2026-01-19 - US-050: Cache zip code data for offline viewing
+- Installed @react-native-community/netinfo for network status detection
+- Created useNetworkStatus hook to detect online/offline state
+- Updated useZipCodeData hook with MMKV caching and offline support:
+  - Cache key format: zipcode_stats_{zipCode}
+  - Stores data with cachedAt timestamp for invalidation
+  - Automatically invalidates cache after 24 hours
+  - Falls back to cached data when offline or API fails
+  - Returns isCachedData, lastUpdated, and isOffline flags
+  - Added clearCachedZipCodeData export for manual cache clearing
+- Updated DashboardScreen:
+  - Added pull-to-refresh using RefreshControl
+  - Shows offline banner with "Last updated X ago" when using cached data offline
+- Updated CategoryDetailScreen:
+  - Added pull-to-refresh using RefreshControl
+  - Shows offline banner when using cached data offline
+- Files created:
+  - apps/mobile/app/hooks/useNetworkStatus.ts
+- Files modified:
+  - apps/mobile/app/hooks/useZipCodeData.ts (MMKV caching, offline support)
+  - apps/mobile/app/screens/DashboardScreen.tsx (pull-to-refresh, offline banner)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (pull-to-refresh, offline banner)
+  - apps/mobile/package.json (added @react-native-community/netinfo)
+  - yarn.lock (updated dependencies)
+- **Learnings for future iterations:**
+  - @react-native-community/netinfo provides NetInfo.addEventListener for real-time network changes
+  - MMKV load/save functions handle JSON serialization, use load<T> for typed retrieval
+  - Use formatDistanceToNow from date-fns for human-readable "X ago" timestamps
+  - RefreshControl can be passed through Screen component's ScrollViewProps
+  - Cache invalidation: check cachedAt against CACHE_DURATION_MS (24 hours = 24 * 60 * 60 * 1000)
+  - useZipCodeData now returns more properties: isCachedData, lastUpdated, isOffline
+---
