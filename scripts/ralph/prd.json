@@ -789,7 +789,7 @@
         "yarn type-check passes"
       ],
       "priority": 46,
-      "passes": false,
+      "passes": true,
       "notes": "Bundled data provides instant lookup without API calls. Source: US Census or similar public dataset."
     },
     {

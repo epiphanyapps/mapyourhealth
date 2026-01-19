@@ -510,3 +510,23 @@ Branch: ralph/safety-dashboard-mvp
   - Use Alert.alert with destructive style for logout/delete actions
   - Switch component uses trackColor and thumbColor for styling
 ---
+
+## 2026-01-19 - US-046: Bundle zip code metadata for city/state lookup
+- Created apps/mobile/app/data/zip-codes-metadata.json with US zip codes
+- File size: 40KB uncompressed, ~5KB compressed (well under 500KB limit)
+- Includes major US cities and surrounding zip codes (LA, NYC, Miami, Chicago, Seattle, Atlanta, Dallas, Phoenix, Denver, Boston)
+- Created getZipCodeMetadata(zipCode) helper function in data/helpers.ts
+- Updated useZipCodeData hook to use bundled metadata for city/state lookup
+- Updated DashboardScreen to display "United States" for unknown zip codes
+- Files created:
+  - apps/mobile/app/data/zip-codes-metadata.json
+- Files modified:
+  - apps/mobile/app/data/helpers.ts (added ZipCodeMetadata interface and getZipCodeMetadata function)
+  - apps/mobile/app/hooks/useZipCodeData.ts (updated getCityStateForZipCode to use bundled metadata)
+  - apps/mobile/app/screens/DashboardScreen.tsx (graceful handling of unknown zip codes)
+- **Learnings for future iterations:**
+  - JSON files can be imported directly in TypeScript with proper typing via `as Record<string, T>`
+  - Compact JSON format (city/state/lat/lng) keeps file size small while providing all needed data
+  - For unknown zip codes, show "United States" as a fallback rather than "Unknown City"
+  - getZipCodeMetadata returns null for unknown zips, letting callers decide how to handle
+---
