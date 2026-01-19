@@ -42,9 +42,20 @@ export const NAVIGATION_PERSISTENCE_KEY = "NAVIGATION_STATE"
 const prefix = Linking.createURL("/")
 const config = {
   screens: {
-    Login: {
+    Dashboard: {
       path: "",
     },
+    CategoryDetail: "category/:category/:zipCode",
+    StatTrend: "trend/:statId/:zipCode",
+    Compare: "compare",
+    Login: "login",
+    Signup: "signup",
+    ConfirmSignup: "confirm-signup",
+    ForgotPassword: "forgot-password",
+    OnboardingZipCodes: "onboarding",
+    Report: "report",
+    SubscriptionsSettings: "subscriptions",
+    Profile: "profile",
     Welcome: "welcome",
     Demo: {
       screens: {
