@@ -563,3 +563,43 @@ Branch: ralph/safety-dashboard-mvp
   - Cache invalidation: check cachedAt against CACHE_DURATION_MS (24 hours = 24 * 60 * 60 * 1000)
   - useZipCodeData now returns more properties: isCachedData, lastUpdated, isOffline
 ---
+
+## 2026-01-19 - US-051: Email notifications for safety alerts
+- Created send-email-alert Lambda function using Amazon SES
+- Created on-zipcode-stat-update Lambda function triggered by DynamoDB Streams
+- Added emailNotifications boolean field to ZipCodeSubscription model
+- Configured DynamoDB Stream event source mapping for ZipCodeStat table
+- Files created:
+  - packages/backend/amplify/functions/send-email-alert/resource.ts
+  - packages/backend/amplify/functions/send-email-alert/handler.ts
+  - packages/backend/amplify/functions/on-zipcode-stat-update/resource.ts
+  - packages/backend/amplify/functions/on-zipcode-stat-update/handler.ts
+- Files modified:
+  - packages/backend/amplify/data/resource.ts (added emailNotifications field)
+  - packages/backend/amplify/backend.ts (added Lambda functions, policies, stream trigger)
+  - packages/backend/package.json (added AWS SDK dependencies)
+- Features implemented:
+  - HTML and plain text email templates with status change visualization
+  - Status colors in email: danger (#DC2626), warning (#F59E0B), safe (#10B981)
+  - Stream handler processes MODIFY events and detects status changes
+  - Only sends alerts when status changes to danger or warning (not safe)
+  - Queries subscribers with emailNotifications=true for affected zip codes
+  - IAM policies for DynamoDB stream access, table queries, Lambda invoke, SES
+  - Environment variables for table names and function references
+- Dependencies added:
+  - @aws-sdk/client-dynamodb
+  - @aws-sdk/client-lambda
+  - @aws-sdk/client-ses
+  - @aws-sdk/lib-dynamodb
+  - @aws-sdk/util-dynamodb
+  - @types/aws-lambda (dev)
+- **Learnings for future iterations:**
+  - Amplify Gen2 DynamoDB Stream triggers use CDK constructs (EventSourceMapping, Policy)
+  - Use `defineFunction({ resourceGroupName: 'data' })` for functions that access data resources
+  - Lambda functions need explicit IAM policies for DynamoDB streams, table queries, invoking other Lambdas
+  - Cast `backend.function.resources.lambda as LambdaFunction` to access addEnvironment method
+  - Use unmarshall from @aws-sdk/util-dynamodb to convert DynamoDB stream records to plain objects
+  - SES requires verified sender email in production (configured via SES_SENDER_EMAIL env var)
+  - Stream handler returns batchItemFailures array for partial batch failure handling
+  - ZipCodeSubscription model needs secondary index on zipCode for efficient subscriber queries
+---

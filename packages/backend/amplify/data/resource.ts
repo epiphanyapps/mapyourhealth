@@ -79,6 +79,7 @@ const schema = a.schema({
       cityName: a.string(),
       state: a.string(),
       enableNotifications: a.boolean().default(true),
+      emailNotifications: a.boolean().default(true),
     })
     .authorization((allow) => [allow.owner()]),
 
