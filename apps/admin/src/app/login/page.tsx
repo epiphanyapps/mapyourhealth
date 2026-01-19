@@ -1,8 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Amplify } from "aws-amplify";
 import { signIn, fetchAuthSession } from "aws-amplify/auth";
+import outputs from "../../../amplify_outputs.json";
+
+// DEBUG: Log and configure Amplify
+console.log("=== LOGIN PAGE DEBUG ===");
+console.log("Outputs loaded:", outputs);
+console.log("Auth config:", outputs?.auth);
+console.log("User Pool ID:", outputs?.auth?.user_pool_id);
+console.log("AWS Region:", outputs?.auth?.aws_region);
+console.log("=== END LOGIN PAGE DEBUG ===");
+
+// Configure Amplify
+Amplify.configure(outputs, { ssr: true });
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
