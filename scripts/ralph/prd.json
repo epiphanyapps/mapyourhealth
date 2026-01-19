@@ -771,7 +771,7 @@
         "yarn type-check passes"
       ],
       "priority": 45,
-      "passes": false,
+      "passes": true,
       "notes": "Depends on US-044 for seed data. Major change - screens switch from sync mock data to async API calls."
     },
     {

@@ -432,3 +432,31 @@ Branch: ralph/safety-dashboard-mvp
   - calculateStatus helper matches mobile mock data logic for consistency
   - Use tsx (not ts-node) for modern ESM-based TypeScript execution
 ---
+
+## 2026-01-19 - US-045: Switch mobile app from mock data to Amplify backend
+- Created StatDefinitionsContext to cache stat definitions from Amplify on app startup
+- Created useZipCodeData hook for async data fetching with loading/error states
+- Updated DashboardScreen to use async data fetching from Amplify with fallback to mock data
+- Updated CategoryDetailScreen to use async data fetching with loading/error/empty states
+- Added StatDefinitionsProvider to App.tsx provider hierarchy
+- Files created:
+  - apps/mobile/app/context/StatDefinitionsContext.tsx
+  - apps/mobile/app/hooks/useZipCodeData.ts
+- Files modified:
+  - apps/mobile/app/App.tsx (added StatDefinitionsProvider)
+  - apps/mobile/app/screens/DashboardScreen.tsx (async data, loading/error states)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (async data, loading/error states)
+- Features implemented:
+  - Loading spinner while fetching data
+  - Error state with retry button when API fails
+  - "No data" state when zip code has no stats in backend
+  - Mock data fallback banner shown in __DEV__ mode when using local data
+  - Stat definitions cached in context for use across screens
+- **Learnings for future iterations:**
+  - Amplify types have nullable fields (category, higherIsBad, status) - use ?? for defaults
+  - Use `import type { X } from "@/services/amplify/data"` to get Amplify model types
+  - StatDefinitionsProvider should wrap ThemeProvider so screens can use both contexts
+  - useZipCodeData hook depends on statDefinitions context - waits for defs before fetching
+  - Keep mock data as fallback: import getMockZipCodeData from @/data/helpers
+  - Helper functions (getWorstStatusForCategory, getStatsForCategory, getAlertStats) now take statDefinitions as param
+---
