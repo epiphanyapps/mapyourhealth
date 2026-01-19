@@ -900,7 +900,7 @@
         "yarn type-check passes"
       ],
       "priority": 52,
-      "passes": false,
+      "passes": true,
       "notes": "Social feature. Simple text sharing first, deep links can be added later."
     },
     {

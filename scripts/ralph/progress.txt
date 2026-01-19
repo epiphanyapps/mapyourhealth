@@ -603,3 +603,23 @@ Branch: ralph/safety-dashboard-mvp
   - Stream handler returns batchItemFailures array for partial batch failure handling
   - ZipCodeSubscription model needs secondary index on zipCode for efficient subscriber queries
 ---
+
+## 2026-01-19 - US-052: Share safety data feature
+- Added share functionality to DashboardScreen and CategoryDetailScreen
+- Implemented using React Native Share API
+- Share text includes status emojis (🔴🟡🟢), location name, and deep link URL
+- Files modified:
+  - apps/mobile/app/screens/DashboardScreen.tsx (added Share button in action row with Follow)
+  - apps/mobile/app/screens/CategoryDetailScreen.tsx (added Share button in header)
+- Features implemented:
+  - DashboardScreen: Share button in horizontal action row next to Follow button
+  - CategoryDetailScreen: Share button via Header RightActionComponent
+  - Share text format includes all category statuses with emojis
+  - Category detail share includes individual stat values and units
+  - Deep link URL format: mapyourhealth://zip/{zipCode}
+- **Learnings for future iterations:**
+  - Header component supports RightActionComponent prop for custom header actions
+  - React Native Share API works cross-platform: Share.share({ message, title })
+  - Variables used in useCallback dependencies must be declared before the callback
+  - Follow and Share buttons work well in a horizontal flex row with gap spacing
+---
