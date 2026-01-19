@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Amplify } from "aws-amplify";
-import { signIn, fetchAuthSession } from "aws-amplify/auth";
+import { signIn, signOut, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 import outputs from "../../../amplify_outputs.json";
 
 // DEBUG: Log and configure Amplify
@@ -34,6 +34,50 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+
+  // Check if user is already authenticated on mount
+  useEffect(() => {
+    const checkExistingAuth = async () => {
+      try {
+        const user = await getCurrentUser();
+        if (user) {
+          // User is signed in, check if admin
+          const session = await fetchAuthSession();
+          const groups =
+            (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
+            [];
+
+          if (groups.includes("admin")) {
+            // Already signed in as admin, redirect to home
+            router.push("/");
+            return;
+          } else {
+            // Signed in but not admin, sign out
+            await signOut();
+          }
+        }
+      } catch {
+        // Not signed in, continue showing login form
+      } finally {
+        setIsCheckingAuth(false);
+      }
+    };
+
+    checkExistingAuth();
+  }, [router]);
+
+  const handleSignOut = async () => {
+    setIsLoading(true);
+    try {
+      await signOut();
+      setError("");
+    } catch (err) {
+      console.error("Sign out error:", err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +85,13 @@ export default function LoginPage() {
     setIsLoading(true);
 
     try {
+      // Sign out any existing user first
+      try {
+        await signOut();
+      } catch {
+        // Ignore sign out errors
+      }
+
       await signIn({ username: email, password });
 
       // Check if user is in admin group
@@ -50,6 +101,7 @@ export default function LoginPage() {
         [];
 
       if (!groups.includes("admin")) {
+        await signOut();
         setError(
           "Access denied. You must be an admin to access this portal."
         );
@@ -67,6 +119,14 @@ export default function LoginPage() {
       setIsLoading(false);
     }
   };
+
+  if (isCheckingAuth) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-muted/50">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted/50">
