@@ -17,7 +17,9 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
+    console.log("=== ADMIN LAYOUT: useEffect ===", { isLoading, isAuthenticated, isAdmin });
     if (!isLoading && (!isAuthenticated || !isAdmin)) {
+      console.log("=== ADMIN LAYOUT: Redirecting to /login ===");
       router.push("/login");
     }
   }, [isLoading, isAuthenticated, isAdmin, router]);

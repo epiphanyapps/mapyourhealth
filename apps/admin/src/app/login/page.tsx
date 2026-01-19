@@ -39,28 +39,36 @@ export default function LoginPage() {
   // Check if user is already authenticated on mount
   useEffect(() => {
     const checkExistingAuth = async () => {
+      console.log("=== LOGIN PAGE: checkExistingAuth starting ===");
       try {
         const user = await getCurrentUser();
+        console.log("=== LOGIN PAGE: getCurrentUser ===", user);
         if (user) {
           // User is signed in, check if admin
           const session = await fetchAuthSession();
+          console.log("=== LOGIN PAGE: fetchAuthSession ===", session);
           const groups =
             (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
             [];
+          console.log("=== LOGIN PAGE: groups ===", groups);
 
           if (groups.includes("admin")) {
             // Already signed in as admin, redirect to home with full reload
+            console.log("=== LOGIN PAGE: User is admin, redirecting to / ===");
             window.location.href = "/";
             return;
           } else {
             // Signed in but not admin, sign out
+            console.log("=== LOGIN PAGE: User not admin, signing out ===");
             await signOut();
           }
         }
-      } catch {
+      } catch (error) {
         // Not signed in, continue showing login form
+        console.log("=== LOGIN PAGE: checkExistingAuth error ===", error);
       } finally {
         setIsCheckingAuth(false);
+        console.log("=== LOGIN PAGE: checkExistingAuth complete ===");
       }
     };
 
@@ -92,10 +100,20 @@ export default function LoginPage() {
         // Ignore sign out errors
       }
 
-      await signIn({ username: email, password });
+      const signInResult = await signIn({ username: email, password });
+      console.log("=== LOGIN: signIn result ===", signInResult);
+
+      // Check if sign in is complete
+      if (signInResult.nextStep?.signInStep !== "DONE") {
+        console.log("=== LOGIN: signIn not complete, nextStep ===", signInResult.nextStep);
+        setError(`Sign in requires additional step: ${signInResult.nextStep?.signInStep}`);
+        setIsLoading(false);
+        return;
+      }
 
       // Check if user is in admin group
       const session = await fetchAuthSession();
+      console.log("=== LOGIN: fetchAuthSession result ===", session);
       const groups =
         (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
         [];
