@@ -22,6 +22,7 @@ import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { ReportScreen } from "@/screens/ReportScreen"
 import { SubscriptionsSettingsScreen } from "@/screens/SubscriptionsSettingsScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
+import { StatTrendScreen } from "@/screens/StatTrendScreen"
 import { useAppTheme } from "@/theme/context"
 
 import { DemoNavigator } from "./DemoNavigator"
@@ -67,6 +68,7 @@ const AppStack = () => {
       {/* Screens available to all users (guests and authenticated) */}
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+      <Stack.Screen name="StatTrend" component={StatTrendScreen} />
 
       {/* Auth screens - available to guests for login/signup flow */}
       <Stack.Screen name="Login" component={LoginScreen} />

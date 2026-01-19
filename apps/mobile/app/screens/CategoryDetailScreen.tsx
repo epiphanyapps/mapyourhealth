@@ -307,6 +307,23 @@ mapyourhealth://zip/${zipData.zipCode}`
                 value={stat.value}
                 unit={definition.unit}
                 status={stat.status}
+                history={stat.history}
+                onViewTrends={
+                  stat.history && stat.history.length > 0
+                    ? () =>
+                        navigation.navigate("StatTrend", {
+                          statName: definition.name,
+                          statId: stat.statId,
+                          unit: definition.unit,
+                          currentValue: stat.value,
+                          currentStatus: stat.status,
+                          history: stat.history || [],
+                          higherIsBad: definition.thresholds.higherIsBad,
+                          lastUpdated: stat.lastUpdated,
+                          zipCode,
+                        })
+                    : undefined
+                }
               />
             ))
           ) : (

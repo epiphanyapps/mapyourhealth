@@ -50,6 +50,15 @@ const schema = a.schema({
     ]),
 
   /**
+   * Historical data point for a stat
+   */
+  StatHistoryEntry: a.customType({
+    value: a.float().required(),
+    status: a.enum(["danger", "warning", "safe"]),
+    recordedAt: a.datetime().required(),
+  }),
+
+  /**
    * Zip code stats - actual measurements for each location
    * Public read, admin write
    */
@@ -61,6 +70,7 @@ const schema = a.schema({
       status: a.enum(["danger", "warning", "safe"]),
       lastUpdated: a.datetime().required(),
       source: a.string(),
+      history: a.ref("StatHistoryEntry").array(),
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
