@@ -18,6 +18,17 @@ if (__DEV__) {
 }
 import "./utils/gestureHandler"
 
+import { Amplify } from "aws-amplify"
+import outputs from "../amplify_outputs.json"
+
+if (__DEV__) {
+  console.log("=== AMPLIFY CONFIG ===")
+  console.log("Region:", outputs.auth?.aws_region)
+  console.log("GraphQL URL:", outputs.data?.url)
+}
+
+Amplify.configure(outputs)
+
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"

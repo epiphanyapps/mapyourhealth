@@ -8,7 +8,24 @@
 import { generateClient } from 'aws-amplify/data'
 import type { Schema } from '@mapyourhealth/backend/amplify/data/resource'
 
-const client = generateClient<Schema>()
+// Lazy client initialization to ensure Amplify.configure() has been called first
+// Use IAM auth for public access (unauthenticated users can read public data)
+let _publicClient: ReturnType<typeof generateClient<Schema>> | null = null
+let _privateClient: ReturnType<typeof generateClient<Schema>> | null = null
+
+function getPublicClient() {
+  if (!_publicClient) {
+    _publicClient = generateClient<Schema>({ authMode: 'iam' })
+  }
+  return _publicClient
+}
+
+function getPrivateClient() {
+  if (!_privateClient) {
+    _privateClient = generateClient<Schema>({ authMode: 'userPool' })
+  }
+  return _privateClient
+}
 
 // Types for easier consumption
 export type StatDefinition = Schema['StatDefinition']['type']
@@ -17,10 +34,10 @@ export type ZipCodeSubscription = Schema['ZipCodeSubscription']['type']
 export type HazardReport = Schema['HazardReport']['type']
 
 /**
- * Fetch all stat definitions
+ * Fetch all stat definitions (public read - uses IAM auth)
  */
 export async function getStatDefinitions(): Promise<StatDefinition[]> {
-  const { data, errors } = await client.models.StatDefinition.list()
+  const { data, errors } = await getPublicClient().models.StatDefinition.list()
   if (errors) {
     console.error('Error fetching stat definitions:', errors)
     throw new Error('Failed to fetch stat definitions')
@@ -29,10 +46,10 @@ export async function getStatDefinitions(): Promise<StatDefinition[]> {
 }
 
 /**
- * Fetch stats for a specific zip code
+ * Fetch stats for a specific zip code (public read - uses IAM auth)
  */
 export async function getZipCodeStats(zipCode: string): Promise<ZipCodeStat[]> {
-  const { data, errors } = await client.models.ZipCodeStat.listZipCodeStatByZipCode({
+  const { data, errors } = await getPublicClient().models.ZipCodeStat.listZipCodeStatByZipCode({
     zipCode,
   })
   if (errors) {
@@ -58,7 +75,7 @@ export async function createZipCodeSubscription(
   state?: string,
   options?: CreateSubscriptionOptions,
 ): Promise<ZipCodeSubscription> {
-  const { data, errors } = await client.models.ZipCodeSubscription.create({
+  const { data, errors } = await getPrivateClient().models.ZipCodeSubscription.create({
     zipCode,
     cityName,
     state,
@@ -79,7 +96,7 @@ export async function createZipCodeSubscription(
  * Delete a subscription by ID
  */
 export async function deleteZipCodeSubscription(id: string): Promise<void> {
-  const { errors } = await client.models.ZipCodeSubscription.delete({ id })
+  const { errors } = await getPrivateClient().models.ZipCodeSubscription.delete({ id })
   if (errors) {
     console.error('Error deleting subscription:', errors)
     throw new Error('Failed to delete subscription')
@@ -90,7 +107,7 @@ export async function deleteZipCodeSubscription(id: string): Promise<void> {
  * Get all subscriptions for the current user
  */
 export async function getUserZipCodeSubscriptions(): Promise<ZipCodeSubscription[]> {
-  const { data, errors } = await client.models.ZipCodeSubscription.list()
+  const { data, errors } = await getPrivateClient().models.ZipCodeSubscription.list()
   if (errors) {
     console.error('Error fetching user subscriptions:', errors)
     throw new Error('Failed to fetch user subscriptions')
@@ -107,7 +124,7 @@ export async function createHazardReport(reportData: {
   location: string
   zipCode?: string
 }): Promise<HazardReport> {
-  const { data, errors } = await client.models.HazardReport.create({
+  const { data, errors } = await getPrivateClient().models.HazardReport.create({
     ...reportData,
     status: 'pending',
   })
@@ -125,7 +142,7 @@ export async function createHazardReport(reportData: {
  * Get all hazard reports for the current user
  */
 export async function getUserHazardReports(): Promise<HazardReport[]> {
-  const { data, errors } = await client.models.HazardReport.list()
+  const { data, errors } = await getPrivateClient().models.HazardReport.list()
   if (errors) {
     console.error('Error fetching hazard reports:', errors)
     throw new Error('Failed to fetch hazard reports')
