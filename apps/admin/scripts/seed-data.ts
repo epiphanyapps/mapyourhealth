@@ -376,6 +376,420 @@ const zipCodeData: ZipCodeData[] = [
       { statId: "disaster-flood", value: 5 }, // Warning
     ],
   },
+  // 11. Corona, Queens, NY - Dense urban area
+  {
+    info: { zipCode: "11368", cityName: "Corona", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 11 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 108 }, // Warning
+      { statId: "air-pm25", value: 24 }, // Warning
+      { statId: "air-ozone", value: 52 }, // Warning
+      { statId: "health-covid", value: 130 }, // Warning
+      { statId: "health-flu", value: 28 }, // Warning
+      { statId: "health-access", value: 86 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 5 }, // Warning
+    ],
+  },
+  // 12. College Point, Queens, NY - Near water, flood risk
+  {
+    info: { zipCode: "11356", cityName: "College Point", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 9 },
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 95 },
+      { statId: "air-pm25", value: 20 }, // Warning
+      { statId: "air-ozone", value: 48 },
+      { statId: "health-covid", value: 115 }, // Warning
+      { statId: "health-flu", value: 26 }, // Warning
+      { statId: "health-access", value: 83 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 7 }, // Danger (coastal area)
+    ],
+  },
+  // ============================================================================
+  // Manhattan Zip Codes
+  // ============================================================================
+  // 13. Lower East Side, Manhattan - Older buildings, mixed conditions
+  {
+    info: { zipCode: "10002", cityName: "Lower East Side", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 13 }, // Warning
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 105 }, // Warning
+      { statId: "air-pm25", value: 25 }, // Warning
+      { statId: "air-ozone", value: 46 },
+      { statId: "health-covid", value: 140 }, // Warning
+      { statId: "health-flu", value: 32 }, // Warning
+      { statId: "health-access", value: 89 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning
+    ],
+  },
+  // 14. Greenwich Village, Manhattan - Generally good conditions
+  {
+    info: { zipCode: "10003", cityName: "Greenwich Village", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 8 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 85 },
+      { statId: "air-pm25", value: 18 }, // Warning
+      { statId: "air-ozone", value: 42 },
+      { statId: "health-covid", value: 95 },
+      { statId: "health-flu", value: 22 },
+      { statId: "health-access", value: 96 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 15. SoHo, Manhattan - Trendy area, moderate air quality
+  {
+    info: { zipCode: "10012", cityName: "SoHo", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 7 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 92 },
+      { statId: "air-pm25", value: 19 }, // Warning
+      { statId: "air-ozone", value: 44 },
+      { statId: "health-covid", value: 85 },
+      { statId: "health-flu", value: 20 },
+      { statId: "health-access", value: 95 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 16. Tribeca, Manhattan - Excellent healthcare, near water
+  {
+    info: { zipCode: "10013", cityName: "Tribeca", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 6 },
+      { statId: "water-nitrate", value: 2 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 78 },
+      { statId: "air-pm25", value: 16 }, // Warning
+      { statId: "air-ozone", value: 40 },
+      { statId: "health-covid", value: 70 },
+      { statId: "health-flu", value: 18 },
+      { statId: "health-access", value: 97 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 5 }, // Warning (coastal)
+    ],
+  },
+  // 17. Murray Hill, Manhattan - Dense residential
+  {
+    info: { zipCode: "10016", cityName: "Murray Hill", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 10 }, // Warning
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 98 },
+      { statId: "air-pm25", value: 21 }, // Warning
+      { statId: "air-ozone", value: 45 },
+      { statId: "health-covid", value: 105 }, // Warning
+      { statId: "health-flu", value: 25 }, // Warning
+      { statId: "health-access", value: 94 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 18. Midtown East, Manhattan - High traffic area
+  {
+    info: { zipCode: "10017", cityName: "Midtown East", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 9 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 118 }, // Warning
+      { statId: "air-pm25", value: 28 }, // Warning
+      { statId: "air-ozone", value: 52 }, // Warning
+      { statId: "health-covid", value: 125 }, // Warning
+      { statId: "health-flu", value: 28 }, // Warning
+      { statId: "health-access", value: 95 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 2 },
+    ],
+  },
+  // 19. Upper West Side, Manhattan - Family-friendly, good healthcare
+  {
+    info: { zipCode: "10023", cityName: "Upper West Side", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 7 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 75 },
+      { statId: "air-pm25", value: 14 },
+      { statId: "air-ozone", value: 38 },
+      { statId: "health-covid", value: 80 },
+      { statId: "health-flu", value: 19 },
+      { statId: "health-access", value: 96 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 2 },
+    ],
+  },
+  // 20. Upper East Side, Manhattan - Affluent, excellent services
+  {
+    info: { zipCode: "10028", cityName: "Upper East Side", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 6 },
+      { statId: "water-nitrate", value: 2 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 70 },
+      { statId: "air-pm25", value: 13 },
+      { statId: "air-ozone", value: 36 },
+      { statId: "health-covid", value: 65 },
+      { statId: "health-flu", value: 16 },
+      { statId: "health-access", value: 98 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 2 },
+    ],
+  },
+  // 21. East Harlem, Manhattan - Older infrastructure, health disparities
+  {
+    info: { zipCode: "10029", cityName: "East Harlem", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 16 }, // Danger
+      { statId: "water-nitrate", value: 6 },
+      { statId: "water-bacteria", value: 2 }, // Warning
+      { statId: "air-aqi", value: 125 }, // Warning
+      { statId: "air-pm25", value: 30 }, // Warning
+      { statId: "air-ozone", value: 55 }, // Warning
+      { statId: "health-covid", value: 180 }, // Warning
+      { statId: "health-flu", value: 40 }, // Warning
+      { statId: "health-access", value: 78 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning
+    ],
+  },
+  // 22. Harlem, Manhattan - Revitalized but aging infrastructure
+  {
+    info: { zipCode: "10027", cityName: "Harlem", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 14 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 112 }, // Warning
+      { statId: "air-pm25", value: 26 }, // Warning
+      { statId: "air-ozone", value: 50 }, // Warning
+      { statId: "health-covid", value: 160 }, // Warning
+      { statId: "health-flu", value: 35 }, // Warning
+      { statId: "health-access", value: 82 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 23. Washington Heights, Manhattan - Hilly area, diverse community
+  {
+    info: { zipCode: "10032", cityName: "Washington Heights", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 12 }, // Warning
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 95 },
+      { statId: "air-pm25", value: 22 }, // Warning
+      { statId: "air-ozone", value: 46 },
+      { statId: "health-covid", value: 145 }, // Warning
+      { statId: "health-flu", value: 30 }, // Warning
+      { statId: "health-access", value: 85 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 24. Financial District, Manhattan - Modern infrastructure
+  {
+    info: { zipCode: "10038", cityName: "Financial District", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 5 },
+      { statId: "water-nitrate", value: 2 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 88 },
+      { statId: "air-pm25", value: 17 }, // Warning
+      { statId: "air-ozone", value: 43 },
+      { statId: "health-covid", value: 90 },
+      { statId: "health-flu", value: 21 },
+      { statId: "health-access", value: 93 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 6 }, // Warning (coastal/low-lying)
+    ],
+  },
+  // ============================================================================
+  // Queens Zip Codes
+  // ============================================================================
+  // 25. Long Island City, Queens - Industrial turned residential
+  {
+    info: { zipCode: "11101", cityName: "Long Island City", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 10 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 102 }, // Warning
+      { statId: "air-pm25", value: 23 }, // Warning
+      { statId: "air-ozone", value: 49 },
+      { statId: "health-covid", value: 120 }, // Warning
+      { statId: "health-flu", value: 27 }, // Warning
+      { statId: "health-access", value: 88 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 6 }, // Warning (waterfront)
+    ],
+  },
+  // 26. Astoria, Queens - Vibrant neighborhood, good transit
+  {
+    info: { zipCode: "11102", cityName: "Astoria", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 9 },
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 90 },
+      { statId: "air-pm25", value: 19 }, // Warning
+      { statId: "air-ozone", value: 45 },
+      { statId: "health-covid", value: 110 }, // Warning
+      { statId: "health-flu", value: 24 },
+      { statId: "health-access", value: 87 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning
+    ],
+  },
+  // 27. Flushing, Queens - Busy commercial area
+  {
+    info: { zipCode: "11354", cityName: "Flushing", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 10 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 115 }, // Warning
+      { statId: "air-pm25", value: 26 }, // Warning
+      { statId: "air-ozone", value: 53 }, // Warning
+      { statId: "health-covid", value: 135 }, // Warning
+      { statId: "health-flu", value: 29 }, // Warning
+      { statId: "health-access", value: 84 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 5 }, // Warning
+    ],
+  },
+  // 28. Jackson Heights, Queens - Dense, diverse neighborhood
+  {
+    info: { zipCode: "11372", cityName: "Jackson Heights", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 11 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 108 }, // Warning
+      { statId: "air-pm25", value: 24 }, // Warning
+      { statId: "air-ozone", value: 51 }, // Warning
+      { statId: "health-covid", value: 155 }, // Warning
+      { statId: "health-flu", value: 33 }, // Warning
+      { statId: "health-access", value: 83 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning
+    ],
+  },
+  // 29. Elmhurst, Queens - Dense residential, diverse
+  {
+    info: { zipCode: "11373", cityName: "Elmhurst", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 12 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 112 }, // Warning
+      { statId: "air-pm25", value: 25 }, // Warning
+      { statId: "air-ozone", value: 52 }, // Warning
+      { statId: "health-covid", value: 165 }, // Warning
+      { statId: "health-flu", value: 35 }, // Warning
+      { statId: "health-access", value: 81 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning
+    ],
+  },
+  // 30. Forest Hills, Queens - Leafy, suburban feel
+  {
+    info: { zipCode: "11375", cityName: "Forest Hills", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 7 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 78 },
+      { statId: "air-pm25", value: 15 }, // Warning
+      { statId: "air-ozone", value: 40 },
+      { statId: "health-covid", value: 85 },
+      { statId: "health-flu", value: 20 },
+      { statId: "health-access", value: 91 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 31. Bayside, Queens - Quiet, residential
+  {
+    info: { zipCode: "11361", cityName: "Bayside", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 6 },
+      { statId: "water-nitrate", value: 3 },
+      { statId: "water-bacteria", value: 0 },
+      { statId: "air-aqi", value: 72 },
+      { statId: "air-pm25", value: 14 },
+      { statId: "air-ozone", value: 38 },
+      { statId: "health-covid", value: 75 },
+      { statId: "health-flu", value: 18 },
+      { statId: "health-access", value: 89 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 4 }, // Warning (near water)
+    ],
+  },
+  // 32. Jamaica, Queens - Major transit hub
+  {
+    info: { zipCode: "11432", cityName: "Jamaica", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 13 }, // Warning
+      { statId: "water-nitrate", value: 5 },
+      { statId: "water-bacteria", value: 2 }, // Warning
+      { statId: "air-aqi", value: 118 }, // Warning
+      { statId: "air-pm25", value: 27 }, // Warning
+      { statId: "air-ozone", value: 54 }, // Warning
+      { statId: "health-covid", value: 170 }, // Warning
+      { statId: "health-flu", value: 38 }, // Warning
+      { statId: "health-access", value: 79 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 5 }, // Warning
+    ],
+  },
+  // 33. Ridgewood, Queens - Border area with Brooklyn
+  {
+    info: { zipCode: "11385", cityName: "Ridgewood", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 10 }, // Warning
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 95 },
+      { statId: "air-pm25", value: 21 }, // Warning
+      { statId: "air-ozone", value: 47 },
+      { statId: "health-covid", value: 125 }, // Warning
+      { statId: "health-flu", value: 28 }, // Warning
+      { statId: "health-access", value: 85 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 3 },
+    ],
+  },
+  // 34. Rockaway Beach, Queens - Coastal area, flood risk
+  {
+    info: { zipCode: "11693", cityName: "Rockaway Beach", state: "NY" },
+    stats: [
+      { statId: "water-lead", value: 8 },
+      { statId: "water-nitrate", value: 4 },
+      { statId: "water-bacteria", value: 1 }, // Warning
+      { statId: "air-aqi", value: 65 },
+      { statId: "air-pm25", value: 12 },
+      { statId: "air-ozone", value: 35 },
+      { statId: "health-covid", value: 90 },
+      { statId: "health-flu", value: 22 },
+      { statId: "health-access", value: 76 },
+      { statId: "disaster-wildfire", value: 1 },
+      { statId: "disaster-flood", value: 9 }, // Danger (beach/coastal)
+    ],
+  },
 ];
 
 // ============================================================================
