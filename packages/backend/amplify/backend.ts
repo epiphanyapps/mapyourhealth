@@ -223,10 +223,7 @@ const functionUrl = requestMagicLinkLambda.addFunctionUrl({
   authType: FunctionUrlAuthType.NONE,
   cors: {
     allowedOrigins: ['*'],
-    allowedMethods: [
-      HttpMethod.POST,
-      HttpMethod.OPTIONS,
-    ],
+    allowedMethods: [HttpMethod.POST],
     allowedHeaders: ['Content-Type'],
   },
 });
