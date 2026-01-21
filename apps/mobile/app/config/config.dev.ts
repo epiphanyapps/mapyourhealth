@@ -7,7 +7,6 @@
  */
 export default {
   API_URL: "https://api.rss2json.com/v1/",
-  // Magic Link API URL - populated from Amplify backend outputs after deployment
-  // Format: https://<function-id>.lambda-url.<region>.on.aws/
-  MAGIC_LINK_API_URL: "",
+  // Magic Link API URL - from Amplify backend deployment
+  MAGIC_LINK_API_URL: "https://kfnd5f23ymt4mnkziuc7d7ybwq0gfsln.lambda-url.us-east-1.on.aws/",
 }
