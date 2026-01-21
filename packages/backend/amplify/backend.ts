@@ -6,6 +6,7 @@ import {
   EventSourceMapping,
   Function as LambdaFunction,
   FunctionUrlAuthType,
+  HttpMethod,
 } from 'aws-cdk-lib/aws-lambda';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import { auth } from './auth/resource';
@@ -223,8 +224,8 @@ const functionUrl = requestMagicLinkLambda.addFunctionUrl({
   cors: {
     allowedOrigins: ['*'],
     allowedMethods: [
-      require('aws-cdk-lib/aws-lambda').HttpMethod.POST,
-      require('aws-cdk-lib/aws-lambda').HttpMethod.OPTIONS,
+      HttpMethod.POST,
+      HttpMethod.OPTIONS,
     ],
     allowedHeaders: ['Content-Type'],
   },
