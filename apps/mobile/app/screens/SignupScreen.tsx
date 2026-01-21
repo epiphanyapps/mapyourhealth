@@ -15,12 +15,25 @@ import { PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
-import { usePendingAction } from "@/context/PendingActionContext"
+import { usePendingAction, type PendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
 interface SignupScreenProps extends AppStackScreenProps<"Signup"> {}
+
+function getContextMessage(action: PendingAction): string {
+  switch (action.type) {
+    case "notify_when_available":
+      return `Sign up to get notified when data for ${action.payload.zipCode} becomes available`
+    case "follow_zip_code":
+      return `Sign up to follow ${action.payload.zipCode} and receive safety alerts`
+    case "report_hazard":
+      return "Sign up to report a hazard in your area"
+    default:
+      return "Create an account to complete your action"
+  }
+}
 
 export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
   const passwordInput = useRef<TextInput>(null)
@@ -128,7 +141,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
       <Text text="Create Account" preset="heading" style={themed($heading)} />
       {pendingAction && (
         <Text
-          text="Create an account to complete your action"
+          text={getContextMessage(pendingAction)}
           preset="formHelper"
           style={themed($pendingActionHint)}
         />
@@ -188,6 +201,14 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
       />
 
       <Button
+        text="Sign up with email link"
+        style={themed($magicLinkButton)}
+        preset="default"
+        textStyle={themed($magicLinkText)}
+        onPress={() => navigation.navigate("MagicLink")}
+      />
+
+      <Button
         text="Already have an account? Log in"
         style={themed($loginButton)}
         preset="default"
@@ -226,6 +247,15 @@ const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 
 const $signupButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.xs,
+})
+
+const $magicLinkButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.lg,
+})
+
+const $magicLinkText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.tint,
+  fontSize: 14,
 })
 
 const $loginButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({

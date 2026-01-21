@@ -2,6 +2,8 @@ export interface ConfigBaseProps {
   persistNavigation: "always" | "dev" | "prod" | "never"
   catchErrors: "always" | "dev" | "prod" | "never"
   exitRoutes: string[]
+  API_URL?: string
+  MAGIC_LINK_API_URL?: string
 }
 
 export type PersistNavigationConfig = ConfigBaseProps["persistNavigation"]

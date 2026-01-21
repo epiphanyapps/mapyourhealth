@@ -5,8 +5,9 @@
  * and a "main" flow which the user will use once logged in.
  */
 import { ActivityIndicator, View, ViewStyle } from "react-native"
-import { NavigationContainer } from "@react-navigation/native"
+import { NavigationContainer, LinkingOptions } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
+import * as Linking from "expo-linking"
 
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
@@ -15,6 +16,9 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
+import { MagicLinkScreen } from "@/screens/MagicLinkScreen"
+import { MagicLinkSentScreen } from "@/screens/MagicLinkSentScreen"
+import { MagicLinkVerifyScreen } from "@/screens/MagicLinkVerifyScreen"
 import { OnboardingZipCodesScreen } from "@/screens/OnboardingZipCodesScreen"
 import { WelcomeScreen } from "@/screens/WelcomeScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
@@ -77,6 +81,9 @@ const AppStack = () => {
       <Stack.Screen name="Signup" component={SignupScreen} />
       <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
       <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="MagicLink" component={MagicLinkScreen} />
+      <Stack.Screen name="MagicLinkSent" component={MagicLinkSentScreen} />
+      <Stack.Screen name="MagicLinkVerify" component={MagicLinkVerifyScreen} />
 
       {/* Authenticated-only screens */}
       {isAuthenticated && (
@@ -102,13 +109,35 @@ const $loadingContainer: ViewStyle = {
   alignItems: "center",
 }
 
+/**
+ * Deep linking configuration for the app
+ * Handles magic link authentication URLs
+ */
+const linking: LinkingOptions<AppStackParamList> = {
+  prefixes: [Linking.createURL("/"), "mapyourhealth://"],
+  config: {
+    screens: {
+      MagicLinkVerify: {
+        path: "auth/verify",
+        parse: {
+          email: (email: string) => decodeURIComponent(email),
+          token: (token: string) => token,
+        },
+      },
+      Dashboard: "dashboard",
+      Login: "login",
+      Signup: "signup",
+    },
+  },
+}
+
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} {...props}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} {...props}>
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>

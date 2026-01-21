@@ -1,16 +1,19 @@
 import { defineBackend } from '@aws-amplify/backend';
-import { Stack } from 'aws-cdk-lib';
+import { Stack, CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { Policy, PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
   StartingPosition,
   EventSourceMapping,
   Function as LambdaFunction,
+  FunctionUrlAuthType,
 } from 'aws-cdk-lib/aws-lambda';
+import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { sendNotifications } from './functions/send-notifications/resource';
 import { sendEmailAlert } from './functions/send-email-alert/resource';
 import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
+import { requestMagicLink } from './functions/request-magic-link/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -24,6 +27,7 @@ const backend = defineBackend({
   sendNotifications,
   sendEmailAlert,
   onZipCodeStatUpdate,
+  requestMagicLink,
   // storage,
 });
 
@@ -145,3 +149,90 @@ const eventSourceMapping = new EventSourceMapping(
 
 // Ensure the mapping depends on the stream policy
 eventSourceMapping.node.addDependency(streamPolicy);
+
+// ============================================
+// Magic Link Authentication Setup
+// ============================================
+
+// Get User Pool ID for environment variables
+const userPoolId = backend.auth.resources.userPool.userPoolId;
+const authStack = Stack.of(backend.auth.resources.userPool);
+
+// Create DynamoDB table for rate limiting magic link requests
+const rateLimitTable = new Table(authStack, 'MagicLinkRateLimitTable', {
+  tableName: `MagicLinkRateLimit-${authStack.stackName}`,
+  partitionKey: { name: 'pk', type: AttributeType.STRING },
+  billingMode: BillingMode.PAY_PER_REQUEST,
+  timeToLiveAttribute: 'ttl',
+  removalPolicy: RemovalPolicy.DESTROY, // For development - change to RETAIN for production
+});
+
+// Get the requestMagicLink Lambda function
+const requestMagicLinkLambda = backend.requestMagicLink.resources.lambda as LambdaFunction;
+
+// Set environment variables for requestMagicLink function
+requestMagicLinkLambda.addEnvironment('USER_POOL_ID', userPoolId);
+requestMagicLinkLambda.addEnvironment('RATE_LIMIT_TABLE_NAME', rateLimitTable.tableName);
+
+// Grant requestMagicLink function permissions for Cognito
+const cognitoPolicy = new Policy(authStack, 'RequestMagicLinkCognitoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'cognito-idp:AdminGetUser',
+        'cognito-idp:AdminCreateUser',
+        'cognito-idp:AdminUpdateUserAttributes',
+      ],
+      resources: [backend.auth.resources.userPool.userPoolArn],
+    }),
+  ],
+});
+backend.requestMagicLink.resources.lambda.role?.attachInlinePolicy(cognitoPolicy);
+
+// Grant requestMagicLink function permissions for SES
+const requestMagicLinkSesPolicy = new Policy(authStack, 'RequestMagicLinkSESPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    }),
+  ],
+});
+backend.requestMagicLink.resources.lambda.role?.attachInlinePolicy(requestMagicLinkSesPolicy);
+
+// Grant requestMagicLink function permissions for DynamoDB rate limit table
+const rateLimitPolicy = new Policy(authStack, 'RequestMagicLinkRateLimitPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:GetItem',
+        'dynamodb:PutItem',
+      ],
+      resources: [rateLimitTable.tableArn],
+    }),
+  ],
+});
+backend.requestMagicLink.resources.lambda.role?.attachInlinePolicy(rateLimitPolicy);
+
+// Create a function URL for the requestMagicLink function (public access)
+const functionUrl = requestMagicLinkLambda.addFunctionUrl({
+  authType: FunctionUrlAuthType.NONE,
+  cors: {
+    allowedOrigins: ['*'],
+    allowedMethods: [
+      require('aws-cdk-lib/aws-lambda').HttpMethod.POST,
+      require('aws-cdk-lib/aws-lambda').HttpMethod.OPTIONS,
+    ],
+    allowedHeaders: ['Content-Type'],
+  },
+});
+
+// Export the function URL for frontend use
+new CfnOutput(authStack, 'RequestMagicLinkFunctionUrl', {
+  value: functionUrl.url,
+  description: 'URL for the Request Magic Link function',
+  exportName: `${authStack.stackName}-RequestMagicLinkUrl`,
+});

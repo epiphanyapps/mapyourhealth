@@ -1,10 +1,14 @@
 import { defineAuth } from '@aws-amplify/backend';
+import { defineAuthChallenge } from '../functions/define-auth-challenge/resource';
+import { createAuthChallenge } from '../functions/create-auth-challenge/resource';
+import { verifyAuthChallengeResponse } from '../functions/verify-auth-challenge/resource';
 
 /**
  * Authentication configuration for MapYourHealth
  *
  * Features:
  * - Email/password authentication
+ * - Magic link (passwordless) authentication via custom auth flow
  * - Email verification required
  * - Admin group for portal access and data management
  *
@@ -24,6 +28,21 @@ export const auth = defineAuth({
       mutable: true,
       required: false,
     },
+    // Custom attributes for magic link authentication
+    'custom:magicLinkToken': {
+      dataType: 'String',
+      mutable: true,
+    },
+    'custom:magicLinkExpiry': {
+      dataType: 'String',
+      mutable: true,
+    },
+  },
+  // Cognito triggers for custom auth flow (magic link)
+  triggers: {
+    defineAuthChallenge,
+    createAuthChallenge,
+    verifyAuthChallengeResponse,
   },
   groups: ['admin'],
 });

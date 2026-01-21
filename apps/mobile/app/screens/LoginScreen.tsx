@@ -199,6 +199,14 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       />
 
       <Button
+        text="Email me a link instead"
+        style={themed($magicLinkButton)}
+        preset="default"
+        textStyle={themed($magicLinkText)}
+        onPress={() => navigation.navigate("MagicLink")}
+      />
+
+      <Button
         text="Don't have an account? Sign up"
         style={themed($signupButton)}
         preset="default"
@@ -248,6 +256,15 @@ const $forgotPasswordText: ThemedStyle<TextStyle> = ({ colors }) => ({
 
 const $loginButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.xs,
+})
+
+const $magicLinkButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.lg,
+})
+
+const $magicLinkText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.tint,
+  fontSize: 14,
 })
 
 const $signupButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({

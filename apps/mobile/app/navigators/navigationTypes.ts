@@ -23,6 +23,9 @@ export type AppStackParamList = {
   Signup: undefined
   ConfirmSignup: { email: string }
   ForgotPassword: undefined
+  MagicLink: undefined
+  MagicLinkSent: { email: string }
+  MagicLinkVerify: { email: string; token: string }
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: { zipCode?: string } | undefined
