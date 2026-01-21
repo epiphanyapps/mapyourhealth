@@ -16,9 +16,13 @@ export interface SearchBarProps {
    */
   onSubmit?: () => void
   /**
-   * Callback when the settings icon is pressed
+   * Callback when the avatar icon is pressed
    */
-  onSettingsPress?: () => void
+  onAvatarPress?: () => void
+  /**
+   * Whether the user is authenticated (affects avatar icon style)
+   */
+  isAuthenticated?: boolean
   /**
    * Placeholder text
    * @default "Search zip codes..."
@@ -31,13 +35,14 @@ export interface SearchBarProps {
 }
 
 /**
- * A search bar component with a search icon on the left and settings icon on the right.
+ * A search bar component with an avatar on the left and search input.
  *
  * @example
  * <SearchBar
  *   value={searchText}
  *   onChangeText={setSearchText}
- *   onSettingsPress={() => navigation.navigate("Settings")}
+ *   onAvatarPress={() => setIsProfileMenuVisible(true)}
+ *   isAuthenticated={isAuthenticated}
  * />
  */
 export function SearchBar(props: SearchBarProps) {
@@ -45,7 +50,8 @@ export function SearchBar(props: SearchBarProps) {
     value,
     onChangeText,
     onSubmit,
-    onSettingsPress,
+    onAvatarPress,
+    isAuthenticated = false,
     placeholder = "Search zip codes...",
     style,
   } = props
@@ -54,13 +60,24 @@ export function SearchBar(props: SearchBarProps) {
   const $container: ViewStyle = {
     flexDirection: "row",
     alignItems: "center",
+    marginHorizontal: 16,
+    gap: 12,
+  }
+
+  const $avatarButton: ViewStyle = {
+    padding: 4,
+  }
+
+  const $searchInputContainer: ViewStyle = {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
     backgroundColor: theme.colors.palette.neutral200,
     borderRadius: 12,
     borderWidth: 1,
     borderColor: theme.colors.border,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    marginHorizontal: 16,
   }
 
   const $searchIcon: ViewStyle = {
@@ -74,40 +91,41 @@ export function SearchBar(props: SearchBarProps) {
     padding: 0,
   }
 
-  const $settingsButton: ViewStyle = {
-    marginLeft: 8,
-    padding: 4,
-  }
-
   return (
     <View style={[$container, style]}>
-      <MaterialCommunityIcons
-        name="magnify"
-        size={20}
-        color={theme.colors.textDim}
-        style={$searchIcon}
-        accessibilityLabel="Search"
-      />
-      <TextInput
-        value={value}
-        onChangeText={onChangeText}
-        onSubmitEditing={onSubmit}
-        placeholder={placeholder}
-        placeholderTextColor={theme.colors.textDim}
-        style={$input}
-        returnKeyType="search"
-        keyboardType="number-pad"
-        accessibilityLabel="Search zip codes"
-        accessibilityHint="Enter a zip code to search"
-      />
       <Pressable
-        onPress={onSettingsPress}
-        style={$settingsButton}
-        accessibilityLabel="Settings"
+        onPress={onAvatarPress}
+        style={$avatarButton}
+        accessibilityLabel="Open profile menu"
         accessibilityRole="button"
       >
-        <MaterialCommunityIcons name="cog" size={20} color={theme.colors.textDim} />
+        <MaterialCommunityIcons
+          name={isAuthenticated ? "account-circle" : "account-circle-outline"}
+          size={32}
+          color={theme.colors.text}
+        />
       </Pressable>
+      <View style={$searchInputContainer}>
+        <MaterialCommunityIcons
+          name="magnify"
+          size={20}
+          color={theme.colors.textDim}
+          style={$searchIcon}
+          accessibilityLabel="Search"
+        />
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          onSubmitEditing={onSubmit}
+          placeholder={placeholder}
+          placeholderTextColor={theme.colors.textDim}
+          style={$input}
+          returnKeyType="search"
+          keyboardType="number-pad"
+          accessibilityLabel="Search zip codes"
+          accessibilityHint="Enter a zip code to search"
+        />
+      </View>
     </View>
   )
 }
