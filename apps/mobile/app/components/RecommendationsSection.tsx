@@ -41,7 +41,7 @@ export function RecommendationsSection(props: RecommendationsSectionProps) {
   }
 
   // Get unique categories from alert stats
-  const alertCategories = [...new Set(alertStats.map((a) => a.definition.category))]
+  const alertCategories = [...new Set(alertStats.filter((a) => a.definition).map((a) => a.definition.category))]
 
   // Get hazard category IDs for these stat categories
   const hazardCategoryIds: string[] = []

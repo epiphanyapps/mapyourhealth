@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
 import { LocationHeader } from "@/components/LocationHeader"
+import { ProfileMenu } from "@/components/ProfileMenu"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
 import { SearchBar } from "@/components/SearchBar"
@@ -41,7 +42,7 @@ interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScreen(props) {
   const { navigation, route } = props
   const { theme } = useAppTheme()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
@@ -60,6 +61,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const [currentZipCode, setCurrentZipCode] = useState(getDefaultZipCode())
   const [searchText, setSearchText] = useState("")
   const [isFollowing, setIsFollowing] = useState(false)
+  const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
   // Update zip code when primary subscription loads (for authenticated users)
   useEffect(() => {
@@ -174,9 +176,24 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         type: "notify_when_available",
         payload: { zipCode: currentZipCode },
       })
-      navigation.navigate("Login")
+      navigation.navigate("Signup")
     }
   }, [isAuthenticated, currentZipCode, addSubscription, setPendingAction, navigation])
+
+  // Handle Sign Out from profile menu
+  const handleSignOut = useCallback(async () => {
+    setIsProfileMenuVisible(false)
+    await logout()
+  }, [logout])
+
+  // Handle navigation from profile menu
+  const handleProfileMenuNavigate = useCallback(
+    (screen: string) => {
+      setIsProfileMenuVisible(false)
+      navigation.navigate(screen as any)
+    },
+    [navigation],
+  )
 
   // Handle Share button press - share safety data
   const handleShare = useCallback(async () => {
@@ -322,9 +339,8 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onSettingsPress={() => {
-              navigation.navigate("Login")
-            }}
+            onAvatarPress={() => setIsProfileMenuVisible(true)}
+            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -335,6 +351,14 @@ mapyourhealth://zip/${zipData.zipCode}`
             natural disasters in any area
           </Text>
         </View>
+        <ProfileMenu
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={handleProfileMenuNavigate}
+          onSignOut={handleSignOut}
+          isAuthenticated={isAuthenticated}
+          userEmail={user?.signInDetails?.loginId}
+        />
       </Screen>
     )
   }
@@ -348,19 +372,22 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onSettingsPress={() => {
-              if (isAuthenticated) {
-                navigation.navigate("Profile")
-              } else {
-                navigation.navigate("Login")
-              }
-            }}
+            onAvatarPress={() => setIsProfileMenuVisible(true)}
+            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.tint} />
           <Text style={{ marginTop: 12, color: theme.colors.textDim }}>Loading safety data...</Text>
         </View>
+        <ProfileMenu
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={handleProfileMenuNavigate}
+          onSignOut={handleSignOut}
+          isAuthenticated={isAuthenticated}
+          userEmail={user?.signInDetails?.loginId}
+        />
       </Screen>
     )
   }
@@ -373,13 +400,8 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onSettingsPress={() => {
-              if (isAuthenticated) {
-                navigation.navigate("Profile")
-              } else {
-                navigation.navigate("Login")
-              }
-            }}
+            onAvatarPress={() => setIsProfileMenuVisible(true)}
+            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -398,6 +420,14 @@ mapyourhealth://zip/${zipData.zipCode}`
             <Text style={$retryButtonText}>Try Again</Text>
           </Pressable>
         </View>
+        <ProfileMenu
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={handleProfileMenuNavigate}
+          onSignOut={handleSignOut}
+          isAuthenticated={isAuthenticated}
+          userEmail={user?.signInDetails?.loginId}
+        />
       </Screen>
     )
   }
@@ -410,13 +440,8 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onSettingsPress={() => {
-              if (isAuthenticated) {
-                navigation.navigate("Profile")
-              } else {
-                navigation.navigate("Login")
-              }
-            }}
+            onAvatarPress={() => setIsProfileMenuVisible(true)}
+            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -439,6 +464,14 @@ mapyourhealth://zip/${zipData.zipCode}`
             <Text style={$notifyButtonText}>{isSettingNotify ? "Setting up..." : "Notify Me"}</Text>
           </Pressable>
         </View>
+        <ProfileMenu
+          visible={isProfileMenuVisible}
+          onClose={() => setIsProfileMenuVisible(false)}
+          onNavigate={handleProfileMenuNavigate}
+          onSignOut={handleSignOut}
+          isAuthenticated={isAuthenticated}
+          userEmail={user?.signInDetails?.loginId}
+        />
       </Screen>
     )
   }
@@ -477,13 +510,8 @@ mapyourhealth://zip/${zipData.zipCode}`
         <SearchBar
           value={searchText}
           onChangeText={handleSearch}
-          onSettingsPress={() => {
-            if (isAuthenticated) {
-              navigation.navigate("SubscriptionsSettings")
-            } else {
-              navigation.navigate("Login")
-            }
-          }}
+          onAvatarPress={() => setIsProfileMenuVisible(true)}
+          isAuthenticated={isAuthenticated}
         />
       </View>
 
@@ -561,7 +589,7 @@ mapyourhealth://zip/${zipData.zipCode}`
       </View>
 
       {/* Warning Banner - shows for danger/warning stats */}
-      {priorityAlert && (
+      {priorityAlert && priorityAlert.definition && (
         <View style={$warningBannerContainer}>
           <WarningBanner
             statDefinition={priorityAlert.definition}
@@ -609,6 +637,16 @@ mapyourhealth://zip/${zipData.zipCode}`
         <MaterialCommunityIcons name="alert-circle-outline" size={20} color="#FFFFFF" />
         <Text style={$reportButtonText}>Report Hazard</Text>
       </Pressable>
+
+      {/* Profile Menu */}
+      <ProfileMenu
+        visible={isProfileMenuVisible}
+        onClose={() => setIsProfileMenuVisible(false)}
+        onNavigate={handleProfileMenuNavigate}
+        onSignOut={handleSignOut}
+        isAuthenticated={isAuthenticated}
+        userEmail={user?.signInDetails?.loginId}
+      />
     </Screen>
   )
 }

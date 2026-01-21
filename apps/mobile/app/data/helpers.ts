@@ -198,6 +198,7 @@ export function getAlertStats(
       stat,
       definition: defMap.get(stat.statId)!,
     }))
+    .filter((item) => item.definition)
 }
 
 /**
