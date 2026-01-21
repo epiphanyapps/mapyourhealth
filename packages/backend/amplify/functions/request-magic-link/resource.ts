@@ -11,6 +11,7 @@ export const requestMagicLink = defineFunction({
   entry: './handler.ts',
   timeoutSeconds: 30,
   memoryMB: 256,
+  resourceGroupName: 'auth',
   environment: {
     // These will be set dynamically in backend.ts
     USER_POOL_ID: '',
