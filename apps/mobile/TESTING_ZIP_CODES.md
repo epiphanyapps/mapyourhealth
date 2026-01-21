@@ -47,10 +47,13 @@ ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=yourpassword npx tsx apps/admin/scr
 
 ### Test Accounts
 
-| Role | Email | Password | Notes |
-|------|-------|----------|-------|
-| Admin | admin@mapyourhealth.com | (set in env) | Full admin access |
-| Test User | test@example.com | Test123! | Standard user for testing |
+| Role | Email | Password | Auth Method | Notes |
+|------|-------|----------|-------------|-------|
+| Admin | admin@mapyourhealth.com | (set in env) | Password | Full admin access |
+| Test User | test@example.com | Test123! | Password | Standard user for testing |
+| Magic Link User | magiclink@example.com | N/A | Magic Link | Passwordless user |
+
+**Note:** Magic link users do not have passwords. They can only authenticate via magic link. Users who sign up with a password can also use magic link to log in.
 
 ### Environment Configuration
 
@@ -58,6 +61,35 @@ The app uses different configurations based on environment:
 
 - **Development**: `app/config/config.dev.ts` - Points to sandbox backend
 - **Production**: `app/config/config.prod.ts` - Points to production backend
+
+### Testing Magic Link Backend API
+
+The magic link request endpoint is a Lambda Function URL. You can test it directly:
+
+**Get the Function URL:**
+After deployment, the URL is exported as a CloudFormation output. Check the Amplify console or run:
+```bash
+aws cloudformation describe-stacks --stack-name amplify-d3jl0ykn4qgj9r-main-branch-xxx --query "Stacks[0].Outputs[?contains(ExportName, 'RequestMagicLinkUrl')].OutputValue" --output text
+```
+
+**Test with curl:**
+```bash
+# Request a magic link
+curl -X POST "https://your-function-url.lambda-url.ca-central-1.on.aws/" \
+  -H "Content-Type: application/json" \
+  -d '{"email": "test@example.com"}'
+
+# Expected success response:
+# {"success": true, "message": "Magic link sent to your email"}
+
+# Expected rate limit response (after 3 requests in 15 min):
+# {"success": false, "error": "Too many requests. Please try again later."}
+```
+
+**SES Considerations:**
+- In sandbox mode, both sender and recipient emails must be verified
+- Verify test emails in SES console before testing
+- Production requires moving out of SES sandbox
 
 ---
 
@@ -106,56 +138,110 @@ The app supports multiple authentication methods:
 | Expired verification code | Error: "Code expired, request a new one" |
 | Invalid zip code | Error or empty data state |
 
-### Magic Link Sign Up
+### Magic Link Sign Up (Passwordless)
+
+Magic link authentication allows users to sign up and log in without a password. A secure one-time link is emailed that authenticates the user when clicked.
+
+#### Technical Details
+
+- **Deep Link Format**: `mapyourhealth://auth/verify?email={encoded_email}&token={token}`
+- **Token Expiry**: 15 minutes
+- **Rate Limit**: 3 requests per email per 15 minutes
+- **Token Length**: 32 bytes (cryptographically random)
 
 #### Test Steps
 
 1. **Launch App**
    - Tap "Sign Up" on welcome screen
-   - Select "Continue with Magic Link"
+   - Tap **"Sign up with email link"** button at the bottom
 
-2. **Enter Email**
+2. **Enter Email (MagicLinkScreen)**
    - Enter valid email address
    - Tap "Send Magic Link"
+   - Screen navigates to MagicLinkSentScreen on success
 
-3. **Check Email**
-   - Open magic link email
-   - Tap the link to verify
+3. **Check Email Confirmation (MagicLinkSentScreen)**
+   - Verify screen shows "Check Your Email" message
+   - Verify email address is displayed
+   - Verify "Link expires in 15 minutes" hint is shown
+   - Available actions:
+     - "Resend Link" - sends a new magic link
+     - "Open Email App" - opens device email app
+     - "Use Different Email" - returns to email entry
 
-4. **Complete Registration**
-   - App should auto-verify and proceed to profile setup
-   - Enter zip code to complete
+4. **Click Magic Link in Email**
+   - Email contains link in format: `mapyourhealth://auth/verify?email=...&token=...`
+   - Clicking link opens the app via deep link
+   - MagicLinkVerifyScreen shows loading spinner during verification
+
+5. **Verification Complete**
+   - On success: Auto-navigates to Dashboard
+   - On failure: Shows error with "Try Again" option
 
 #### Edge Cases to Test
 
 | Scenario | Expected Result |
 |----------|-----------------|
-| Invalid email | Error: "Please enter a valid email" |
-| Link expired (after 15 min) | Error: "Link expired, request a new one" |
-| Link already used | Error: "Link already used" |
-| Opening link on different device | Should still work if same email |
+| Invalid email format | Error: "Please enter a valid email address" |
+| Empty email | Button disabled or error on submit |
+| Link expired (after 15 min) | Error: "Magic link expired. Please request a new one." |
+| Invalid/tampered token | Error: "Invalid or expired magic link" |
+| Rate limit exceeded (4+ requests) | Error: "Too many requests. Please try again in 15 minutes." |
+| Opening link on different device | Works if email matches the token |
+| Link clicked twice | Second click fails (token cleared after first use) |
+| Network error during verification | Error with retry option |
+
+#### Simulating Deep Links (Testing)
+
+For simulator testing, use these commands:
+
+**iOS Simulator:**
+```bash
+xcrun simctl openurl booted "mapyourhealth://auth/verify?email=test%40example.com&token=abc123"
+```
+
+**Android Emulator:**
+```bash
+adb shell am start -a android.intent.action.VIEW -d "mapyourhealth://auth/verify?email=test%40example.com&token=abc123"
+```
 
 ### Login Flow
 
-#### Test Steps
+#### Email/Password Login
 
 1. **Existing User Login**
    - Tap "Log In" on welcome screen
    - Enter registered email and password
    - Verify dashboard loads
 
-2. **Magic Link Login**
-   - Tap "Log In"
-   - Select "Continue with Magic Link"
-   - Follow magic link flow
+2. **Forgot Password**
+   - Tap "Forgot Password?" link
+   - Follow password reset flow
+
+#### Magic Link Login
+
+1. **Tap "Log In"** on welcome screen
+2. **Tap "Email me a link instead"** button below the password field
+3. **Enter Email (MagicLinkScreen)**
+   - Enter your registered email address
+   - Tap "Send Magic Link"
+4. **Check Email (MagicLinkSentScreen)**
+   - Wait for magic link email
+   - Use "Open Email App" for quick access
+5. **Click Link in Email**
+   - Link opens app and verifies automatically
+   - On success, navigates directly to Dashboard
 
 #### Edge Cases to Test
 
 | Scenario | Expected Result |
 |----------|-----------------|
 | Wrong password | Error: "Incorrect email or password" |
-| Non-existent account | Error: "No account found with this email" |
-| Account locked (too many attempts) | Error: "Account temporarily locked" |
+| Non-existent account (password) | Error: "No account found with this email" |
+| Non-existent account (magic link) | Creates new account automatically |
+| Account locked (too many password attempts) | Error: "Account temporarily locked" |
+| Magic link for unregistered email | User is created and logged in |
+| Switching between password and magic link | Both methods work for same account |
 
 ---
 
@@ -485,6 +571,11 @@ Test the permission flow:
 | Auth errors | Verify amplify_outputs.json is present |
 | Notifications not received | Check device permissions, use physical device for iOS |
 | Zip code shows no data | Run seed script, verify zip code exists |
+| Magic link not received | Check SES sandbox mode, verify sender/recipient emails in SES |
+| Magic link deep link not working | Verify URL scheme in app.json, test with simulator commands |
+| "Invalid magic link" error | Token expired (15 min) or already used - request new link |
+| Rate limit error | Wait 15 minutes or use different email for testing |
+| Magic link works but auth fails | Check Cognito custom auth triggers are deployed |
 
 ### Debug Tools
 

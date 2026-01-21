@@ -13,6 +13,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
 import { LocationHeader } from "@/components/LocationHeader"
+import { NavHeader } from "@/components/NavHeader"
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
@@ -335,12 +336,14 @@ mapyourhealth://zip/${zipData.zipCode}`
   if (!currentZipCode) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <NavHeader
+          onProfilePress={() => setIsProfileMenuVisible(true)}
+          isAuthenticated={isAuthenticated}
+        />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onAvatarPress={() => setIsProfileMenuVisible(true)}
-            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -367,13 +370,14 @@ mapyourhealth://zip/${zipData.zipCode}`
   if (isLoading) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
-        <LocationHeader zipCode={currentZipCode} cityName="Loading..." />
+        <NavHeader
+          onProfilePress={() => setIsProfileMenuVisible(true)}
+          isAuthenticated={isAuthenticated}
+        />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onAvatarPress={() => setIsProfileMenuVisible(true)}
-            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$loadingContainer}>
@@ -396,12 +400,14 @@ mapyourhealth://zip/${zipData.zipCode}`
   if (error && !zipData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <NavHeader
+          onProfilePress={() => setIsProfileMenuVisible(true)}
+          isAuthenticated={isAuthenticated}
+        />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onAvatarPress={() => setIsProfileMenuVisible(true)}
-            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -436,12 +442,14 @@ mapyourhealth://zip/${zipData.zipCode}`
   if (!zipData) {
     return (
       <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
+        <NavHeader
+          onProfilePress={() => setIsProfileMenuVisible(true)}
+          isAuthenticated={isAuthenticated}
+        />
         <View style={$searchBarContainer}>
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
-            onAvatarPress={() => setIsProfileMenuVisible(true)}
-            isAuthenticated={isAuthenticated}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -495,6 +503,20 @@ mapyourhealth://zip/${zipData.zipCode}`
         ),
       }}
     >
+      {/* Navigation Header */}
+      <NavHeader
+        onProfilePress={() => setIsProfileMenuVisible(true)}
+        isAuthenticated={isAuthenticated}
+      />
+
+      {/* Search Bar */}
+      <View style={$searchBarContainer}>
+        <SearchBar
+          value={searchText}
+          onChangeText={handleSearch}
+        />
+      </View>
+
       {/* Location Header */}
       <LocationHeader
         zipCode={zipData.zipCode}
@@ -504,16 +526,6 @@ mapyourhealth://zip/${zipData.zipCode}`
             : zipData.cityName || zipData.state || "United States"
         }
       />
-
-      {/* Search Bar */}
-      <View style={$searchBarContainer}>
-        <SearchBar
-          value={searchText}
-          onChangeText={handleSearch}
-          onAvatarPress={() => setIsProfileMenuVisible(true)}
-          isAuthenticated={isAuthenticated}
-        />
-      </View>
 
       {/* Offline Banner - shown when using cached data while offline */}
       {isOffline && isCachedData && (

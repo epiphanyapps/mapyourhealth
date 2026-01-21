@@ -1,4 +1,4 @@
-import { View, TextInput, ViewStyle, TextStyle, StyleProp, Pressable } from "react-native"
+import { View, TextInput, ViewStyle, TextStyle, StyleProp } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useAppTheme } from "@/theme/context"
 
@@ -16,14 +16,6 @@ export interface SearchBarProps {
    */
   onSubmit?: () => void
   /**
-   * Callback when the avatar icon is pressed
-   */
-  onAvatarPress?: () => void
-  /**
-   * Whether the user is authenticated (affects avatar icon style)
-   */
-  isAuthenticated?: boolean
-  /**
    * Placeholder text
    * @default "Search zip codes..."
    */
@@ -35,14 +27,12 @@ export interface SearchBarProps {
 }
 
 /**
- * A search bar component with an avatar on the left and search input.
+ * A search bar component for searching zip codes.
  *
  * @example
  * <SearchBar
  *   value={searchText}
  *   onChangeText={setSearchText}
- *   onAvatarPress={() => setIsProfileMenuVisible(true)}
- *   isAuthenticated={isAuthenticated}
  * />
  */
 export function SearchBar(props: SearchBarProps) {
@@ -50,8 +40,6 @@ export function SearchBar(props: SearchBarProps) {
     value,
     onChangeText,
     onSubmit,
-    onAvatarPress,
-    isAuthenticated = false,
     placeholder = "Search zip codes...",
     style,
   } = props
@@ -61,11 +49,6 @@ export function SearchBar(props: SearchBarProps) {
     flexDirection: "row",
     alignItems: "center",
     marginHorizontal: 16,
-    gap: 12,
-  }
-
-  const $avatarButton: ViewStyle = {
-    padding: 4,
   }
 
   const $searchInputContainer: ViewStyle = {
@@ -93,18 +76,6 @@ export function SearchBar(props: SearchBarProps) {
 
   return (
     <View style={[$container, style]}>
-      <Pressable
-        onPress={onAvatarPress}
-        style={$avatarButton}
-        accessibilityLabel="Open profile menu"
-        accessibilityRole="button"
-      >
-        <MaterialCommunityIcons
-          name={isAuthenticated ? "account-circle" : "account-circle-outline"}
-          size={32}
-          color={theme.colors.text}
-        />
-      </Pressable>
       <View style={$searchInputContainer}>
         <MaterialCommunityIcons
           name="magnify"
