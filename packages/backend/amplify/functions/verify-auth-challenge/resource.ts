@@ -11,4 +11,5 @@ export const verifyAuthChallengeResponse = defineFunction({
   entry: './handler.ts',
   timeoutSeconds: 10,
   memoryMB: 128,
+  resourceGroupName: 'auth',
 });
