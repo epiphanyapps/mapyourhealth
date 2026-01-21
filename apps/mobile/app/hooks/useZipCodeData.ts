@@ -274,8 +274,15 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
           setLastUpdated(null)
           setError("Using local data - could not reach server")
         } else {
+          // Check if this might be a "not found" vs actual error
+          const errorMessage = err instanceof Error ? err.message : String(err)
+          const isNotFoundError = errorMessage.includes("not found") ||
+                                  errorMessage.includes("404") ||
+                                  errorMessage.includes("No data")
+
           setZipData(null)
-          setError("Failed to load data for this zip code")
+          // Only set error for actual network/server errors, not "no data" cases
+          setError(isNotFoundError ? null : "Unable to connect. Check your connection and try again.")
         }
       }
     } finally {
