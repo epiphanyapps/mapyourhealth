@@ -79,6 +79,12 @@
 
 The app supports international postal codes. Users outside the US will see localized terminology and can search/locate using their local postal code format.
 
+#### Validation Philosophy
+
+**"Accept flexibly, let the data layer determine coverage."**
+
+We accept most reasonable inputs (2-12 alphanumeric characters with optional spaces/dashes) rather than rejecting based on strict country-specific patterns. If we don't have data for a postal code, users see the "No data yet, Notify Me" flow.
+
 #### Supported Formats
 
 | Country | Format | Example | Terminology |
@@ -87,6 +93,11 @@ The app supports international postal codes. Users outside the US will see local
 | Canada | A1A 1A1 | `M5V 3L9` | postal code |
 | UK | Various | `SW1A 1AA` | postcode |
 | Australia | 4 digits | `2000` | postal code |
+| Germany | 5 digits | `10115` | postal code |
+| France | 5 digits | `75001` | postal code |
+| Netherlands | 4 digits + 2 letters | `1234 AB` | postal code |
+| Japan | 7 digits | `123-4567` | postal code |
+| India | 6 digits | `110001` | postal code |
 
 #### Dynamic Terminology
 
@@ -100,14 +111,30 @@ The app detects device region (via `expo-localization`) and displays appropriate
 
 1. **Canadian postal code**: Enter `M5V 3L9` (Toronto) - should normalize to `M5V3L9` and show "No data yet"
 2. **UK postcode**: Enter `SW1A 1AA` (London) - should be accepted and show "No data yet"
-3. **Notify Me flow**: International users can request notifications when data becomes available
-4. **GPS outside US/Canada**: Should detect local postal code and show "No data yet" state
+3. **German postal code**: Enter `10115` (Berlin) - should be accepted
+4. **Japanese postal code**: Enter `123-4567` - should normalize to `1234567`
+5. **Notify Me flow**: International users can request notifications when data becomes available
+6. **GPS outside US/Canada**: Should detect local postal code and show "No data yet" state
+
+#### Countries Without Postal Codes
+
+~40 countries don't use postal codes (e.g., Ireland pre-2015, many African/Caribbean nations).
+
+When GPS is used in these areas:
+- App shows alert: "Postal Code Not Available"
+- Displays detected city/region/country
+- Prompts user to enter a postal code manually
+
+**Test scenario**: Use GPS in a country without postal codes → should see helpful alert with location name
 
 #### Postal Code Normalization
 
-- Canadian codes: Space removed (`M5V 3L9` → `M5V3L9`)
-- All codes: Uppercase
-- Stored consistently for database lookup
+| Country | Input | Normalized |
+|---------|-------|------------|
+| Canada | `M5V 3L9` | `M5V3L9` |
+| Japan | `123-4567` | `1234567` |
+| Netherlands | `1234 AB` | `1234AB` |
+| All others | as entered | UPPERCASE |
 
 ### Admin Dashboard (https://admin.mapyourhealth.info/)
 
