@@ -1,51 +1,23 @@
-# MapYourHealth Mobile App - Testing Guide
+# MapYourHealth Mobile App - Test Scenarios
 
-This document provides testing instructions for the MapYourHealth mobile app.
+This document describes test scenarios for QA testing the MapYourHealth mobile app.
+
+For developer setup and technical details, see [DEV_TESTING.md](./DEV_TESTING.md).
 
 ---
 
 ## Table of Contents
 
-1. [General Testing](#general-testing)
+1. [Test Accounts](#test-accounts)
 2. [Sign Up Flow](#sign-up-flow)
-3. [CMS Updates](#cms-updates)
-4. [Notifications](#notifications)
-5. [Zip Code Test Data](#zip-code-test-data)
+3. [Login Flow](#login-flow)
+4. [CMS Updates](#cms-updates)
+5. [Notifications](#notifications)
+6. [Zip Code Test Data](#zip-code-test-data)
 
 ---
 
-## General Testing
-
-### Prerequisites
-
-1. **Development Environment**
-   - Node.js >= 20.0.0
-   - Yarn package manager
-   - Xcode (for iOS) or Android Studio (for Android)
-   - Expo CLI installed globally
-
-2. **Backend Setup**
-   - Amplify sandbox running (`npx ampx sandbox` in packages/backend)
-   - Seed data populated (see below)
-
-3. **Running the App**
-   ```bash
-   # From apps/mobile directory
-   yarn start           # Start Metro bundler
-   yarn ios             # Run on iOS simulator
-   yarn android         # Run on Android emulator
-   ```
-
-### Seeding Test Data
-
-Before testing, populate the backend with test data:
-
-```bash
-# From repository root
-ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=yourpassword npx tsx apps/admin/scripts/seed-data.ts
-```
-
-### Test Accounts
+## Test Accounts
 
 | Role | Email | Password | Auth Method | Notes |
 |------|-------|----------|-------------|-------|
@@ -55,51 +27,9 @@ ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=yourpassword npx tsx apps/admin/scr
 
 **Note:** Magic link users do not have passwords. They can only authenticate via magic link. Users who sign up with a password can also use magic link to log in.
 
-### Environment Configuration
-
-The app uses different configurations based on environment:
-
-- **Development**: `app/config/config.dev.ts` - Points to sandbox backend
-- **Production**: `app/config/config.prod.ts` - Points to production backend
-
-### Testing Magic Link Backend API
-
-The magic link request endpoint is a Lambda Function URL. You can test it directly:
-
-**Get the Function URL:**
-After deployment, the URL is exported as a CloudFormation output. Check the Amplify console or run:
-```bash
-aws cloudformation describe-stacks --stack-name amplify-d3jl0ykn4qgj9r-main-branch-xxx --query "Stacks[0].Outputs[?contains(ExportName, 'RequestMagicLinkUrl')].OutputValue" --output text
-```
-
-**Test with curl:**
-```bash
-# Request a magic link
-curl -X POST "https://your-function-url.lambda-url.ca-central-1.on.aws/" \
-  -H "Content-Type: application/json" \
-  -d '{"email": "test@example.com"}'
-
-# Expected success response:
-# {"success": true, "message": "Magic link sent to your email"}
-
-# Expected rate limit response (after 3 requests in 15 min):
-# {"success": false, "error": "Too many requests. Please try again later."}
-```
-
-**SES Considerations:**
-- In sandbox mode, both sender and recipient emails must be verified
-- Verify test emails in SES console before testing
-- Production requires moving out of SES sandbox
-
 ---
 
 ## Sign Up Flow
-
-### Overview
-
-The app supports multiple authentication methods:
-1. Email/Password registration
-2. Magic Link (passwordless) authentication
 
 ### Email/Password Sign Up
 
@@ -140,14 +70,7 @@ The app supports multiple authentication methods:
 
 ### Magic Link Sign Up (Passwordless)
 
-Magic link authentication allows users to sign up and log in without a password. A secure one-time link is emailed that authenticates the user when clicked.
-
-#### Technical Details
-
-- **Deep Link Format**: `mapyourhealth://auth/verify?email={encoded_email}&token={token}`
-- **Token Expiry**: 15 minutes
-- **Rate Limit**: 3 requests per email per 15 minutes
-- **Token Length**: 32 bytes (cryptographically random)
+Magic link authentication allows users to sign up and log in without a password.
 
 #### Test Steps
 
@@ -170,8 +93,7 @@ Magic link authentication allows users to sign up and log in without a password.
      - "Use Different Email" - returns to email entry
 
 4. **Click Magic Link in Email**
-   - Email contains link in format: `mapyourhealth://auth/verify?email=...&token=...`
-   - Clicking link opens the app via deep link
+   - Email contains link that opens the app
    - MagicLinkVerifyScreen shows loading spinner during verification
 
 5. **Verification Complete**
@@ -191,23 +113,11 @@ Magic link authentication allows users to sign up and log in without a password.
 | Link clicked twice | Second click fails (token cleared after first use) |
 | Network error during verification | Error with retry option |
 
-#### Simulating Deep Links (Testing)
+---
 
-For simulator testing, use these commands:
+## Login Flow
 
-**iOS Simulator:**
-```bash
-xcrun simctl openurl booted "mapyourhealth://auth/verify?email=test%40example.com&token=abc123"
-```
-
-**Android Emulator:**
-```bash
-adb shell am start -a android.intent.action.VIEW -d "mapyourhealth://auth/verify?email=test%40example.com&token=abc123"
-```
-
-### Login Flow
-
-#### Email/Password Login
+### Email/Password Login
 
 1. **Existing User Login**
    - Tap "Log In" on welcome screen
@@ -218,7 +128,7 @@ adb shell am start -a android.intent.action.VIEW -d "mapyourhealth://auth/verify
    - Tap "Forgot Password?" link
    - Follow password reset flow
 
-#### Magic Link Login
+### Magic Link Login
 
 1. **Tap "Log In"** on welcome screen
 2. **Tap "Email me a link instead"** button below the password field
@@ -232,7 +142,7 @@ adb shell am start -a android.intent.action.VIEW -d "mapyourhealth://auth/verify
    - Link opens app and verifies automatically
    - On success, navigates directly to Dashboard
 
-#### Edge Cases to Test
+### Edge Cases to Test
 
 | Scenario | Expected Result |
 |----------|-----------------|
@@ -254,12 +164,10 @@ The admin portal allows updating safety data that reflects in the mobile app.
 ### Admin Portal Access
 
 ```
-URL: https://admin.mapyourhealth.com (or localhost:3000 for dev)
+URL: https://admin.mapyourhealth.info
 ```
 
 ### Updating Zip Code Stats
-
-#### Via Admin Portal
 
 1. **Login to Admin Portal**
    - Use admin credentials
@@ -276,50 +184,6 @@ URL: https://admin.mapyourhealth.com (or localhost:3000 for dev)
 4. **Verify in Mobile App**
    - Pull to refresh on dashboard
    - Verify updated values appear
-
-#### Via Seed Script
-
-For bulk updates, modify `apps/admin/scripts/seed-data.ts`:
-
-```typescript
-// Example: Update lead levels for 10001
-{
-  info: { zipCode: "10001", cityName: "New York", state: "NY" },
-  stats: [
-    { statId: "water-lead", value: 20 }, // Changed from 12 to 20
-    // ... other stats
-  ],
-}
-```
-
-Then re-run the seed script.
-
-### Adding New Zip Codes
-
-1. **Add to Seed Data**
-   - Open `apps/admin/scripts/seed-data.ts`
-   - Add new entry to `zipCodeData` array
-   - Include all 11 stat values
-
-2. **Run Seed Script**
-   ```bash
-   ADMIN_EMAIL=admin@example.com ADMIN_PASSWORD=yourpassword npx tsx apps/admin/scripts/seed-data.ts
-   ```
-
-3. **Verify in App**
-   - Search for the new zip code
-   - Verify data displays correctly
-
-### Updating Stat Definitions
-
-To modify thresholds or add new stat types:
-
-1. **Edit Stat Definitions**
-   - Modify `statDefinitions` array in seed script
-   - Update `dangerThreshold` and `warningThreshold` values
-
-2. **Re-run Seed**
-   - This will skip existing definitions (check for duplicates)
 
 ### CMS Test Scenarios
 
@@ -341,21 +205,6 @@ The app sends push notifications for:
 - Weekly safety summaries
 - New data available for tracked zip codes
 
-### Setting Up Push Notifications (Development)
-
-1. **iOS Simulator**
-   - Push notifications don't work on iOS simulator
-   - Use a physical device for testing
-
-2. **Physical Device**
-   - Build with `yarn build:ios:device`
-   - Install on device
-   - Accept notification permissions when prompted
-
-3. **Android Emulator**
-   - Push notifications work on Android emulator
-   - Ensure Google Play Services are available
-
 ### Test Notification Triggers
 
 #### Safety Alert Notifications
@@ -369,18 +218,6 @@ Triggered when a stat crosses into warning or danger:
 2. **Expected**
    - Push notification: "Safety Alert: Lead levels in your area have reached dangerous levels"
    - In-app alert badge on dashboard
-
-#### Weekly Summary Notifications
-
-Sent every Monday at 9:00 AM local time:
-
-1. **Testing**
-   - Modify notification schedule for testing (set to 1 minute)
-   - Wait for notification
-
-2. **Expected**
-   - Summary of all tracked zip codes
-   - Highlight any warnings or dangers
 
 #### Manual Notification Testing
 
@@ -491,20 +328,6 @@ Test the permission flow:
 | 11385 | Ridgewood | Lead warning, health warnings |
 | 11693 | Rockaway Beach | **Flood danger**, bacteria warning |
 
-### Other US Cities
-
-| Zip Code | City, State | Key Alerts |
-|----------|-------------|------------|
-| 90210 | Beverly Hills, CA | Wildfire warning |
-| 33139 | Miami Beach, FL | **Flood danger** |
-| 60601 | Chicago, IL | **Lead danger**, bacteria warning, flood warning |
-| 98101 | Seattle, WA | All safe |
-| 30301 | Atlanta, GA | Air quality warnings, bacteria warning, flood warning |
-| 75201 | Dallas, TX | Ozone warning, flood warning, wildfire warning |
-| 85001 | Phoenix, AZ | **Ozone danger**, **wildfire danger**, air warnings |
-| 80202 | Denver, CO | **Wildfire danger**, ozone warning, flood warning |
-| 02101 | Boston, MA | Lead warning, bacteria warning, health warnings |
-
 ### Test Scenarios by Category
 
 #### Safe Locations (All Green)
@@ -529,19 +352,6 @@ Test the permission flow:
 - **11356** (College Point) - Flood danger (level 7)
 - **33139** (Miami Beach) - Flood danger (level 8)
 
-#### Air Quality Issues
-- **10017** (Midtown East) - AQI 118, PM2.5 28, Ozone 52
-- **85001** (Phoenix) - AQI 135, PM2.5 30, Ozone 75 (danger)
-
-#### Water Quality Issues
-- **60601** (Chicago) - Lead 18 (danger), bacteria 2
-- **10029** (East Harlem) - Lead 16 (danger), bacteria 2
-
-#### Healthcare Access Concerns
-- **11693** (Rockaway Beach) - 76% access
-- **10029** (East Harlem) - 78% access
-- **11432** (Jamaica) - 79% access
-
 ### Thresholds Reference
 
 | Stat | Warning | Danger | Notes |
@@ -550,48 +360,10 @@ Test the permission flow:
 | Nitrate (mg/L) | >= 7 | >= 10 | EPA limit is 10 |
 | Bacteria (CFU/100mL) | >= 1 | >= 5 | Coliform presence |
 | AQI | >= 100 | >= 150 | Unhealthy for sensitive groups |
-| PM2.5 (µg/m³) | >= 15 | >= 35 | WHO guideline is 15 |
+| PM2.5 (ug/m3) | >= 15 | >= 35 | WHO guideline is 15 |
 | Ozone (ppb) | >= 50 | >= 70 | EPA standard is 70 |
 | COVID (per 100k) | >= 100 | >= 200 | Weekly cases |
 | Flu (per 100k) | >= 25 | >= 50 | Weekly cases |
 | Healthcare Access (%) | <= 85 | <= 70 | Lower is worse |
 | Wildfire Risk (1-10) | >= 4 | >= 7 | Based on conditions |
 | Flood Risk (1-10) | >= 4 | >= 7 | Based on terrain/weather |
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-| Issue | Solution |
-|-------|----------|
-| App won't start | Clear Metro cache: `yarn start --reset-cache` |
-| Data not loading | Check Amplify sandbox is running |
-| Auth errors | Verify amplify_outputs.json is present |
-| Notifications not received | Check device permissions, use physical device for iOS |
-| Zip code shows no data | Run seed script, verify zip code exists |
-| Magic link not received | Check SES sandbox mode, verify sender/recipient emails in SES |
-| Magic link deep link not working | Verify URL scheme in app.json, test with simulator commands |
-| "Invalid magic link" error | Token expired (15 min) or already used - request new link |
-| Rate limit error | Wait 15 minutes or use different email for testing |
-| Magic link works but auth fails | Check Cognito custom auth triggers are deployed |
-
-### Debug Tools
-
-- **Reactotron**: Connect for state inspection and network logging
-- **Flipper**: iOS/Android debugging
-- **Expo DevTools**: Shake device or press `m` in terminal
-
-### Logs
-
-```bash
-# View Metro logs
-yarn start
-
-# View native iOS logs
-npx react-native log-ios
-
-# View native Android logs
-npx react-native log-android
-```
