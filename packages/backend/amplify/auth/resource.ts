@@ -1,7 +1,7 @@
-import { defineAuth } from '@aws-amplify/backend';
-import { defineAuthChallenge } from '../functions/define-auth-challenge/resource';
-import { createAuthChallenge } from '../functions/create-auth-challenge/resource';
-import { verifyAuthChallengeResponse } from '../functions/verify-auth-challenge/resource';
+import { defineAuth } from "@aws-amplify/backend";
+import { defineAuthChallenge } from "../functions/define-auth-challenge/resource";
+import { createAuthChallenge } from "../functions/create-auth-challenge/resource";
+import { verifyAuthChallengeResponse } from "../functions/verify-auth-challenge/resource";
 
 /**
  * Authentication configuration for MapYourHealth
@@ -17,8 +17,8 @@ import { verifyAuthChallengeResponse } from '../functions/verify-auth-challenge/
 export const auth = defineAuth({
   loginWith: {
     email: {
-      verificationEmailStyle: 'CODE',
-      verificationEmailSubject: 'Verify your MapYourHealth account',
+      verificationEmailStyle: "CODE",
+      verificationEmailSubject: "Verify your MapYourHealth account",
       verificationEmailBody: (createCode) =>
         `Welcome to MapYourHealth! Your verification code is ${createCode()}`,
     },
@@ -29,12 +29,12 @@ export const auth = defineAuth({
       required: false,
     },
     // Custom attributes for magic link authentication
-    'custom:magicLinkToken': {
-      dataType: 'String',
+    "custom:magicLinkToken": {
+      dataType: "String",
       mutable: true,
     },
-    'custom:magicLinkExpiry': {
-      dataType: 'String',
+    "custom:magicLinkExpiry": {
+      dataType: "String",
       mutable: true,
     },
   },
@@ -44,5 +44,5 @@ export const auth = defineAuth({
     createAuthChallenge,
     verifyAuthChallengeResponse,
   },
-  groups: ['admin'],
+  groups: ["admin"],
 });
