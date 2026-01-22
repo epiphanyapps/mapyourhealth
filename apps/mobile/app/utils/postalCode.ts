@@ -39,31 +39,48 @@ export function getPostalCodeLabelCapitalized(region?: string): string {
 }
 
 /**
- * Postal code validation patterns by country
+ * Known postal code patterns by country (used for detection and normalization)
+ * Note: These are NOT used for strict validation - we accept most reasonable inputs
  */
-const POSTAL_CODE_PATTERNS: Record<string, RegExp> = {
+const KNOWN_PATTERNS: Record<string, RegExp> = {
   // US: 5 digits or 5+4 format
   US: /^\d{5}(-\d{4})?$/,
   // Canada: A1A 1A1 or A1A1A1 format
   CA: /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/,
-  // UK: Various formats (simplified)
+  // UK: Various formats
   GB: /^[A-Za-z]{1,2}\d[A-Za-z\d]?[ ]?\d[A-Za-z]{2}$/,
   // Australia: 4 digits
   AU: /^\d{4}$/,
-  // Generic: 3-10 alphanumeric characters
-  DEFAULT: /^[A-Za-z0-9]{3,10}$/,
+  // Germany/Austria/Switzerland: 4-5 digits
+  DE: /^\d{4,5}$/,
+  // France: 5 digits
+  FR: /^\d{5}$/,
+  // Netherlands: 4 digits + 2 letters
+  NL: /^\d{4}[ ]?[A-Za-z]{2}$/,
+  // Japan: 3 digits - 4 digits or 7 digits
+  JP: /^\d{3}-?\d{4}$/,
+  // India: 6 digits
+  IN: /^\d{6}$/,
 }
 
 /**
  * Validate a postal code
- * Returns true if the postal code matches any known format
+ *
+ * Philosophy: Accept flexibly, let the data layer determine if we have coverage.
+ * We accept most reasonable inputs (2-12 alphanumeric chars with optional spaces/dashes)
+ * rather than rejecting based on strict country-specific patterns.
  */
 export function isValidPostalCode(postalCode: string): boolean {
   const trimmed = postalCode.trim()
   if (!trimmed) return false
 
-  // Check against all known patterns
-  return Object.values(POSTAL_CODE_PATTERNS).some((pattern) => pattern.test(trimmed))
+  // Minimum 2 chars, maximum 12 chars
+  if (trimmed.length < 2 || trimmed.length > 12) return false
+
+  // Must start and end with alphanumeric, can contain spaces or dashes in between
+  // This covers virtually all postal code formats worldwide
+  return /^[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$/.test(trimmed) ||
+         /^[A-Za-z0-9]{2}$/.test(trimmed) // Allow 2-char codes
 }
 
 /**
@@ -73,10 +90,16 @@ export function isValidPostalCode(postalCode: string): boolean {
 export function detectPostalCodeRegion(postalCode: string): string | null {
   const trimmed = postalCode.trim()
 
-  if (POSTAL_CODE_PATTERNS.US.test(trimmed)) return "US"
-  if (POSTAL_CODE_PATTERNS.CA.test(trimmed)) return "CA"
-  if (POSTAL_CODE_PATTERNS.GB.test(trimmed)) return "GB"
-  if (POSTAL_CODE_PATTERNS.AU.test(trimmed)) return "AU"
+  // Check specific patterns (order matters - check more specific patterns first)
+  if (KNOWN_PATTERNS.CA.test(trimmed)) return "CA"
+  if (KNOWN_PATTERNS.GB.test(trimmed)) return "GB"
+  if (KNOWN_PATTERNS.NL.test(trimmed)) return "NL"
+  if (KNOWN_PATTERNS.JP.test(trimmed)) return "JP"
+  if (KNOWN_PATTERNS.IN.test(trimmed)) return "IN"
+  if (KNOWN_PATTERNS.US.test(trimmed)) return "US"
+  if (KNOWN_PATTERNS.AU.test(trimmed)) return "AU"
+  if (KNOWN_PATTERNS.DE.test(trimmed)) return "DE"
+  if (KNOWN_PATTERNS.FR.test(trimmed)) return "FR"
 
   return null
 }
@@ -84,15 +107,27 @@ export function detectPostalCodeRegion(postalCode: string): string | null {
 /**
  * Normalize a postal code for storage
  * - Uppercase
- * - Remove extra spaces
+ * - Trim whitespace
  * - Canadian codes: remove space (M5V 3L9 → M5V3L9)
+ * - Japanese codes: remove dash (123-4567 → 1234567)
+ * - Netherlands: remove space (1234 AB → 1234AB)
  */
 export function normalizePostalCode(postalCode: string): string {
   const trimmed = postalCode.trim().toUpperCase()
 
-  // Canadian postal codes: remove space
-  if (POSTAL_CODE_PATTERNS.CA.test(trimmed)) {
+  // Canadian postal codes: remove space/dash
+  if (KNOWN_PATTERNS.CA.test(trimmed)) {
     return trimmed.replace(/[ -]/g, "")
+  }
+
+  // Japanese postal codes: remove dash
+  if (KNOWN_PATTERNS.JP.test(trimmed)) {
+    return trimmed.replace(/-/g, "")
+  }
+
+  // Netherlands: remove space
+  if (KNOWN_PATTERNS.NL.test(trimmed)) {
+    return trimmed.replace(/ /g, "")
   }
 
   return trimmed
