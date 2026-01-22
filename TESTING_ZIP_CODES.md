@@ -70,10 +70,44 @@
 
 1. **Use My Location button**: Tap the GPS icon (crosshairs) next to the search bar
 2. **Permission prompt**: Grant location permission when prompted
-3. **Auto-populate**: Verify zip code is auto-populated from device location
+3. **Auto-populate**: Verify postal code is auto-populated from device location
 4. **Loading state**: GPS button shows spinner while fetching location
 5. **Permission denied**: Decline permission - should show alert explaining how to enable
 6. **Location unavailable**: Test with location services disabled - should show error message
+
+### International Postal Code Support
+
+The app supports international postal codes. Users outside the US will see localized terminology and can search/locate using their local postal code format.
+
+#### Supported Formats
+
+| Country | Format | Example | Terminology |
+|---------|--------|---------|-------------|
+| USA | 5 digits | `90210` | ZIP code |
+| Canada | A1A 1A1 | `M5V 3L9` | postal code |
+| UK | Various | `SW1A 1AA` | postcode |
+| Australia | 4 digits | `2000` | postal code |
+
+#### Dynamic Terminology
+
+The app detects device region (via `expo-localization`) and displays appropriate terminology:
+- **US users**: "Search zip codes..."
+- **Canadian users**: "Search postal codes..."
+- **UK users**: "Search postcodes..."
+- **Others**: "Search ZIP/postal codes..."
+
+#### Testing International Users
+
+1. **Canadian postal code**: Enter `M5V 3L9` (Toronto) - should normalize to `M5V3L9` and show "No data yet"
+2. **UK postcode**: Enter `SW1A 1AA` (London) - should be accepted and show "No data yet"
+3. **Notify Me flow**: International users can request notifications when data becomes available
+4. **GPS outside US/Canada**: Should detect local postal code and show "No data yet" state
+
+#### Postal Code Normalization
+
+- Canadian codes: Space removed (`M5V 3L9` → `M5V3L9`)
+- All codes: Uppercase
+- Stored consistently for database lookup
 
 ### Admin Dashboard (https://admin.mapyourhealth.info/)
 
