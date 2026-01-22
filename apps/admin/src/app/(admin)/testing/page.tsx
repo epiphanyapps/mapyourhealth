@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -18,6 +19,16 @@ import {
 import { ExternalLink, MapPin, TestTube, Droplets, Wind, Heart, AlertTriangle } from "lucide-react";
 
 export default function TestingPage() {
+  useEffect(() => {
+    console.log("=== TESTING PAGE MOUNTED ===");
+    console.log("majorCities:", majorCities);
+    console.log("queensZipCodes:", queensZipCodes);
+    console.log("manhattanZipCodes:", manhattanZipCodes);
+    console.log("Total zip codes:", majorCities.length + queensZipCodes.length + manhattanZipCodes.length);
+  }, []);
+
+  console.log("=== TESTING PAGE RENDER ===");
+
   return (
     <div className="space-y-8">
       <div>
