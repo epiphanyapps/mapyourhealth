@@ -51,12 +51,15 @@ export function useLocation(): UseLocationResult {
   }, [])
 
   const getLocationZipCode = useCallback(async (): Promise<string | null> => {
+    console.log("=== useLocation: Starting getLocationZipCode ===")
     setError("")
     setIsLocating(true)
 
     try {
       // Request permission
+      console.log("useLocation: Requesting permission...")
       const { status } = await Location.requestForegroundPermissionsAsync()
+      console.log("useLocation: Permission status:", status)
       if (status !== "granted") {
         Alert.alert(
           "Location Permission Required",
@@ -67,27 +70,34 @@ export function useLocation(): UseLocationResult {
       }
 
       // Get current location
+      console.log("useLocation: Getting current position...")
       const location = await Location.getCurrentPositionAsync({
         accuracy: Location.Accuracy.Balanced,
       })
+      console.log("useLocation: Got position:", location.coords.latitude, location.coords.longitude)
 
       // Reverse geocode to get address/zip code
+      console.log("useLocation: Reverse geocoding...")
       const [address] = await Location.reverseGeocodeAsync({
         latitude: location.coords.latitude,
         longitude: location.coords.longitude,
       })
+      console.log("useLocation: Geocode result:", JSON.stringify(address, null, 2))
 
       if (address?.postalCode) {
+        console.log("useLocation: Found postal code:", address.postalCode)
         return address.postalCode
       } else {
+        console.log("useLocation: No postal code in address")
         setError("Could not determine zip code from your location")
         return null
       }
     } catch (err) {
-      console.error("Location error:", err)
+      console.error("useLocation: Error:", err)
       setError("Failed to get your location. Please try again.")
       return null
     } finally {
+      console.log("=== useLocation: Finished ===")
       setIsLocating(false)
     }
   }, [])
