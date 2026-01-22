@@ -1,0 +1,66 @@
+name: Seed Backend Data
+
+on:
+  workflow_run:
+    workflows: ["Backend CI/CD"]
+    types: [completed]
+    branches: [main]
+
+jobs:
+  seed-data:
+    name: Seed Data After Backend Deployment
+    runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Wait for Amplify deployment to complete
+        env:
+          AMPLIFY_APP_ID: ${{ secrets.AMPLIFY_BACKEND_APP_ID }}
+        run: |
+          echo "Waiting for backend deployment to complete..."
+          for i in {1..30}; do
+            JOB=$(aws amplify list-jobs --app-id $AMPLIFY_APP_ID --branch-name main --max-results 1 --query 'jobSummaries[0]' --output json)
+            STATUS=$(echo $JOB | jq -r '.status')
+            echo "Attempt $i: Status = $STATUS"
+            if [ "$STATUS" = "SUCCEED" ]; then
+              echo "Backend deployment succeeded"
+              break
+            elif [ "$STATUS" = "FAILED" ]; then
+              echo "Backend deployment failed"
+              exit 1
+            fi
+            sleep 20
+          done
+
+      - name: Generate Amplify outputs
+        run: |
+          npx ampx generate outputs \
+            --branch main \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --out-dir apps/admin
+
+      - name: Run seed script
+        env:
+          ADMIN_EMAIL: ${{ secrets.SEED_ADMIN_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.SEED_ADMIN_PASSWORD }}
+        run: yarn seed:data
