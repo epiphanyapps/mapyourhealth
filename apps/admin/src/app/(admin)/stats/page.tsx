@@ -40,6 +40,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { CATEGORIES, categoryColors, type Category } from "@/lib/constants";
 
 interface StatDefinition {
   id: string;
@@ -47,20 +48,11 @@ interface StatDefinition {
   name: string;
   unit: string;
   description?: string | null;
-  category: "water" | "air" | "health" | "disaster" | null;
+  category: Category | null;
   dangerThreshold: number;
   warningThreshold: number;
   higherIsBad?: boolean | null;
 }
-
-const CATEGORIES = ["water", "air", "health", "disaster"] as const;
-
-const categoryColors: Record<string, string> = {
-  water: "bg-blue-100 text-blue-800",
-  air: "bg-purple-100 text-purple-800",
-  health: "bg-red-100 text-red-800",
-  disaster: "bg-orange-100 text-orange-800",
-};
 
 export default function StatsPage() {
   const [stats, setStats] = useState<StatDefinition[]>([]);
@@ -75,7 +67,7 @@ export default function StatsPage() {
     name: "",
     unit: "",
     description: "",
-    category: "" as "water" | "air" | "health" | "disaster" | "",
+    category: "" as Category | "",
     dangerThreshold: "",
     warningThreshold: "",
     higherIsBad: true,
@@ -155,7 +147,7 @@ export default function StatsPage() {
         name: formData.name,
         unit: formData.unit,
         description: formData.description || null,
-        category: formData.category as "water" | "air" | "health" | "disaster",
+        category: formData.category as Category,
         dangerThreshold: parseFloat(formData.dangerThreshold),
         warningThreshold: parseFloat(formData.warningThreshold),
         higherIsBad: formData.higherIsBad,
@@ -247,7 +239,7 @@ export default function StatsPage() {
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        category: value as "water" | "air" | "health" | "disaster",
+                        category: value as Category,
                       })
                     }
                   >
@@ -413,7 +405,9 @@ export default function StatsPage() {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={categoryColors[stat.category || ""] || ""}
+                        className={
+                          stat.category ? categoryColors[stat.category] : ""
+                        }
                       >
                         {stat.category}
                       </Badge>

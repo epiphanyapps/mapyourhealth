@@ -40,10 +40,15 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Plus, Pencil, Trash2, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
+import {
+  statStatusColors,
+  STAT_HISTORY_LIMIT,
+  type StatStatus,
+} from "@/lib/constants";
 
 interface StatHistoryEntry {
   value: number;
-  status: "danger" | "warning" | "safe";
+  status: StatStatus;
   recordedAt: string;
 }
 
@@ -52,7 +57,7 @@ interface ZipCodeStat {
   zipCode: string;
   statId: string;
   value: number;
-  status: "danger" | "warning" | "safe" | null;
+  status: StatStatus | null;
   lastUpdated: string;
   source?: string | null;
   history?: StatHistoryEntry[] | null;
@@ -68,12 +73,6 @@ interface StatDefinition {
   warningThreshold: number;
   higherIsBad?: boolean | null;
 }
-
-const statusColors: Record<string, string> = {
-  danger: "bg-red-100 text-red-800",
-  warning: "bg-yellow-100 text-yellow-800",
-  safe: "bg-green-100 text-green-800",
-};
 
 export default function ZipCodeDetailPage({
   params,
@@ -126,10 +125,7 @@ export default function ZipCodeDetailPage({
     return statDefinitions.find((def) => def.statId === statId);
   };
 
-  const calculateStatus = (
-    value: number,
-    def: StatDefinition
-  ): "danger" | "warning" | "safe" => {
+  const calculateStatus = (value: number, def: StatDefinition): StatStatus => {
     const { dangerThreshold, warningThreshold, higherIsBad } = def;
 
     if (higherIsBad ?? true) {
@@ -189,12 +185,14 @@ export default function ZipCodeDetailPage({
         // Add the previous value to history if it differs from new value
         const newHistoryEntry: StatHistoryEntry = {
           value: editingStat.value,
-          status: (editingStat.status || "safe") as "danger" | "warning" | "safe",
+          status: (editingStat.status || "safe") as StatStatus,
           recordedAt: editingStat.lastUpdated,
         };
 
-        // Keep last 12 entries plus the new one (for 12 months of history)
-        const updatedHistory = [...existingHistory, newHistoryEntry].slice(-12);
+        // Keep last N entries plus the new one (for historical tracking)
+        const updatedHistory = [...existingHistory, newHistoryEntry].slice(
+          -STAT_HISTORY_LIMIT
+        );
 
         const statData = {
           zipCode,
@@ -341,7 +339,7 @@ export default function ZipCodeDetailPage({
                       <Badge
                         variant="secondary"
                         className={
-                          statusColors[
+                          statStatusColors[
                             calculateStatus(
                               parseFloat(formData.value),
                               getStatDefinition(formData.statId)!
@@ -429,7 +427,7 @@ export default function ZipCodeDetailPage({
                       <TableCell>
                         <Badge
                           variant="secondary"
-                          className={statusColors[stat.status || "safe"]}
+                          className={statStatusColors[stat.status || "safe"]}
                         >
                           {stat.status}
                         </Badge>

@@ -23,19 +23,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Search, MapPin, Loader2, Plus } from "lucide-react";
+import { statStatusColors, type StatStatus } from "@/lib/constants";
 
 interface ZipCodeStats {
   zipCode: string;
   statCount: number;
-  worstStatus: "danger" | "warning" | "safe";
+  worstStatus: StatStatus;
   lastUpdated: string;
 }
-
-const statusColors: Record<string, string> = {
-  danger: "bg-red-100 text-red-800",
-  warning: "bg-yellow-100 text-yellow-800",
-  safe: "bg-green-100 text-green-800",
-};
 
 export default function ZipCodesPage() {
   const router = useRouter();
@@ -86,7 +81,7 @@ export default function ZipCodesPage() {
         ([zipCode, { stats, worstStatus, lastUpdated }]) => ({
           zipCode,
           statCount: stats.length,
-          worstStatus: worstStatus as "danger" | "warning" | "safe",
+          worstStatus: worstStatus as StatStatus,
           lastUpdated,
         })
       );
@@ -191,7 +186,7 @@ export default function ZipCodesPage() {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={statusColors[zipCode.worstStatus]}
+                        className={statStatusColors[zipCode.worstStatus]}
                       >
                         {zipCode.worstStatus}
                       </Badge>

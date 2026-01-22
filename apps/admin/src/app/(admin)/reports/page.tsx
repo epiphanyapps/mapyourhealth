@@ -39,35 +39,26 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Eye, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
+import {
+  CATEGORIES,
+  REPORT_STATUS_OPTIONS,
+  categoryColors,
+  reportStatusColors,
+  type Category,
+  type ReportStatus,
+} from "@/lib/constants";
 
 interface HazardReport {
   id: string;
-  category: "water" | "air" | "health" | "disaster" | null;
+  category: Category | null;
   description: string;
   location: string;
   zipCode?: string | null;
-  status: "pending" | "reviewed" | "resolved" | "dismissed" | null;
+  status: ReportStatus | null;
   adminNotes?: string | null;
   owner?: string | null;
   createdAt?: string;
 }
-
-const STATUS_OPTIONS = ["pending", "reviewed", "resolved", "dismissed"] as const;
-const CATEGORY_OPTIONS = ["water", "air", "health", "disaster"] as const;
-
-const statusColors: Record<string, string> = {
-  pending: "bg-yellow-100 text-yellow-800",
-  reviewed: "bg-blue-100 text-blue-800",
-  resolved: "bg-green-100 text-green-800",
-  dismissed: "bg-gray-100 text-gray-800",
-};
-
-const categoryColors: Record<string, string> = {
-  water: "bg-blue-100 text-blue-800",
-  air: "bg-purple-100 text-purple-800",
-  health: "bg-red-100 text-red-800",
-  disaster: "bg-orange-100 text-orange-800",
-};
 
 export default function ReportsPage() {
   const [reports, setReports] = useState<HazardReport[]>([]);
@@ -121,7 +112,7 @@ export default function ReportsPage() {
     setAdminNotes(report.adminNotes || "");
   };
 
-  const updateReportStatus = async (newStatus: "pending" | "reviewed" | "resolved" | "dismissed") => {
+  const updateReportStatus = async (newStatus: ReportStatus) => {
     if (!selectedReport) return;
 
     setIsSaving(true);
@@ -171,7 +162,7 @@ export default function ReportsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
-            {STATUS_OPTIONS.map((status) => (
+            {REPORT_STATUS_OPTIONS.map((status) => (
               <SelectItem key={status} value={status}>
                 {status.charAt(0).toUpperCase() + status.slice(1)}
               </SelectItem>
@@ -185,7 +176,7 @@ export default function ReportsPage() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {CATEGORY_OPTIONS.map((category) => (
+            {CATEGORIES.map((category) => (
               <SelectItem key={category} value={category}>
                 {category.charAt(0).toUpperCase() + category.slice(1)}
               </SelectItem>
@@ -229,7 +220,9 @@ export default function ReportsPage() {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={categoryColors[report.category || ""] || ""}
+                        className={
+                          report.category ? categoryColors[report.category] : ""
+                        }
                       >
                         {report.category}
                       </Badge>
@@ -250,7 +243,7 @@ export default function ReportsPage() {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={statusColors[report.status || "pending"]}
+                        className={reportStatusColors[report.status || "pending"]}
                       >
                         {report.status || "pending"}
                       </Badge>
@@ -294,7 +287,11 @@ export default function ReportsPage() {
                   <p className="mt-1">
                     <Badge
                       variant="secondary"
-                      className={categoryColors[selectedReport.category || ""]}
+                      className={
+                        selectedReport.category
+                          ? categoryColors[selectedReport.category]
+                          : ""
+                      }
                     >
                       {selectedReport.category}
                     </Badge>
@@ -305,7 +302,7 @@ export default function ReportsPage() {
                   <p className="mt-1">
                     <Badge
                       variant="secondary"
-                      className={statusColors[selectedReport.status || "pending"]}
+                      className={reportStatusColors[selectedReport.status || "pending"]}
                     >
                       {selectedReport.status || "pending"}
                     </Badge>
