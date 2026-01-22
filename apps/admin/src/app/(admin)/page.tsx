@@ -20,9 +20,6 @@ import {
   ArrowRight,
 } from "lucide-react";
 
-// Note: We'll create a proper client once the schema types are available
-// For now, we'll use placeholder data
-
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     statDefinitions: 0,
@@ -32,15 +29,36 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // TODO: Fetch actual stats from Amplify Data
-    // For now, use placeholder values
     const fetchStats = async () => {
       try {
-        // Placeholder - will be replaced with actual API calls
+        const client = generateClient<Schema>();
+
+        // Fetch all counts in parallel
+        const [statDefsResult, zipCodeStatsResult, reportsResult] =
+          await Promise.all([
+            client.models.StatDefinition.list(),
+            client.models.ZipCodeStat.list(),
+            client.models.HazardReport.list(),
+          ]);
+
+        // Count stat definitions
+        const statDefinitions = statDefsResult.data?.length || 0;
+
+        // Count unique zip codes with data
+        const uniqueZipCodes = new Set(
+          zipCodeStatsResult.data?.map((stat) => stat.zipCode) || []
+        );
+        const zipCodesWithData = uniqueZipCodes.size;
+
+        // Count pending reports
+        const pendingReports =
+          reportsResult.data?.filter((report) => report.status === "pending")
+            .length || 0;
+
         setStats({
-          statDefinitions: 11,
-          zipCodesWithData: 5,
-          pendingReports: 3,
+          statDefinitions,
+          zipCodesWithData,
+          pendingReports,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
