@@ -2,8 +2,8 @@
 
 ## URLs
 
-- **Mobile App**: https://app.mapyourhealth.info/
-- **Admin Dashboard**: https://admin.mapyourhealth.info/
+- **Mobile App (Web)**: https://app.mapyourhealth.info/
+- **Admin Dashboard**: https://mapyourhealth.info/admin/
 
 ---
 
