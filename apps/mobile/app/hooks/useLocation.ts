@@ -9,6 +9,8 @@ import { useState, useCallback } from "react"
 import { Alert } from "react-native"
 import * as Location from "expo-location"
 
+import { normalizePostalCode } from "@/utils/postalCode"
+
 export interface UseLocationResult {
   /**
    * Async function to get zip code from current GPS location
@@ -85,8 +87,9 @@ export function useLocation(): UseLocationResult {
       console.log("useLocation: Geocode result:", JSON.stringify(address, null, 2))
 
       if (address?.postalCode) {
-        console.log("useLocation: Found postal code:", address.postalCode)
-        return address.postalCode
+        const normalized = normalizePostalCode(address.postalCode)
+        console.log("useLocation: Found postal code:", address.postalCode, "-> normalized:", normalized)
+        return normalized
       } else {
         console.log("useLocation: No postal code in address")
         setError("Could not determine zip code from your location")

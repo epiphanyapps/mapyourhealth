@@ -21,6 +21,11 @@ import { Text } from "@/components/Text"
 import { getZipCodeDataByCode, getAvailableZipCodes } from "@/data/mock"
 import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
+import {
+  isValidPostalCode,
+  normalizePostalCode,
+  getPostalCodeLabel,
+} from "@/utils/postalCode"
 
 export interface ZipCodeSelection {
   zipCode: string
@@ -73,33 +78,38 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
   const [error, setError] = useState("")
   const { getLocationZipCode, isLocating, error: locationError } = useLocation()
 
+  // Get localized label
+  const postalCodeLabel = getPostalCodeLabel()
+
   /**
-   * Add a zip code to the selection
+   * Add a postal code to the selection
    */
   const addZipCode = useCallback(
-    (zipCode: string) => {
+    (postalCode: string) => {
       setError("")
 
-      // Validate zip code format (5 digits)
-      if (!/^\d{5}$/.test(zipCode)) {
-        setError("Please enter a valid 5-digit zip code")
+      // Validate postal code format (supports US, CA, UK, AU, etc.)
+      if (!isValidPostalCode(postalCode)) {
+        setError(`Please enter a valid ${postalCodeLabel}`)
         return
       }
 
+      const normalized = normalizePostalCode(postalCode)
+
       // Check if already selected
-      if (selectedZipCodes.some((s) => s.zipCode === zipCode)) {
-        setError("This zip code is already selected")
+      if (selectedZipCodes.some((s) => s.zipCode === normalized)) {
+        setError(`This ${postalCodeLabel} is already selected`)
         return
       }
 
       // Check max selections
       if (selectedZipCodes.length >= maxSelections) {
-        setError(`Maximum ${maxSelections} zip codes allowed`)
+        setError(`Maximum ${maxSelections} ${postalCodeLabel}s allowed`)
         return
       }
 
-      // Look up zip code data (from mock data for now)
-      const zipData = getZipCodeDataByCode(zipCode)
+      // Look up postal code data (from mock data for now)
+      const zipData = getZipCodeDataByCode(normalized)
       if (zipData) {
         onSelectionChange([
           ...selectedZipCodes,
@@ -110,12 +120,12 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
           },
         ])
       } else {
-        // For zip codes not in mock data, add with unknown city
+        // For postal codes not in mock data, add with unknown city
         // In production, this would call an API to validate and get city info
         onSelectionChange([
           ...selectedZipCodes,
           {
-            zipCode,
+            zipCode: normalized,
             cityName: "Unknown",
             state: "",
           },
@@ -124,7 +134,7 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
 
       setInputValue("")
     },
-    [selectedZipCodes, onSelectionChange, maxSelections],
+    [selectedZipCodes, onSelectionChange, maxSelections, postalCodeLabel],
   )
 
   /**

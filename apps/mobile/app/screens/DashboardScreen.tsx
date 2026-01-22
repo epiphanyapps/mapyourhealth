@@ -30,6 +30,12 @@ import { useLocation } from "@/hooks/useLocation"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import {
+  isValidPostalCode,
+  normalizePostalCode,
+  getPostalCodeLabel,
+  getPostalCodeLabelCapitalized,
+} from "@/utils/postalCode"
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -105,13 +111,17 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     StatCategory.disaster,
   ]
 
-  // Handle search - validate and update current zip code
+  // Get localized label for postal codes
+  const postalCodeLabel = getPostalCodeLabel()
+  const postalCodeLabelCap = getPostalCodeLabelCapitalized()
+
+  // Handle search - validate and update current postal code
   const handleSearch = useCallback((text: string) => {
     setSearchText(text)
-    // Simple 5-digit zip code validation
-    if (/^\d{5}$/.test(text.trim())) {
-      const newZipCode = text.trim()
-      setCurrentZipCode(newZipCode)
+    // Validate against international postal code formats (US, CA, UK, AU, etc.)
+    if (isValidPostalCode(text.trim())) {
+      const normalized = normalizePostalCode(text.trim())
+      setCurrentZipCode(normalized)
       setSearchText("")
     }
   }, [])
@@ -354,6 +364,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            placeholder={`Search ${postalCodeLabel}s...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -361,7 +372,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         </View>
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="shield-search" size={64} color={theme.colors.tint} />
-          <Text style={$emptyStateTitle}>Find out how safe your zip code is</Text>
+          <Text style={$emptyStateTitle}>Find out how safe your {postalCodeLabel} is</Text>
           <Text style={$emptyStateSubtitle}>
             Search above to get safety insights on water quality, air pollution, health risks, and
             natural disasters in any area
@@ -391,6 +402,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            placeholder={`Search ${postalCodeLabel}s...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -424,6 +436,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            placeholder={`Search ${postalCodeLabel}s...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -469,6 +482,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            placeholder={`Search ${postalCodeLabel}s...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -536,6 +550,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <SearchBar
           value={searchText}
           onChangeText={handleSearch}
+          placeholder={`Search ${postalCodeLabel}s...`}
           showLocationButton
           onLocationPress={handleLocationPress}
           isLocating={isLocating}
