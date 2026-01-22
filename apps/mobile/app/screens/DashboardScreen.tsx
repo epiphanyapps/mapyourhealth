@@ -26,6 +26,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
+import { useLocation } from "@/hooks/useLocation"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -47,6 +48,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
+  const { getLocationZipCode, isLocating } = useLocation()
 
   // Determine the default zip code:
   // 1. Route param takes priority (for navigation from other screens)
@@ -113,6 +115,14 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       setSearchText("")
     }
   }, [])
+
+  // Handle location button press - get zip code from GPS
+  const handleLocationPress = useCallback(async () => {
+    const zipCode = await getLocationZipCode()
+    if (zipCode) {
+      setCurrentZipCode(zipCode)
+    }
+  }, [getLocationZipCode])
 
   // Handle Follow button press - auth gated
   const handleFollow = useCallback(async () => {
@@ -344,6 +354,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            showLocationButton
+            onLocationPress={handleLocationPress}
+            isLocating={isLocating}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -378,6 +391,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            showLocationButton
+            onLocationPress={handleLocationPress}
+            isLocating={isLocating}
           />
         </View>
         <View style={$loadingContainer}>
@@ -408,6 +424,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            showLocationButton
+            onLocationPress={handleLocationPress}
+            isLocating={isLocating}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -450,6 +469,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           <SearchBar
             value={searchText}
             onChangeText={handleSearch}
+            showLocationButton
+            onLocationPress={handleLocationPress}
+            isLocating={isLocating}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -514,6 +536,9 @@ mapyourhealth://zip/${zipData.zipCode}`
         <SearchBar
           value={searchText}
           onChangeText={handleSearch}
+          showLocationButton
+          onLocationPress={handleLocationPress}
+          isLocating={isLocating}
         />
       </View>
 

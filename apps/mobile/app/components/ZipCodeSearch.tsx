@@ -13,14 +13,13 @@ import {
   TextStyle,
   Pressable,
   ActivityIndicator,
-  Alert,
   ScrollView,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import * as Location from "expo-location"
 
 import { Text } from "@/components/Text"
 import { getZipCodeDataByCode, getAvailableZipCodes } from "@/data/mock"
+import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
 
 export interface ZipCodeSelection {
@@ -71,8 +70,8 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
 
   const { theme } = useAppTheme()
   const [inputValue, setInputValue] = useState("")
-  const [isLocating, setIsLocating] = useState(false)
   const [error, setError] = useState("")
+  const { getLocationZipCode, isLocating, error: locationError } = useLocation()
 
   /**
    * Add a zip code to the selection
@@ -144,43 +143,11 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
    */
   const handleUseMyLocation = useCallback(async () => {
     setError("")
-    setIsLocating(true)
-
-    try {
-      // Request permission
-      const { status } = await Location.requestForegroundPermissionsAsync()
-      if (status !== "granted") {
-        Alert.alert(
-          "Location Permission Required",
-          "Please enable location access in your device settings to use this feature.",
-          [{ text: "OK" }],
-        )
-        return
-      }
-
-      // Get current location
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      })
-
-      // Reverse geocode to get address/zip code
-      const [address] = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      })
-
-      if (address?.postalCode) {
-        addZipCode(address.postalCode)
-      } else {
-        setError("Could not determine zip code from your location")
-      }
-    } catch (err) {
-      console.error("Location error:", err)
-      setError("Failed to get your location. Please try again.")
-    } finally {
-      setIsLocating(false)
+    const zipCode = await getLocationZipCode()
+    if (zipCode) {
+      addZipCode(zipCode)
     }
-  }, [addZipCode])
+  }, [addZipCode, getLocationZipCode])
 
   /**
    * Handle search input submission
@@ -318,7 +285,7 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
       </View>
 
       {/* Error message */}
-      {error ? <Text style={$errorText}>{error}</Text> : null}
+      {(error || locationError) ? <Text style={$errorText}>{error || locationError}</Text> : null}
 
       {/* Selected zip codes as chips */}
       {selectedZipCodes.length > 0 && (

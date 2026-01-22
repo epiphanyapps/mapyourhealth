@@ -1,4 +1,4 @@
-import { View, TextInput, ViewStyle, TextStyle, StyleProp } from "react-native"
+import { View, TextInput, ViewStyle, TextStyle, StyleProp, Pressable, ActivityIndicator } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useAppTheme } from "@/theme/context"
 
@@ -24,6 +24,20 @@ export interface SearchBarProps {
    * Optional style override for the container
    */
   style?: StyleProp<ViewStyle>
+  /**
+   * Whether to show the location button
+   * @default false
+   */
+  showLocationButton?: boolean
+  /**
+   * Callback when location button is pressed
+   */
+  onLocationPress?: () => void
+  /**
+   * Whether location is currently being fetched
+   * @default false
+   */
+  isLocating?: boolean
 }
 
 /**
@@ -42,6 +56,9 @@ export function SearchBar(props: SearchBarProps) {
     onSubmit,
     placeholder = "Search zip codes...",
     style,
+    showLocationButton = false,
+    onLocationPress,
+    isLocating = false,
   } = props
   const { theme } = useAppTheme()
 
@@ -74,6 +91,15 @@ export function SearchBar(props: SearchBarProps) {
     padding: 0,
   }
 
+  const $locationButton: ViewStyle = {
+    padding: 10,
+    marginLeft: 8,
+    backgroundColor: theme.colors.tint,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  }
+
   return (
     <View style={[$container, style]}>
       <View style={$searchInputContainer}>
@@ -97,6 +123,26 @@ export function SearchBar(props: SearchBarProps) {
           accessibilityHint="Enter a zip code to search"
         />
       </View>
+      {showLocationButton && (
+        <Pressable
+          onPress={onLocationPress}
+          disabled={isLocating}
+          style={({ pressed }) => [
+            $locationButton,
+            pressed && { opacity: 0.8 },
+            isLocating && { opacity: 0.6 },
+          ]}
+          accessibilityLabel="Use my location"
+          accessibilityRole="button"
+          accessibilityHint="Get zip code from your current GPS location"
+        >
+          {isLocating ? (
+            <ActivityIndicator size="small" color="#FFFFFF" />
+          ) : (
+            <MaterialCommunityIcons name="crosshairs-gps" size={20} color="#FFFFFF" />
+          )}
+        </Pressable>
+      )}
     </View>
   )
 }
