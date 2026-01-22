@@ -26,6 +26,7 @@ import {
   LogOut,
   Shield,
   KeyRound,
+  TestTube,
 } from "lucide-react";
 
 const menuItems = [
@@ -53,6 +54,11 @@ const menuItems = [
     title: "Hazard Reports",
     url: "/reports",
     icon: AlertTriangle,
+  },
+  {
+    title: "Testing Guide",
+    url: "/testing",
+    icon: TestTube,
   },
 ];
 
