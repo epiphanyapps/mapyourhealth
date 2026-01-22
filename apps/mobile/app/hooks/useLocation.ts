@@ -91,8 +91,22 @@ export function useLocation(): UseLocationResult {
         console.log("useLocation: Found postal code:", address.postalCode, "-> normalized:", normalized)
         return normalized
       } else {
+        // No postal code - common in ~40 countries (Ireland pre-2015, many African nations, etc.)
         console.log("useLocation: No postal code in address")
-        setError("Could not determine zip code from your location")
+        const locationDesc = [address?.city, address?.region, address?.country]
+          .filter(Boolean)
+          .join(", ")
+
+        if (locationDesc) {
+          // Show helpful message with detected location
+          Alert.alert(
+            "Postal Code Not Available",
+            `We detected you're in ${locationDesc}, but couldn't find a postal code for this area.\n\nPlease enter a postal code manually to search.`,
+            [{ text: "OK" }],
+          )
+        } else {
+          setError("Could not determine postal code from your location")
+        }
         return null
       }
     } catch (err) {
