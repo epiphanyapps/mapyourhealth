@@ -1,174 +1,75 @@
-# Testing Zip Codes
+# Testing Guide
 
-## Production URLs
+## URLs
 
 - **Mobile App**: https://app.mapyourhealth.info/
 - **Admin Dashboard**: https://admin.mapyourhealth.info/
 
-## Seeded Zip Codes (34 total)
+---
 
-### Major US Cities (10)
+## Mobile App Testing
 
-| Zip Code | City | State | Notable Conditions |
-|----------|------|-------|-------------------|
-| 90210 | Beverly Hills | CA | Wildfire warning |
-| 10001 | New York | NY | Air quality & lead warnings |
-| 33139 | Miami Beach | FL | Flood danger |
-| 60601 | Chicago | IL | Lead danger, bacteria warning |
-| 98101 | Seattle | WA | Very safe overall |
-| 30301 | Atlanta | GA | Air quality warnings |
-| 75201 | Dallas | TX | Ozone & flood warnings |
-| 85001 | Phoenix | AZ | Ozone danger, wildfire danger |
-| 80202 | Denver | CO | Wildfire danger |
-| 02101 | Boston | MA | Lead & flu warnings |
+### Search by Zip Code
 
-### Queens, NY (12)
+Try these zip codes to see different safety conditions:
 
-| Zip Code | Neighborhood | Notable Conditions |
-|----------|--------------|-------------------|
-| 11368 | Corona | Dense urban, multiple warnings |
-| 11356 | College Point | Flood danger (coastal) |
-| 11101 | Long Island City | Industrial area, flood warning |
-| 11102 | Astoria | Good transit, moderate air |
-| 11354 | Flushing | Busy commercial, air warnings |
-| 11372 | Jackson Heights | Dense, health warnings |
-| 11373 | Elmhurst | Dense residential |
-| 11375 | Forest Hills | Suburban feel, mostly safe |
-| 11361 | Bayside | Quiet residential |
-| 11432 | Jamaica | Transit hub, multiple warnings |
-| 11385 | Ridgewood | Border with Brooklyn |
-| 11693 | Rockaway Beach | Flood danger (coastal) |
-
-### Manhattan, NY (12)
-
-| Zip Code | Neighborhood | Notable Conditions |
-|----------|--------------|-------------------|
-| 10002 | Lower East Side | Older buildings, lead warning |
-| 10003 | Greenwich Village | Generally good |
-| 10012 | SoHo | Moderate air quality |
-| 10013 | Tribeca | Excellent healthcare, flood warning |
-| 10016 | Murray Hill | Dense residential |
-| 10017 | Midtown East | High traffic, air warnings |
-| 10023 | Upper West Side | Family-friendly, safe |
-| 10028 | Upper East Side | Affluent, excellent services |
-| 10029 | East Harlem | Lead danger, health disparities |
-| 10027 | Harlem | Aging infrastructure |
-| 10032 | Washington Heights | Diverse community |
-| 10038 | Financial District | Modern infrastructure, flood warning |
-
-## Testing Scenarios
-
-### Mobile App (https://app.mapyourhealth.info/)
-
-1. **Safe area**: Search `98101` (Seattle) - should show mostly green/safe
-2. **Mixed warnings**: Search `10001` (NYC) - should show multiple yellow warnings
-3. **Danger alerts**: Search `60601` (Chicago) - should show red danger for lead
-4. **Flood risk**: Search `33139` (Miami Beach) - should show flood danger
-5. **Wildfire risk**: Search `85001` (Phoenix) - should show wildfire danger
+| Zip Code | Location | What You'll See |
+|----------|----------|-----------------|
+| 98101 | Seattle, WA | Mostly safe (green) |
+| 10001 | New York, NY | Multiple warnings (yellow) |
+| 60601 | Chicago, IL | Danger alert for lead (red) |
+| 33139 | Miami Beach, FL | Flood danger |
+| 85001 | Phoenix, AZ | Wildfire & ozone danger |
+| 90210 | Beverly Hills, CA | Wildfire warning |
 
 ### GPS Location Feature
 
-1. **Use My Location button**: Tap the GPS icon (crosshairs) next to the search bar
-2. **Permission prompt**: Grant location permission when prompted
-3. **Auto-populate**: Verify postal code is auto-populated from device location
-4. **Loading state**: GPS button shows spinner while fetching location
-5. **Permission denied**: Decline permission - should show alert explaining how to enable
-6. **Location unavailable**: Test with location services disabled - should show error message
+1. Tap the GPS icon (crosshairs) next to the search bar
+2. Grant location permission when prompted
+3. Your postal code should auto-populate
+4. If no data exists for your area, you'll see "No data yet" with option to be notified
 
-### International Postal Code Support
+### International Users
 
-The app supports international postal codes. Users outside the US will see localized terminology and can search/locate using their local postal code format.
+The app works with postal codes from many countries:
 
-#### Validation Philosophy
+| Country | Example |
+|---------|---------|
+| USA | `90210` |
+| Canada | `M5V 3L9` |
+| UK | `SW1A 1AA` |
+| Australia | `2000` |
+| Germany | `10115` |
 
-**"Accept flexibly, let the data layer determine coverage."**
+- **US users** see "zip code"
+- **Canadian users** see "postal code"
+- **UK users** see "postcode"
 
-We accept most reasonable inputs (2-12 alphanumeric characters with optional spaces/dashes) rather than rejecting based on strict country-specific patterns. If we don't have data for a postal code, users see the "No data yet, Notify Me" flow.
+If we don't have data for your area yet, you can sign up to be notified when it becomes available.
 
-#### Supported Formats
+---
 
-| Country | Format | Example | Terminology |
-|---------|--------|---------|-------------|
-| USA | 5 digits | `90210` | ZIP code |
-| Canada | A1A 1A1 | `M5V 3L9` | postal code |
-| UK | Various | `SW1A 1AA` | postcode |
-| Australia | 4 digits | `2000` | postal code |
-| Germany | 5 digits | `10115` | postal code |
-| France | 5 digits | `75001` | postal code |
-| Netherlands | 4 digits + 2 letters | `1234 AB` | postal code |
-| Japan | 7 digits | `123-4567` | postal code |
-| India | 6 digits | `110001` | postal code |
+## Available Test Data
 
-#### Dynamic Terminology
+### US Cities with Data (34 zip codes)
 
-The app detects device region (via `expo-localization`) and displays appropriate terminology:
-- **US users**: "Search zip codes..."
-- **Canadian users**: "Search postal codes..."
-- **UK users**: "Search postcodes..."
-- **Others**: "Search ZIP/postal codes..."
+**Major Cities (10)**
+- 90210 (Beverly Hills), 10001 (NYC), 33139 (Miami Beach)
+- 60601 (Chicago), 98101 (Seattle), 30301 (Atlanta)
+- 75201 (Dallas), 85001 (Phoenix), 80202 (Denver), 02101 (Boston)
 
-#### Testing International Users
+**Queens, NY (12)**
+- 11368, 11356, 11101, 11102, 11354, 11372
+- 11373, 11375, 11361, 11432, 11385, 11693
 
-1. **Canadian postal code**: Enter `M5V 3L9` (Toronto) - should normalize to `M5V3L9` and show "No data yet"
-2. **UK postcode**: Enter `SW1A 1AA` (London) - should be accepted and show "No data yet"
-3. **German postal code**: Enter `10115` (Berlin) - should be accepted
-4. **Japanese postal code**: Enter `123-4567` - should normalize to `1234567`
-5. **Notify Me flow**: International users can request notifications when data becomes available
-6. **GPS outside US/Canada**: Should detect local postal code and show "No data yet" state
+**Manhattan, NY (12)**
+- 10002, 10003, 10012, 10013, 10016, 10017
+- 10023, 10028, 10029, 10027, 10032, 10038
 
-#### Countries Without Postal Codes
+---
 
-~40 countries don't use postal codes (e.g., Ireland pre-2015, many African/Caribbean nations).
+## Admin Dashboard Testing
 
-When GPS is used in these areas:
-- App shows alert: "Postal Code Not Available"
-- Displays detected city/region/country
-- Prompts user to enter a postal code manually
-
-**Test scenario**: Use GPS in a country without postal codes → should see helpful alert with location name
-
-#### Postal Code Normalization
-
-| Country | Input | Normalized |
-|---------|-------|------------|
-| Canada | `M5V 3L9` | `M5V3L9` |
-| Japan | `123-4567` | `1234567` |
-| Netherlands | `1234 AB` | `1234AB` |
-| All others | as entered | UPPERCASE |
-
-### Admin Dashboard (https://admin.mapyourhealth.info/)
-
-1. **Zip Codes page**: `/zip-codes` - should list all 34 zip codes
-2. **Stats page**: `/stats` - should show 11 stat definitions
-3. **Zip Code detail**: `/zip-codes/10001` - should show all stats for NYC
-
-## Stat Definitions (11 total)
-
-### Water (3)
-- `water-lead` - Lead Levels (ppb)
-- `water-nitrate` - Nitrate Levels (mg/L)
-- `water-bacteria` - Bacteria Count (CFU/100mL)
-
-### Air (3)
-- `air-aqi` - Air Quality Index
-- `air-pm25` - PM2.5 Levels (µg/m³)
-- `air-ozone` - Ozone Levels (ppb)
-
-### Health (3)
-- `health-covid` - COVID-19 Cases (per 100k)
-- `health-flu` - Flu Cases (per 100k)
-- `health-access` - Healthcare Access (%)
-
-### Disaster (2)
-- `disaster-wildfire` - Wildfire Risk (level 1-10)
-- `disaster-flood` - Flood Risk (level 1-10)
-
-## Running the Seed Script
-
-From repository root:
-
-```bash
-ADMIN_EMAIL=your-admin@email.com ADMIN_PASSWORD=your-password yarn seed:data
-```
-
-The seed script is idempotent - it skips existing records and only creates missing ones.
+1. **View all zip codes**: Visit `/zip-codes`
+2. **View safety metrics**: Visit `/stats`
+3. **View specific zip code**: Visit `/zip-codes/10001` (NYC example)
