@@ -40,6 +40,7 @@ applications:
             - cat amplify_outputs.json
         build:
           commands:
+            - echo "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=$EXPO_PUBLIC_GOOGLE_PLACES_API_KEY" >> .env
             - npx expo export --platform web
       artifacts:
         baseDirectory: dist

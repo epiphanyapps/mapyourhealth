@@ -25,6 +25,23 @@ This document contains technical testing instructions for developers working on 
 - Xcode (for iOS) or Android Studio (for Android)
 - Expo CLI installed globally
 
+### Environment Variables
+
+Copy the example environment file and configure it:
+
+```bash
+# From apps/mobile directory
+cp .env.example .env
+```
+
+Edit `.env` and add your Google Places API key:
+
+```
+EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=your_api_key_here
+```
+
+**Note:** For production builds via Amplify Console, the `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` environment variable is configured in the Amplify Console under **Hosting** → **Environment variables**. The `amplify.yml` build script writes this to `.env` before the Expo build.
+
 ### Running the App
 
 ```bash
@@ -221,3 +238,5 @@ npx react-native log-android
 | "Invalid magic link" error | Token expired (15 min) or already used - request new link |
 | Rate limit error | Wait 15 minutes or use different email for testing |
 | Magic link works but auth fails | Check Cognito custom auth triggers are deployed |
+| Google Places autocomplete not working | Check `.env` has `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY`, restart Metro |
+| Google Places API errors | Verify API key has Places API enabled in Google Cloud Console |

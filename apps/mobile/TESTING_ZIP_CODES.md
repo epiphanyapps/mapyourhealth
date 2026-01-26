@@ -11,9 +11,10 @@ For developer setup and technical details, see [DEV_TESTING.md](./DEV_TESTING.md
 1. [Test Accounts](#test-accounts)
 2. [Sign Up Flow](#sign-up-flow)
 3. [Login Flow](#login-flow)
-4. [CMS Updates](#cms-updates)
-5. [Notifications](#notifications)
-6. [Zip Code Test Data](#zip-code-test-data)
+4. [Location Search](#location-search)
+5. [CMS Updates](#cms-updates)
+6. [Notifications](#notifications)
+7. [Zip Code Test Data](#zip-code-test-data)
 
 ---
 
@@ -152,6 +153,51 @@ Magic link authentication allows users to sign up and log in without a password.
 | Account locked (too many password attempts) | Error: "Account temporarily locked" |
 | Magic link for unregistered email | User is created and logged in |
 | Switching between password and magic link | Both methods work for same account |
+
+---
+
+## Location Search
+
+### Overview
+
+The app uses Google Places Autocomplete for location search, allowing users to find zip codes by typing addresses, cities, or place names.
+
+### Test Steps
+
+1. **Navigate to Search**
+   - From Dashboard, tap the search bar
+   - Or during onboarding, use the zip code entry screen
+
+2. **Test Autocomplete**
+   - Type a partial address (e.g., "123 Main")
+   - Verify autocomplete suggestions appear
+   - Tap a suggestion to select it
+
+3. **Verify Zip Code Extraction**
+   - After selecting a place, verify the zip code is extracted
+   - The dashboard should load with safety data for that zip code
+
+### Test Scenarios
+
+| Scenario | Input | Expected Result |
+|----------|-------|-----------------|
+| US Address | "350 Fifth Avenue, New York" | Extracts 10118 (Empire State Building) |
+| City Name | "Miami Beach, FL" | Shows multiple suggestions, extracts zip on selection |
+| Zip Code Direct | "90210" | Shows Beverly Hills suggestions |
+| Partial Address | "123 Main St" | Shows autocomplete suggestions |
+| International Address | "London, UK" | No results or shows international locations (non-US not supported) |
+| Empty Search | Clear search field | Suggestions disappear |
+| No Results | "xyzabc123" | No suggestions shown |
+
+### Edge Cases to Test
+
+| Scenario | Expected Result |
+|----------|-----------------|
+| Network offline | Error message or cached suggestions |
+| API key invalid | No suggestions, graceful degradation |
+| Rapid typing | Debounced requests, smooth UX |
+| Special characters | Handled gracefully |
+| Very long input | Input truncated or handled |
 
 ---
 
