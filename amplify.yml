@@ -40,7 +40,11 @@ applications:
             - cat amplify_outputs.json
         build:
           commands:
+            - echo "=== Checking Google Places API Key ==="
+            - if [ -n "$EXPO_PUBLIC_GOOGLE_PLACES_API_KEY" ]; then echo "API key is set (length ${#EXPO_PUBLIC_GOOGLE_PLACES_API_KEY})"; else echo "WARNING: API key is NOT set"; fi
             - echo "EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=$EXPO_PUBLIC_GOOGLE_PLACES_API_KEY" >> .env
+            - echo "=== .env file contents ==="
+            - cat .env
             - npx expo export --platform web
       artifacts:
         baseDirectory: dist
