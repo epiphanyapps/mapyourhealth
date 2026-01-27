@@ -136,6 +136,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         title=""
         leftIcon="back"
         onLeftPress={() => navigation.goBack()}
+        safeAreaEdges={[]}
       />
 
       <Text text="Create Account" preset="heading" style={themed($heading)} />
@@ -219,7 +220,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
 }
 
 const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xxl,
+  paddingBottom: spacing.xxl,
   paddingHorizontal: spacing.lg,
 })
 
