@@ -13,11 +13,13 @@ import {
   ZipCodeData,
   ZipCodeStat,
   StatDefinition,
+  LocationData,
 } from "./types/safety"
 import {
   getZipCodeDataByCode,
   getStatDefinitionsByCategory,
   allStatDefinitions,
+  getMockLocationData as getMockLocationDataFromMock,
 } from "./mock"
 import zipCodesMetadata from "./zip-codes-metadata.json"
 
@@ -251,4 +253,24 @@ export function getZipCodeMetadata(zipCode: string): ZipCodeMetadata | null {
     latitude: record.lat,
     longitude: record.lng,
   }
+}
+
+/**
+ * Get mock location data for a postal code.
+ *
+ * Returns the full LocationData object for a given postal code,
+ * using the new data model with contaminants and measurements.
+ *
+ * @param postalCode - The postal/zip code to look up (e.g., "90210")
+ * @returns LocationData object or undefined if not found
+ *
+ * @example
+ * const data = getMockLocationData("90210")
+ * if (data) {
+ *   console.log(data.cityName) // "Beverly Hills"
+ *   console.log(data.measurements) // Array of measurements with status
+ * }
+ */
+export function getMockLocationData(postalCode: string): LocationData | undefined {
+  return getMockLocationDataFromMock(postalCode)
 }

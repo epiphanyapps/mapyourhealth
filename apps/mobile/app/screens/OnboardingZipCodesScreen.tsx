@@ -9,6 +9,7 @@ import { FC, useState } from "react"
 import { View, TextStyle, ViewStyle, Alert } from "react-native"
 
 import { Button } from "@/components/Button"
+import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { ZipCodeSearch, ZipCodeSelection } from "@/components/ZipCodeSearch"
@@ -27,6 +28,31 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
   const { themed } = useAppTheme()
 
   const canContinue = selectedZipCodes.length >= 1
+
+  // Handle postal code selection from PlacesSearchBar
+  const handlePostalCodeSelect = (postalCode: string, cityName?: string, state?: string) => {
+    // Check if already selected
+    if (selectedZipCodes.some((s) => s.zipCode === postalCode)) {
+      setError("This postal code is already selected")
+      return
+    }
+
+    // Check max selections
+    if (selectedZipCodes.length >= 10) {
+      setError("Maximum 10 postal codes allowed")
+      return
+    }
+
+    setError("")
+    setSelectedZipCodes([
+      ...selectedZipCodes,
+      {
+        zipCode: postalCode,
+        cityName: cityName || "Unknown",
+        state: state || "",
+      },
+    ])
+  }
 
   async function handleContinue() {
     if (!canContinue) {
@@ -79,19 +105,28 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
       </View>
 
       <View style={themed($contentContainer)}>
-        <Text text="Select Your Zip Codes" preset="formLabel" style={themed($sectionTitle)} />
+        <Text text="Select Your Locations" preset="formLabel" style={themed($sectionTitle)} />
         <Text
-          text="Add the zip codes you want to monitor. You can add up to 10 locations including your home, work, and places where family members live."
+          text="Add the locations you want to monitor. You can add up to 10 locations including your home, work, and places where family members live."
           style={themed($sectionDescription)}
           size="sm"
         />
 
+        {/* City search with Google Places */}
+        <Text text="Search by city" style={themed($searchLabel)} size="sm" />
+        <PlacesSearchBar
+          onPostalCodeSelect={handlePostalCodeSelect}
+          placeholder="Search city or postal code..."
+        />
+
+        {/* Manual postal code entry */}
+        <Text text="Or enter postal code directly" style={themed($searchLabelAlt)} size="sm" />
         <View style={themed($searchContainer)}>
           <ZipCodeSearch
             selectedZipCodes={selectedZipCodes}
             onSelectionChange={setSelectedZipCodes}
             maxSelections={10}
-            placeholder="Enter a 5-digit zip code..."
+            placeholder="Enter postal code..."
           />
         </View>
 
@@ -163,6 +198,18 @@ const $sectionDescription: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
 
 const $searchContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginTop: spacing.sm,
+})
+
+const $searchLabel: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.textDim,
+  marginTop: spacing.md,
+  marginBottom: spacing.xs,
+})
+
+const $searchLabelAlt: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.textDim,
+  marginTop: spacing.lg,
+  marginBottom: spacing.xs,
 })
 
 const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

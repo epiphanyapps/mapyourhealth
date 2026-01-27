@@ -5,10 +5,35 @@
  * Import from this file to access mock data during development.
  *
  * Example usage:
- *   import { allZipCodeData, getZipCodeDataByCode } from "@/data/mock"
+ *   import { mockContaminants, getMockLocationData } from "@/data/mock"
  */
 
-// Stat definitions
+// =============================================================================
+// New Contaminant-based Mock Data
+// =============================================================================
+
+// Contaminants, Thresholds, Jurisdictions
+export {
+  mockContaminants,
+  mockThresholds,
+  mockJurisdictions,
+  getMockThreshold,
+  getMockLocationData,
+  getAvailableMockPostalCodes,
+  allMockLocationData,
+  mockLocationDataMap,
+  beverlyHillsLocationData,
+  newYorkLocationData,
+  miamiBeachLocationData,
+  chicagoLocationData,
+  seattleLocationData,
+} from "./contaminants"
+
+// =============================================================================
+// Legacy Mock Data (for backward compatibility)
+// =============================================================================
+
+// Stat definitions (legacy)
 export {
   allStatDefinitions,
   waterStatDefinitions,
@@ -19,7 +44,7 @@ export {
   getStatDefinitionsByCategory,
 } from "./stat-definitions"
 
-// Zip code data
+// Zip code data (legacy)
 export {
   allZipCodeData,
   zipCodeDataMap,

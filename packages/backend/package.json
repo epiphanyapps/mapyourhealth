@@ -8,7 +8,9 @@
     "lint:check": "echo 'No lint configured'",
     "compile": "tsc --noEmit",
     "clean": "rm -rf dist .amplify",
-    "esbuild": "esbuild"
+    "esbuild": "esbuild",
+    "seed": "tsx scripts/seed-contaminants.ts",
+    "seed:clear": "tsx scripts/seed-contaminants.ts --clear"
   },
   "dependencies": {
     "@aws-amplify/backend": "^1.14.1",
@@ -19,6 +21,7 @@
     "@aws-sdk/client-ses": "^3.782.0",
     "@aws-sdk/lib-dynamodb": "^3.782.0",
     "@aws-sdk/util-dynamodb": "^3.782.0",
+    "aws-amplify": "^6.0.0",
     "aws-cdk": "^2.177.0",
     "aws-cdk-lib": "^2.177.0",
     "constructs": "^10.4.2",

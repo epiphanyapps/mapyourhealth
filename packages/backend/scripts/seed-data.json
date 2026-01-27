@@ -1,0 +1,1060 @@
+{
+  "jurisdictions": [
+    {
+      "code": "WHO",
+      "name": "World Health Organization",
+      "nameFr": "Organisation mondiale de la Santé",
+      "country": "INTL",
+      "region": null,
+      "parentCode": null,
+      "isDefault": true
+    },
+    {
+      "code": "EU",
+      "name": "European Union",
+      "nameFr": "Union européenne",
+      "country": "EU",
+      "region": null,
+      "parentCode": "WHO",
+      "isDefault": false
+    },
+    {
+      "code": "US",
+      "name": "United States (Federal)",
+      "nameFr": "États-Unis (Fédéral)",
+      "country": "US",
+      "region": null,
+      "parentCode": "WHO",
+      "isDefault": false
+    },
+    {
+      "code": "CA",
+      "name": "Canada (Federal)",
+      "nameFr": "Canada (Fédéral)",
+      "country": "CA",
+      "region": null,
+      "parentCode": "WHO",
+      "isDefault": false
+    },
+    {
+      "code": "US-NY",
+      "name": "New York State",
+      "nameFr": "État de New York",
+      "country": "US",
+      "region": "NY",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-CA",
+      "name": "California",
+      "nameFr": "Californie",
+      "country": "US",
+      "region": "CA",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-TX",
+      "name": "Texas",
+      "nameFr": "Texas",
+      "country": "US",
+      "region": "TX",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-FL",
+      "name": "Florida",
+      "nameFr": "Floride",
+      "country": "US",
+      "region": "FL",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-IL",
+      "name": "Illinois",
+      "nameFr": "Illinois",
+      "country": "US",
+      "region": "IL",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-WA",
+      "name": "Washington",
+      "nameFr": "Washington",
+      "country": "US",
+      "region": "WA",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-GA",
+      "name": "Georgia",
+      "nameFr": "Géorgie",
+      "country": "US",
+      "region": "GA",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-AZ",
+      "name": "Arizona",
+      "nameFr": "Arizona",
+      "country": "US",
+      "region": "AZ",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-CO",
+      "name": "Colorado",
+      "nameFr": "Colorado",
+      "country": "US",
+      "region": "CO",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "US-MA",
+      "name": "Massachusetts",
+      "nameFr": "Massachusetts",
+      "country": "US",
+      "region": "MA",
+      "parentCode": "US",
+      "isDefault": false
+    },
+    {
+      "code": "CA-QC",
+      "name": "Quebec",
+      "nameFr": "Québec",
+      "country": "CA",
+      "region": "QC",
+      "parentCode": "CA",
+      "isDefault": false
+    },
+    {
+      "code": "CA-ON",
+      "name": "Ontario",
+      "nameFr": "Ontario",
+      "country": "CA",
+      "region": "ON",
+      "parentCode": "CA",
+      "isDefault": false
+    },
+    {
+      "code": "CA-BC",
+      "name": "British Columbia",
+      "nameFr": "Colombie-Britannique",
+      "country": "CA",
+      "region": "BC",
+      "parentCode": "CA",
+      "isDefault": false
+    },
+    {
+      "code": "CA-AB",
+      "name": "Alberta",
+      "nameFr": "Alberta",
+      "country": "CA",
+      "region": "AB",
+      "parentCode": "CA",
+      "isDefault": false
+    }
+  ],
+  "contaminants": [
+    {
+      "contaminantId": "nitrate",
+      "name": "Nitrate",
+      "nameFr": "Nitrate",
+      "category": "fertilizer",
+      "unit": "μg/L",
+      "description": "High levels can cause methemoglobinemia (blue baby syndrome) in infants. Often from agricultural runoff and fertilizers.",
+      "descriptionFr": "Des niveaux élevés peuvent causer la méthémoglobinémie (syndrome du bébé bleu) chez les nourrissons. Souvent dû au ruissellement agricole et aux engrais.",
+      "studies": "WHO Guidelines for Drinking-water Quality, 4th ed.",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "nitrite",
+      "name": "Nitrite",
+      "nameFr": "Nitrite",
+      "category": "fertilizer",
+      "unit": "μg/L",
+      "description": "Can interfere with oxygen-carrying capacity of blood. More toxic than nitrate. Often from incomplete nitrification.",
+      "descriptionFr": "Peut interférer avec la capacité du sang à transporter l'oxygène. Plus toxique que le nitrate. Souvent dû à une nitrification incomplète.",
+      "studies": "WHO Guidelines for Drinking-water Quality, 4th ed.",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "atrazine",
+      "name": "Atrazine",
+      "nameFr": "Atrazine",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Herbicide linked to endocrine disruption and potential carcinogen. Widely used in agriculture.",
+      "descriptionFr": "Herbicide lié à la perturbation endocrinienne et cancérogène potentiel. Largement utilisé en agriculture.",
+      "studies": "IARC Monographs Vol. 73",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "alachlor",
+      "name": "Alachlor",
+      "nameFr": "Alachlore",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Herbicide classified as probable human carcinogen. Banned in many jurisdictions.",
+      "descriptionFr": "Herbicide classé comme cancérogène humain probable. Interdit dans de nombreuses juridictions.",
+      "studies": "US EPA Integrated Risk Information System",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "simazine",
+      "name": "Simazine",
+      "nameFr": "Simazine",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Triazine herbicide, potential endocrine disruptor. Used for weed control in various crops.",
+      "descriptionFr": "Herbicide triazine, perturbateur endocrinien potentiel. Utilisé pour le contrôle des mauvaises herbes.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "glyphosate",
+      "name": "Glyphosate",
+      "nameFr": "Glyphosate",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Most widely used herbicide globally. IARC classified as probably carcinogenic to humans (Group 2A).",
+      "descriptionFr": "Herbicide le plus utilisé au monde. Classé par le CIRC comme probablement cancérogène pour l'homme (Groupe 2A).",
+      "studies": "IARC Monographs Vol. 112",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chlorpyrifos",
+      "name": "Chlorpyrifos",
+      "nameFr": "Chlorpyrifos",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Organophosphate insecticide linked to neurodevelopmental effects in children. Banned for residential use in many areas.",
+      "descriptionFr": "Insecticide organophosphoré lié à des effets neurodéveloppementaux chez les enfants. Interdit pour usage résidentiel dans de nombreuses régions.",
+      "studies": "US EPA Risk Assessment",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "ddt",
+      "name": "DDT",
+      "nameFr": "DDT",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Persistent organic pollutant, banned globally for agricultural use. Still detected in environment due to persistence.",
+      "descriptionFr": "Polluant organique persistant, interdit mondialement pour usage agricole. Encore détecté dans l'environnement en raison de sa persistance.",
+      "studies": "Stockholm Convention on POPs",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "lindane",
+      "name": "Lindane (gamma-HCH)",
+      "nameFr": "Lindane (gamma-HCH)",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Organochlorine insecticide, neurotoxic and probable carcinogen. Banned in most countries.",
+      "descriptionFr": "Insecticide organochloré, neurotoxique et cancérogène probable. Interdit dans la plupart des pays.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "carbofuran",
+      "name": "Carbofuran",
+      "nameFr": "Carbofurane",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Highly toxic carbamate insecticide. One of the most toxic pesticides to humans.",
+      "descriptionFr": "Insecticide carbamate hautement toxique. L'un des pesticides les plus toxiques pour l'homme.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "2,4-d",
+      "name": "2,4-D",
+      "nameFr": "2,4-D",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Widely used herbicide. IARC classifies as possibly carcinogenic to humans (Group 2B).",
+      "descriptionFr": "Herbicide largement utilisé. Le CIRC le classe comme possiblement cancérogène pour l'homme (Groupe 2B).",
+      "studies": "IARC Monographs Vol. 113",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "dichlorvos",
+      "name": "Dichlorvos",
+      "nameFr": "Dichlorvos",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Organophosphate insecticide, possible carcinogen. Used for pest control.",
+      "descriptionFr": "Insecticide organophosphoré, cancérogène possible. Utilisé pour la lutte antiparasitaire.",
+      "studies": "IARC Monographs Vol. 53",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "malathion",
+      "name": "Malathion",
+      "nameFr": "Malathion",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Organophosphate insecticide, probably carcinogenic. Used in agriculture and public health programs.",
+      "descriptionFr": "Insecticide organophosphoré, probablement cancérogène. Utilisé en agriculture et programmes de santé publique.",
+      "studies": "IARC Monographs Vol. 112",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "paraquat",
+      "name": "Paraquat",
+      "nameFr": "Paraquat",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Highly toxic herbicide. Linked to Parkinson's disease. Banned in many countries.",
+      "descriptionFr": "Herbicide hautement toxique. Lié à la maladie de Parkinson. Interdit dans de nombreux pays.",
+      "studies": "WHO Classification of Pesticides",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "diazinon",
+      "name": "Diazinon",
+      "nameFr": "Diazinon",
+      "category": "pesticide",
+      "unit": "μg/L",
+      "description": "Organophosphate insecticide. Phased out for residential use in many countries.",
+      "descriptionFr": "Insecticide organophosphoré. Éliminé progressivement pour usage résidentiel dans de nombreux pays.",
+      "studies": "US EPA Pesticide Fact Sheet",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "uranium",
+      "name": "Uranium",
+      "nameFr": "Uranium",
+      "category": "radioactive",
+      "unit": "μg/L",
+      "description": "Radioactive element with kidney toxicity. Can occur naturally in groundwater from certain geological formations.",
+      "descriptionFr": "Élément radioactif avec toxicité rénale. Peut se trouver naturellement dans les eaux souterraines de certaines formations géologiques.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "radium-226",
+      "name": "Radium-226",
+      "nameFr": "Radium-226",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Radioactive element that accumulates in bones. Associated with bone cancer and leukemia risk.",
+      "descriptionFr": "Élément radioactif qui s'accumule dans les os. Associé au risque de cancer des os et de leucémie.",
+      "studies": "US EPA Radionuclides Rule",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "radium-228",
+      "name": "Radium-228",
+      "nameFr": "Radium-228",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Radioactive isotope, bone-seeking radionuclide. Present in certain geological formations.",
+      "descriptionFr": "Isotope radioactif, radionucléide ostéotrope. Présent dans certaines formations géologiques.",
+      "studies": "US EPA Radionuclides Rule",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "radon",
+      "name": "Radon",
+      "nameFr": "Radon",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Radioactive gas, second leading cause of lung cancer. Released from water during showering and other uses.",
+      "descriptionFr": "Gaz radioactif, deuxième cause de cancer du poumon. Libéré de l'eau pendant la douche et autres utilisations.",
+      "studies": "WHO Guidelines for Indoor Air Quality: Radon",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "gross-alpha",
+      "name": "Gross Alpha Activity",
+      "nameFr": "Activité alpha globale",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Screening measurement for alpha-emitting radionuclides. Indicates potential radioactive contamination.",
+      "descriptionFr": "Mesure de dépistage des radionucléides émetteurs alpha. Indique une contamination radioactive potentielle.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "gross-beta",
+      "name": "Gross Beta Activity",
+      "nameFr": "Activité bêta globale",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Screening measurement for beta-emitting radionuclides. Used to assess overall radioactivity.",
+      "descriptionFr": "Mesure de dépistage des radionucléides émetteurs bêta. Utilisé pour évaluer la radioactivité globale.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "tritium",
+      "name": "Tritium",
+      "nameFr": "Tritium",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Radioactive hydrogen isotope. Can be naturally occurring or from nuclear facilities.",
+      "descriptionFr": "Isotope radioactif de l'hydrogène. Peut être naturel ou provenir d'installations nucléaires.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "strontium-90",
+      "name": "Strontium-90",
+      "nameFr": "Strontium-90",
+      "category": "radioactive",
+      "unit": "Bq/L",
+      "description": "Radioactive isotope from nuclear fallout. Accumulates in bones, increasing leukemia and bone cancer risk.",
+      "descriptionFr": "Isotope radioactif des retombées nucléaires. S'accumule dans les os, augmentant le risque de leucémie et cancer des os.",
+      "studies": "US EPA Radionuclides Rule",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "lead",
+      "name": "Lead",
+      "nameFr": "Plomb",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Toxic heavy metal affecting brain development, especially in children. Often from old pipes and plumbing.",
+      "descriptionFr": "Métal lourd toxique affectant le développement cérébral, surtout chez les enfants. Souvent dû aux vieilles conduites et plomberie.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "arsenic",
+      "name": "Arsenic",
+      "nameFr": "Arsenic",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Known human carcinogen affecting skin, lungs, bladder. Can occur naturally in groundwater.",
+      "descriptionFr": "Cancérogène humain connu affectant la peau, les poumons, la vessie. Peut se trouver naturellement dans les eaux souterraines.",
+      "studies": "IARC Monographs Vol. 100C",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "mercury",
+      "name": "Mercury",
+      "nameFr": "Mercure",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Neurotoxic heavy metal. Can cause neurological damage, especially during fetal development.",
+      "descriptionFr": "Métal lourd neurotoxique. Peut causer des dommages neurologiques, surtout pendant le développement fœtal.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "cadmium",
+      "name": "Cadmium",
+      "nameFr": "Cadmium",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Toxic metal that accumulates in kidneys. Known human carcinogen. From industrial sources and fertilizers.",
+      "descriptionFr": "Métal toxique qui s'accumule dans les reins. Cancérogène humain connu. Provenant de sources industrielles et d'engrais.",
+      "studies": "IARC Monographs Vol. 100C",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chromium-total",
+      "name": "Chromium (Total)",
+      "nameFr": "Chrome (Total)",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Includes all forms of chromium. Hexavalent chromium (Cr-VI) is carcinogenic.",
+      "descriptionFr": "Inclut toutes les formes de chrome. Le chrome hexavalent (Cr-VI) est cancérogène.",
+      "studies": "US EPA National Primary Drinking Water Regulations",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chromium-6",
+      "name": "Hexavalent Chromium (Cr-VI)",
+      "nameFr": "Chrome hexavalent (Cr-VI)",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Known human carcinogen via inhalation, likely via ingestion. Used in industrial processes.",
+      "descriptionFr": "Cancérogène humain connu par inhalation, probablement par ingestion. Utilisé dans les processus industriels.",
+      "studies": "California OEHHA Public Health Goals",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "copper",
+      "name": "Copper",
+      "nameFr": "Cuivre",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Essential nutrient but toxic at high levels. Causes gastrointestinal distress. Often from plumbing corrosion.",
+      "descriptionFr": "Nutriment essentiel mais toxique à hauts niveaux. Cause des troubles gastro-intestinaux. Souvent dû à la corrosion de la plomberie.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "fluoride",
+      "name": "Fluoride",
+      "nameFr": "Fluorure",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Beneficial for teeth at low levels, but excess causes dental/skeletal fluorosis. Naturally occurring in some groundwater.",
+      "descriptionFr": "Bénéfique pour les dents à faibles niveaux, mais l'excès cause la fluorose dentaire/squelettique. Naturellement présent dans certaines eaux souterraines.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "barium",
+      "name": "Barium",
+      "nameFr": "Baryum",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Can cause increased blood pressure and cardiovascular effects. Naturally occurring in some groundwater.",
+      "descriptionFr": "Peut causer une augmentation de la pression artérielle et des effets cardiovasculaires. Naturellement présent dans certaines eaux souterraines.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "antimony",
+      "name": "Antimony",
+      "nameFr": "Antimoine",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Potential carcinogen. Used in flame retardants and semiconductor manufacturing.",
+      "descriptionFr": "Cancérogène potentiel. Utilisé dans les retardateurs de flamme et la fabrication de semi-conducteurs.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "selenium",
+      "name": "Selenium",
+      "nameFr": "Sélénium",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Essential nutrient but toxic at high levels. Can cause hair/nail loss, nervous system effects.",
+      "descriptionFr": "Nutriment essentiel mais toxique à hauts niveaux. Peut causer la perte de cheveux/ongles, effets sur le système nerveux.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "cyanide",
+      "name": "Cyanide",
+      "nameFr": "Cyanure",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Highly toxic, interferes with cellular respiration. Industrial contaminant from mining and electroplating.",
+      "descriptionFr": "Hautement toxique, interfère avec la respiration cellulaire. Contaminant industriel des mines et de l'électroplacage.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "thallium",
+      "name": "Thallium",
+      "nameFr": "Thallium",
+      "category": "inorganic",
+      "unit": "μg/L",
+      "description": "Highly toxic metal causing hair loss, nervous system damage. From industrial processes and natural leaching.",
+      "descriptionFr": "Métal hautement toxique causant la perte de cheveux, des dommages au système nerveux. Provenant de processus industriels et lessivage naturel.",
+      "studies": "US EPA National Primary Drinking Water Regulations",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chloroform",
+      "name": "Chloroform (THM)",
+      "nameFr": "Chloroforme (THM)",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Disinfection byproduct, probable carcinogen. Forms when chlorine reacts with organic matter.",
+      "descriptionFr": "Sous-produit de désinfection, cancérogène probable. Se forme quand le chlore réagit avec la matière organique.",
+      "studies": "IARC Monographs Vol. 73",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "tthm",
+      "name": "Total Trihalomethanes (TTHM)",
+      "nameFr": "Trihalométhanes totaux (THM)",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Sum of chloroform, bromoform, dibromochloromethane, bromodichloromethane. Carcinogenic byproducts of chlorination.",
+      "descriptionFr": "Somme du chloroforme, bromoforme, dibromochlorométhane, bromodichlorométhane. Sous-produits cancérogènes de la chloration.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "haa5",
+      "name": "Haloacetic Acids (HAA5)",
+      "nameFr": "Acides haloacétiques (HAA5)",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Disinfection byproducts linked to cancer and reproductive effects. Sum of 5 haloacetic acids.",
+      "descriptionFr": "Sous-produits de désinfection liés au cancer et effets reproductifs. Somme de 5 acides haloacétiques.",
+      "studies": "US EPA Stage 2 Disinfectants and Disinfection Byproducts Rule",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chlorite",
+      "name": "Chlorite",
+      "nameFr": "Chlorite",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Byproduct of chlorine dioxide disinfection. Can cause anemia and nervous system effects in infants.",
+      "descriptionFr": "Sous-produit de la désinfection au dioxyde de chlore. Peut causer l'anémie et des effets sur le système nerveux chez les nourrissons.",
+      "studies": "US EPA National Primary Drinking Water Regulations",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "chlorate",
+      "name": "Chlorate",
+      "nameFr": "Chlorate",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Disinfection byproduct that can affect thyroid function and red blood cells.",
+      "descriptionFr": "Sous-produit de désinfection pouvant affecter la fonction thyroïdienne et les globules rouges.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "bromate",
+      "name": "Bromate",
+      "nameFr": "Bromate",
+      "category": "disinfectant",
+      "unit": "μg/L",
+      "description": "Ozonation byproduct, probable human carcinogen. Forms when ozone reacts with bromide in water.",
+      "descriptionFr": "Sous-produit de l'ozonation, cancérogène humain probable. Se forme quand l'ozone réagit avec le bromure dans l'eau.",
+      "studies": "IARC Monographs Vol. 73",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "benzene",
+      "name": "Benzene",
+      "nameFr": "Benzène",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Known human carcinogen causing leukemia. From industrial discharge, gasoline spills.",
+      "descriptionFr": "Cancérogène humain connu causant la leucémie. Provenant de rejets industriels, déversements d'essence.",
+      "studies": "IARC Monographs Vol. 100F",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "toluene",
+      "name": "Toluene",
+      "nameFr": "Toluène",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Affects nervous system. From industrial solvents and gasoline contamination.",
+      "descriptionFr": "Affecte le système nerveux. Provenant de solvants industriels et contamination par l'essence.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "xylenes",
+      "name": "Xylenes (Total)",
+      "nameFr": "Xylènes (Total)",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Affects nervous system. From industrial solvents, gasoline, paint.",
+      "descriptionFr": "Affecte le système nerveux. Provenant de solvants industriels, essence, peinture.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "ethylbenzene",
+      "name": "Ethylbenzene",
+      "nameFr": "Éthylbenzène",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Possible carcinogen affecting liver and kidneys. From gasoline and industrial processes.",
+      "descriptionFr": "Cancérogène possible affectant le foie et les reins. Provenant de l'essence et processus industriels.",
+      "studies": "IARC Monographs Vol. 77",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "styrene",
+      "name": "Styrene",
+      "nameFr": "Styrène",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Possible carcinogen, affects liver and nervous system. From plastics manufacturing.",
+      "descriptionFr": "Cancérogène possible, affecte le foie et le système nerveux. Provenant de la fabrication de plastiques.",
+      "studies": "IARC Monographs Vol. 121",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "tce",
+      "name": "Trichloroethylene (TCE)",
+      "nameFr": "Trichloréthylène (TCE)",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Known human carcinogen. Industrial degreaser, common groundwater contaminant.",
+      "descriptionFr": "Cancérogène humain connu. Dégraissant industriel, contaminant courant des eaux souterraines.",
+      "studies": "IARC Monographs Vol. 106",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "pce",
+      "name": "Tetrachloroethylene (PCE)",
+      "nameFr": "Tétrachloréthylène (PCE)",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Probable carcinogen. Used in dry cleaning, common groundwater contaminant.",
+      "descriptionFr": "Cancérogène probable. Utilisé dans le nettoyage à sec, contaminant courant des eaux souterraines.",
+      "studies": "IARC Monographs Vol. 106",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "vinyl-chloride",
+      "name": "Vinyl Chloride",
+      "nameFr": "Chlorure de vinyle",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Known human carcinogen causing liver cancer. From PVC production and degradation of other solvents.",
+      "descriptionFr": "Cancérogène humain connu causant le cancer du foie. Provenant de la production de PVC et dégradation d'autres solvants.",
+      "studies": "IARC Monographs Vol. 100F",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "mtbe",
+      "name": "MTBE",
+      "nameFr": "MTBE",
+      "category": "organic",
+      "unit": "μg/L",
+      "description": "Possible carcinogen with unpleasant taste/odor at low levels. Former gasoline additive.",
+      "descriptionFr": "Cancérogène possible avec goût/odeur désagréables à faibles niveaux. Ancien additif d'essence.",
+      "studies": "California OEHHA Public Health Goals",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "pfoa",
+      "name": "PFOA",
+      "nameFr": "PFOA",
+      "category": "organic",
+      "unit": "ng/L",
+      "description": "Forever chemical linked to cancer, immune effects, developmental issues. Very persistent in environment.",
+      "descriptionFr": "Polluant éternel lié au cancer, effets immunitaires, problèmes de développement. Très persistant dans l'environnement.",
+      "studies": "US EPA PFAS Strategic Roadmap",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "pfos",
+      "name": "PFOS",
+      "nameFr": "PFOS",
+      "category": "organic",
+      "unit": "ng/L",
+      "description": "Forever chemical with bioaccumulation potential. Linked to cancer and immune system effects.",
+      "descriptionFr": "Polluant éternel avec potentiel de bioaccumulation. Lié au cancer et effets sur le système immunitaire.",
+      "studies": "US EPA PFAS Strategic Roadmap",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "e-coli",
+      "name": "E. coli",
+      "nameFr": "E. coli",
+      "category": "microbiological",
+      "unit": "CFU/100mL",
+      "description": "Indicator of fecal contamination. Some strains cause severe illness. Must be absent in drinking water.",
+      "descriptionFr": "Indicateur de contamination fécale. Certaines souches causent des maladies graves. Doit être absent de l'eau potable.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "total-coliform",
+      "name": "Total Coliform",
+      "nameFr": "Coliformes totaux",
+      "category": "microbiological",
+      "unit": "CFU/100mL",
+      "description": "General indicator of water quality and potential contamination. Should be absent in treated water.",
+      "descriptionFr": "Indicateur général de la qualité de l'eau et contamination potentielle. Devrait être absent de l'eau traitée.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "turbidity",
+      "name": "Turbidity",
+      "nameFr": "Turbidité",
+      "category": "microbiological",
+      "unit": "NTU",
+      "description": "Cloudiness indicating particles that may harbor pathogens. Affects disinfection effectiveness.",
+      "descriptionFr": "Trouble indiquant des particules pouvant abriter des pathogènes. Affecte l'efficacité de la désinfection.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "giardia",
+      "name": "Giardia",
+      "nameFr": "Giardia",
+      "category": "microbiological",
+      "unit": "cysts/L",
+      "description": "Parasitic protozoan causing giardiasis (diarrheal disease). Resistant to chlorine disinfection.",
+      "descriptionFr": "Protozoaire parasite causant la giardiase (maladie diarrhéique). Résistant à la désinfection au chlore.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    },
+    {
+      "contaminantId": "cryptosporidium",
+      "name": "Cryptosporidium",
+      "nameFr": "Cryptosporidium",
+      "category": "microbiological",
+      "unit": "oocysts/L",
+      "description": "Parasitic protozoan causing severe diarrhea. Highly resistant to chlorine, requires filtration.",
+      "descriptionFr": "Protozoaire parasite causant une diarrhée sévère. Très résistant au chlore, nécessite une filtration.",
+      "studies": "WHO Guidelines for Drinking-water Quality",
+      "higherIsBad": true
+    }
+  ],
+  "thresholds": [
+    { "contaminantId": "nitrate", "jurisdictionCode": "WHO", "limitValue": 50000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "US", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "CA", "limitValue": 45000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "CA-QC", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "US-NY", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "US-CA", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrate", "jurisdictionCode": "EU", "limitValue": 50000, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "nitrite", "jurisdictionCode": "WHO", "limitValue": 3000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrite", "jurisdictionCode": "US", "limitValue": 1000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrite", "jurisdictionCode": "CA", "limitValue": 3200, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrite", "jurisdictionCode": "CA-QC", "limitValue": 1000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrite", "jurisdictionCode": "US-NY", "limitValue": 1000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "nitrite", "jurisdictionCode": "EU", "limitValue": 500, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "atrazine", "jurisdictionCode": "WHO", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "atrazine", "jurisdictionCode": "US", "limitValue": 3, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "atrazine", "jurisdictionCode": "CA", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "atrazine", "jurisdictionCode": "CA-QC", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "atrazine", "jurisdictionCode": "US-NY", "limitValue": 3, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "atrazine", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "alachlor", "jurisdictionCode": "WHO", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "alachlor", "jurisdictionCode": "US", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "alachlor", "jurisdictionCode": "CA-QC", "limitValue": null, "warningRatio": null, "status": "banned" },
+    { "contaminantId": "alachlor", "jurisdictionCode": "US-NY", "limitValue": null, "warningRatio": null, "status": "banned" },
+    { "contaminantId": "alachlor", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "simazine", "jurisdictionCode": "WHO", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "simazine", "jurisdictionCode": "US", "limitValue": 4, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "simazine", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "glyphosate", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "glyphosate", "jurisdictionCode": "US", "limitValue": 700, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "glyphosate", "jurisdictionCode": "CA", "limitValue": 280, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "glyphosate", "jurisdictionCode": "EU", "limitValue": 0.1, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chlorpyrifos", "jurisdictionCode": "WHO", "limitValue": 30, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chlorpyrifos", "jurisdictionCode": "US", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "chlorpyrifos", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+    { "contaminantId": "chlorpyrifos", "jurisdictionCode": "US-CA", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "ddt", "jurisdictionCode": "WHO", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "ddt", "jurisdictionCode": "US", "limitValue": null, "warningRatio": null, "status": "banned" },
+    { "contaminantId": "ddt", "jurisdictionCode": "CA", "limitValue": null, "warningRatio": null, "status": "banned" },
+    { "contaminantId": "ddt", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "lindane", "jurisdictionCode": "WHO", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lindane", "jurisdictionCode": "US", "limitValue": 0.2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lindane", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "carbofuran", "jurisdictionCode": "WHO", "limitValue": 7, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "carbofuran", "jurisdictionCode": "US", "limitValue": 40, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "carbofuran", "jurisdictionCode": "CA", "limitValue": 90, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "carbofuran", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "2,4-d", "jurisdictionCode": "WHO", "limitValue": 30, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "2,4-d", "jurisdictionCode": "US", "limitValue": 70, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "2,4-d", "jurisdictionCode": "CA", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "malathion", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "malathion", "jurisdictionCode": "US-CA", "limitValue": 200, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "paraquat", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "paraquat", "jurisdictionCode": "US-CA", "limitValue": 4, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "paraquat", "jurisdictionCode": "EU", "limitValue": null, "warningRatio": null, "status": "banned" },
+
+    { "contaminantId": "diazinon", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "diazinon", "jurisdictionCode": "US-CA", "limitValue": 1200, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "uranium", "jurisdictionCode": "WHO", "limitValue": 30, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "uranium", "jurisdictionCode": "US", "limitValue": 30, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "uranium", "jurisdictionCode": "CA", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "uranium", "jurisdictionCode": "CA-QC", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "radium-226", "jurisdictionCode": "WHO", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "radium-226", "jurisdictionCode": "US", "limitValue": 0.185, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "radium-226", "jurisdictionCode": "CA", "limitValue": 0.5, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "radium-228", "jurisdictionCode": "WHO", "limitValue": 0.1, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "radium-228", "jurisdictionCode": "US", "limitValue": 0.185, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "radon", "jurisdictionCode": "WHO", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "radon", "jurisdictionCode": "US", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "radon", "jurisdictionCode": "EU", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "gross-alpha", "jurisdictionCode": "WHO", "limitValue": 0.5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "gross-alpha", "jurisdictionCode": "US", "limitValue": 0.56, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "gross-alpha", "jurisdictionCode": "CA", "limitValue": 0.5, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "gross-beta", "jurisdictionCode": "WHO", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "gross-beta", "jurisdictionCode": "US", "limitValue": 1.85, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "gross-beta", "jurisdictionCode": "CA", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "tritium", "jurisdictionCode": "WHO", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tritium", "jurisdictionCode": "US", "limitValue": 740, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tritium", "jurisdictionCode": "CA", "limitValue": 7000, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "strontium-90", "jurisdictionCode": "WHO", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "strontium-90", "jurisdictionCode": "US", "limitValue": 0.296, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "lead", "jurisdictionCode": "WHO", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lead", "jurisdictionCode": "US", "limitValue": 15, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lead", "jurisdictionCode": "CA", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lead", "jurisdictionCode": "CA-QC", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lead", "jurisdictionCode": "US-CA", "limitValue": 15, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "lead", "jurisdictionCode": "EU", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "arsenic", "jurisdictionCode": "WHO", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "arsenic", "jurisdictionCode": "US", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "arsenic", "jurisdictionCode": "CA", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "arsenic", "jurisdictionCode": "CA-QC", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "arsenic", "jurisdictionCode": "EU", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "mercury", "jurisdictionCode": "WHO", "limitValue": 6, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "mercury", "jurisdictionCode": "US", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "mercury", "jurisdictionCode": "CA", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "mercury", "jurisdictionCode": "EU", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "cadmium", "jurisdictionCode": "WHO", "limitValue": 3, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "cadmium", "jurisdictionCode": "US", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "cadmium", "jurisdictionCode": "CA", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "cadmium", "jurisdictionCode": "EU", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chromium-total", "jurisdictionCode": "WHO", "limitValue": 50, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chromium-total", "jurisdictionCode": "US", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chromium-total", "jurisdictionCode": "CA", "limitValue": 50, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chromium-total", "jurisdictionCode": "EU", "limitValue": 50, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chromium-6", "jurisdictionCode": "US-CA", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chromium-6", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+
+    { "contaminantId": "copper", "jurisdictionCode": "WHO", "limitValue": 2000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "copper", "jurisdictionCode": "US", "limitValue": 1300, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "copper", "jurisdictionCode": "CA", "limitValue": 2000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "copper", "jurisdictionCode": "EU", "limitValue": 2000, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "fluoride", "jurisdictionCode": "WHO", "limitValue": 1500, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "fluoride", "jurisdictionCode": "US", "limitValue": 4000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "fluoride", "jurisdictionCode": "CA", "limitValue": 1500, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "fluoride", "jurisdictionCode": "EU", "limitValue": 1500, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "barium", "jurisdictionCode": "WHO", "limitValue": 1300, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "barium", "jurisdictionCode": "US", "limitValue": 2000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "barium", "jurisdictionCode": "CA", "limitValue": 2000, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "antimony", "jurisdictionCode": "WHO", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "antimony", "jurisdictionCode": "US", "limitValue": 6, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "antimony", "jurisdictionCode": "CA", "limitValue": 6, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "selenium", "jurisdictionCode": "WHO", "limitValue": 40, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "selenium", "jurisdictionCode": "US", "limitValue": 50, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "selenium", "jurisdictionCode": "CA", "limitValue": 50, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "cyanide", "jurisdictionCode": "WHO", "limitValue": 70, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "cyanide", "jurisdictionCode": "US", "limitValue": 200, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "cyanide", "jurisdictionCode": "CA", "limitValue": 200, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "thallium", "jurisdictionCode": "US", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "thallium", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+
+    { "contaminantId": "tthm", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "tthm", "jurisdictionCode": "US", "limitValue": 80, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tthm", "jurisdictionCode": "CA", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tthm", "jurisdictionCode": "EU", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chloroform", "jurisdictionCode": "WHO", "limitValue": 300, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chloroform", "jurisdictionCode": "CA", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+
+    { "contaminantId": "haa5", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "haa5", "jurisdictionCode": "US", "limitValue": 60, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "haa5", "jurisdictionCode": "CA", "limitValue": 80, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chlorite", "jurisdictionCode": "WHO", "limitValue": 700, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chlorite", "jurisdictionCode": "US", "limitValue": 1000, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "chlorate", "jurisdictionCode": "WHO", "limitValue": 700, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "chlorate", "jurisdictionCode": "US", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+
+    { "contaminantId": "bromate", "jurisdictionCode": "WHO", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "bromate", "jurisdictionCode": "US", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "bromate", "jurisdictionCode": "CA", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "bromate", "jurisdictionCode": "EU", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "benzene", "jurisdictionCode": "WHO", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "benzene", "jurisdictionCode": "US", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "benzene", "jurisdictionCode": "CA", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "benzene", "jurisdictionCode": "EU", "limitValue": 1, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "toluene", "jurisdictionCode": "WHO", "limitValue": 700, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "toluene", "jurisdictionCode": "US", "limitValue": 1000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "toluene", "jurisdictionCode": "CA", "limitValue": 60, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "xylenes", "jurisdictionCode": "WHO", "limitValue": 500, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "xylenes", "jurisdictionCode": "US", "limitValue": 10000, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "xylenes", "jurisdictionCode": "CA", "limitValue": 300, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "ethylbenzene", "jurisdictionCode": "WHO", "limitValue": 300, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "ethylbenzene", "jurisdictionCode": "US", "limitValue": 700, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "ethylbenzene", "jurisdictionCode": "CA", "limitValue": 140, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "styrene", "jurisdictionCode": "WHO", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "styrene", "jurisdictionCode": "US", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "tce", "jurisdictionCode": "WHO", "limitValue": 20, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tce", "jurisdictionCode": "US", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tce", "jurisdictionCode": "CA", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "tce", "jurisdictionCode": "EU", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "pce", "jurisdictionCode": "WHO", "limitValue": 40, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pce", "jurisdictionCode": "US", "limitValue": 5, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pce", "jurisdictionCode": "CA", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pce", "jurisdictionCode": "EU", "limitValue": 10, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "vinyl-chloride", "jurisdictionCode": "WHO", "limitValue": 0.3, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "vinyl-chloride", "jurisdictionCode": "US", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "vinyl-chloride", "jurisdictionCode": "CA", "limitValue": 2, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "vinyl-chloride", "jurisdictionCode": "EU", "limitValue": 0.5, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "mtbe", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "mtbe", "jurisdictionCode": "US-CA", "limitValue": 13, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "pfoa", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "pfoa", "jurisdictionCode": "US", "limitValue": 4, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pfoa", "jurisdictionCode": "CA", "limitValue": 200, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pfoa", "jurisdictionCode": "EU", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "pfos", "jurisdictionCode": "WHO", "limitValue": null, "warningRatio": null, "status": "not_controlled" },
+    { "contaminantId": "pfos", "jurisdictionCode": "US", "limitValue": 4, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pfos", "jurisdictionCode": "CA", "limitValue": 600, "warningRatio": 0.8, "status": "regulated" },
+    { "contaminantId": "pfos", "jurisdictionCode": "EU", "limitValue": 100, "warningRatio": 0.8, "status": "regulated" },
+
+    { "contaminantId": "e-coli", "jurisdictionCode": "WHO", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "e-coli", "jurisdictionCode": "US", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "e-coli", "jurisdictionCode": "CA", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "e-coli", "jurisdictionCode": "EU", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+
+    { "contaminantId": "total-coliform", "jurisdictionCode": "WHO", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "total-coliform", "jurisdictionCode": "US", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "total-coliform", "jurisdictionCode": "CA", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+
+    { "contaminantId": "turbidity", "jurisdictionCode": "WHO", "limitValue": 1, "warningRatio": 0.5, "status": "regulated" },
+    { "contaminantId": "turbidity", "jurisdictionCode": "US", "limitValue": 1, "warningRatio": 0.5, "status": "regulated" },
+    { "contaminantId": "turbidity", "jurisdictionCode": "CA", "limitValue": 1, "warningRatio": 0.5, "status": "regulated" },
+
+    { "contaminantId": "giardia", "jurisdictionCode": "WHO", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "giardia", "jurisdictionCode": "US", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "giardia", "jurisdictionCode": "CA", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+
+    { "contaminantId": "cryptosporidium", "jurisdictionCode": "WHO", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "cryptosporidium", "jurisdictionCode": "US", "limitValue": 0, "warningRatio": 0, "status": "regulated" },
+    { "contaminantId": "cryptosporidium", "jurisdictionCode": "CA", "limitValue": 0, "warningRatio": 0, "status": "regulated" }
+  ]
+}

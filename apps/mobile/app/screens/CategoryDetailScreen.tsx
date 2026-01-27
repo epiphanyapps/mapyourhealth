@@ -318,7 +318,7 @@ mapyourhealth://zip/${zipData.zipCode}`
                           currentValue: stat.value,
                           currentStatus: stat.status,
                           history: stat.history || [],
-                          higherIsBad: definition.thresholds.higherIsBad,
+                          higherIsBad: definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
                           lastUpdated: stat.lastUpdated,
                           zipCode,
                         })

@@ -20,6 +20,7 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
 import { getZipCodeMetadata } from "@/data/helpers"
 import { useZipCodeData, getWorstStatusForCategory } from "@/hooks/useZipCodeData"
+import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -51,7 +52,7 @@ const ALL_CATEGORIES = [
  */
 function calculateSafetyScore(
   zipData: ZipCodeData | null,
-  statDefinitions: { id: string; category: StatCategory }[],
+  statDefinitions: { id: string; category: string }[],
 ): number {
   if (!zipData) return 0
 
@@ -123,16 +124,16 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
   // Handle search for zip code 1
   const handleSearch1 = useCallback(() => {
     const trimmed = zipCode1.trim()
-    if (/^\d{5}$/.test(trimmed)) {
-      setActiveZip1(trimmed)
+    if (isValidPostalCode(trimmed)) {
+      setActiveZip1(normalizePostalCode(trimmed))
     }
   }, [zipCode1])
 
   // Handle search for zip code 2
   const handleSearch2 = useCallback(() => {
     const trimmed = zipCode2.trim()
-    if (/^\d{5}$/.test(trimmed)) {
-      setActiveZip2(trimmed)
+    if (isValidPostalCode(trimmed)) {
+      setActiveZip2(normalizePostalCode(trimmed))
     }
   }, [zipCode2])
 
@@ -410,19 +411,20 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
           />
           <TextInput
             style={$input}
-            placeholder="Enter zip code (e.g., 90210)"
+            placeholder="Enter postal code (e.g., 90210 or M5V 3L9)"
             placeholderTextColor={theme.colors.textDim}
             value={zipCode1}
             onChangeText={setZipCode1}
-            keyboardType="number-pad"
-            maxLength={5}
+            keyboardType="default"
+            maxLength={7}
+            autoCapitalize="characters"
             onSubmitEditing={handleSearch1}
             returnKeyType="search"
           />
           <Pressable
             style={$searchButton}
             onPress={handleSearch1}
-            disabled={!/^\d{5}$/.test(zipCode1.trim())}
+            disabled={!isValidPostalCode(zipCode1.trim())}
           >
             <MaterialCommunityIcons name="magnify" size={20} color="#FFFFFF" />
           </Pressable>
@@ -440,19 +442,20 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
           />
           <TextInput
             style={$input}
-            placeholder="Enter zip code (e.g., 10001)"
+            placeholder="Enter postal code (e.g., 10001 or K1A 0B1)"
             placeholderTextColor={theme.colors.textDim}
             value={zipCode2}
             onChangeText={setZipCode2}
-            keyboardType="number-pad"
-            maxLength={5}
+            keyboardType="default"
+            maxLength={7}
+            autoCapitalize="characters"
             onSubmitEditing={handleSearch2}
             returnKeyType="search"
           />
           <Pressable
             style={$searchButton}
             onPress={handleSearch2}
-            disabled={!/^\d{5}$/.test(zipCode2.trim())}
+            disabled={!isValidPostalCode(zipCode2.trim())}
           >
             <MaterialCommunityIcons name="magnify" size={20} color="#FFFFFF" />
           </Pressable>

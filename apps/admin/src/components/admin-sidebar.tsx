@@ -27,6 +27,9 @@ import {
   Shield,
   KeyRound,
   TestTube,
+  Droplets,
+  Scale,
+  Globe,
 } from "lucide-react";
 
 const menuItems = [
@@ -36,9 +39,19 @@ const menuItems = [
     icon: LayoutDashboard,
   },
   {
-    title: "Stat Definitions",
+    title: "Contaminants",
     url: "/stats",
-    icon: ListChecks,
+    icon: Droplets,
+  },
+  {
+    title: "Thresholds",
+    url: "/thresholds",
+    icon: Scale,
+  },
+  {
+    title: "Jurisdictions",
+    url: "/jurisdictions",
+    icon: Globe,
   },
   {
     title: "Zip Code Stats",

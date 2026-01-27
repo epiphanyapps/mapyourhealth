@@ -2,7 +2,7 @@ import { View, ViewStyle, TextStyle, Pressable } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
-import type { StatDefinition, ZipCodeStat } from "@/data/types/safety"
+import type { ZipCodeStat } from "@/data/types/safety"
 
 /**
  * Warning banner background color (amber/yellow)
@@ -14,11 +14,20 @@ const WARNING_BACKGROUND = "#FEF3C7"
  */
 const WARNING_ACCENT = "#D97706"
 
+/**
+ * Generic definition type for warning banner (supports both legacy StatDefinition and new Contaminant)
+ */
+interface WarningStatDefinition {
+  name: string
+  unit: string
+  category: string
+}
+
 export interface WarningBannerProps {
   /**
-   * The stat definition for the warning
+   * The stat definition for the warning (supports both legacy and new types)
    */
-  statDefinition: StatDefinition
+  statDefinition: WarningStatDefinition
   /**
    * The stat value data
    */

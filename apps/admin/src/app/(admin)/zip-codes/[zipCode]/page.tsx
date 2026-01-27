@@ -42,56 +42,67 @@ import { ArrowLeft, Plus, Pencil, Trash2, Loader2, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import {
   statStatusColors,
-  STAT_HISTORY_LIMIT,
   type StatStatus,
+  contaminantCategoryNames,
+  contaminantCategoryColors,
+  type ContaminantCategory,
 } from "@/lib/constants";
 
-interface StatHistoryEntry {
-  value: number;
-  status: StatStatus;
-  recordedAt: string;
+type LocationMeasurement = Schema["LocationMeasurement"]["type"];
+type Contaminant = Schema["Contaminant"]["type"];
+type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
+
+/**
+ * Calculate status based on measurement value and threshold
+ */
+function calculateStatus(
+  value: number,
+  threshold: ContaminantThreshold | undefined,
+  higherIsBad: boolean = true
+): StatStatus {
+  if (!threshold || threshold.limitValue === null) {
+    return "safe";
+  }
+  if (threshold.status === "banned") {
+    return "danger";
+  }
+
+  const limit = threshold.limitValue!;
+  const warningRatio = threshold.warningRatio ?? 0.8;
+  const warningThreshold = limit * warningRatio;
+
+  if (higherIsBad) {
+    if (value >= limit) return "danger";
+    if (value >= warningThreshold) return "warning";
+    return "safe";
+  } else {
+    if (value <= limit) return "danger";
+    if (value <= warningThreshold) return "warning";
+    return "safe";
+  }
 }
 
-interface ZipCodeStat {
-  id: string;
-  zipCode: string;
-  statId: string;
-  value: number;
-  status: StatStatus | null;
-  lastUpdated: string;
-  source?: string | null;
-  history?: StatHistoryEntry[] | null;
-}
-
-interface StatDefinition {
-  id: string;
-  statId: string;
-  name: string;
-  unit: string;
-  category: string | null;
-  dangerThreshold: number;
-  warningThreshold: number;
-  higherIsBad?: boolean | null;
-}
-
-export default function ZipCodeDetailPage({
+export default function PostalCodeDetailPage({
   params,
 }: {
   params: Promise<{ zipCode: string }>;
 }) {
-  const { zipCode } = use(params);
+  const { zipCode: postalCode } = use(params);
   const router = useRouter();
-  const [stats, setStats] = useState<ZipCodeStat[]>([]);
-  const [statDefinitions, setStatDefinitions] = useState<StatDefinition[]>([]);
+  const [measurements, setMeasurements] = useState<LocationMeasurement[]>([]);
+  const [contaminants, setContaminants] = useState<Contaminant[]>([]);
+  const [thresholds, setThresholds] = useState<ContaminantThreshold[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingStat, setEditingStat] = useState<ZipCodeStat | null>(null);
+  const [editingMeasurement, setEditingMeasurement] = useState<LocationMeasurement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
-    statId: "",
+    contaminantId: "",
     value: "",
     source: "",
+    sourceUrl: "",
+    notes: "",
   });
 
   const fetchData = async () => {
@@ -99,16 +110,17 @@ export default function ZipCodeDetailPage({
       setIsLoading(true);
       const client = generateClient<Schema>();
 
-      // Fetch stats for this zip code
-      const { data: statsData } = await client.models.ZipCodeStat.listZipCodeStatByZipCode({
-        zipCode,
-      });
+      const [measurementsResult, contaminantsResult, thresholdsResult] = await Promise.all([
+        client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
+          postalCode,
+        }),
+        client.models.Contaminant.list({ limit: 1000 }),
+        client.models.ContaminantThreshold.list({ limit: 1000 }),
+      ]);
 
-      // Fetch all stat definitions
-      const { data: defsData } = await client.models.StatDefinition.list();
-
-      setStats((statsData || []) as unknown as ZipCodeStat[]);
-      setStatDefinitions((defsData || []) as unknown as StatDefinition[]);
+      setMeasurements(measurementsResult.data || []);
+      setContaminants(contaminantsResult.data || []);
+      setThresholds(thresholdsResult.data || []);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to fetch data");
@@ -119,29 +131,33 @@ export default function ZipCodeDetailPage({
 
   useEffect(() => {
     fetchData();
-  }, [zipCode]);
+  }, [postalCode]);
 
-  const getStatDefinition = (statId: string) => {
-    return statDefinitions.find((def) => def.statId === statId);
+  const getContaminant = (contaminantId: string) => {
+    return contaminants.find((c) => c.contaminantId === contaminantId);
   };
 
-  const calculateStatus = (value: number, def: StatDefinition): StatStatus => {
-    const { dangerThreshold, warningThreshold, higherIsBad } = def;
-
-    if (higherIsBad ?? true) {
-      if (value >= dangerThreshold) return "danger";
-      if (value >= warningThreshold) return "warning";
-      return "safe";
-    } else {
-      if (value <= dangerThreshold) return "danger";
-      if (value <= warningThreshold) return "warning";
-      return "safe";
-    }
+  const getThreshold = (contaminantId: string) => {
+    // Try WHO first, then US as fallback
+    return (
+      thresholds.find(
+        (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "WHO"
+      ) ||
+      thresholds.find(
+        (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "US"
+      )
+    );
   };
 
   const resetForm = () => {
-    setFormData({ statId: "", value: "", source: "" });
-    setEditingStat(null);
+    setFormData({
+      contaminantId: "",
+      value: "",
+      source: "",
+      sourceUrl: "",
+      notes: "",
+    });
+    setEditingMeasurement(null);
   };
 
   const openCreateDialog = () => {
@@ -149,25 +165,21 @@ export default function ZipCodeDetailPage({
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = (stat: ZipCodeStat) => {
-    setEditingStat(stat);
+  const openEditDialog = (measurement: LocationMeasurement) => {
+    setEditingMeasurement(measurement);
     setFormData({
-      statId: stat.statId,
-      value: stat.value.toString(),
-      source: stat.source || "",
+      contaminantId: measurement.contaminantId,
+      value: measurement.value.toString(),
+      source: measurement.source || "",
+      sourceUrl: measurement.sourceUrl || "",
+      notes: measurement.notes || "",
     });
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.statId || !formData.value) {
+    if (!formData.contaminantId || !formData.value) {
       toast.error("Please fill in all required fields");
-      return;
-    }
-
-    const def = getStatDefinition(formData.statId);
-    if (!def) {
-      toast.error("Invalid stat definition");
       return;
     }
 
@@ -175,89 +187,66 @@ export default function ZipCodeDetailPage({
     try {
       const client = generateClient<Schema>();
       const value = parseFloat(formData.value);
-      const status = calculateStatus(value, def);
       const now = new Date().toISOString();
 
-      if (editingStat) {
-        // When updating, preserve history by adding the previous value to history
-        const existingHistory = editingStat.history || [];
+      const measurementData = {
+        postalCode,
+        contaminantId: formData.contaminantId,
+        value,
+        measuredAt: now,
+        source: formData.source || null,
+        sourceUrl: formData.sourceUrl || null,
+        notes: formData.notes || null,
+      };
 
-        // Add the previous value to history if it differs from new value
-        const newHistoryEntry: StatHistoryEntry = {
-          value: editingStat.value,
-          status: (editingStat.status || "safe") as StatStatus,
-          recordedAt: editingStat.lastUpdated,
-        };
-
-        // Keep last N entries plus the new one (for historical tracking)
-        const updatedHistory = [...existingHistory, newHistoryEntry].slice(
-          -STAT_HISTORY_LIMIT
-        );
-
-        const statData = {
-          zipCode,
-          statId: formData.statId,
-          value,
-          status,
-          lastUpdated: now,
-          source: formData.source || null,
-          history: updatedHistory,
-        };
-
-        await client.models.ZipCodeStat.update({
-          id: editingStat.id,
-          ...statData,
+      if (editingMeasurement) {
+        await client.models.LocationMeasurement.update({
+          id: editingMeasurement.id,
+          ...measurementData,
         });
-        toast.success("Stat updated (previous value preserved in history)");
+        toast.success("Measurement updated");
       } else {
-        // For new stats, start with empty history
-        const statData = {
-          zipCode,
-          statId: formData.statId,
-          value,
-          status,
-          lastUpdated: now,
-          source: formData.source || null,
-          history: [],
-        };
-
-        await client.models.ZipCodeStat.create(statData);
-        toast.success("Stat created");
+        await client.models.LocationMeasurement.create(measurementData);
+        toast.success("Measurement created");
       }
 
       setIsDialogOpen(false);
       resetForm();
       fetchData();
     } catch (error) {
-      console.error("Error saving stat:", error);
-      toast.error("Failed to save stat");
+      console.error("Error saving measurement:", error);
+      toast.error("Failed to save measurement");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (stat: ZipCodeStat) => {
-    const def = getStatDefinition(stat.statId);
-    if (!confirm(`Are you sure you want to delete "${def?.name || stat.statId}"?`)) {
+  const handleDelete = async (measurement: LocationMeasurement) => {
+    const contaminant = getContaminant(measurement.contaminantId);
+    if (
+      !confirm(
+        `Are you sure you want to delete "${contaminant?.name || measurement.contaminantId}"?`
+      )
+    ) {
       return;
     }
 
     try {
       const client = generateClient<Schema>();
-      await client.models.ZipCodeStat.delete({ id: stat.id });
-      toast.success("Stat deleted");
+      await client.models.LocationMeasurement.delete({ id: measurement.id });
+      toast.success("Measurement deleted");
       fetchData();
     } catch (error) {
-      console.error("Error deleting stat:", error);
-      toast.error("Failed to delete stat");
+      console.error("Error deleting measurement:", error);
+      toast.error("Failed to delete measurement");
     }
   };
 
-  // Get available stat definitions (not already added)
-  const availableStatDefs = editingStat
-    ? statDefinitions
-    : statDefinitions.filter(
-        (def) => !stats.some((s) => s.statId === def.statId)
+  // Get available contaminants (not already added)
+  const availableContaminants = editingMeasurement
+    ? contaminants
+    : contaminants.filter(
+        (c) => !measurements.some((m) => m.contaminantId === c.contaminantId)
       );
 
   return (
@@ -269,53 +258,56 @@ export default function ZipCodeDetailPage({
         <div>
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">{zipCode}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{postalCode}</h1>
           </div>
-          <p className="text-muted-foreground">Manage stats for this zip code</p>
+          <p className="text-muted-foreground">
+            Manage contaminant measurements for this postal code
+          </p>
         </div>
       </div>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle>Safety Stats</CardTitle>
+            <CardTitle>Measurements</CardTitle>
             <CardDescription>
-              {stats.length} stat{stats.length !== 1 ? "s" : ""} configured for this location
+              {measurements.length} measurement{measurements.length !== 1 ? "s" : ""} for this
+              location
             </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Button onClick={openCreateDialog} disabled={availableStatDefs.length === 0}>
+            <Button onClick={openCreateDialog} disabled={availableContaminants.length === 0}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Stat
+              Add Measurement
             </Button>
-            <DialogContent>
+            <DialogContent className="sm:max-w-[500px]">
               <DialogHeader>
                 <DialogTitle>
-                  {editingStat ? "Edit Stat Value" : "Add Stat Value"}
+                  {editingMeasurement ? "Edit Measurement" : "Add Measurement"}
                 </DialogTitle>
                 <DialogDescription>
-                  {editingStat
-                    ? "Update the stat value for this zip code."
-                    : "Add a new stat measurement for this zip code."}
+                  {editingMeasurement
+                    ? "Update the measurement value for this location."
+                    : "Add a new contaminant measurement for this location."}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="statId">Stat Definition *</Label>
+                  <Label htmlFor="contaminantId">Contaminant *</Label>
                   <Select
-                    value={formData.statId}
+                    value={formData.contaminantId}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, statId: value })
+                      setFormData({ ...formData, contaminantId: value })
                     }
-                    disabled={!!editingStat}
+                    disabled={!!editingMeasurement}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select a stat" />
+                      <SelectValue placeholder="Select a contaminant" />
                     </SelectTrigger>
                     <SelectContent>
-                      {availableStatDefs.map((def) => (
-                        <SelectItem key={def.statId} value={def.statId}>
-                          {def.name} ({def.unit})
+                      {availableContaminants.map((c) => (
+                        <SelectItem key={c.contaminantId} value={c.contaminantId}>
+                          {c.name} ({c.unit})
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -327,13 +319,12 @@ export default function ZipCodeDetailPage({
                   <Input
                     id="value"
                     type="number"
+                    step="any"
                     placeholder="Enter measured value"
                     value={formData.value}
-                    onChange={(e) =>
-                      setFormData({ ...formData, value: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
                   />
-                  {formData.statId && formData.value && (
+                  {formData.contaminantId && formData.value && (
                     <p className="text-sm text-muted-foreground">
                       Status will be:{" "}
                       <Badge
@@ -342,14 +333,16 @@ export default function ZipCodeDetailPage({
                           statStatusColors[
                             calculateStatus(
                               parseFloat(formData.value),
-                              getStatDefinition(formData.statId)!
+                              getThreshold(formData.contaminantId),
+                              getContaminant(formData.contaminantId)?.higherIsBad ?? true
                             )
                           ]
                         }
                       >
                         {calculateStatus(
                           parseFloat(formData.value),
-                          getStatDefinition(formData.statId)!
+                          getThreshold(formData.contaminantId),
+                          getContaminant(formData.contaminantId)?.higherIsBad ?? true
                         )}
                       </Badge>
                     </p>
@@ -362,9 +355,28 @@ export default function ZipCodeDetailPage({
                     id="source"
                     placeholder="e.g., EPA, CDC, Local Health Dept"
                     value={formData.source}
-                    onChange={(e) =>
-                      setFormData({ ...formData, source: e.target.value })
-                    }
+                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="sourceUrl">Source URL</Label>
+                  <Input
+                    id="sourceUrl"
+                    type="url"
+                    placeholder="https://..."
+                    value={formData.sourceUrl}
+                    onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Input
+                    id="notes"
+                    placeholder="Additional notes..."
+                    value={formData.notes}
+                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   />
                 </div>
               </div>
@@ -382,7 +394,7 @@ export default function ZipCodeDetailPage({
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Saving...
                     </>
-                  ) : editingStat ? (
+                  ) : editingMeasurement ? (
                     "Update"
                   ) : (
                     "Add"
@@ -397,58 +409,79 @@ export default function ZipCodeDetailPage({
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : stats.length === 0 ? (
+          ) : measurements.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No stats for this zip code yet. Click "Add Stat" to add one.
+              No measurements for this location yet. Click &quot;Add Measurement&quot; to add one.
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Stat</TableHead>
+                  <TableHead>Contaminant</TableHead>
+                  <TableHead>Category</TableHead>
                   <TableHead>Value</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Source</TableHead>
-                  <TableHead>Last Updated</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stats.map((stat) => {
-                  const def = getStatDefinition(stat.statId);
+                {measurements.map((measurement) => {
+                  const contaminant = getContaminant(measurement.contaminantId);
+                  const threshold = getThreshold(measurement.contaminantId);
+                  const status = calculateStatus(
+                    measurement.value,
+                    threshold,
+                    contaminant?.higherIsBad ?? true
+                  );
+
                   return (
-                    <TableRow key={stat.id}>
+                    <TableRow key={measurement.id}>
                       <TableCell className="font-medium">
-                        {def?.name || stat.statId}
+                        {contaminant?.name || measurement.contaminantId}
                       </TableCell>
                       <TableCell>
-                        {stat.value} {def?.unit}
+                        {contaminant?.category && (
+                          <Badge
+                            variant="secondary"
+                            className={
+                              contaminantCategoryColors[
+                                contaminant.category as ContaminantCategory
+                              ]
+                            }
+                          >
+                            {contaminantCategoryNames[contaminant.category as ContaminantCategory]}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant="secondary"
-                          className={statStatusColors[stat.status || "safe"]}
-                        >
-                          {stat.status}
+                        {measurement.value} {contaminant?.unit}
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant="secondary" className={statStatusColors[status]}>
+                          {status}
                         </Badge>
                       </TableCell>
-                      <TableCell>{stat.source || "-"}</TableCell>
+                      <TableCell>{measurement.source || "—"}</TableCell>
                       <TableCell>
-                        {new Date(stat.lastUpdated).toLocaleDateString()}
+                        {measurement.measuredAt
+                          ? new Date(measurement.measuredAt).toLocaleDateString()
+                          : "—"}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => openEditDialog(stat)}
+                            onClick={() => openEditDialog(measurement)}
                           >
                             <Pencil className="h-4 w-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => handleDelete(stat)}
+                            onClick={() => handleDelete(measurement)}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>

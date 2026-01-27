@@ -14,10 +14,10 @@ import { formatDistanceToNow } from "date-fns"
 
 import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
+import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
-import { SearchBar } from "@/components/SearchBar"
 import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
 import { WarningBanner } from "@/components/WarningBanner"
@@ -30,14 +30,35 @@ import { useLocation } from "@/hooks/useLocation"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import {
-  isValidPostalCode,
-  normalizePostalCode,
-  getPostalCodeLabel,
-  getPostalCodeLabelCapitalized,
-} from "@/utils/postalCode"
+import { getPostalCodeLabel, getPostalCodeLabelCapitalized } from "@/utils/postalCode"
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
+
+/**
+ * Map any category string to a StatCategory for navigation.
+ * ContaminantCategory types (fertilizer, pesticide, etc.) all map to water.
+ */
+function mapToStatCategory(category: string): StatCategory {
+  // If it's already a StatCategory, return it
+  if (Object.values(StatCategory).includes(category as StatCategory)) {
+    return category as StatCategory
+  }
+  // ContaminantCategory types are all water-related
+  const contaminantCategories = [
+    "fertilizer",
+    "pesticide",
+    "radioactive",
+    "disinfectant",
+    "inorganic",
+    "organic",
+    "microbiological",
+  ]
+  if (contaminantCategories.includes(category)) {
+    return StatCategory.water
+  }
+  // Default fallback
+  return StatCategory.water
+}
 
 /**
  * Dashboard Screen - Main screen showing safety overview for a location.
@@ -62,13 +83,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // 3. For guests, show empty state to prompt zip code lookup
   const getDefaultZipCode = () => {
     if (route.params?.zipCode) return route.params.zipCode
-    if (isAuthenticated && primarySubscription) return primarySubscription.zipCode
+    if (isAuthenticated && primarySubscription) return primarySubscription.postalCode
     return ""
   }
 
   // State for current zip code
   const [currentZipCode, setCurrentZipCode] = useState(getDefaultZipCode())
-  const [searchText, setSearchText] = useState("")
   const [isFollowing, setIsFollowing] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
@@ -76,7 +96,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   useEffect(() => {
     // Only auto-update if no route param was provided
     if (!route.params?.zipCode && isAuthenticated && primarySubscription && !subsLoading) {
-      setCurrentZipCode(primarySubscription.zipCode)
+      setCurrentZipCode(primarySubscription.postalCode)
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
 
@@ -115,15 +135,9 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const postalCodeLabel = getPostalCodeLabel()
   const postalCodeLabelCap = getPostalCodeLabelCapitalized()
 
-  // Handle search - validate and update current postal code
-  const handleSearch = useCallback((text: string) => {
-    setSearchText(text)
-    // Validate against international postal code formats (US, CA, UK, AU, etc.)
-    if (isValidPostalCode(text.trim())) {
-      const normalized = normalizePostalCode(text.trim())
-      setCurrentZipCode(normalized)
-      setSearchText("")
-    }
+  // Handle postal code selection from PlacesSearchBar
+  const handlePostalCodeSelect = useCallback((postalCode: string, _cityName?: string, _state?: string) => {
+    setCurrentZipCode(postalCode)
   }, [])
 
   // Handle location button press - get zip code from GPS
@@ -361,10 +375,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           isAuthenticated={isAuthenticated}
         />
         <View style={$searchBarContainer}>
-          <SearchBar
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder={`Search ${postalCodeLabel}s...`}
+          <PlacesSearchBar
+            onPostalCodeSelect={handlePostalCodeSelect}
+            placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -399,10 +412,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           isAuthenticated={isAuthenticated}
         />
         <View style={$searchBarContainer}>
-          <SearchBar
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder={`Search ${postalCodeLabel}s...`}
+          <PlacesSearchBar
+            onPostalCodeSelect={handlePostalCodeSelect}
+            placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -433,10 +445,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           isAuthenticated={isAuthenticated}
         />
         <View style={$searchBarContainer}>
-          <SearchBar
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder={`Search ${postalCodeLabel}s...`}
+          <PlacesSearchBar
+            onPostalCodeSelect={handlePostalCodeSelect}
+            placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -479,10 +490,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           isAuthenticated={isAuthenticated}
         />
         <View style={$searchBarContainer}>
-          <SearchBar
-            value={searchText}
-            onChangeText={handleSearch}
-            placeholder={`Search ${postalCodeLabel}s...`}
+          <PlacesSearchBar
+            onPostalCodeSelect={handlePostalCodeSelect}
+            placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -547,10 +557,9 @@ mapyourhealth://zip/${zipData.zipCode}`
 
       {/* Search Bar */}
       <View style={$searchBarContainer}>
-        <SearchBar
-          value={searchText}
-          onChangeText={handleSearch}
-          placeholder={`Search ${postalCodeLabel}s...`}
+        <PlacesSearchBar
+          onPostalCodeSelect={handlePostalCodeSelect}
+          placeholder={`Search city or ${postalCodeLabel}...`}
           showLocationButton
           onLocationPress={handleLocationPress}
           isLocating={isLocating}
@@ -649,7 +658,7 @@ mapyourhealth://zip/${zipData.zipCode}`
             onViewDetails={() => {
               // Navigate to category detail for this stat
               navigation.navigate("CategoryDetail", {
-                category: priorityAlert.definition.category,
+                category: mapToStatCategory(priorityAlert.definition.category),
                 zipCode: currentZipCode,
               })
             }}

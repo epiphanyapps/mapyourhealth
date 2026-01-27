@@ -40,76 +40,75 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { CATEGORIES, categoryColors, type Category } from "@/lib/constants";
+import {
+  CONTAMINANT_CATEGORIES,
+  contaminantCategoryColors,
+  contaminantCategoryNames,
+  type ContaminantCategory,
+} from "@/lib/constants";
 
-interface StatDefinition {
-  id: string;
-  statId: string;
-  name: string;
-  unit: string;
-  description?: string | null;
-  category: Category | null;
-  dangerThreshold: number;
-  warningThreshold: number;
-  higherIsBad?: boolean | null;
-}
+type Contaminant = Schema["Contaminant"]["type"];
 
-export default function StatsPage() {
-  const [stats, setStats] = useState<StatDefinition[]>([]);
+export default function ContaminantsPage() {
+  const [contaminants, setContaminants] = useState<Contaminant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingStat, setEditingStat] = useState<StatDefinition | null>(null);
+  const [editingContaminant, setEditingContaminant] = useState<Contaminant | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
-    statId: "",
+    contaminantId: "",
     name: "",
+    nameFr: "",
     unit: "",
     description: "",
-    category: "" as Category | "",
-    dangerThreshold: "",
-    warningThreshold: "",
+    descriptionFr: "",
+    category: "" as ContaminantCategory | "",
+    studies: "",
     higherIsBad: true,
   });
 
-  const fetchStats = async () => {
+  const fetchContaminants = async () => {
     try {
       setIsLoading(true);
       const client = generateClient<Schema>();
-      const { data, errors } = await client.models.StatDefinition.list();
+      const { data, errors } = await client.models.Contaminant.list({
+        limit: 1000,
+      });
 
       if (errors) {
-        console.error("Error fetching stats:", errors);
-        toast.error("Failed to fetch stat definitions");
+        console.error("Error fetching contaminants:", errors);
+        toast.error("Failed to fetch contaminants");
         return;
       }
 
-      setStats((data || []) as unknown as StatDefinition[]);
+      setContaminants(data || []);
     } catch (error) {
-      console.error("Error fetching stats:", error);
-      toast.error("Failed to fetch stat definitions");
+      console.error("Error fetching contaminants:", error);
+      toast.error("Failed to fetch contaminants");
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchStats();
+    fetchContaminants();
   }, []);
 
   const resetForm = () => {
     setFormData({
-      statId: "",
+      contaminantId: "",
       name: "",
+      nameFr: "",
       unit: "",
       description: "",
+      descriptionFr: "",
       category: "",
-      dangerThreshold: "",
-      warningThreshold: "",
+      studies: "",
       higherIsBad: true,
     });
-    setEditingStat(null);
+    setEditingContaminant(null);
   };
 
   const openCreateDialog = () => {
@@ -117,23 +116,24 @@ export default function StatsPage() {
     setIsDialogOpen(true);
   };
 
-  const openEditDialog = (stat: StatDefinition) => {
-    setEditingStat(stat);
+  const openEditDialog = (contaminant: Contaminant) => {
+    setEditingContaminant(contaminant);
     setFormData({
-      statId: stat.statId,
-      name: stat.name,
-      unit: stat.unit,
-      description: stat.description || "",
-      category: stat.category || "",
-      dangerThreshold: stat.dangerThreshold.toString(),
-      warningThreshold: stat.warningThreshold.toString(),
-      higherIsBad: stat.higherIsBad ?? true,
+      contaminantId: contaminant.contaminantId,
+      name: contaminant.name,
+      nameFr: contaminant.nameFr || "",
+      unit: contaminant.unit,
+      description: contaminant.description || "",
+      descriptionFr: contaminant.descriptionFr || "",
+      category: (contaminant.category as ContaminantCategory) || "",
+      studies: contaminant.studies || "",
+      higherIsBad: contaminant.higherIsBad ?? true,
     });
     setIsDialogOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.statId || !formData.name || !formData.unit || !formData.category) {
+    if (!formData.contaminantId || !formData.name || !formData.unit || !formData.category) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -142,52 +142,53 @@ export default function StatsPage() {
     try {
       const client = generateClient<Schema>();
 
-      const statData = {
-        statId: formData.statId,
+      const contaminantData = {
+        contaminantId: formData.contaminantId,
         name: formData.name,
+        nameFr: formData.nameFr || null,
         unit: formData.unit,
         description: formData.description || null,
-        category: formData.category as Category,
-        dangerThreshold: parseFloat(formData.dangerThreshold),
-        warningThreshold: parseFloat(formData.warningThreshold),
+        descriptionFr: formData.descriptionFr || null,
+        category: formData.category as ContaminantCategory,
+        studies: formData.studies || null,
         higherIsBad: formData.higherIsBad,
       };
 
-      if (editingStat) {
-        await client.models.StatDefinition.update({
-          id: editingStat.id,
-          ...statData,
+      if (editingContaminant) {
+        await client.models.Contaminant.update({
+          id: editingContaminant.id,
+          ...contaminantData,
         });
-        toast.success("Stat definition updated");
+        toast.success("Contaminant updated");
       } else {
-        await client.models.StatDefinition.create(statData);
-        toast.success("Stat definition created");
+        await client.models.Contaminant.create(contaminantData);
+        toast.success("Contaminant created");
       }
 
       setIsDialogOpen(false);
       resetForm();
-      fetchStats();
+      fetchContaminants();
     } catch (error) {
-      console.error("Error saving stat:", error);
-      toast.error("Failed to save stat definition");
+      console.error("Error saving contaminant:", error);
+      toast.error("Failed to save contaminant");
     } finally {
       setIsSaving(false);
     }
   };
 
-  const handleDelete = async (stat: StatDefinition) => {
-    if (!confirm(`Are you sure you want to delete "${stat.name}"?`)) {
+  const handleDelete = async (contaminant: Contaminant) => {
+    if (!confirm(`Are you sure you want to delete "${contaminant.name}"?`)) {
       return;
     }
 
     try {
       const client = generateClient<Schema>();
-      await client.models.StatDefinition.delete({ id: stat.id });
-      toast.success("Stat definition deleted");
-      fetchStats();
+      await client.models.Contaminant.delete({ id: contaminant.id });
+      toast.success("Contaminant deleted");
+      fetchContaminants();
     } catch (error) {
-      console.error("Error deleting stat:", error);
-      toast.error("Failed to delete stat definition");
+      console.error("Error deleting contaminant:", error);
+      toast.error("Failed to delete contaminant");
     }
   };
 
@@ -195,41 +196,41 @@ export default function StatsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Stat Definitions</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Contaminants</h1>
           <p className="text-muted-foreground">
-            Manage safety metrics and their thresholds
+            Manage water contaminants and their properties
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={openCreateDialog}>
               <Plus className="mr-2 h-4 w-4" />
-              Add Stat Definition
+              Add Contaminant
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
-                {editingStat ? "Edit Stat Definition" : "Create Stat Definition"}
+                {editingContaminant ? "Edit Contaminant" : "Create Contaminant"}
               </DialogTitle>
               <DialogDescription>
-                {editingStat
-                  ? "Update the stat definition details below."
-                  : "Add a new safety metric to track."}
+                {editingContaminant
+                  ? "Update the contaminant details below."
+                  : "Add a new water contaminant to track."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="statId">Stat ID *</Label>
+                  <Label htmlFor="contaminantId">Contaminant ID *</Label>
                   <Input
-                    id="statId"
-                    placeholder="e.g., lead_levels"
-                    value={formData.statId}
+                    id="contaminantId"
+                    placeholder="e.g., nitrate"
+                    value={formData.contaminantId}
                     onChange={(e) =>
-                      setFormData({ ...formData, statId: e.target.value })
+                      setFormData({ ...formData, contaminantId: e.target.value })
                     }
-                    disabled={!!editingStat}
+                    disabled={!!editingContaminant}
                   />
                 </div>
                 <div className="space-y-2">
@@ -239,7 +240,7 @@ export default function StatsPage() {
                     onValueChange={(value) =>
                       setFormData({
                         ...formData,
-                        category: value as Category,
+                        category: value as ContaminantCategory,
                       })
                     }
                   >
@@ -247,9 +248,9 @@ export default function StatsPage() {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      {CATEGORIES.map((cat) => (
+                      {CONTAMINANT_CATEGORIES.map((cat) => (
                         <SelectItem key={cat} value={cat}>
-                          {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                          {contaminantCategoryNames[cat]}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -257,16 +258,29 @@ export default function StatsPage() {
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="name">Name *</Label>
-                <Input
-                  id="name"
-                  placeholder="e.g., Lead Levels"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData({ ...formData, name: e.target.value })
-                  }
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Name (English) *</Label>
+                  <Input
+                    id="name"
+                    placeholder="e.g., Nitrate"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nameFr">Name (French)</Label>
+                  <Input
+                    id="nameFr"
+                    placeholder="e.g., Nitrate"
+                    value={formData.nameFr}
+                    onChange={(e) =>
+                      setFormData({ ...formData, nameFr: e.target.value })
+                    }
+                  />
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
@@ -274,7 +288,7 @@ export default function StatsPage() {
                   <Label htmlFor="unit">Unit *</Label>
                   <Input
                     id="unit"
-                    placeholder="e.g., ppb"
+                    placeholder="e.g., μg/L"
                     value={formData.unit}
                     onChange={(e) =>
                       setFormData({ ...formData, unit: e.target.value })
@@ -300,47 +314,38 @@ export default function StatsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="warningThreshold">Warning Threshold *</Label>
-                  <Input
-                    id="warningThreshold"
-                    type="number"
-                    placeholder="e.g., 10"
-                    value={formData.warningThreshold}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        warningThreshold: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="dangerThreshold">Danger Threshold *</Label>
-                  <Input
-                    id="dangerThreshold"
-                    type="number"
-                    placeholder="e.g., 15"
-                    value={formData.dangerThreshold}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        dangerThreshold: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-              </div>
-
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Description (English)</Label>
                 <Input
                   id="description"
-                  placeholder="Optional description"
+                  placeholder="Health concerns and effects"
                   value={formData.description}
                   onChange={(e) =>
                     setFormData({ ...formData, description: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="descriptionFr">Description (French)</Label>
+                <Input
+                  id="descriptionFr"
+                  placeholder="Préoccupations et effets sur la santé"
+                  value={formData.descriptionFr}
+                  onChange={(e) =>
+                    setFormData({ ...formData, descriptionFr: e.target.value })
+                  }
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="studies">Scientific References</Label>
+                <Input
+                  id="studies"
+                  placeholder="Links to scientific studies"
+                  value={formData.studies}
+                  onChange={(e) =>
+                    setFormData({ ...formData, studies: e.target.value })
                   }
                 />
               </div>
@@ -359,7 +364,7 @@ export default function StatsPage() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Saving...
                   </>
-                ) : editingStat ? (
+                ) : editingContaminant ? (
                   "Update"
                 ) : (
                   "Create"
@@ -372,9 +377,9 @@ export default function StatsPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Stat Definitions</CardTitle>
+          <CardTitle>All Contaminants</CardTitle>
           <CardDescription>
-            {stats.length} stat definition{stats.length !== 1 ? "s" : ""} configured
+            {contaminants.length} contaminant{contaminants.length !== 1 ? "s" : ""} configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -382,52 +387,62 @@ export default function StatsPage() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : stats.length === 0 ? (
+          ) : contaminants.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No stat definitions yet. Click "Add Stat Definition" to create one.
+              No contaminants yet. Click &quot;Add Contaminant&quot; to create one.
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead>ID</TableHead>
                   <TableHead>Name</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Unit</TableHead>
-                  <TableHead>Warning</TableHead>
-                  <TableHead>Danger</TableHead>
+                  <TableHead>Higher Is</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {stats.map((stat) => (
-                  <TableRow key={stat.id}>
-                    <TableCell className="font-medium">{stat.name}</TableCell>
+                {contaminants.map((contaminant) => (
+                  <TableRow key={contaminant.id}>
+                    <TableCell className="font-mono text-sm">
+                      {contaminant.contaminantId}
+                    </TableCell>
+                    <TableCell className="font-medium">{contaminant.name}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
                         className={
-                          stat.category ? categoryColors[stat.category] : ""
+                          contaminant.category
+                            ? contaminantCategoryColors[contaminant.category as ContaminantCategory]
+                            : ""
                         }
                       >
-                        {stat.category}
+                        {contaminant.category
+                          ? contaminantCategoryNames[contaminant.category as ContaminantCategory]
+                          : "—"}
                       </Badge>
                     </TableCell>
-                    <TableCell>{stat.unit}</TableCell>
-                    <TableCell>{stat.warningThreshold}</TableCell>
-                    <TableCell>{stat.dangerThreshold}</TableCell>
+                    <TableCell>{contaminant.unit}</TableCell>
+                    <TableCell>
+                      <Badge variant={contaminant.higherIsBad ? "destructive" : "default"}>
+                        {contaminant.higherIsBad ? "Bad" : "Good"}
+                      </Badge>
+                    </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEditDialog(stat)}
+                          onClick={() => openEditDialog(contaminant)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(stat)}
+                          onClick={() => handleDelete(contaminant)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>

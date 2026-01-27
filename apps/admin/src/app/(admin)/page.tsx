@@ -11,20 +11,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import {
-  ListChecks,
+  Droplets,
   MapPin,
   AlertTriangle,
   Upload,
   ArrowRight,
+  Globe,
+  Scale,
 } from "lucide-react";
+
+type Contaminant = Schema["Contaminant"]["type"];
+type LocationMeasurement = Schema["LocationMeasurement"]["type"];
+type HazardReport = Schema["HazardReport"]["type"];
+type Jurisdiction = Schema["Jurisdiction"]["type"];
+type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
-    statDefinitions: 0,
-    zipCodesWithData: 0,
+    contaminants: 0,
+    locationsWithData: 0,
     pendingReports: 0,
+    jurisdictions: 0,
+    thresholds: 0,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -34,31 +43,39 @@ export default function AdminDashboard() {
         const client = generateClient<Schema>();
 
         // Fetch all counts in parallel
-        const [statDefsResult, zipCodeStatsResult, reportsResult] =
+        const [contaminantsResult, measurementsResult, reportsResult, jurisdictionsResult, thresholdsResult] =
           await Promise.all([
-            client.models.StatDefinition.list(),
-            client.models.ZipCodeStat.list(),
-            client.models.HazardReport.list(),
+            client.models.Contaminant.list({ limit: 1000 }),
+            client.models.LocationMeasurement.list({ limit: 1000 }),
+            client.models.HazardReport.list({ limit: 1000 }),
+            client.models.Jurisdiction.list({ limit: 100 }),
+            client.models.ContaminantThreshold.list({ limit: 1000 }),
           ]);
 
-        // Count stat definitions
-        const statDefinitions = statDefsResult.data?.length || 0;
+        // Count contaminants
+        const contaminants = contaminantsResult.data?.length || 0;
 
-        // Count unique zip codes with data
-        const uniqueZipCodes = new Set(
-          zipCodeStatsResult.data?.map((stat) => stat.zipCode) || []
+        // Count unique postal codes with data
+        const uniquePostalCodes = new Set(
+          measurementsResult.data?.map((m: LocationMeasurement) => m.postalCode) || []
         );
-        const zipCodesWithData = uniqueZipCodes.size;
+        const locationsWithData = uniquePostalCodes.size;
 
         // Count pending reports
         const pendingReports =
-          reportsResult.data?.filter((report) => report.status === "pending")
+          reportsResult.data?.filter((report: HazardReport) => report.status === "pending")
             .length || 0;
 
+        // Count jurisdictions and thresholds
+        const jurisdictions = jurisdictionsResult.data?.length || 0;
+        const thresholds = thresholdsResult.data?.length || 0;
+
         setStats({
-          statDefinitions,
-          zipCodesWithData,
+          contaminants,
+          locationsWithData,
           pendingReports,
+          jurisdictions,
+          thresholds,
         });
       } catch (error) {
         console.error("Error fetching stats:", error);
@@ -72,20 +89,32 @@ export default function AdminDashboard() {
 
   const quickActions = [
     {
-      title: "Manage Stat Definitions",
-      description: "Add, edit, or remove safety metrics",
-      icon: ListChecks,
+      title: "Manage Contaminants",
+      description: "Add, edit, or remove contaminant definitions",
+      icon: Droplets,
       href: "/stats",
     },
     {
-      title: "Update Zip Code Data",
-      description: "Add or modify stats for zip codes",
+      title: "Manage Thresholds",
+      description: "Configure jurisdiction-specific limits",
+      icon: Scale,
+      href: "/thresholds",
+    },
+    {
+      title: "Manage Jurisdictions",
+      description: "Add or edit regulatory jurisdictions",
+      icon: Globe,
+      href: "/jurisdictions",
+    },
+    {
+      title: "Location Measurements",
+      description: "Add or modify measurements for postal codes",
       icon: MapPin,
       href: "/zip-codes",
     },
     {
       title: "Import Data",
-      description: "Bulk import stats via CSV or JSON",
+      description: "Bulk import data via CSV or JSON",
       icon: Upload,
       href: "/import",
     },
@@ -107,20 +136,20 @@ export default function AdminDashboard() {
       </div>
 
       {/* Stats Overview */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Stat Definitions
+              Contaminants
             </CardTitle>
-            <ListChecks className="h-4 w-4 text-muted-foreground" />
+            <Droplets className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? "..." : stats.statDefinitions}
+              {isLoading ? "..." : stats.contaminants}
             </div>
             <p className="text-xs text-muted-foreground">
-              Safety metrics configured
+              Defined contaminants
             </p>
           </CardContent>
         </Card>
@@ -128,16 +157,50 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Zip Codes with Data
+              Jurisdictions
+            </CardTitle>
+            <Globe className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats.jurisdictions}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Regulatory regions
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Thresholds
+            </CardTitle>
+            <Scale className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {isLoading ? "..." : stats.thresholds}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Configured limits
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Locations with Data
             </CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {isLoading ? "..." : stats.zipCodesWithData}
+              {isLoading ? "..." : stats.locationsWithData}
             </div>
             <p className="text-xs text-muted-foreground">
-              Locations tracked
+              Postal codes tracked
             </p>
           </CardContent>
         </Card>
@@ -163,7 +226,7 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div>
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {quickActions.map((action) => (
             <Card key={action.title} className="hover:bg-muted/50 transition-colors">
               <Link href={action.href}>

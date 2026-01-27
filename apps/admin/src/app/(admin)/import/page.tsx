@@ -23,9 +23,11 @@ import { Badge } from "@/components/ui/badge";
 import { Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
+type Contaminant = Schema["Contaminant"]["type"];
+
 interface ImportRow {
-  zipCode: string;
-  statId: string;
+  postalCode: string;
+  contaminantId: string;
   value: number;
   source?: string;
   isValid: boolean;
@@ -43,33 +45,29 @@ export default function ImportPage() {
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [statDefinitions, setStatDefinitions] = useState<Map<string, { dangerThreshold: number; warningThreshold: number; higherIsBad: boolean }>>(new Map());
+  const [contaminants, setContaminants] = useState<Map<string, Contaminant>>(new Map());
 
-  const fetchStatDefinitions = async () => {
+  const fetchContaminants = async () => {
     const client = generateClient<Schema>();
-    const { data } = await client.models.StatDefinition.list();
+    const { data } = await client.models.Contaminant.list({ limit: 1000 });
 
-    const defsMap = new Map();
-    for (const def of data || []) {
-      defsMap.set(def.statId, {
-        dangerThreshold: def.dangerThreshold,
-        warningThreshold: def.warningThreshold,
-        higherIsBad: def.higherIsBad ?? true,
-      });
+    const contaminantMap = new Map<string, Contaminant>();
+    for (const c of data || []) {
+      contaminantMap.set(c.contaminantId, c);
     }
-    setStatDefinitions(defsMap);
-    return defsMap;
+    setContaminants(contaminantMap);
+    return contaminantMap;
   };
 
-  const validateRow = (row: Partial<ImportRow>, defs: Map<string, { dangerThreshold: number; warningThreshold: number; higherIsBad: boolean }>): ImportRow => {
+  const validateRow = (row: Partial<ImportRow>, contaminantMap: Map<string, Contaminant>): ImportRow => {
     const errors: string[] = [];
 
-    if (!row.zipCode || !/^\d{5}$/.test(row.zipCode)) {
-      errors.push("Invalid zip code");
+    if (!row.postalCode || row.postalCode.length < 2) {
+      errors.push("Invalid postal code");
     }
 
-    if (!row.statId || !defs.has(row.statId)) {
-      errors.push("Unknown stat ID");
+    if (!row.contaminantId || !contaminantMap.has(row.contaminantId)) {
+      errors.push("Unknown contaminant ID");
     }
 
     if (row.value === undefined || isNaN(row.value)) {
@@ -77,8 +75,8 @@ export default function ImportPage() {
     }
 
     return {
-      zipCode: row.zipCode || "",
-      statId: row.statId || "",
+      postalCode: row.postalCode || "",
+      contaminantId: row.contaminantId || "",
       value: row.value || 0,
       source: row.source,
       isValid: errors.length === 0,
@@ -90,16 +88,20 @@ export default function ImportPage() {
     const lines = content.trim().split("\n");
     const header = lines[0].toLowerCase().split(",").map((h) => h.trim());
 
-    const zipCodeIdx = header.indexOf("zipcode") !== -1 ? header.indexOf("zipcode") : header.indexOf("zip_code");
-    const statIdIdx = header.indexOf("statid") !== -1 ? header.indexOf("statid") : header.indexOf("stat_id");
+    const postalCodeIdx = header.indexOf("postalcode") !== -1 ? header.indexOf("postalcode") :
+                          header.indexOf("postal_code") !== -1 ? header.indexOf("postal_code") :
+                          header.indexOf("zipcode") !== -1 ? header.indexOf("zipcode") : header.indexOf("zip_code");
+    const contaminantIdIdx = header.indexOf("contaminantid") !== -1 ? header.indexOf("contaminantid") :
+                             header.indexOf("contaminant_id") !== -1 ? header.indexOf("contaminant_id") :
+                             header.indexOf("statid") !== -1 ? header.indexOf("statid") : header.indexOf("stat_id");
     const valueIdx = header.indexOf("value");
     const sourceIdx = header.indexOf("source");
 
     return lines.slice(1).map((line) => {
       const values = line.split(",").map((v) => v.trim());
       return {
-        zipCode: values[zipCodeIdx] || "",
-        statId: values[statIdIdx] || "",
+        postalCode: values[postalCodeIdx] || "",
+        contaminantId: values[contaminantIdIdx] || "",
         value: parseFloat(values[valueIdx]) || 0,
         source: sourceIdx !== -1 ? values[sourceIdx] : undefined,
       };
@@ -112,8 +114,8 @@ export default function ImportPage() {
       throw new Error("JSON must be an array");
     }
     return data.map((item: Record<string, unknown>) => ({
-      zipCode: String(item.zipCode || item.zip_code || ""),
-      statId: String(item.statId || item.stat_id || ""),
+      postalCode: String(item.postalCode || item.postal_code || item.zipCode || item.zip_code || ""),
+      contaminantId: String(item.contaminantId || item.contaminant_id || item.statId || item.stat_id || ""),
       value: Number(item.value) || 0,
       source: item.source ? String(item.source) : undefined,
     }));
@@ -126,7 +128,7 @@ export default function ImportPage() {
     setImportResult(null);
 
     try {
-      const defs = await fetchStatDefinitions();
+      const contaminantMap = await fetchContaminants();
       const content = await file.text();
 
       let rows: Partial<ImportRow>[];
@@ -139,7 +141,7 @@ export default function ImportPage() {
         return;
       }
 
-      const validatedRows = rows.map((row) => validateRow(row, defs));
+      const validatedRows = rows.map((row) => validateRow(row, contaminantMap));
       setPreviewData(validatedRows);
 
       const invalidCount = validatedRows.filter((r) => !r.isValid).length;
@@ -159,18 +161,6 @@ export default function ImportPage() {
     }
   };
 
-  const calculateStatus = (value: number, def: { dangerThreshold: number; warningThreshold: number; higherIsBad: boolean }): "danger" | "warning" | "safe" => {
-    if (def.higherIsBad) {
-      if (value >= def.dangerThreshold) return "danger";
-      if (value >= def.warningThreshold) return "warning";
-      return "safe";
-    } else {
-      if (value <= def.dangerThreshold) return "danger";
-      if (value <= def.warningThreshold) return "warning";
-      return "safe";
-    }
-  };
-
   const handleImport = async () => {
     const validRows = previewData.filter((r) => r.isValid);
     if (validRows.length === 0) {
@@ -186,28 +176,18 @@ export default function ImportPage() {
 
       for (const row of validRows) {
         try {
-          const def = statDefinitions.get(row.statId);
-          if (!def) {
-            result.failed++;
-            result.errors.push(`${row.zipCode}/${row.statId}: Unknown stat`);
-            continue;
-          }
-
-          const status = calculateStatus(row.value, def);
-
-          await client.models.ZipCodeStat.create({
-            zipCode: row.zipCode,
-            statId: row.statId,
+          await client.models.LocationMeasurement.create({
+            postalCode: row.postalCode,
+            contaminantId: row.contaminantId,
             value: row.value,
-            status,
-            lastUpdated: new Date().toISOString(),
+            measuredAt: new Date().toISOString(),
             source: row.source || null,
           });
 
           result.success++;
         } catch (error) {
           result.failed++;
-          result.errors.push(`${row.zipCode}/${row.statId}: ${error instanceof Error ? error.message : "Unknown error"}`);
+          result.errors.push(`${row.postalCode}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
       }
 
@@ -235,7 +215,7 @@ export default function ImportPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Import Data</h1>
         <p className="text-muted-foreground">
-          Bulk import zip code stats from CSV or JSON files
+          Bulk import location measurements from CSV or JSON files
         </p>
       </div>
 
@@ -250,10 +230,10 @@ export default function ImportPage() {
           </CardHeader>
           <CardContent>
             <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto">
-{`zipCode,statId,value,source
-90210,lead_levels,12.5,EPA
-90210,aqi,85,EPA
-10001,lead_levels,8.2,Local`}
+{`postalCode,contaminantId,value,source
+90210,nitrate,12500,EPA
+90210,lead,8.2,Local
+10001,arsenic,5.5,EPA`}
             </pre>
           </CardContent>
         </Card>
@@ -269,8 +249,8 @@ export default function ImportPage() {
           <CardContent>
             <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto">
 {`[
-  {"zipCode": "90210", "statId": "lead_levels", "value": 12.5, "source": "EPA"},
-  {"zipCode": "90210", "statId": "aqi", "value": 85}
+  {"postalCode": "90210", "contaminantId": "nitrate", "value": 12500, "source": "EPA"},
+  {"postalCode": "90210", "contaminantId": "lead", "value": 8.2}
 ]`}
             </pre>
           </CardContent>
@@ -334,8 +314,8 @@ export default function ImportPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
-                  <TableHead>Zip Code</TableHead>
-                  <TableHead>Stat ID</TableHead>
+                  <TableHead>Postal Code</TableHead>
+                  <TableHead>Contaminant ID</TableHead>
                   <TableHead>Value</TableHead>
                   <TableHead>Source</TableHead>
                   <TableHead>Error</TableHead>
@@ -351,8 +331,8 @@ export default function ImportPage() {
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
                     </TableCell>
-                    <TableCell>{row.zipCode}</TableCell>
-                    <TableCell>{row.statId}</TableCell>
+                    <TableCell>{row.postalCode}</TableCell>
+                    <TableCell>{row.contaminantId}</TableCell>
                     <TableCell>{row.value}</TableCell>
                     <TableCell>{row.source || "-"}</TableCell>
                     <TableCell className="text-red-600 text-sm">

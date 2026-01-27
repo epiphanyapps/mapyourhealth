@@ -197,7 +197,7 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
 
   const renderSubscription = ({ item }: { item: ZipCodeSubscription }) => (
     <SubscriptionCard
-      zipCode={item.zipCode}
+      zipCode={item.postalCode}
       cityName={item.cityName ?? undefined}
       state={item.state ?? undefined}
       onDelete={() => handleDelete(item.id)}
