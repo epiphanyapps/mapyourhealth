@@ -124,7 +124,12 @@ const linking: LinkingOptions<AppStackParamList> = {
           token: (token: string) => token,
         },
       },
-      Dashboard: "dashboard",
+      Dashboard: {
+        path: "zip/:zipCode",
+        parse: {
+          zipCode: (zipCode: string) => decodeURIComponent(zipCode),
+        },
+      },
       Login: "login",
       Signup: "signup",
     },
