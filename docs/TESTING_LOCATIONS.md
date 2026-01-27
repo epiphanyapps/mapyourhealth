@@ -1,10 +1,10 @@
-# Testing ZIP Codes for MapYourHealth
+# Testing Locations for MapYourHealth
 
 ## Available Mock Data
 
-The following ZIP codes have mock measurement data available for testing:
+The following locations have mock measurement data available for testing:
 
-| ZIP Code | Location | State | Jurisdiction | Expected Status | Notes |
+| Postal Code | Location | State | Jurisdiction | Expected Status | Notes |
 |----------|----------|-------|--------------|-----------------|-------|
 | **90210** | Beverly Hills | CA | US-CA | Safe | Low contamination levels |
 | **10001** | New York | NY | US-NY | Warning | Elevated lead (12 μg/L) |
@@ -30,7 +30,7 @@ The app now uses location-based jurisdiction lookup instead of hardcoded "US" li
 
 ### Testing Jurisdiction Detection
 
-1. **US ZIP codes** (5 digits): Detected as US, state extracted from bundled metadata
+1. **US postal codes** (5 digits): Detected as US, state extracted from bundled metadata
    - `10001` → NY → US-NY jurisdiction
    - `90210` → CA → US-CA jurisdiction
 
