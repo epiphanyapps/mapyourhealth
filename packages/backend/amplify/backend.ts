@@ -2,8 +2,8 @@ import { defineBackend } from '@aws-amplify/backend';
 import { Stack, CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { Policy, PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
-  StartingPosition,
-  EventSourceMapping,
+  // StartingPosition,
+  // EventSourceMapping,
   Function as LambdaFunction,
   FunctionUrlAuthType,
   HttpMethod,
@@ -13,7 +13,7 @@ import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { sendNotifications } from './functions/send-notifications/resource';
 import { sendEmailAlert } from './functions/send-email-alert/resource';
-import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
+// import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
 // import { storage } from './storage/resource';
 
@@ -27,11 +27,19 @@ const backend = defineBackend({
   data,
   sendNotifications,
   sendEmailAlert,
-  onZipCodeStatUpdate,
+  // onZipCodeStatUpdate, // Disabled: tables removed in schema redesign
   requestMagicLink,
   // storage,
 });
 
+// ============================================
+// OLD DATA MODEL - DISABLED PENDING REFACTOR
+// ============================================
+// The following code references old tables (ZipCodeStat, ZipCodeSubscription, StatDefinition)
+// that were removed in the schema redesign (commit a3f1eec).
+// This will be refactored to work with the new jurisdiction-aware data model.
+
+/*
 // Get DynamoDB tables from the data resources
 const zipCodeStatTable = backend.data.resources.tables['ZipCodeStat'];
 const subscriptionsTable = backend.data.resources.tables['ZipCodeSubscription'];
@@ -150,6 +158,7 @@ const eventSourceMapping = new EventSourceMapping(
 
 // Ensure the mapping depends on the stream policy
 eventSourceMapping.node.addDependency(streamPolicy);
+*/
 
 // ============================================
 // Magic Link Authentication Setup
