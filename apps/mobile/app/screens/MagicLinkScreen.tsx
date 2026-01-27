@@ -78,7 +78,7 @@ export const MagicLinkScreen: FC<MagicLinkScreenProps> = ({ navigation }) => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} />
+      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} safeAreaEdges={[]} />
 
       <Text text="Sign in with Email Link" preset="heading" style={themed($heading)} />
       {pendingAction && (
@@ -133,7 +133,7 @@ export const MagicLinkScreen: FC<MagicLinkScreenProps> = ({ navigation }) => {
 }
 
 const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xxl,
+  paddingBottom: spacing.xxl,
   paddingHorizontal: spacing.lg,
 })
 

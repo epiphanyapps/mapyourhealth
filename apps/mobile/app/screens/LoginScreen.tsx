@@ -126,6 +126,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         title=""
         leftIcon="back"
         onLeftPress={() => navigation.goBack()}
+        safeAreaEdges={[]}
       />
 
       <Text text="Welcome Back" preset="heading" style={themed($heading)} />
@@ -217,7 +218,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
 }
 
 const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xxl,
+  paddingBottom: spacing.xxl,
   paddingHorizontal: spacing.lg,
 })
 

@@ -71,7 +71,7 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} />
+      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} safeAreaEdges={[]} />
 
       <Icon icon="check" size={64} color={colors.tint} containerStyle={themed($iconContainer)} />
 
@@ -121,7 +121,7 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
 }
 
 const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  paddingVertical: spacing.xxl,
+  paddingBottom: spacing.xxl,
   paddingHorizontal: spacing.lg,
   alignItems: "center",
 })
