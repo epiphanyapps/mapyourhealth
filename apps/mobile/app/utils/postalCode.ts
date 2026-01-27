@@ -74,13 +74,12 @@ export function isValidPostalCode(postalCode: string): boolean {
   const trimmed = postalCode.trim()
   if (!trimmed) return false
 
-  // Minimum 2 chars, maximum 12 chars
-  if (trimmed.length < 2 || trimmed.length > 12) return false
+  // Minimum 4 chars (shortest valid format: Australian 4-digit codes), maximum 12 chars
+  if (trimmed.length < 4 || trimmed.length > 12) return false
 
   // Must start and end with alphanumeric, can contain spaces or dashes in between
   // This covers virtually all postal code formats worldwide
-  return /^[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$/.test(trimmed) ||
-         /^[A-Za-z0-9]{2}$/.test(trimmed) // Allow 2-char codes
+  return /^[A-Za-z0-9][A-Za-z0-9 -]*[A-Za-z0-9]$/.test(trimmed)
 }
 
 /**

@@ -118,9 +118,10 @@ export function SearchBar(props: SearchBarProps) {
           placeholderTextColor={theme.colors.textDim}
           style={$input}
           returnKeyType="search"
-          keyboardType="number-pad"
-          accessibilityLabel="Search zip codes"
-          accessibilityHint="Enter a zip code to search"
+          keyboardType="default"
+          autoCapitalize="characters"
+          accessibilityLabel="Search postal codes"
+          accessibilityHint="Enter a postal code (US or Canadian) to search"
         />
       </View>
       {showLocationButton && (

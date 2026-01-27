@@ -268,11 +268,12 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
             placeholder={placeholder}
             placeholderTextColor={theme.colors.textDim}
             style={$input}
-            keyboardType="number-pad"
-            maxLength={5}
+            keyboardType="default"
+            maxLength={7}
+            autoCapitalize="characters"
             returnKeyType="done"
-            accessibilityLabel="Enter zip code"
-            accessibilityHint="Type a 5-digit zip code and press enter to add"
+            accessibilityLabel="Enter postal code"
+            accessibilityHint="Type a postal code (US or Canadian) and press enter to add"
           />
         </View>
 
