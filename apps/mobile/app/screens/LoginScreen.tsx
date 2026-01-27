@@ -6,12 +6,12 @@
  */
 
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
-import { TextInput, TextStyle, ViewStyle } from "react-native"
+import { Pressable, TextInput, TextStyle, View, ViewStyle } from "react-native"
 import { signIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
 import { Header } from "@/components/Header"
-import { PressableIcon } from "@/components/Icon"
+import { Icon, PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
@@ -129,6 +129,11 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         safeAreaEdges={[]}
       />
 
+      {/* Welcome Icon */}
+      <View style={themed($iconContainer)}>
+        <Icon icon="lock" size={32} color={colors.tint} />
+      </View>
+
       <Text text="Welcome Back" preset="heading" style={themed($heading)} />
       {pendingAction && (
         <Text
@@ -139,11 +144,15 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
       )}
       <Text
         text="Sign in to access your safety alerts and subscriptions"
-        preset="subheading"
         style={themed($subheading)}
+        size="sm"
       />
 
-      {generalError ? <Text text={generalError} style={themed($errorText)} size="sm" /> : null}
+      {generalError ? (
+        <View style={themed($errorContainer)}>
+          <Text text={generalError} style={themed($errorText)} size="sm" />
+        </View>
+      ) : null}
 
       <TextField
         value={email}
@@ -183,14 +192,15 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         RightAccessory={PasswordRightAccessory}
       />
 
-      <Button
-        text="Forgot Password?"
-        style={themed($forgotPasswordButton)}
-        preset="default"
-        textStyle={themed($forgotPasswordText)}
+      {/* Forgot Password Link */}
+      <Pressable
         onPress={() => navigation.navigate("ForgotPassword")}
-      />
+        style={themed($forgotPasswordLink)}
+      >
+        <Text text="Forgot password?" style={themed($forgotPasswordText)} size="xs" />
+      </Pressable>
 
+      {/* Primary Sign In Button */}
       <Button
         text={isSubmitting ? "Signing In..." : "Sign In"}
         style={themed($loginButton)}
@@ -199,20 +209,29 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
         disabled={isSubmitting}
       />
 
+      {/* Divider */}
+      <View style={themed($dividerContainer)}>
+        <View style={themed($dividerLine)} />
+        <Text text="or" style={themed($dividerText)} size="xs" />
+        <View style={themed($dividerLine)} />
+      </View>
+
+      {/* Magic Link Button */}
       <Button
-        text="Email me a link instead"
+        text="Sign in with email link"
         style={themed($magicLinkButton)}
         preset="default"
         textStyle={themed($magicLinkText)}
         onPress={() => navigation.navigate("MagicLink")}
       />
 
-      <Button
-        text="Don't have an account? Sign up"
-        style={themed($signupButton)}
-        preset="default"
-        onPress={() => navigation.navigate("Signup")}
-      />
+      {/* Sign Up Link */}
+      <View style={themed($signupContainer)}>
+        <Text text="Don't have an account? " style={themed($signupText)} size="sm" />
+        <Pressable onPress={() => navigation.navigate("Signup")}>
+          <Text text="Sign up" style={themed($signupLink)} size="sm" weight="semiBold" />
+        </Pressable>
+      </View>
     </Screen>
   )
 }
@@ -222,12 +241,24 @@ const $screenContentContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingHorizontal: spacing.lg,
 })
 
-const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.sm,
+const $iconContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  width: 64,
+  height: 64,
+  borderRadius: 32,
+  backgroundColor: colors.tint + "15",
+  justifyContent: "center",
+  alignItems: "center",
+  alignSelf: "center",
+  marginBottom: spacing.lg,
 })
 
-const $subheading: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  marginBottom: spacing.lg,
+const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
+  marginBottom: spacing.xs,
+})
+
+const $subheading: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.textDim,
+  marginBottom: spacing.xl,
 })
 
 const $pendingActionHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
@@ -235,39 +266,76 @@ const $pendingActionHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.xs,
 })
 
-const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.error,
+const $errorContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.error + "15",
+  borderRadius: 8,
+  padding: spacing.sm,
   marginBottom: spacing.md,
 })
 
-const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginBottom: spacing.lg,
+const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.error,
 })
 
-const $forgotPasswordButton: ThemedStyle<ViewStyle> = () => ({
+const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginBottom: spacing.md,
+})
+
+const $forgotPasswordLink: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   alignSelf: "flex-end",
-  marginTop: -8,
-  marginBottom: 16,
+  marginBottom: spacing.lg,
 })
 
 const $forgotPasswordText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.tint,
-  fontSize: 14,
 })
 
 const $loginButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.xs,
+  marginBottom: spacing.md,
+  borderRadius: 12,
+  minHeight: 52,
 })
 
-const $magicLinkButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.lg,
+const $dividerContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  alignItems: "center",
+  marginVertical: spacing.md,
+})
+
+const $dividerLine: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  flex: 1,
+  height: 1,
+  backgroundColor: colors.separator,
+})
+
+const $dividerText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.textDim,
+  paddingHorizontal: spacing.md,
+})
+
+const $magicLinkButton: ThemedStyle<ViewStyle> = ({ colors }) => ({
+  borderRadius: 12,
+  minHeight: 52,
+  borderWidth: 1,
+  borderColor: colors.border,
+  backgroundColor: "transparent",
 })
 
 const $magicLinkText: ThemedStyle<TextStyle> = ({ colors }) => ({
-  color: colors.tint,
-  fontSize: 14,
+  color: colors.text,
 })
 
-const $signupButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.md,
+const $signupContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  flexDirection: "row",
+  justifyContent: "center",
+  alignItems: "center",
+  marginTop: spacing.xl,
+})
+
+const $signupText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.textDim,
+})
+
+const $signupLink: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.tint,
 })
