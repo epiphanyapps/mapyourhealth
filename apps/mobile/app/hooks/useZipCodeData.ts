@@ -26,6 +26,8 @@ import {
   type LocationData,
   type MeasurementWithStatus,
 } from "@/data/types/safety"
+import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
+import { detectPostalCodeRegion } from "@/utils/postalCode"
 
 /** Cache key prefix for zip code stats */
 const CACHE_KEY_PREFIX = "zipcode_stats_"
@@ -59,11 +61,39 @@ interface UseZipCodeDataResult {
 }
 
 /**
+ * Canadian postal code first-letter to province mapping.
+ * The first letter of a Canadian postal code indicates the province.
+ */
+const CANADIAN_POSTAL_PREFIX_TO_PROVINCE: Record<string, string> = {
+  A: "NL", // Newfoundland and Labrador
+  B: "NS", // Nova Scotia
+  C: "PE", // Prince Edward Island
+  E: "NB", // New Brunswick
+  G: "QC", // Quebec (east)
+  H: "QC", // Quebec (Montreal)
+  J: "QC", // Quebec (other)
+  K: "ON", // Ontario (Ottawa)
+  L: "ON", // Ontario (central)
+  M: "ON", // Ontario (Toronto)
+  N: "ON", // Ontario (southwest)
+  P: "ON", // Ontario (north)
+  R: "MB", // Manitoba
+  S: "SK", // Saskatchewan
+  T: "AB", // Alberta
+  V: "BC", // British Columbia
+  X: "NT", // Northwest Territories / Nunavut
+  Y: "YT", // Yukon
+}
+
+/**
  * Look up city/state from bundled metadata or mock data as fallback.
  * Uses bundled zip code metadata for instant lookup without API calls.
+ * Also handles Canadian postal codes by extracting province from the postal code prefix.
  */
 function getCityStateForZipCode(zipCode: string): { cityName: string; state: string } {
-  // First try bundled metadata (covers most US zip codes)
+  const normalized = zipCode.trim().toUpperCase()
+
+  // First try bundled metadata (covers US zip codes)
   const metadata = getZipCodeMetadata(zipCode)
   if (metadata) {
     return { cityName: metadata.city, state: metadata.state }
@@ -73,6 +103,17 @@ function getCityStateForZipCode(zipCode: string): { cityName: string; state: str
   const mockData = getMockLocationData(zipCode)
   if (mockData) {
     return { cityName: mockData.cityName, state: mockData.state }
+  }
+
+  // For Canadian postal codes, extract province from first letter
+  // Canadian format: A1A 1A1 or A1A1A1 (letter-digit-letter digit-letter-digit)
+  const canadianPattern = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
+  if (canadianPattern.test(normalized)) {
+    const firstLetter = normalized.charAt(0).toUpperCase()
+    const province = CANADIAN_POSTAL_PREFIX_TO_PROVINCE[firstLetter]
+    if (province) {
+      return { cityName: "", state: province }
+    }
   }
 
   // Return generic placeholders for truly unknown zip codes
@@ -149,12 +190,16 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
 
   /**
    * Maps new LocationMeasurement to legacy ZipCodeStat format
+   *
+   * @param measurement - The measurement from Amplify backend
+   * @param jurisdictionCode - The jurisdiction code to use for threshold lookup
+   *                          (determined from zip code location)
    */
   const mapMeasurementToLegacyStat = useCallback(
-    (measurement: AmplifyLocationMeasurement): ZipCodeStat => {
-      // Compute status based on threshold
+    (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): ZipCodeStat => {
+      // Compute status based on threshold for the user's jurisdiction
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
-      const threshold = getThreshold(measurement.contaminantId, "US") // Default to US for legacy format
+      const threshold = getThreshold(measurement.contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
 
       let status: StatStatus = "safe"
@@ -260,9 +305,13 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
         const measurements = await getLocationMeasurements(zipCode)
 
         if (measurements.length > 0) {
-          // Map measurements to legacy format
-          const stats = measurements.map(mapMeasurementToLegacyStat)
+          // Get location info and determine jurisdiction
           const { cityName, state } = getCityStateForZipCode(zipCode)
+          const country = detectPostalCodeRegion(zipCode) || "US"
+          const jurisdictionCode = getJurisdictionForPostalCode(zipCode, state, country)
+
+          // Map measurements to legacy format using the correct jurisdiction
+          const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
 
           const newData: ZipCodeData = {
             zipCode,

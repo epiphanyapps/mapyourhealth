@@ -17,7 +17,11 @@ import seedData from "./seed-data.json";
 import outputs from "../amplify_outputs.json";
 
 Amplify.configure(outputs);
-const client = generateClient<Schema>();
+
+// Use IAM auth for admin operations (requires AWS credentials)
+const client = generateClient<Schema>({
+  authMode: "iam",
+});
 
 interface SeedJurisdiction {
   code: string;
