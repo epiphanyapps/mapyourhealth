@@ -14,18 +14,26 @@
   "assetBundlePatterns": ["**/*"],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
-    "package": "com.mapyourhealth",
+    "package": "com.epiphanyapps.mapyourhealth",
     "adaptiveIcon": {
       "foregroundImage": "./assets/images/app-icon-android-adaptive-foreground.png",
       "backgroundImage": "./assets/images/app-icon-android-adaptive-background.png"
     },
     "allowBackup": false,
-    "edgeToEdgeEnabled": true
+    "edgeToEdgeEnabled": true,
+    "config": {
+      "googleMaps": {
+        "apiKey": ""
+      }
+    }
   },
   "ios": {
     "icon": "./assets/images/app-icon-ios.png",
     "supportsTablet": true,
-    "bundleIdentifier": "com.mapyourhealth"
+    "bundleIdentifier": "com.epiphanyapps.mapyourhealth",
+    "config": {
+      "googleMapsApiKey": ""
+    }
   },
   "web": {
     "favicon": "./assets/images/app-icon-web-favicon.png",
@@ -37,10 +45,10 @@
     [
       "expo-splash-screen",
       {
-        "image": "./assets/images/app-icon-android-adaptive-foreground.png",
-        "imageWidth": 300,
+        "image": "./assets/images/logo@3x.png",
+        "imageWidth": 200,
         "resizeMode": "contain",
-        "backgroundColor": "#191015"
+        "backgroundColor": "#E8F5E9"
       }
     ],
     [
@@ -48,7 +56,7 @@
       {
         "android": {
           "parentTheme": "Light",
-          "enforceNavigationBarContrast": false
+          "enforceNavigationBarContrast": true
         }
       }
     ],
