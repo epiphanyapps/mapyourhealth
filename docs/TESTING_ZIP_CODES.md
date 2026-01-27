@@ -1,75 +1,96 @@
-# Testing Guide
+# Testing ZIP Codes for MapYourHealth
 
-## URLs
+## Available Mock Data
 
-- **Mobile App (Web)**: https://app.mapyourhealth.info/
-- **Admin Dashboard**: https://admin.mapyourhealth.info/
+The following ZIP codes have mock measurement data available for testing:
 
----
+| ZIP Code | Location | State | Jurisdiction | Expected Status | Notes |
+|----------|----------|-------|--------------|-----------------|-------|
+| **90210** | Beverly Hills | CA | US-CA | Safe | Low contamination levels |
+| **10001** | New York | NY | US-NY | Warning | Elevated lead (12 μg/L) |
+| **33139** | Miami Beach | FL | US-FL | Safe | Normal levels |
+| **60601** | Chicago | IL | US-IL | Danger | High lead (18 μg/L) + coliform |
+| **98101** | Seattle | WA | US-WA | Very Safe | Lowest contamination |
 
-## Mobile App Testing
+## Jurisdiction-Aware Thresholds
 
-### Search by Zip Code
+The app now uses location-based jurisdiction lookup instead of hardcoded "US" limits.
 
-Try these zip codes to see different safety conditions:
+### Example: Lead Limits by Jurisdiction
 
-| Zip Code | Location | What You'll See |
-|----------|----------|-----------------|
-| 98101 | Seattle, WA | Mostly safe (green) |
-| 10001 | New York, NY | Multiple warnings (yellow) |
-| 60601 | Chicago, IL | Danger alert for lead (red) |
-| 33139 | Miami Beach, FL | Flood danger |
-| 85001 | Phoenix, AZ | Wildfire & ozone danger |
-| 90210 | Beverly Hills, CA | Wildfire warning |
+| Jurisdiction | Lead Limit (μg/L) | Notes |
+|--------------|-------------------|-------|
+| WHO | 10 | Global standard |
+| US (Federal) | 15 | EPA action level |
+| US-NY | 15 | Follows federal |
+| US-CA | 15 | Follows federal |
+| CA (Canada Federal) | 5 | Stricter than US |
+| CA-QC (Quebec) | 5 | Follows Canadian federal |
+| EU | 5 | European standard |
 
-### GPS Location Feature
+### Testing Jurisdiction Detection
 
-1. Tap the GPS icon (crosshairs) next to the search bar
-2. Grant location permission when prompted
-3. Your postal code should auto-populate
-4. If no data exists for your area, you'll see "No data yet" with option to be notified
+1. **US ZIP codes** (5 digits): Detected as US, state extracted from bundled metadata
+   - `10001` → NY → US-NY jurisdiction
+   - `90210` → CA → US-CA jurisdiction
 
-### International Users
+2. **Canadian postal codes** (A1A 1A1 format): Detected as CA, province from first letter
+   - `H2X 1Y6` → QC (H = Quebec) → CA-QC jurisdiction
+   - `M5V 3L9` → ON (M = Ontario) → CA-ON jurisdiction
+   - `V6B 1A1` → BC (V = British Columbia) → CA-BC jurisdiction
 
-The app works with postal codes from many countries:
+## Canadian Postal Code Prefixes
 
-| Country | Example |
-|---------|---------|
-| USA | `90210` |
-| Canada | `M5V 3L9` |
-| UK | `SW1A 1AA` |
-| Australia | `2000` |
-| Germany | `10115` |
+| First Letter | Province |
+|--------------|----------|
+| A | Newfoundland and Labrador |
+| B | Nova Scotia |
+| C | Prince Edward Island |
+| E | New Brunswick |
+| G, H, J | Quebec |
+| K, L, M, N, P | Ontario |
+| R | Manitoba |
+| S | Saskatchewan |
+| T | Alberta |
+| V | British Columbia |
+| X | Northwest Territories / Nunavut |
+| Y | Yukon |
 
-- **US users** see "zip code"
-- **Canadian users** see "postal code"
-- **UK users** see "postcode"
+## Seeded Data Summary
 
-If we don't have data for your area yet, you can sign up to be notified when it becomes available.
+The backend database contains:
 
----
+- **18 jurisdictions**: WHO, EU, US, CA + state/provincial (NY, CA, TX, FL, IL, WA, QC, ON, BC, AB, etc.)
+- **174 contaminants**: Parsed from Risks.xlsx
+  - 68 pesticides
+  - 48 organic compounds (including PFAS)
+  - 29 disinfection byproducts
+  - 17 radioactive contaminants
+  - 10 heavy metals (inorganic)
+  - 2 fertilizers
+- **414 thresholds**: Jurisdiction-specific limits
 
-## Available Test Data
+## Testing the Fix
 
-### US Cities with Data (34 zip codes)
+### Before (Bug)
+All users saw US federal limits regardless of location.
 
-**Major Cities (10)**
-- 90210 (Beverly Hills), 10001 (NYC), 33139 (Miami Beach)
-- 60601 (Chicago), 98101 (Seattle), 30301 (Atlanta)
-- 75201 (Dallas), 85001 (Phoenix), 80202 (Denver), 02101 (Boston)
+### After (Fixed)
+- User in NYC (10001) → sees US-NY thresholds
+- User in Montreal (H2X 1Y6) → sees CA-QC thresholds (stricter lead limit!)
+- User in Beverly Hills (90210) → sees US-CA thresholds
 
-**Queens, NY (12)**
-- 11368, 11356, 11101, 11102, 11354, 11372
-- 11373, 11375, 11361, 11432, 11385, 11693
+## Running Seeds
 
-**Manhattan, NY (12)**
-- 10002, 10003, 10012, 10013, 10016, 10017
-- 10023, 10028, 10029, 10027, 10032, 10038
+```bash
+# Parse Risks.xlsx and regenerate seed-data.json
+cd packages/backend
+yarn parse:excel
 
----
+# Clear and reseed the database
+yarn seed:clear
 
-## Admin Dashboard Testing
-
-1. **View all zip codes**: Visit `/zip-codes`
-2. **View safety metrics**: Visit `/stats`
-3. **View specific zip code**: Visit `/zip-codes/10001` (NYC example)
+# Fetch latest amplify_outputs.json (after deployment)
+cd apps/mobile
+yarn amplify:outputs
+```
