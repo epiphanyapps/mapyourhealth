@@ -17,6 +17,9 @@ import "tsx/cjs"
 module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
   const existingPlugins = config.plugins ?? []
 
+  // Get Google Places API key from environment variable
+  const googlePlacesApiKey = process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY || ""
+
   return {
     ...config,
     ios: {
@@ -35,7 +38,24 @@ module.exports = ({ config }: ConfigContext): Partial<ExpoConfig> => {
           },
         ],
       },
+      config: {
+        ...config.ios?.config,
+        googleMapsApiKey: googlePlacesApiKey,
+      },
+    },
+    android: {
+      ...config.android,
+      config: {
+        ...config.android?.config,
+        googleMaps: {
+          apiKey: googlePlacesApiKey,
+        },
+      },
     },
     plugins: [...existingPlugins],
+    extra: {
+      ...config.extra,
+      googlePlacesApiKey,
+    },
   }
 }
