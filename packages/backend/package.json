@@ -2,6 +2,9 @@
   "name": "@mapyourhealth/backend",
   "version": "1.0.1",
   "type": "module",
+  "exports": {
+    "./amplify/*": "./amplify/*"
+  },
   "scripts": {
     "sandbox": "ampx sandbox",
     "deploy": "ampx pipeline-deploy --branch main",
