@@ -258,6 +258,9 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
       const warningThreshold = limit * warningRatio
 
       if (higherIsBad) {
+        // Special case: limit of 0 means "must be absent"
+        // If value is also 0 (none detected), that's safe, not danger
+        if (limit === 0 && value === 0) return "safe"
         if (value >= limit) return "danger"
         if (value >= warningThreshold) return "warning"
         return "safe"
