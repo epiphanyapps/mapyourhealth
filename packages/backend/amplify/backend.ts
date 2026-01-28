@@ -253,10 +253,10 @@ new CfnOutput(authStack, 'RequestMagicLinkFunctionUrl', {
 // Get DynamoDB tables from the data resources
 const subscriptionsTable = backend.data.resources.tables['UserSubscription'];
 const notificationLogTable = backend.data.resources.tables['NotificationLog'];
-const dataStack = Stack.of(subscriptionsTable);
 
-// Get the processNotifications Lambda function
+// Get the processNotifications Lambda function and its stack
 const processNotificationsLambda = backend.processNotifications.resources.lambda as LambdaFunction;
+const processNotificationsStack = Stack.of(processNotificationsLambda);
 
 // Set environment variables for processNotifications function
 processNotificationsLambda.addEnvironment('SUBSCRIPTIONS_TABLE_NAME', subscriptionsTable.tableName);
@@ -266,7 +266,7 @@ processNotificationsLambda.addEnvironment('SEND_PUSH_FUNCTION_NAME', backend.sen
 processNotificationsLambda.addEnvironment('USER_POOL_ID', userPoolId);
 
 // Grant processNotifications function permissions to query subscriptions and write logs
-const processNotificationsDynamoPolicy = new Policy(dataStack, 'ProcessNotificationsDynamoPolicy', {
+const processNotificationsDynamoPolicy = new Policy(processNotificationsStack, 'ProcessNotificationsDynamoPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
@@ -293,7 +293,7 @@ const processNotificationsDynamoPolicy = new Policy(dataStack, 'ProcessNotificat
 backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsDynamoPolicy);
 
 // Grant processNotifications function permissions to invoke email and push Lambdas
-const processNotificationsInvokePolicy = new Policy(dataStack, 'ProcessNotificationsInvokePolicy', {
+const processNotificationsInvokePolicy = new Policy(processNotificationsStack, 'ProcessNotificationsInvokePolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
@@ -308,7 +308,7 @@ const processNotificationsInvokePolicy = new Policy(dataStack, 'ProcessNotificat
 backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsInvokePolicy);
 
 // Grant processNotifications function permissions to look up user emails from Cognito
-const processNotificationsCognitoPolicy = new Policy(dataStack, 'ProcessNotificationsCognitoPolicy', {
+const processNotificationsCognitoPolicy = new Policy(processNotificationsStack, 'ProcessNotificationsCognitoPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
@@ -319,8 +319,12 @@ const processNotificationsCognitoPolicy = new Policy(dataStack, 'ProcessNotifica
 });
 backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsCognitoPolicy);
 
+// Get sendEmailAlert Lambda and its stack for SES permissions
+const sendEmailAlertLambda = backend.sendEmailAlert.resources.lambda as LambdaFunction;
+const sendEmailAlertStack = Stack.of(sendEmailAlertLambda);
+
 // Grant sendEmailAlert function permissions to use SES
-const sendEmailAlertSesPolicy = new Policy(dataStack, 'SendEmailAlertSESPolicy', {
+const sendEmailAlertSesPolicy = new Policy(sendEmailAlertStack, 'SendEmailAlertSESPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
@@ -332,8 +336,8 @@ const sendEmailAlertSesPolicy = new Policy(dataStack, 'SendEmailAlertSESPolicy',
 backend.sendEmailAlert.resources.lambda.role?.attachInlinePolicy(sendEmailAlertSesPolicy);
 
 // Export the processNotifications function name for admin app
-new CfnOutput(dataStack, 'ProcessNotificationsFunctionName', {
+new CfnOutput(processNotificationsStack, 'ProcessNotificationsFunctionName', {
   value: backend.processNotifications.resources.lambda.functionName,
   description: 'Lambda function name for processing notifications',
-  exportName: `${dataStack.stackName}-ProcessNotificationsFunctionName`,
+  exportName: `${processNotificationsStack.stackName}-ProcessNotificationsFunctionName`,
 });
