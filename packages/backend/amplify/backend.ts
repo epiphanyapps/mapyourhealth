@@ -13,6 +13,7 @@ import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { sendNotifications } from './functions/send-notifications/resource';
 import { sendEmailAlert } from './functions/send-email-alert/resource';
+import { processNotifications } from './functions/process-notifications/resource';
 // import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
 // import { storage } from './storage/resource';
@@ -27,6 +28,7 @@ const backend = defineBackend({
   data,
   sendNotifications,
   sendEmailAlert,
+  processNotifications,
   // onZipCodeStatUpdate, // Disabled: tables removed in schema redesign
   requestMagicLink,
   // storage,
@@ -242,4 +244,96 @@ new CfnOutput(authStack, 'RequestMagicLinkFunctionUrl', {
   value: functionUrl.url,
   description: 'URL for the Request Magic Link function',
   exportName: `${authStack.stackName}-RequestMagicLinkUrl`,
+});
+
+// ============================================
+// Process Notifications Lambda Setup
+// ============================================
+
+// Get DynamoDB tables from the data resources
+const subscriptionsTable = backend.data.resources.tables['UserSubscription'];
+const notificationLogTable = backend.data.resources.tables['NotificationLog'];
+const dataStack = Stack.of(subscriptionsTable);
+
+// Get the processNotifications Lambda function
+const processNotificationsLambda = backend.processNotifications.resources.lambda as LambdaFunction;
+
+// Set environment variables for processNotifications function
+processNotificationsLambda.addEnvironment('SUBSCRIPTIONS_TABLE_NAME', subscriptionsTable.tableName);
+processNotificationsLambda.addEnvironment('NOTIFICATION_LOG_TABLE_NAME', notificationLogTable.tableName);
+processNotificationsLambda.addEnvironment('SEND_EMAIL_FUNCTION_NAME', backend.sendEmailAlert.resources.lambda.functionName);
+processNotificationsLambda.addEnvironment('SEND_PUSH_FUNCTION_NAME', backend.sendNotifications.resources.lambda.functionName);
+processNotificationsLambda.addEnvironment('USER_POOL_ID', userPoolId);
+
+// Grant processNotifications function permissions to query subscriptions and write logs
+const processNotificationsDynamoPolicy = new Policy(dataStack, 'ProcessNotificationsDynamoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:Query',
+        'dynamodb:GetItem',
+      ],
+      resources: [
+        subscriptionsTable.tableArn,
+        `${subscriptionsTable.tableArn}/index/*`,
+      ],
+    }),
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:PutItem',
+      ],
+      resources: [
+        notificationLogTable.tableArn,
+      ],
+    }),
+  ],
+});
+backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsDynamoPolicy);
+
+// Grant processNotifications function permissions to invoke email and push Lambdas
+const processNotificationsInvokePolicy = new Policy(dataStack, 'ProcessNotificationsInvokePolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['lambda:InvokeFunction'],
+      resources: [
+        backend.sendEmailAlert.resources.lambda.functionArn,
+        backend.sendNotifications.resources.lambda.functionArn,
+      ],
+    }),
+  ],
+});
+backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsInvokePolicy);
+
+// Grant processNotifications function permissions to look up user emails from Cognito
+const processNotificationsCognitoPolicy = new Policy(dataStack, 'ProcessNotificationsCognitoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['cognito-idp:AdminGetUser'],
+      resources: [backend.auth.resources.userPool.userPoolArn],
+    }),
+  ],
+});
+backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsCognitoPolicy);
+
+// Grant sendEmailAlert function permissions to use SES
+const sendEmailAlertSesPolicy = new Policy(dataStack, 'SendEmailAlertSESPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    }),
+  ],
+});
+backend.sendEmailAlert.resources.lambda.role?.attachInlinePolicy(sendEmailAlertSesPolicy);
+
+// Export the processNotifications function name for admin app
+new CfnOutput(dataStack, 'ProcessNotificationsFunctionName', {
+  value: backend.processNotifications.resources.lambda.functionName,
+  description: 'Lambda function name for processing notifications',
+  exportName: `${dataStack.stackName}-ProcessNotificationsFunctionName`,
 });
