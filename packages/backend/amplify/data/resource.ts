@@ -177,9 +177,41 @@ const schema = a.schema({
       // Specific contaminants to watch (null = all)
       watchContaminants: a.string().array(),
       notifyWhenDataAvailable: a.boolean().default(false),
+      // Push notification token (Expo Push)
+      expoPushToken: a.string(),
     })
     .authorization((allow) => [allow.owner()])
     .secondaryIndexes((index) => [index("postalCode")]),
+
+  /**
+   * NotificationLog - audit trail for sent notifications
+   * Lambda writes via IAM, users can read their own, admin can read all
+   */
+  NotificationLog: a
+    .model({
+      subscriptionId: a.string().required(),
+      userId: a.string().required(),
+      postalCode: a.string().required(),
+      type: a.enum(["push", "email"]),
+      status: a.enum(["pending", "sent", "failed", "delivered"]),
+      title: a.string().required(),
+      body: a.string().required(),
+      sentAt: a.datetime(),
+      deliveredAt: a.datetime(),
+      error: a.string(),
+      // Context for what triggered the notification
+      triggerType: a.enum(["data_update", "data_available", "status_change"]),
+      contaminantId: a.string(), // If notification was about specific contaminant
+    })
+    .authorization((allow) => [
+      allow.authenticated().to(["read"]), // Users can read (filter by userId in app)
+      allow.group("admin").to(["read", "delete"]),
+      // Lambda functions use resource-based IAM policies to write
+    ])
+    .secondaryIndexes((index) => [
+      index("postalCode"),
+      index("userId"),
+    ]),
 
   /**
    * Hazard reports - user-submitted reports
