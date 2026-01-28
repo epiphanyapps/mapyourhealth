@@ -20,8 +20,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, XCircle } from "lucide-react";
+import { Upload, FileJson, FileSpreadsheet, Loader2, CheckCircle, XCircle, Bell } from "lucide-react";
 import { toast } from "sonner";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { fetchAuthSession } from "aws-amplify/auth";
 
 type Contaminant = Schema["Contaminant"]["type"];
 
@@ -46,6 +50,8 @@ export default function ImportPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
   const [contaminants, setContaminants] = useState<Map<string, Contaminant>>(new Map());
+  const [notifySubscribers, setNotifySubscribers] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
 
   const fetchContaminants = async () => {
     const client = generateClient<Schema>();
@@ -199,11 +205,83 @@ export default function ImportPage() {
       } else {
         toast.warning(`Imported ${result.success} rows, ${result.failed} failed`);
       }
+
+      // Send notifications if enabled and we had successful imports
+      if (notifySubscribers && result.success > 0) {
+        await sendNotifications(validRows);
+      }
     } catch (error) {
       console.error("Error importing data:", error);
       toast.error("Import failed");
     } finally {
       setIsImporting(false);
+    }
+  };
+
+  const sendNotifications = async (importedRows: ImportRow[]) => {
+    // Get unique postal codes from imported data
+    const postalCodes = [...new Set(importedRows.map((r) => r.postalCode))];
+
+    if (postalCodes.length === 0) return;
+
+    setIsNotifying(true);
+    let notifiedCount = 0;
+
+    try {
+      // Get AWS credentials from Amplify Auth
+      const session = await fetchAuthSession();
+      const credentials = session.credentials;
+
+      if (!credentials) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const lambdaClient = new LambdaClient({
+        region: "ca-central-1",
+        credentials: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          sessionToken: credentials.sessionToken,
+        },
+      });
+
+      // Send notification for each postal code
+      for (const postalCode of postalCodes) {
+        try {
+          const command = new InvokeCommand({
+            FunctionName: "process-notifications",
+            InvocationType: "RequestResponse",
+            Payload: Buffer.from(JSON.stringify({
+              postalCode,
+              triggerType: "data_update",
+              adminTriggered: true,
+            })),
+          });
+
+          const response = await lambdaClient.send(command);
+
+          if (response.Payload) {
+            const result = JSON.parse(Buffer.from(response.Payload).toString());
+            if (result.subscribersNotified > 0) {
+              notifiedCount += result.subscribersNotified;
+            }
+          }
+        } catch (error) {
+          console.error(`Failed to send notifications for ${postalCode}:`, error);
+        }
+      }
+
+      if (notifiedCount > 0) {
+        toast.success(`Notified ${notifiedCount} subscriber(s) about the update`);
+      } else {
+        toast.info("No subscribers to notify for these locations");
+      }
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      toast.error("Failed to send some notifications");
+    } finally {
+      setIsNotifying(false);
     }
   };
 
@@ -295,19 +373,37 @@ export default function ImportPage() {
                 {validCount} valid, {invalidCount} invalid rows
               </CardDescription>
             </div>
-            <Button onClick={handleImport} disabled={isImporting || validCount === 0}>
-              {isImporting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Importing...
-                </>
-              ) : (
-                <>
-                  <Upload className="mr-2 h-4 w-4" />
-                  Import {validCount} Rows
-                </>
-              )}
-            </Button>
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="notify-subscribers"
+                  checked={notifySubscribers}
+                  onCheckedChange={setNotifySubscribers}
+                />
+                <Label htmlFor="notify-subscribers" className="flex items-center gap-1.5 cursor-pointer">
+                  <Bell className="h-4 w-4" />
+                  Notify subscribers
+                </Label>
+              </div>
+              <Button onClick={handleImport} disabled={isImporting || isNotifying || validCount === 0}>
+                {isImporting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Importing...
+                  </>
+                ) : isNotifying ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Notifying...
+                  </>
+                ) : (
+                  <>
+                    <Upload className="mr-2 h-4 w-4" />
+                    Import {validCount} Rows
+                  </>
+                )}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent>
             <Table>
