@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react"
 import { useMMKVString } from "react-native-mmkv"
@@ -17,6 +18,11 @@ import {
   AuthUser,
 } from "aws-amplify/auth"
 import Config from "@/config"
+import {
+  initializePushNotifications,
+  addNotificationResponseListener,
+  getLastNotificationResponse,
+} from "@/services/notifications"
 
 // Magic link API endpoint - this will be set from backend outputs
 const MAGIC_LINK_API_URL = Config.MAGIC_LINK_API_URL || ""
@@ -32,6 +38,7 @@ export type AuthContextType = {
   validationError: string
   requestMagicLink: (email: string) => Promise<boolean>
   verifyMagicLink: (email: string, token: string) => Promise<boolean>
+  expoPushToken: string | null
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -42,6 +49,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   const [authEmail, setAuthEmail] = useMMKVString("AuthProvider.authEmail")
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [expoPushToken, setExpoPushToken] = useState<string | null>(null)
+  const notificationListenerRef = useRef<ReturnType<typeof addNotificationResponseListener> | null>(null)
 
   /**
    * Check the current Amplify auth state
@@ -63,6 +72,46 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   useEffect(() => {
     checkAuthState()
   }, [checkAuthState])
+
+  // Initialize push notifications when user is authenticated
+  useEffect(() => {
+    if (user) {
+      // Initialize push notifications and get token
+      initializePushNotifications()
+        .then((token) => {
+          if (token) {
+            setExpoPushToken(token)
+            console.log("Push notifications initialized with token:", token)
+          }
+        })
+        .catch((error) => {
+          console.error("Failed to initialize push notifications:", error)
+        })
+
+      // Set up notification response listener (when user taps notification)
+      notificationListenerRef.current = addNotificationResponseListener((response) => {
+        const data = response.notification.request.content.data
+        console.log("Notification tapped:", data)
+        // Handle navigation to specific screen based on notification data
+        // This can be enhanced to use navigation context
+      })
+
+      // Check if app was opened from a notification
+      getLastNotificationResponse().then((response) => {
+        if (response) {
+          const data = response.notification.request.content.data
+          console.log("App opened from notification:", data)
+        }
+      })
+    }
+
+    return () => {
+      // Clean up notification listener
+      if (notificationListenerRef.current) {
+        notificationListenerRef.current.remove()
+      }
+    }
+  }, [user])
 
   /**
    * Refresh auth state - call this after successful login
@@ -179,6 +228,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     validationError,
     requestMagicLink,
     verifyMagicLink,
+    expoPushToken,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

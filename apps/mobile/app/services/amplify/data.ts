@@ -228,6 +228,7 @@ export interface CreateSubscriptionOptions {
   alertOnAnyChange?: boolean
   watchContaminants?: string[]
   notifyWhenDataAvailable?: boolean
+  expoPushToken?: string
 }
 
 /**
@@ -252,6 +253,7 @@ export async function createUserSubscription(
     alertOnAnyChange: options?.alertOnAnyChange ?? false,
     watchContaminants: options?.watchContaminants,
     notifyWhenDataAvailable: options?.notifyWhenDataAvailable ?? false,
+    expoPushToken: options?.expoPushToken,
   })
   if (errors) {
     console.error('Error creating subscription:', errors)
