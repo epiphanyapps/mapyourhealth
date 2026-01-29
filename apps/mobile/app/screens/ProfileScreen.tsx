@@ -6,8 +6,8 @@
  * logout button, and delete account information.
  */
 
-import { FC, useState, useCallback } from "react"
-import { View, TextStyle, ViewStyle, Pressable, Alert, Switch } from "react-native"
+import { FC, useState, useCallback, useEffect } from "react"
+import { View, TextStyle, ViewStyle, Pressable, Alert, Switch, ActivityIndicator } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Screen } from "@/components/Screen"
@@ -17,15 +17,111 @@ import { useAuth } from "@/context/AuthContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { getUserSubscriptions, updateUserSubscription, type AmplifyUserSubscription } from "@/services/amplify/data"
 
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
 export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, logout } = useAuth()
+  const { user, logout, expoPushToken } = useAuth()
   const { themed, theme } = useAppTheme()
 
-  // Notification preferences state (local only for now)
-  const [emailNotifications, setEmailNotifications] = useState(true)
+  // Subscriptions and loading state
+  const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Notification preferences state
+  const [enablePush, setEnablePush] = useState(true)
+  const [enableEmail, setEnableEmail] = useState(false)
+  const [alertOnDanger, setAlertOnDanger] = useState(true)
+  const [alertOnWarning, setAlertOnWarning] = useState(false)
+
+  /**
+   * Load user's subscriptions and extract notification preferences
+   */
+  const loadSubscriptions = useCallback(async () => {
+    try {
+      setIsLoading(true)
+      const subs = await getUserSubscriptions()
+      setSubscriptions(subs)
+
+      // Use preferences from first subscription as defaults (they should all be the same)
+      if (subs.length > 0) {
+        const first = subs[0]
+        setEnablePush(first.enablePush ?? true)
+        setEnableEmail(first.enableEmail ?? false)
+        setAlertOnDanger(first.alertOnDanger ?? true)
+        setAlertOnWarning(first.alertOnWarning ?? false)
+      }
+    } catch (error) {
+      console.error("Failed to load subscriptions:", error)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
+
+  // Load subscriptions on mount
+  useEffect(() => {
+    loadSubscriptions()
+  }, [loadSubscriptions])
+
+  /**
+   * Update notification preferences across all subscriptions
+   */
+  const updateNotificationPreferences = useCallback(async (
+    updates: {
+      enablePush?: boolean
+      enableEmail?: boolean
+      alertOnDanger?: boolean
+      alertOnWarning?: boolean
+    }
+  ) => {
+    if (subscriptions.length === 0) return
+
+    setIsSaving(true)
+    try {
+      // Update all subscriptions with new preferences
+      await Promise.all(
+        subscriptions.map((sub) =>
+          updateUserSubscription(sub.id, {
+            ...updates,
+            // Also update push token if we have one
+            ...(expoPushToken && { expoPushToken }),
+          })
+        )
+      )
+      // Reload to get updated data
+      await loadSubscriptions()
+    } catch (error) {
+      console.error("Failed to update notification preferences:", error)
+      Alert.alert("Error", "Failed to save notification preferences")
+    } finally {
+      setIsSaving(false)
+    }
+  }, [subscriptions, expoPushToken, loadSubscriptions])
+
+  /**
+   * Handle toggle changes with immediate UI update and background save
+   */
+  const handleEnablePushChange = useCallback((value: boolean) => {
+    setEnablePush(value)
+    updateNotificationPreferences({ enablePush: value })
+  }, [updateNotificationPreferences])
+
+  const handleEnableEmailChange = useCallback((value: boolean) => {
+    setEnableEmail(value)
+    updateNotificationPreferences({ enableEmail: value })
+  }, [updateNotificationPreferences])
+
+  const handleAlertOnDangerChange = useCallback((value: boolean) => {
+    setAlertOnDanger(value)
+    updateNotificationPreferences({ alertOnDanger: value })
+  }, [updateNotificationPreferences])
+
+  const handleAlertOnWarningChange = useCallback((value: boolean) => {
+    setAlertOnWarning(value)
+    updateNotificationPreferences({ alertOnWarning: value })
+  }, [updateNotificationPreferences])
 
   /**
    * Handle logout with confirmation
@@ -132,30 +228,128 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
       {/* Notification Preferences */}
       <View style={themed($section)}>
-        <Text text="Notifications" preset="subheading" style={themed($sectionTitle)} />
-        <View style={themed($menuItem)}>
-          <View style={$menuItemLeft}>
-            <MaterialCommunityIcons
-              name="email-outline"
-              size={24}
-              color={theme.colors.text}
+        <View style={$sectionHeader}>
+          <Text text="Notifications" preset="subheading" style={themed($sectionTitle)} />
+          {isSaving && <ActivityIndicator size="small" color={theme.colors.tint} />}
+        </View>
+
+        {subscriptions.length === 0 && !isLoading ? (
+          <View style={themed($emptyState)}>
+            <Text
+              text="Subscribe to a location to enable notifications"
+              style={$emptyStateText}
             />
-            <View>
-              <Text text="Email Notifications" style={$menuItemText} />
-              <Text
-                text="Receive alerts about safety conditions"
-                style={$menuItemDescription}
+          </View>
+        ) : (
+          <>
+            {/* Push Notifications */}
+            <View style={themed($menuItem)}>
+              <View style={$menuItemLeft}>
+                <MaterialCommunityIcons
+                  name="bell-outline"
+                  size={24}
+                  color={theme.colors.text}
+                />
+                <View style={$menuItemTextContainer}>
+                  <Text text="Push Notifications" style={$menuItemText} />
+                  <Text
+                    text="Receive alerts on your device"
+                    style={$menuItemDescription}
+                  />
+                </View>
+              </View>
+              <Switch
+                value={enablePush}
+                onValueChange={handleEnablePushChange}
+                trackColor={{ false: theme.colors.palette.neutral400, true: theme.colors.tint }}
+                thumbColor="#FFFFFF"
+                disabled={isLoading || subscriptions.length === 0}
+                accessibilityLabel="Toggle push notifications"
               />
             </View>
-          </View>
-          <Switch
-            value={emailNotifications}
-            onValueChange={setEmailNotifications}
-            trackColor={{ false: theme.colors.palette.neutral400, true: theme.colors.tint }}
-            thumbColor="#FFFFFF"
-            accessibilityLabel="Toggle email notifications"
-          />
-        </View>
+
+            {/* Email Notifications */}
+            <View style={themed($menuItem)}>
+              <View style={$menuItemLeft}>
+                <MaterialCommunityIcons
+                  name="email-outline"
+                  size={24}
+                  color={theme.colors.text}
+                />
+                <View style={$menuItemTextContainer}>
+                  <Text text="Email Notifications" style={$menuItemText} />
+                  <Text
+                    text="Receive alerts via email"
+                    style={$menuItemDescription}
+                  />
+                </View>
+              </View>
+              <Switch
+                value={enableEmail}
+                onValueChange={handleEnableEmailChange}
+                trackColor={{ false: theme.colors.palette.neutral400, true: theme.colors.tint }}
+                thumbColor="#FFFFFF"
+                disabled={isLoading || subscriptions.length === 0}
+                accessibilityLabel="Toggle email notifications"
+              />
+            </View>
+
+            {/* Alert Level Settings */}
+            <Text text="Alert Levels" style={[$menuItemText, { marginTop: 16, marginBottom: 8 }]} />
+
+            {/* Danger Alerts */}
+            <View style={themed($menuItem)}>
+              <View style={$menuItemLeft}>
+                <MaterialCommunityIcons
+                  name="alert-circle"
+                  size={24}
+                  color={theme.colors.error}
+                />
+                <View style={$menuItemTextContainer}>
+                  <Text text="Danger Alerts" style={$menuItemText} />
+                  <Text
+                    text="When contaminants exceed safe limits"
+                    style={$menuItemDescription}
+                  />
+                </View>
+              </View>
+              <Switch
+                value={alertOnDanger}
+                onValueChange={handleAlertOnDangerChange}
+                trackColor={{ false: theme.colors.palette.neutral400, true: theme.colors.error }}
+                thumbColor="#FFFFFF"
+                disabled={isLoading || subscriptions.length === 0}
+                accessibilityLabel="Toggle danger alerts"
+              />
+            </View>
+
+            {/* Warning Alerts */}
+            <View style={themed($menuItem)}>
+              <View style={$menuItemLeft}>
+                <MaterialCommunityIcons
+                  name="alert"
+                  size={24}
+                  color="#F59E0B"
+                />
+                <View style={$menuItemTextContainer}>
+                  <Text text="Warning Alerts" style={$menuItemText} />
+                  <Text
+                    text="When contaminants approach limits"
+                    style={$menuItemDescription}
+                  />
+                </View>
+              </View>
+              <Switch
+                value={alertOnWarning}
+                onValueChange={handleAlertOnWarningChange}
+                trackColor={{ false: theme.colors.palette.neutral400, true: "#F59E0B" }}
+                thumbColor="#FFFFFF"
+                disabled={isLoading || subscriptions.length === 0}
+                accessibilityLabel="Toggle warning alerts"
+              />
+            </View>
+          </>
+        )}
       </View>
 
       {/* Account Actions */}
@@ -258,6 +452,14 @@ const $deleteAccountLink: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   gap: 8,
 })
 
+const $emptyState: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.palette.neutral100,
+  paddingVertical: spacing.lg,
+  paddingHorizontal: spacing.md,
+  borderRadius: 12,
+  alignItems: "center",
+})
+
 // Non-themed styles
 const $emailContainer: ViewStyle = {
   flexDirection: "row",
@@ -295,6 +497,23 @@ const $menuItemDescription: TextStyle = {
   fontSize: 12,
   color: "#6B7280",
   marginTop: 2,
+}
+
+const $menuItemTextContainer: ViewStyle = {
+  flex: 1,
+}
+
+const $sectionHeader: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  justifyContent: "space-between",
+  marginBottom: 8,
+}
+
+const $emptyStateText: TextStyle = {
+  fontSize: 14,
+  color: "#6B7280",
+  textAlign: "center",
 }
 
 const $deleteAccountText: TextStyle = {
