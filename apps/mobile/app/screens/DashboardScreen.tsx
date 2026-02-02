@@ -27,6 +27,7 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
+import { useMultiLocationData } from "@/hooks/useMultiLocationData"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -92,6 +93,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const [isFollowing, setIsFollowing] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
+  // State for city selection (when user selects a city with multiple postal codes)
+  const [selectedCity, setSelectedCity] = useState<{
+    city: string
+    state: string
+    postalCodes: string[]
+  } | null>(null)
+
   // Update zip code when primary subscription loads (for authenticated users)
   useEffect(() => {
     // Only auto-update if no route param was provided
@@ -101,8 +109,24 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
 
   // Fetch data for current zip code from Amplify (with caching and offline support)
-  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
-    useZipCodeData(currentZipCode)
+  const singleLocationData = useZipCodeData(selectedCity ? "" : currentZipCode)
+
+  // Fetch aggregated data when a city is selected
+  const multiLocationData = useMultiLocationData(selectedCity)
+
+  // Use multi-location data when a city is selected, otherwise use single location data
+  const {
+    zipData,
+    isLoading,
+    error,
+    isMockData = false,
+    isCachedData = false,
+    lastUpdated = null,
+    isOffline,
+    refresh,
+  } = selectedCity
+    ? { ...multiLocationData, isMockData: false, isCachedData: false, lastUpdated: null }
+    : singleLocationData
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -137,13 +161,28 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   // Handle postal code selection from PlacesSearchBar
   const handlePostalCodeSelect = useCallback((postalCode: string, _cityName?: string, _state?: string) => {
+    setSelectedCity(null) // Clear any city selection
     setCurrentZipCode(postalCode)
+  }, [])
+
+  // Handle city selection from PlacesSearchBar
+  const handleCitySelect = useCallback((city: string, state: string, postalCodes: string[]) => {
+    if (postalCodes.length === 1) {
+      // Single postal code - treat as regular postal code selection
+      setSelectedCity(null)
+      setCurrentZipCode(postalCodes[0])
+    } else {
+      // Multiple postal codes - aggregate data
+      setSelectedCity({ city, state, postalCodes })
+      setCurrentZipCode("") // Clear single zip code when city is selected
+    }
   }, [])
 
   // Handle location button press - get zip code from GPS
   const handleLocationPress = useCallback(async () => {
     const zipCode = await getLocationZipCode()
     if (zipCode) {
+      setSelectedCity(null) // Clear any city selection
       setCurrentZipCode(zipCode)
     }
   }, [getLocationZipCode])
@@ -367,7 +406,7 @@ mapyourhealth://zip/${zipData.zipCode}`
   }
 
   // Empty state for guests - prompt to look up a zip code
-  if (!currentZipCode) {
+  if (!currentZipCode && !selectedCity) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
         <NavHeader
@@ -377,6 +416,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <View style={$searchBarContainer}>
           <PlacesSearchBar
             onPostalCodeSelect={handlePostalCodeSelect}
+            onCitySelect={handleCitySelect}
             placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
@@ -414,6 +454,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <View style={$searchBarContainer}>
           <PlacesSearchBar
             onPostalCodeSelect={handlePostalCodeSelect}
+            onCitySelect={handleCitySelect}
             placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
@@ -447,6 +488,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <View style={$searchBarContainer}>
           <PlacesSearchBar
             onPostalCodeSelect={handlePostalCodeSelect}
+            onCitySelect={handleCitySelect}
             placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
@@ -457,7 +499,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
           <Text style={$emptyStateTitle}>Unable to load data</Text>
           <Text style={$emptyStateSubtitle}>
-            We couldn't fetch safety data for {currentZipCode}. Check your connection and try again.
+            We couldn't fetch safety data for {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode}. Check your connection and try again.
           </Text>
           <Pressable
             style={[
@@ -492,6 +534,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         <View style={$searchBarContainer}>
           <PlacesSearchBar
             onPostalCodeSelect={handlePostalCodeSelect}
+            onCitySelect={handleCitySelect}
             placeholder={`Search city or ${postalCodeLabel}...`}
             showLocationButton
             onLocationPress={handleLocationPress}
@@ -500,7 +543,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         </View>
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="map-marker-question" size={64} color={theme.colors.textDim} />
-          <Text style={$emptyStateTitle}>No data for {currentZipCode} yet</Text>
+          <Text style={$emptyStateTitle}>No data for {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode} yet</Text>
           <Text style={$emptyStateSubtitle}>
             We're working on expanding our coverage. Want to know when safety data becomes available?
           </Text>
@@ -568,11 +611,13 @@ mapyourhealth://zip/${zipData.zipCode}`
 
       {/* Location Header */}
       <LocationHeader
-        zipCode={zipData.zipCode}
+        zipCode={selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : zipData.zipCode}
         cityName={
-          zipData.cityName && zipData.state
-            ? `${zipData.cityName}, ${zipData.state}`
-            : zipData.cityName || zipData.state || "United States"
+          selectedCity
+            ? `${selectedCity.postalCodes.length} locations`
+            : zipData.cityName && zipData.state
+              ? `${zipData.cityName}, ${zipData.state}`
+              : zipData.cityName || zipData.state || "United States"
         }
       />
 
@@ -606,7 +651,7 @@ mapyourhealth://zip/${zipData.zipCode}`
             isFollowing && { opacity: 0.6 },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={`Follow ${currentZipCode}`}
+          accessibilityLabel={selectedCity ? `Follow ${selectedCity.city}` : `Follow ${currentZipCode}`}
         >
           <MaterialCommunityIcons name="heart-plus-outline" size={20} color={theme.colors.tint} />
           <Text style={[$actionButtonText, { color: theme.colors.tint }]}>

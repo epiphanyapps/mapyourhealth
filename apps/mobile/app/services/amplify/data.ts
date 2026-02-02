@@ -6,25 +6,46 @@
  */
 
 import { generateClient } from 'aws-amplify/data'
+import { fetchAuthSession } from 'aws-amplify/auth'
 import type { Schema } from '@mapyourhealth/backend/amplify/data/resource'
 
 // Lazy client initialization to ensure Amplify.configure() has been called first
-// Use IAM auth for public access (unauthenticated users can read public data)
-let _publicClient: ReturnType<typeof generateClient<Schema>> | null = null
-let _privateClient: ReturnType<typeof generateClient<Schema>> | null = null
+// Use userPool auth for authenticated users, IAM for guest access
+let _userPoolClient: ReturnType<typeof generateClient<Schema>> | null = null
+let _iamClient: ReturnType<typeof generateClient<Schema>> | null = null
 
-function getPublicClient() {
-  if (!_publicClient) {
-    _publicClient = generateClient<Schema>({ authMode: 'iam' })
+function getUserPoolClient() {
+  if (!_userPoolClient) {
+    _userPoolClient = generateClient<Schema>({ authMode: 'userPool' })
   }
-  return _publicClient
+  return _userPoolClient
+}
+
+function getIamClient() {
+  if (!_iamClient) {
+    _iamClient = generateClient<Schema>({ authMode: 'iam' })
+  }
+  return _iamClient
+}
+
+/**
+ * Get the appropriate client for public data access.
+ * Uses userPool auth when authenticated, IAM auth for guest access.
+ */
+async function getPublicClient(): Promise<ReturnType<typeof generateClient<Schema>>> {
+  try {
+    const session = await fetchAuthSession()
+    if (session.tokens?.accessToken) {
+      return getUserPoolClient()
+    }
+  } catch {
+    // Not authenticated, use IAM
+  }
+  return getIamClient()
 }
 
 function getPrivateClient() {
-  if (!_privateClient) {
-    _privateClient = generateClient<Schema>({ authMode: 'userPool' })
-  }
-  return _privateClient
+  return getUserPoolClient()
 }
 
 // =============================================================================
@@ -44,10 +65,11 @@ export type AmplifyHazardReport = Schema['HazardReport']['type']
 // =============================================================================
 
 /**
- * Fetch all contaminants (public read - uses IAM auth)
+ * Fetch all contaminants (public read - uses userPool when authenticated, IAM for guests)
  */
 export async function getContaminants(): Promise<AmplifyContaminant[]> {
-  const { data, errors } = await getPublicClient().models.Contaminant.list({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Contaminant.list({
     limit: 1000,
   })
   if (errors) {
@@ -61,7 +83,8 @@ export async function getContaminants(): Promise<AmplifyContaminant[]> {
  * Fetch a specific contaminant by ID
  */
 export async function getContaminantById(contaminantId: string): Promise<AmplifyContaminant | null> {
-  const { data, errors } = await getPublicClient().models.Contaminant.listContaminantByContaminantId({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Contaminant.listContaminantByContaminantId({
     contaminantId,
   })
   if (errors) {
@@ -76,10 +99,11 @@ export async function getContaminantById(contaminantId: string): Promise<Amplify
 // =============================================================================
 
 /**
- * Fetch all thresholds (public read - uses IAM auth)
+ * Fetch all thresholds (public read - uses userPool when authenticated, IAM for guests)
  */
 export async function getContaminantThresholds(): Promise<AmplifyContaminantThreshold[]> {
-  const { data, errors } = await getPublicClient().models.ContaminantThreshold.list({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ContaminantThreshold.list({
     limit: 1000,
   })
   if (errors) {
@@ -93,7 +117,8 @@ export async function getContaminantThresholds(): Promise<AmplifyContaminantThre
  * Fetch thresholds for a specific contaminant
  */
 export async function getThresholdsForContaminant(contaminantId: string): Promise<AmplifyContaminantThreshold[]> {
-  const { data, errors } = await getPublicClient().models.ContaminantThreshold.listContaminantThresholdByContaminantId({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ContaminantThreshold.listContaminantThresholdByContaminantId({
     contaminantId,
   })
   if (errors) {
@@ -107,7 +132,8 @@ export async function getThresholdsForContaminant(contaminantId: string): Promis
  * Fetch thresholds for a specific jurisdiction
  */
 export async function getThresholdsForJurisdiction(jurisdictionCode: string): Promise<AmplifyContaminantThreshold[]> {
-  const { data, errors } = await getPublicClient().models.ContaminantThreshold.listContaminantThresholdByJurisdictionCode({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ContaminantThreshold.listContaminantThresholdByJurisdictionCode({
     jurisdictionCode,
   })
   if (errors) {
@@ -122,10 +148,11 @@ export async function getThresholdsForJurisdiction(jurisdictionCode: string): Pr
 // =============================================================================
 
 /**
- * Fetch all jurisdictions (public read - uses IAM auth)
+ * Fetch all jurisdictions (public read - uses userPool when authenticated, IAM for guests)
  */
 export async function getJurisdictions(): Promise<AmplifyJurisdiction[]> {
-  const { data, errors } = await getPublicClient().models.Jurisdiction.list({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Jurisdiction.list({
     limit: 100,
   })
   if (errors) {
@@ -139,7 +166,8 @@ export async function getJurisdictions(): Promise<AmplifyJurisdiction[]> {
  * Fetch jurisdiction by code
  */
 export async function getJurisdictionByCode(code: string): Promise<AmplifyJurisdiction | null> {
-  const { data, errors } = await getPublicClient().models.Jurisdiction.listJurisdictionByCode({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Jurisdiction.listJurisdictionByCode({
     code,
   })
   if (errors) {
@@ -153,7 +181,8 @@ export async function getJurisdictionByCode(code: string): Promise<AmplifyJurisd
  * Fetch jurisdictions by country
  */
 export async function getJurisdictionsByCountry(country: string): Promise<AmplifyJurisdiction[]> {
-  const { data, errors } = await getPublicClient().models.Jurisdiction.listJurisdictionByCountry({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Jurisdiction.listJurisdictionByCountry({
     country,
   })
   if (errors) {
@@ -171,7 +200,8 @@ export async function getJurisdictionsByCountry(country: string): Promise<Amplif
  * Fetch location by postal code
  */
 export async function getLocationByPostalCode(postalCode: string): Promise<AmplifyLocation | null> {
-  const { data, errors } = await getPublicClient().models.Location.listLocationByPostalCode({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.listLocationByPostalCode({
     postalCode,
   })
   if (errors) {
@@ -181,15 +211,64 @@ export async function getLocationByPostalCode(postalCode: string): Promise<Ampli
   return data.length > 0 ? data[0] : null
 }
 
+/**
+ * Fetch all locations by city name
+ * Uses the city index for efficient lookup
+ */
+export async function getLocationsByCity(city: string): Promise<AmplifyLocation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.listLocationByCity({
+    city,
+  })
+  if (errors) {
+    console.error('Error fetching locations by city:', errors)
+    throw new Error('Failed to fetch locations by city')
+  }
+  return data
+}
+
+/**
+ * Fetch all locations by state/province
+ * Uses the state index for efficient lookup
+ */
+export async function getLocationsByState(state: string): Promise<AmplifyLocation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.listLocationByState({
+    state,
+  })
+  if (errors) {
+    console.error('Error fetching locations by state:', errors)
+    throw new Error('Failed to fetch locations by state')
+  }
+  return data
+}
+
+/**
+ * Fetch all locations from the database
+ * Used for building the search index
+ */
+export async function getAllLocations(): Promise<AmplifyLocation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.list({
+    limit: 1000,
+  })
+  if (errors) {
+    console.error('Error fetching all locations:', errors)
+    throw new Error('Failed to fetch all locations')
+  }
+  return data
+}
+
 // =============================================================================
 // Location Measurements (Public Read)
 // =============================================================================
 
 /**
- * Fetch measurements for a specific postal code (public read - uses IAM auth)
+ * Fetch measurements for a specific postal code (public read - uses userPool when authenticated, IAM for guests)
  */
 export async function getLocationMeasurements(postalCode: string): Promise<AmplifyLocationMeasurement[]> {
-  const { data, errors } = await getPublicClient().models.LocationMeasurement.listLocationMeasurementByPostalCode({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
     postalCode,
   })
   if (errors) {
@@ -203,7 +282,8 @@ export async function getLocationMeasurements(postalCode: string): Promise<Ampli
  * Fetch measurements for a specific contaminant across all locations
  */
 export async function getMeasurementsByContaminant(contaminantId: string): Promise<AmplifyLocationMeasurement[]> {
-  const { data, errors } = await getPublicClient().models.LocationMeasurement.listLocationMeasurementByContaminantId({
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByContaminantId({
     contaminantId,
   })
   if (errors) {

@@ -347,6 +347,30 @@ export interface ZipCodeData {
  */
 export type TrendDirection = "improving" | "worsening" | "stable"
 
+// =============================================================================
+// Search Types
+// =============================================================================
+
+/**
+ * Represents a search suggestion for city/state/postal code autocomplete
+ */
+export interface SearchSuggestion {
+  /** Type of search result */
+  type: "postalCode" | "city" | "state"
+  /** Primary display text (e.g., "Montreal, QC") */
+  displayText: string
+  /** Secondary text (e.g., "2 locations") */
+  secondaryText: string
+  /** List of postal codes covered by this suggestion */
+  postalCodes: string[]
+  /** City name (for city and postalCode types) */
+  city?: string
+  /** State/province code */
+  state?: string
+  /** Country code */
+  country?: string
+}
+
 /**
  * @deprecated Use UserSubscription instead
  */
