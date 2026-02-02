@@ -20,6 +20,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { getLoginErrorMessage, isUnconfirmedUserError } from "@/utils/authErrors"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
@@ -103,8 +104,13 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
         setGeneralError(`Additional step required: ${result.nextStep?.signInStep}`)
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Login failed. Please try again."
+      const message = getLoginErrorMessage(error)
       setGeneralError(message)
+
+      // If user hasn't confirmed their email, navigate to confirmation
+      if (isUnconfirmedUserError(error)) {
+        navigation.navigate("ConfirmSignup", { email })
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -132,12 +138,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Header
-        title=""
-        leftIcon="back"
-        onLeftPress={() => navigation.goBack()}
-        safeAreaEdges={[]}
-      />
+      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} safeAreaEdges={[]} />
 
       {/* Welcome Icon */}
       <View style={themed($iconContainer)}>

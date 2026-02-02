@@ -6,12 +6,13 @@
  */
 
 import { ComponentType, FC, useMemo, useRef, useState } from "react"
-import { TextInput, TextStyle, ViewStyle } from "react-native"
+import { TextInput, TextStyle, View, ViewStyle } from "react-native"
 import { signUp } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
 import { Header } from "@/components/Header"
 import { PressableIcon } from "@/components/Icon"
+import { PasswordRequirements, isPasswordValid } from "@/components/PasswordRequirements"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
@@ -19,6 +20,7 @@ import { usePendingAction, type PendingAction } from "@/context/PendingActionCon
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { getSignupErrorMessage, isUserExistsError } from "@/utils/authErrors"
 
 interface SignupScreenProps extends AppStackScreenProps<"Signup"> {}
 
@@ -41,10 +43,12 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isPasswordHidden, setIsPasswordHidden] = useState(true)
+  const [isPasswordFocused, setIsPasswordFocused] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [emailError, setEmailError] = useState("")
   const [passwordError, setPasswordError] = useState("")
   const [generalError, setGeneralError] = useState("")
+  const [showLoginLink, setShowLoginLink] = useState(false)
 
   const { pendingAction } = usePendingAction()
 
@@ -72,8 +76,8 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
       setPasswordError("Password is required")
       return false
     }
-    if (value.length < 8) {
-      setPasswordError("Password must be at least 8 characters")
+    if (!isPasswordValid(value)) {
+      setPasswordError("Please meet all password requirements")
       return false
     }
     setPasswordError("")
@@ -82,10 +86,11 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
 
   async function handleSignup() {
     setGeneralError("")
+    setShowLoginLink(false)
     const isEmailValid = validateEmail(email)
-    const isPasswordValid = validatePassword(password)
+    const isPasswordOk = validatePassword(password)
 
-    if (!isEmailValid || !isPasswordValid) {
+    if (!isEmailValid || !isPasswordOk) {
       return
     }
 
@@ -103,8 +108,13 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
 
       navigation.navigate("ConfirmSignup", { email })
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Signup failed. Please try again."
+      const message = getSignupErrorMessage(error)
       setGeneralError(message)
+
+      // Show login link if user already exists
+      if (isUserExistsError(error)) {
+        setShowLoginLink(true)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -132,12 +142,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
       contentContainerStyle={themed($screenContentContainer)}
       safeAreaEdges={["top", "bottom"]}
     >
-      <Header
-        title=""
-        leftIcon="back"
-        onLeftPress={() => navigation.goBack()}
-        safeAreaEdges={[]}
-      />
+      <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} safeAreaEdges={[]} />
 
       <Text text="Create Account" preset="heading" style={themed($heading)} />
       {pendingAction && (
@@ -153,7 +158,20 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         style={themed($subheading)}
       />
 
-      {generalError ? <Text text={generalError} style={themed($errorText)} size="sm" /> : null}
+      {generalError ? (
+        <View style={themed($errorContainer)}>
+          <Text text={generalError} style={themed($errorText)} size="sm" />
+          {showLoginLink && (
+            <Button
+              text="Go to Login"
+              preset="default"
+              style={$errorLoginButton}
+              textStyle={themed($errorLoginButtonText)}
+              onPress={() => navigation.navigate("Login", { email })}
+            />
+          )}
+        </View>
+      ) : null}
 
       <TextField
         value={email}
@@ -180,17 +198,24 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
           setPassword(text)
           if (passwordError) validatePassword(text)
         }}
-        containerStyle={themed($textField)}
+        containerStyle={themed($passwordField)}
         autoCapitalize="none"
         autoComplete="password-new"
         autoCorrect={false}
         secureTextEntry={isPasswordHidden}
         label="Password"
-        placeholder="At least 8 characters"
+        placeholder="Create a strong password"
         helper={passwordError}
         status={passwordError ? "error" : undefined}
         onSubmitEditing={handleSignup}
+        onFocus={() => setIsPasswordFocused(true)}
+        onBlur={() => setIsPasswordFocused(false)}
         RightAccessory={PasswordRightAccessory}
+      />
+
+      <PasswordRequirements
+        password={password}
+        visible={isPasswordFocused || password.length > 0}
       />
 
       <Button
@@ -237,13 +262,33 @@ const $pendingActionHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.xs,
 })
 
-const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.error,
+const $errorContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.error + "15",
+  borderRadius: 8,
+  padding: spacing.sm,
   marginBottom: spacing.md,
+})
+
+const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.error,
+})
+
+const $errorLoginButton: ViewStyle = {
+  marginTop: 8,
+  minHeight: 36,
+}
+
+const $errorLoginButtonText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.tint,
+  fontSize: 14,
 })
 
 const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
+})
+
+const $passwordField: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginBottom: spacing.sm,
 })
 
 const $signupButton: ThemedStyle<ViewStyle> = ({ spacing }) => ({

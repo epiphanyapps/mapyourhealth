@@ -7,8 +7,8 @@
 
 import { FC, useState } from "react"
 import { TextStyle, ViewStyle, View, ActivityIndicator } from "react-native"
-import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
@@ -19,6 +19,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
+import { getConfirmErrorMessage, isExpiredCodeError, isRateLimitError } from "@/utils/authErrors"
 
 interface ConfirmSignupScreenProps extends AppStackScreenProps<"ConfirmSignup"> {}
 
@@ -35,7 +36,7 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
   const [isAutoSigningIn, setIsAutoSigningIn] = useState(false)
 
   const { refreshAuthState } = useAuth()
-  const { pendingAction, executePendingAction } = usePendingAction()
+  const { executePendingAction } = usePendingAction()
   const { themed } = useAppTheme()
 
   function validateCode(value: string): boolean {
@@ -98,8 +99,13 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
         setIsAutoSigningIn(false)
       }
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Verification failed. Please try again."
+      const message = getConfirmErrorMessage(err)
       setError(message)
+
+      // If code expired, prompt user to request a new one
+      if (isExpiredCodeError(err)) {
+        setResendSuccess(false)
+      }
     } finally {
       setIsSubmitting(false)
     }
@@ -110,6 +116,9 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
   }
 
   async function handleResendCode() {
+    // Check for rate limiting
+    if (isResending) return
+
     setIsResending(true)
     setError("")
     setResendSuccess(false)
@@ -117,9 +126,15 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
     try {
       await resendSignUpCode({ username: email })
       setResendSuccess(true)
+      // Clear any previous code
+      setCode("")
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to resend code. Please try again."
-      setError(message)
+      if (isRateLimitError(err)) {
+        setError("Please wait a few minutes before requesting another code.")
+      } else {
+        const message = getConfirmErrorMessage(err)
+        setError(message)
+      }
     } finally {
       setIsResending(false)
     }
@@ -144,16 +159,8 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
 
           {isAutoSigningIn ? (
             <>
-              <Text
-                text="Signing you in..."
-                style={themed($successSubtext)}
-                size="sm"
-              />
-              <ActivityIndicator
-                size="large"
-                color={theme.colors.tint}
-                style={$loadingIndicator}
-              />
+              <Text text="Signing you in..." style={themed($successSubtext)} size="sm" />
+              <ActivityIndicator size="large" color={theme.colors.tint} style={$loadingIndicator} />
             </>
           ) : autoSignInFailed ? (
             <>
@@ -187,10 +194,19 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
         preset="subheading"
         style={themed($subheading)}
       />
+      <Text text="The code will expire in 24 hours" style={themed($expirationHint)} size="xs" />
 
-      {error ? <Text text={error} style={themed($errorText)} size="sm" /> : null}
+      {error ? (
+        <View style={themed($errorContainer)}>
+          <Text text={error} style={themed($errorText)} size="sm" />
+        </View>
+      ) : null}
       {resendSuccess ? (
-        <Text text="A new code has been sent to your email" style={themed($successText)} size="sm" />
+        <Text
+          text="A new code has been sent to your email"
+          style={themed($successText)}
+          size="sm"
+        />
       ) : null}
 
       <TextField
@@ -243,12 +259,23 @@ const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
 })
 
 const $subheading: ThemedStyle<TextStyle> = ({ spacing }) => ({
+  marginBottom: spacing.xs,
+})
+
+const $expirationHint: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  color: colors.textDim,
   marginBottom: spacing.lg,
 })
 
-const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.error,
+const $errorContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
+  backgroundColor: colors.error + "15",
+  borderRadius: 8,
+  padding: spacing.sm,
   marginBottom: spacing.md,
+})
+
+const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
+  color: colors.error,
 })
 
 const $successText: ThemedStyle<TextStyle> = ({ spacing }) => ({
