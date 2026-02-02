@@ -23,7 +23,7 @@ import {
   addNotificationResponseListener,
   getLastNotificationResponse,
 } from "@/services/notifications"
-import { navigate } from "@/navigators/navigationUtilities"
+import { navigate, navigationRef } from "@/navigators/navigationUtilities"
 
 /**
  * Notification data structure from backend (process-notifications Lambda)
@@ -77,6 +77,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null)
+  const [initialNotification, setInitialNotification] = useState<NotificationData | null>(null)
   const notificationListenerRef = useRef<ReturnType<typeof addNotificationResponseListener> | null>(null)
 
   /**
@@ -122,15 +123,12 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
         handleNotificationNavigation(data)
       })
 
-      // Check if app was opened from a notification
+      // Check if app was opened from a notification - store for later processing
       getLastNotificationResponse().then((response) => {
         if (response) {
           const data = response.notification.request.content.data as NotificationData
           console.log("App launched from notification:", data)
-          // Small delay to ensure navigation is ready
-          setTimeout(() => {
-            handleNotificationNavigation(data)
-          }, 100)
+          setInitialNotification(data)
         }
       })
     }
@@ -142,6 +140,24 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
       }
     }
   }, [user])
+
+  // Process initial notification after auth state is determined and navigation is ready
+  useEffect(() => {
+    if (initialNotification && !isLoading) {
+      // Wait for navigation to be ready before navigating
+      const checkAndNavigate = () => {
+        if (navigationRef.isReady()) {
+          console.log("Processing initial notification - navigation ready")
+          handleNotificationNavigation(initialNotification)
+          setInitialNotification(null) // Clear after handling
+        } else {
+          // Retry after a short delay if navigation isn't ready yet
+          setTimeout(checkAndNavigate, 50)
+        }
+      }
+      checkAndNavigate()
+    }
+  }, [initialNotification, isLoading])
 
   /**
    * Refresh auth state - call this after successful login
