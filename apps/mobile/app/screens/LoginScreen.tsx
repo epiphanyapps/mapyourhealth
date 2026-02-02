@@ -5,7 +5,7 @@
  * Integrates with Amplify Auth signIn and navigates to dashboard on success.
  */
 
-import { ComponentType, FC, useMemo, useRef, useState } from "react"
+import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
 import { Pressable, TextInput, TextStyle, View, ViewStyle } from "react-native"
 import { signIn } from "aws-amplify/auth"
 
@@ -23,10 +23,13 @@ import type { ThemedStyle } from "@/theme/types"
 
 interface LoginScreenProps extends AppStackScreenProps<"Login"> {}
 
-export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
+export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
   const passwordInput = useRef<TextInput>(null)
 
-  const [email, setEmail] = useState("")
+  // Get pre-filled email from navigation params (e.g., after email confirmation)
+  const prefillEmail = route.params?.email
+
+  const [email, setEmail] = useState(prefillEmail ?? "")
   const [password, setPassword] = useState("")
   const [isPasswordHidden, setIsPasswordHidden] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -41,6 +44,13 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation }) => {
     themed,
     theme: { colors },
   } = useAppTheme()
+
+  // Update email if prefill changes (e.g., navigating back with new email)
+  useEffect(() => {
+    if (prefillEmail && prefillEmail !== email) {
+      setEmail(prefillEmail)
+    }
+  }, [prefillEmail])
 
   function validateEmail(value: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

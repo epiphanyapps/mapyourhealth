@@ -19,7 +19,7 @@ export type DemoTabParamList = {
 // App Stack Navigator types
 export type AppStackParamList = {
   Welcome: undefined
-  Login: undefined
+  Login: { email?: string } | undefined
   Signup: undefined
   ConfirmSignup: { email: string }
   ForgotPassword: undefined
