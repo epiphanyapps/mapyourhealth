@@ -1,15 +1,16 @@
 /**
  * Seed script for contaminants and thresholds
  *
- * Run with: npx ts-node scripts/seed-contaminants.ts
+ * Run with: COGNITO_EMAIL=xxx COGNITO_PASSWORD=xxx npx tsx scripts/seed-contaminants.ts
  *
  * Prerequisites:
- * - AWS credentials configured
+ * - User must be in the "admin" Cognito group
  * - Amplify backend deployed
  */
 
 import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
+import { signIn } from "aws-amplify/auth";
 import type { Schema } from "../amplify/data/resource";
 import seedData from "./seed-data.json";
 
@@ -18,10 +19,30 @@ import outputs from "../amplify_outputs.json";
 
 Amplify.configure(outputs);
 
-// Use IAM auth for admin operations (requires AWS credentials)
+// Use userPool auth for admin operations (requires Cognito login)
 const client = generateClient<Schema>({
-  authMode: "iam",
+  authMode: "userPool",
 });
+
+async function authenticate() {
+  const email = process.env.COGNITO_EMAIL;
+  const password = process.env.COGNITO_PASSWORD;
+
+  if (!email || !password) {
+    throw new Error(
+      "Missing credentials. Set COGNITO_EMAIL and COGNITO_PASSWORD environment variables."
+    );
+  }
+
+  console.log(`Signing in as ${email}...`);
+  const result = await signIn({ username: email, password });
+
+  if (!result.isSignedIn) {
+    throw new Error(`Sign in failed: ${result.nextStep?.signInStep}`);
+  }
+
+  console.log("Signed in successfully!\n");
+}
 
 interface SeedJurisdiction {
   code: string;
@@ -168,6 +189,9 @@ async function main() {
   console.log(`  - ${seedData.jurisdictions.length} jurisdictions`);
   console.log(`  - ${seedData.contaminants.length} contaminants`);
   console.log(`  - ${seedData.thresholds.length} thresholds`);
+
+  // Authenticate with Cognito first
+  await authenticate();
 
   const args = process.argv.slice(2);
   const shouldClear = args.includes("--clear");
