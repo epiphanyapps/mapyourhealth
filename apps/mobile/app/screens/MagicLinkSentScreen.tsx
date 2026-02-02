@@ -14,6 +14,7 @@ import { Icon } from "@/components/Icon"
 import { ResendButton } from "@/components/ResendButton"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
+import { MAGIC_LINK_EXPIRATION_MINUTES } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -73,7 +74,7 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
       <Text text={email} preset="bold" style={themed($emailText)} />
 
       <Text
-        text="Click the link in the email to sign in. The link will expire in 15 minutes."
+        text={`Click the link in the email to sign in. The link will expire in ${MAGIC_LINK_EXPIRATION_MINUTES} minutes.`}
         preset="formHelper"
         style={themed($hintText)}
       />

@@ -15,6 +15,7 @@ import { ResendButton } from "@/components/ResendButton"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
+import { VERIFICATION_CODE_EXPIRATION_HOURS } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -175,7 +176,11 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
         preset="subheading"
         style={themed($subheading)}
       />
-      <Text text="The code will expire in 24 hours" style={themed($expirationHint)} size="xs" />
+      <Text
+        text={`The code will expire in ${VERIFICATION_CODE_EXPIRATION_HOURS} hours`}
+        style={themed($expirationHint)}
+        size="xs"
+      />
 
       {error ? (
         <View style={themed($errorContainer)}>

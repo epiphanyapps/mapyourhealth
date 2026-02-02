@@ -7,22 +7,43 @@
  */
 
 import { FC, useState, useCallback, useEffect } from "react"
-import { View, TextStyle, ViewStyle, Pressable, Alert, Switch, ActivityIndicator, Linking } from "react-native"
+import {
+  View,
+  TextStyle,
+  ViewStyle,
+  Pressable,
+  Alert,
+  Switch,
+  ActivityIndicator,
+  Linking,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
+import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { Button } from "@/components/Button"
+import { SUPPORT_EMAIL, getVersionString, STATUS_COLORS } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import {
+  getUserSubscriptions,
+  updateUserSubscription,
+  type AmplifyUserSubscription,
+} from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { getUserSubscriptions, updateUserSubscription, type AmplifyUserSubscription } from "@/services/amplify/data"
 
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
 export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, logout, expoPushToken, notificationStatus, notificationError, retryNotificationSetup } = useAuth()
+  const {
+    user,
+    logout,
+    expoPushToken,
+    notificationStatus,
+    notificationError,
+    retryNotificationSetup,
+  } = useAuth()
   const { themed, theme } = useAppTheme()
   const [isRetrying, setIsRetrying] = useState(false)
 
@@ -69,60 +90,73 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   /**
    * Update notification preferences across all subscriptions
    */
-  const updateNotificationPreferences = useCallback(async (
-    updates: {
+  const updateNotificationPreferences = useCallback(
+    async (updates: {
       enablePush?: boolean
       enableEmail?: boolean
       alertOnDanger?: boolean
       alertOnWarning?: boolean
-    }
-  ) => {
-    if (subscriptions.length === 0) return
+    }) => {
+      if (subscriptions.length === 0) return
 
-    setIsSaving(true)
-    try {
-      // Update all subscriptions with new preferences
-      await Promise.all(
-        subscriptions.map((sub) =>
-          updateUserSubscription(sub.id, {
-            ...updates,
-            // Also update push token if we have one
-            ...(expoPushToken && { expoPushToken }),
-          })
+      setIsSaving(true)
+      try {
+        // Update all subscriptions with new preferences
+        await Promise.all(
+          subscriptions.map((sub) =>
+            updateUserSubscription(sub.id, {
+              ...updates,
+              // Also update push token if we have one
+              ...(expoPushToken && { expoPushToken }),
+            }),
+          ),
         )
-      )
-      // Reload to get updated data
-      await loadSubscriptions()
-    } catch (error) {
-      console.error("Failed to update notification preferences:", error)
-      Alert.alert("Error", "Failed to save notification preferences")
-    } finally {
-      setIsSaving(false)
-    }
-  }, [subscriptions, expoPushToken, loadSubscriptions])
+        // Reload to get updated data
+        await loadSubscriptions()
+      } catch (error) {
+        console.error("Failed to update notification preferences:", error)
+        Alert.alert("Error", "Failed to save notification preferences")
+      } finally {
+        setIsSaving(false)
+      }
+    },
+    [subscriptions, expoPushToken, loadSubscriptions],
+  )
 
   /**
    * Handle toggle changes with immediate UI update and background save
    */
-  const handleEnablePushChange = useCallback((value: boolean) => {
-    setEnablePush(value)
-    updateNotificationPreferences({ enablePush: value })
-  }, [updateNotificationPreferences])
+  const handleEnablePushChange = useCallback(
+    (value: boolean) => {
+      setEnablePush(value)
+      updateNotificationPreferences({ enablePush: value })
+    },
+    [updateNotificationPreferences],
+  )
 
-  const handleEnableEmailChange = useCallback((value: boolean) => {
-    setEnableEmail(value)
-    updateNotificationPreferences({ enableEmail: value })
-  }, [updateNotificationPreferences])
+  const handleEnableEmailChange = useCallback(
+    (value: boolean) => {
+      setEnableEmail(value)
+      updateNotificationPreferences({ enableEmail: value })
+    },
+    [updateNotificationPreferences],
+  )
 
-  const handleAlertOnDangerChange = useCallback((value: boolean) => {
-    setAlertOnDanger(value)
-    updateNotificationPreferences({ alertOnDanger: value })
-  }, [updateNotificationPreferences])
+  const handleAlertOnDangerChange = useCallback(
+    (value: boolean) => {
+      setAlertOnDanger(value)
+      updateNotificationPreferences({ alertOnDanger: value })
+    },
+    [updateNotificationPreferences],
+  )
 
-  const handleAlertOnWarningChange = useCallback((value: boolean) => {
-    setAlertOnWarning(value)
-    updateNotificationPreferences({ alertOnWarning: value })
-  }, [updateNotificationPreferences])
+  const handleAlertOnWarningChange = useCallback(
+    (value: boolean) => {
+      setAlertOnWarning(value)
+      updateNotificationPreferences({ alertOnWarning: value })
+    },
+    [updateNotificationPreferences],
+  )
 
   /**
    * Handle logout with confirmation
@@ -150,7 +184,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       "Delete Account",
-      "To delete your account and all associated data, please contact our support team at support@mapyourhealth.com.\n\nThis action is irreversible and will remove all your subscriptions and data.",
+      `To delete your account and all associated data, please contact our support team at ${SUPPORT_EMAIL}.\n\nThis action is irreversible and will remove all your subscriptions and data.`,
       [
         {
           text: "OK",
@@ -206,11 +240,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
       {/* User Email Section */}
       <View style={themed($section)}>
         <View style={$emailContainer}>
-          <MaterialCommunityIcons
-            name="account-circle"
-            size={48}
-            color={theme.colors.tint}
-          />
+          <MaterialCommunityIcons name="account-circle" size={48} color={theme.colors.tint} />
           <View style={$emailTextContainer}>
             <Text text="Signed in as" style={$labelText} />
             <Text text={userEmail} style={$emailText} />
@@ -223,10 +253,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         <Text text="Subscriptions" preset="subheading" style={themed($sectionTitle)} />
         <Pressable
           onPress={handleManageSubscriptions}
-          style={({ pressed }) => [
-            themed($menuItem),
-            pressed && { opacity: 0.7 },
-          ]}
+          style={({ pressed }) => [themed($menuItem), pressed && { opacity: 0.7 }]}
           accessibilityRole="button"
           accessibilityLabel="Manage subscriptions"
         >
@@ -238,11 +265,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             />
             <Text text="Manage Subscriptions" style={$menuItemText} />
           </View>
-          <MaterialCommunityIcons
-            name="chevron-right"
-            size={24}
-            color={theme.colors.textDim}
-          />
+          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
         </Pressable>
       </View>
 
@@ -266,7 +289,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             <MaterialCommunityIcons name="bell-off-outline" size={20} color="#92400E" />
             <View style={$bannerTextContainer}>
               <Text text="Push notifications are disabled" style={$bannerTitle} />
-              <Text text="Tap to open Settings and enable notifications" style={$bannerDescription} />
+              <Text
+                text="Tap to open Settings and enable notifications"
+                style={$bannerDescription}
+              />
             </View>
             <MaterialCommunityIcons name="chevron-right" size={20} color="#92400E" />
           </Pressable>
@@ -284,7 +310,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           >
             <MaterialCommunityIcons name="alert-circle-outline" size={20} color="#991B1B" />
             <View style={$bannerTextContainer}>
-              <Text text="Failed to set up notifications" style={[$bannerTitle, { color: "#991B1B" }]} />
+              <Text
+                text="Failed to set up notifications"
+                style={[$bannerTitle, { color: "#991B1B" }]}
+              />
               <Text
                 text={notificationError || "Tap to retry"}
                 style={[$bannerDescription, { color: "#B91C1C" }]}
@@ -303,35 +332,31 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           <View style={[$notificationBanner, $notificationBannerInfo]}>
             <MaterialCommunityIcons name="information-outline" size={20} color="#1E40AF" />
             <View style={$bannerTextContainer}>
-              <Text text="Push notifications unavailable" style={[$bannerTitle, { color: "#1E40AF" }]} />
-              <Text text="Use a physical device to receive notifications" style={[$bannerDescription, { color: "#1D4ED8" }]} />
+              <Text
+                text="Push notifications unavailable"
+                style={[$bannerTitle, { color: "#1E40AF" }]}
+              />
+              <Text
+                text="Use a physical device to receive notifications"
+                style={[$bannerDescription, { color: "#1D4ED8" }]}
+              />
             </View>
           </View>
         )}
 
         {subscriptions.length === 0 && !isLoading ? (
           <View style={themed($emptyState)}>
-            <Text
-              text="Subscribe to a location to enable notifications"
-              style={$emptyStateText}
-            />
+            <Text text="Subscribe to a location to enable notifications" style={$emptyStateText} />
           </View>
         ) : (
           <>
             {/* Push Notifications */}
             <View style={themed($menuItem)}>
               <View style={$menuItemLeft}>
-                <MaterialCommunityIcons
-                  name="bell-outline"
-                  size={24}
-                  color={theme.colors.text}
-                />
+                <MaterialCommunityIcons name="bell-outline" size={24} color={theme.colors.text} />
                 <View style={$menuItemTextContainer}>
                   <Text text="Push Notifications" style={$menuItemText} />
-                  <Text
-                    text="Receive alerts on your device"
-                    style={$menuItemDescription}
-                  />
+                  <Text text="Receive alerts on your device" style={$menuItemDescription} />
                 </View>
               </View>
               <Switch
@@ -347,17 +372,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             {/* Email Notifications */}
             <View style={themed($menuItem)}>
               <View style={$menuItemLeft}>
-                <MaterialCommunityIcons
-                  name="email-outline"
-                  size={24}
-                  color={theme.colors.text}
-                />
+                <MaterialCommunityIcons name="email-outline" size={24} color={theme.colors.text} />
                 <View style={$menuItemTextContainer}>
                   <Text text="Email Notifications" style={$menuItemText} />
-                  <Text
-                    text="Receive alerts via email"
-                    style={$menuItemDescription}
-                  />
+                  <Text text="Receive alerts via email" style={$menuItemDescription} />
                 </View>
               </View>
               <Switch
@@ -376,17 +394,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             {/* Danger Alerts */}
             <View style={themed($menuItem)}>
               <View style={$menuItemLeft}>
-                <MaterialCommunityIcons
-                  name="alert-circle"
-                  size={24}
-                  color={theme.colors.error}
-                />
+                <MaterialCommunityIcons name="alert-circle" size={24} color={theme.colors.error} />
                 <View style={$menuItemTextContainer}>
                   <Text text="Danger Alerts" style={$menuItemText} />
-                  <Text
-                    text="When contaminants exceed safe limits"
-                    style={$menuItemDescription}
-                  />
+                  <Text text="When contaminants exceed safe limits" style={$menuItemDescription} />
                 </View>
               </View>
               <Switch
@@ -402,23 +413,16 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
             {/* Warning Alerts */}
             <View style={themed($menuItem)}>
               <View style={$menuItemLeft}>
-                <MaterialCommunityIcons
-                  name="alert"
-                  size={24}
-                  color="#F59E0B"
-                />
+                <MaterialCommunityIcons name="alert" size={24} color={STATUS_COLORS.warning} />
                 <View style={$menuItemTextContainer}>
                   <Text text="Warning Alerts" style={$menuItemText} />
-                  <Text
-                    text="When contaminants approach limits"
-                    style={$menuItemDescription}
-                  />
+                  <Text text="When contaminants approach limits" style={$menuItemDescription} />
                 </View>
               </View>
               <Switch
                 value={alertOnWarning}
                 onValueChange={handleAlertOnWarningChange}
-                trackColor={{ false: theme.colors.palette.neutral400, true: "#F59E0B" }}
+                trackColor={{ false: theme.colors.palette.neutral400, true: STATUS_COLORS.warning }}
                 thumbColor="#FFFFFF"
                 disabled={isLoading || subscriptions.length === 0}
                 accessibilityLabel="Toggle warning alerts"
@@ -451,25 +455,18 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         {/* Delete Account Link */}
         <Pressable
           onPress={handleDeleteAccount}
-          style={({ pressed }) => [
-            themed($deleteAccountLink),
-            pressed && { opacity: 0.7 },
-          ]}
+          style={({ pressed }) => [themed($deleteAccountLink), pressed && { opacity: 0.7 }]}
           accessibilityRole="button"
           accessibilityLabel="Delete account"
         >
-          <MaterialCommunityIcons
-            name="delete-outline"
-            size={20}
-            color={theme.colors.error}
-          />
+          <MaterialCommunityIcons name="delete-outline" size={20} color={theme.colors.error} />
           <Text text="Delete Account" style={[$deleteAccountText, { color: theme.colors.error }]} />
         </Pressable>
       </View>
 
       {/* App Version */}
       <View style={$versionContainer}>
-        <Text text="MapYourHealth v1.0.0" style={$versionText} />
+        <Text text={getVersionString()} style={$versionText} />
       </View>
     </Screen>
   )
