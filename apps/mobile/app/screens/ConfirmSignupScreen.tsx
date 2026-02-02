@@ -11,6 +11,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { confirmSignUp, resendSignUpCode, autoSignIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
+import { ResendButton } from "@/components/ResendButton"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TextField } from "@/components/TextField"
@@ -19,7 +20,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-import { getConfirmErrorMessage, isExpiredCodeError, isRateLimitError } from "@/utils/authErrors"
+import { getConfirmErrorMessage, isExpiredCodeError } from "@/utils/authErrors"
 
 interface ConfirmSignupScreenProps extends AppStackScreenProps<"ConfirmSignup"> {}
 
@@ -28,9 +29,7 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
 
   const [code, setCode] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isResending, setIsResending] = useState(false)
   const [error, setError] = useState("")
-  const [resendSuccess, setResendSuccess] = useState(false)
   const [isConfirmed, setIsConfirmed] = useState(false)
   const [autoSignInFailed, setAutoSignInFailed] = useState(false)
   const [isAutoSigningIn, setIsAutoSigningIn] = useState(false)
@@ -102,9 +101,9 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
       const message = getConfirmErrorMessage(err)
       setError(message)
 
-      // If code expired, prompt user to request a new one
+      // If code expired, show hint that they should request a new one
       if (isExpiredCodeError(err)) {
-        setResendSuccess(false)
+        setError("This code has expired. Please request a new one below.")
       }
     } finally {
       setIsSubmitting(false)
@@ -116,28 +115,10 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
   }
 
   async function handleResendCode() {
-    // Check for rate limiting
-    if (isResending) return
-
-    setIsResending(true)
+    await resendSignUpCode({ username: email })
+    // Clear any previous code to prompt fresh entry
+    setCode("")
     setError("")
-    setResendSuccess(false)
-
-    try {
-      await resendSignUpCode({ username: email })
-      setResendSuccess(true)
-      // Clear any previous code
-      setCode("")
-    } catch (err) {
-      if (isRateLimitError(err)) {
-        setError("Please wait a few minutes before requesting another code.")
-      } else {
-        const message = getConfirmErrorMessage(err)
-        setError(message)
-      }
-    } finally {
-      setIsResending(false)
-    }
   }
 
   const { theme } = useAppTheme()
@@ -201,13 +182,6 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
           <Text text={error} style={themed($errorText)} size="sm" />
         </View>
       ) : null}
-      {resendSuccess ? (
-        <Text
-          text="A new code has been sent to your email"
-          style={themed($successText)}
-          size="sm"
-        />
-      ) : null}
 
       <TextField
         value={code}
@@ -238,12 +212,12 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
         disabled={isSubmitting}
       />
 
-      <Button
-        text={isResending ? "Sending..." : "Resend Code"}
+      <ResendButton
+        label="Resend Code"
+        onResend={handleResendCode}
+        successMessage="A new code has been sent to your email"
+        cooldownSeconds={60}
         style={themed($resendButton)}
-        preset="default"
-        onPress={handleResendCode}
-        disabled={isResending}
       />
     </Screen>
   )
@@ -276,11 +250,6 @@ const $errorContainer: ThemedStyle<ViewStyle> = ({ colors, spacing }) => ({
 
 const $errorText: ThemedStyle<TextStyle> = ({ colors }) => ({
   color: colors.error,
-})
-
-const $successText: ThemedStyle<TextStyle> = ({ spacing }) => ({
-  color: "#10B981",
-  marginBottom: spacing.md,
 })
 
 const $textField: ThemedStyle<ViewStyle> = ({ spacing }) => ({

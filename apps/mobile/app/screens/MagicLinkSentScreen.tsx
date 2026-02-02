@@ -5,12 +5,13 @@
  * Displays email address, hints about expiration, and options to resend or use different email.
  */
 
-import { FC, useState } from "react"
+import { FC } from "react"
 import { TextStyle, ViewStyle, Linking, Platform } from "react-native"
 
 import { Button } from "@/components/Button"
 import { Header } from "@/components/Header"
 import { Icon } from "@/components/Icon"
+import { ResendButton } from "@/components/ResendButton"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useAuth } from "@/context/AuthContext"
@@ -22,8 +23,6 @@ interface MagicLinkSentScreenProps extends AppStackScreenProps<"MagicLinkSent"> 
 
 export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, route }) => {
   const { email } = route.params
-  const [isResending, setIsResending] = useState(false)
-  const [resendMessage, setResendMessage] = useState("")
 
   const { requestMagicLink } = useAuth()
 
@@ -33,21 +32,9 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
   } = useAppTheme()
 
   async function handleResend() {
-    setIsResending(true)
-    setResendMessage("")
-    try {
-      const success = await requestMagicLink(email)
-      if (success) {
-        setResendMessage("A new link has been sent to your email.")
-      } else {
-        setResendMessage("Failed to resend. Please try again.")
-      }
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "An error occurred. Please try again."
-      setResendMessage(message)
-    } finally {
-      setIsResending(false)
+    const success = await requestMagicLink(email)
+    if (!success) {
+      throw new Error("Failed to resend. Please try again.")
     }
   }
 
@@ -91,10 +78,6 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
         style={themed($hintText)}
       />
 
-      {resendMessage ? (
-        <Text text={resendMessage} style={themed($resendMessage)} size="sm" />
-      ) : null}
-
       <Button
         text="Open Email App"
         style={themed($primaryButton)}
@@ -102,12 +85,12 @@ export const MagicLinkSentScreen: FC<MagicLinkSentScreenProps> = ({ navigation, 
         onPress={handleOpenEmailApp}
       />
 
-      <Button
-        text={isResending ? "Sending..." : "Resend Link"}
+      <ResendButton
+        label="Resend Link"
+        onResend={handleResend}
+        successMessage="A new link has been sent to your email"
+        cooldownSeconds={60}
         style={themed($secondaryButton)}
-        preset="default"
-        onPress={handleResend}
-        disabled={isResending}
       />
 
       <Button
@@ -152,12 +135,6 @@ const $emailText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
 const $hintText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   color: colors.textDim,
   marginBottom: spacing.xl,
-  textAlign: "center",
-})
-
-const $resendMessage: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.tint,
-  marginBottom: spacing.md,
   textAlign: "center",
 })
 
