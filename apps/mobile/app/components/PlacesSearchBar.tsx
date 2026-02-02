@@ -63,6 +63,12 @@ export interface PlacesSearchBarProps {
    * @default false
    */
   isLocating?: boolean
+  /**
+   * Top offset for the dropdown (from top of screen)
+   * Accounts for safe area, nav header, and search bar height
+   * @default 160
+   */
+  dropdownTopOffset?: number
 }
 
 /**
@@ -77,6 +83,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     showLocationButton = false,
     onLocationPress,
     isLocating = false,
+    dropdownTopOffset = 160,
   } = props
 
   const { theme } = useAppTheme()
@@ -99,7 +106,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         clearSuggestions()
       }
     },
-    [search, clearSuggestions]
+    [search, clearSuggestions],
   )
 
   /**
@@ -113,37 +120,21 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
 
       if (suggestion.type === "postalCode") {
         // Direct postal code selection
-        onPostalCodeSelect(
-          suggestion.postalCodes[0],
-          suggestion.city,
-          suggestion.state
-        )
+        onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
       } else if (suggestion.type === "city" || suggestion.type === "state") {
         // City or state selection
         if (onCitySelect && suggestion.state) {
-          onCitySelect(
-            suggestion.city || "",
-            suggestion.state,
-            suggestion.postalCodes
-          )
+          onCitySelect(suggestion.city || "", suggestion.state, suggestion.postalCodes)
         } else if (suggestion.postalCodes.length === 1) {
           // Single location - treat as postal code selection
-          onPostalCodeSelect(
-            suggestion.postalCodes[0],
-            suggestion.city,
-            suggestion.state
-          )
+          onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
         } else {
           // Multiple locations but no onCitySelect - use first postal code
-          onPostalCodeSelect(
-            suggestion.postalCodes[0],
-            suggestion.city,
-            suggestion.state
-          )
+          onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
         }
       }
     },
-    [onPostalCodeSelect, onCitySelect, clearSuggestions]
+    [onPostalCodeSelect, onCitySelect, clearSuggestions],
   )
 
   /**
@@ -258,6 +249,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         visible={showSuggestions && suggestions.length > 0}
         onSelect={handleSuggestionSelect}
         onDismiss={handleDismiss}
+        topOffset={dropdownTopOffset}
       />
     </>
   )

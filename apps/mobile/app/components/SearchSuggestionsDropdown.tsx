@@ -33,14 +33,18 @@ interface SearchSuggestionsDropdownProps {
   onSelect: (suggestion: SearchSuggestion) => void
   /** Callback when the dropdown should be dismissed */
   onDismiss: () => void
-  /** Top position offset for the dropdown */
+  /** Top position offset for the dropdown (from top of screen)
+   * @default 160
+   */
   topOffset?: number
 }
 
 /**
  * Get the icon name for a suggestion type
  */
-function getIconForType(type: SearchSuggestion["type"]): React.ComponentProps<typeof MaterialCommunityIcons>["name"] {
+function getIconForType(
+  type: SearchSuggestion["type"],
+): React.ComponentProps<typeof MaterialCommunityIcons>["name"] {
   switch (type) {
     case "postalCode":
       return "map-marker"
@@ -65,7 +69,7 @@ function getIconForType(type: SearchSuggestion["type"]): React.ComponentProps<ty
  * />
  */
 export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps) {
-  const { suggestions, visible, onSelect, onDismiss, topOffset = 120 } = props
+  const { suggestions, visible, onSelect, onDismiss, topOffset = 160 } = props
   const { theme } = useAppTheme()
 
   const renderItem = useCallback(
@@ -127,21 +131,16 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
             <Text style={$displayText}>{item.displayText}</Text>
             <Text style={$secondaryText}>{item.secondaryText}</Text>
           </View>
-          <MaterialCommunityIcons
-            name="chevron-right"
-            size={20}
-            color={theme.colors.textDim}
-          />
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
         </Pressable>
       )
     },
-    [theme, onSelect]
+    [theme, onSelect],
   )
 
   const keyExtractor = useCallback(
-    (item: SearchSuggestion, index: number) =>
-      `${item.type}-${item.displayText}-${index}`,
-    []
+    (item: SearchSuggestion, index: number) => `${item.type}-${item.displayText}-${index}`,
+    [],
   )
 
   if (!visible || suggestions.length === 0) {
@@ -183,12 +182,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
   }
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="fade"
-      onRequestClose={onDismiss}
-    >
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
       <TouchableWithoutFeedback onPress={onDismiss}>
         <View style={$modalOverlay}>
           <TouchableWithoutFeedback>
