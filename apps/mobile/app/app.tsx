@@ -36,6 +36,7 @@ import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
 
 import { AuthProvider } from "./context/AuthContext"
+import { NotificationProvider } from "./context/NotificationContext"
 import { PendingActionProvider } from "./context/PendingActionContext"
 import { StatDefinitionsProvider } from "./context/StatDefinitionsContext"
 import { SubscriptionsProvider } from "./context/SubscriptionsContext"
@@ -121,21 +122,23 @@ export function App() {
   return (
     <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <KeyboardProvider>
-        <AuthProvider>
-          <SubscriptionsProvider>
-            <PendingActionProvider>
-              <StatDefinitionsProvider>
-                <ThemeProvider>
-                  <AppNavigator
-                    linking={linking}
-                    initialState={initialNavigationState}
-                    onStateChange={onNavigationStateChange}
-                  />
-                </ThemeProvider>
-              </StatDefinitionsProvider>
-            </PendingActionProvider>
-          </SubscriptionsProvider>
-        </AuthProvider>
+        <NotificationProvider>
+          <AuthProvider>
+            <SubscriptionsProvider>
+              <PendingActionProvider>
+                <StatDefinitionsProvider>
+                  <ThemeProvider>
+                    <AppNavigator
+                      linking={linking}
+                      initialState={initialNavigationState}
+                      onStateChange={onNavigationStateChange}
+                    />
+                  </ThemeProvider>
+                </StatDefinitionsProvider>
+              </PendingActionProvider>
+            </SubscriptionsProvider>
+          </AuthProvider>
+        </NotificationProvider>
       </KeyboardProvider>
     </SafeAreaProvider>
   )
