@@ -113,15 +113,16 @@ const schema = a.schema({
     .secondaryIndexes((index) => [index("code"), index("country")]),
 
   /**
-   * Location - maps zip/postal codes to jurisdictions
+   * Location - maps zip/postal codes to jurisdictions and cities
    * Enables looking up which regulations apply to a location
+   * Enables querying measurements by city or state
    * Public read, admin write
    */
   Location: a
     .model({
       postalCode: a.string().required(), // ZIP or postal code
-      city: a.string(),
-      state: a.string(), // State/province code
+      city: a.string().required(), // City name for search
+      state: a.string().required(), // State/province code (NY, QC, etc.)
       country: a.string().required(), // "US", "CA"
       jurisdictionCode: a.string().required(), // Which regulations apply: "US-NY", "CA-QC"
       latitude: a.float(),
@@ -132,7 +133,12 @@ const schema = a.schema({
       allow.authenticated().to(["read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ])
-    .secondaryIndexes((index) => [index("postalCode"), index("jurisdictionCode")]),
+    .secondaryIndexes((index) => [
+      index("postalCode"),
+      index("jurisdictionCode"),
+      index("city"),   // Query all postal codes in a city
+      index("state"),  // Query all postal codes in a state
+    ]),
 
   /**
    * LocationMeasurement - actual contaminant measurements for locations

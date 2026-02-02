@@ -1,0 +1,67 @@
+{
+  "locations": [
+    {
+      "postalCode": "H2X1Y6",
+      "city": "Montreal",
+      "state": "QC",
+      "country": "CA",
+      "jurisdictionCode": "CA-QC",
+      "latitude": 45.5152,
+      "longitude": -73.5612
+    },
+    {
+      "postalCode": "H3B2Y5",
+      "city": "Montreal",
+      "state": "QC",
+      "country": "CA",
+      "jurisdictionCode": "CA-QC",
+      "latitude": 45.5017,
+      "longitude": -73.5673
+    },
+    {
+      "postalCode": "J4B5E4",
+      "city": "Boucherville",
+      "state": "QC",
+      "country": "CA",
+      "jurisdictionCode": "CA-QC",
+      "latitude": 45.5909,
+      "longitude": -73.4360
+    },
+    {
+      "postalCode": "M5V3L9",
+      "city": "Toronto",
+      "state": "ON",
+      "country": "CA",
+      "jurisdictionCode": "CA-ON",
+      "latitude": 43.6426,
+      "longitude": -79.3871
+    },
+    {
+      "postalCode": "10001",
+      "city": "New York",
+      "state": "NY",
+      "country": "US",
+      "jurisdictionCode": "US-NY",
+      "latitude": 40.7484,
+      "longitude": -73.9967
+    },
+    {
+      "postalCode": "90210",
+      "city": "Beverly Hills",
+      "state": "CA",
+      "country": "US",
+      "jurisdictionCode": "US-CA",
+      "latitude": 34.0901,
+      "longitude": -118.4065
+    },
+    {
+      "postalCode": "33139",
+      "city": "Miami Beach",
+      "state": "FL",
+      "country": "US",
+      "jurisdictionCode": "US-FL",
+      "latitude": 25.7907,
+      "longitude": -80.1300
+    }
+  ]
+}
