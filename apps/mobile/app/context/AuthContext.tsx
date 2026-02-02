@@ -23,6 +23,33 @@ import {
   addNotificationResponseListener,
   getLastNotificationResponse,
 } from "@/services/notifications"
+import { navigate } from "@/navigators/navigationUtilities"
+
+/**
+ * Notification data structure from backend (process-notifications Lambda)
+ */
+interface NotificationData {
+  screen?: string
+  postalCode?: string
+  contaminantId?: string
+}
+
+/**
+ * Handle navigation based on notification data
+ * Called when user taps a notification or app is launched from notification
+ */
+function handleNotificationNavigation(data: NotificationData | undefined): void {
+  if (!data) return
+
+  console.log("Navigating from notification:", data)
+
+  // Navigate to Dashboard with the postal code
+  if (data.postalCode) {
+    navigate("Dashboard", { zipCode: data.postalCode })
+  } else if (data.screen === "Dashboard") {
+    navigate("Dashboard", undefined)
+  }
+}
 
 // Magic link API endpoint - this will be set from backend outputs
 const MAGIC_LINK_API_URL = Config.MAGIC_LINK_API_URL || ""
@@ -90,17 +117,20 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
 
       // Set up notification response listener (when user taps notification)
       notificationListenerRef.current = addNotificationResponseListener((response) => {
-        const data = response.notification.request.content.data
+        const data = response.notification.request.content.data as NotificationData
         console.log("Notification tapped:", data)
-        // Handle navigation to specific screen based on notification data
-        // This can be enhanced to use navigation context
+        handleNotificationNavigation(data)
       })
 
       // Check if app was opened from a notification
       getLastNotificationResponse().then((response) => {
         if (response) {
-          const data = response.notification.request.content.data
-          console.log("App opened from notification:", data)
+          const data = response.notification.request.content.data as NotificationData
+          console.log("App launched from notification:", data)
+          // Small delay to ensure navigation is ready
+          setTimeout(() => {
+            handleNotificationNavigation(data)
+          }, 100)
         }
       })
     }
