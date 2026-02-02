@@ -7,7 +7,7 @@
  */
 
 import { FC, useState, useCallback, useEffect } from "react"
-import { View, TextStyle, ViewStyle, Pressable, Alert, Switch, ActivityIndicator } from "react-native"
+import { View, TextStyle, ViewStyle, Pressable, Alert, Switch, ActivityIndicator, Linking } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Screen } from "@/components/Screen"
@@ -22,8 +22,9 @@ import { getUserSubscriptions, updateUserSubscription, type AmplifyUserSubscript
 interface ProfileScreenProps extends AppStackScreenProps<"Profile"> {}
 
 export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
-  const { user, logout, expoPushToken } = useAuth()
+  const { user, logout, expoPushToken, notificationStatus, notificationError, retryNotificationSetup } = useAuth()
   const { themed, theme } = useAppTheme()
+  const [isRetrying, setIsRetrying] = useState(false)
 
   // Subscriptions and loading state
   const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
@@ -166,6 +167,25 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
     navigation.navigate("SubscriptionsSettings")
   }, [navigation])
 
+  /**
+   * Retry notification setup
+   */
+  const handleRetryNotifications = useCallback(async () => {
+    setIsRetrying(true)
+    try {
+      await retryNotificationSetup()
+    } finally {
+      setIsRetrying(false)
+    }
+  }, [retryNotificationSetup])
+
+  /**
+   * Open system settings for notification permissions
+   */
+  const handleOpenSettings = useCallback(() => {
+    Linking.openSettings()
+  }, [])
+
   // Get user email from Amplify user object
   const userEmail = user?.signInDetails?.loginId ?? user?.username ?? "Unknown"
 
@@ -232,6 +252,62 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           <Text text="Notifications" preset="subheading" style={themed($sectionTitle)} />
           {isSaving && <ActivityIndicator size="small" color={theme.colors.tint} />}
         </View>
+
+        {/* Notification Status Banners */}
+        {notificationStatus === "denied" && (
+          <Pressable
+            onPress={handleOpenSettings}
+            style={({ pressed }) => [
+              $notificationBanner,
+              $notificationBannerWarning,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <MaterialCommunityIcons name="bell-off-outline" size={20} color="#92400E" />
+            <View style={$bannerTextContainer}>
+              <Text text="Push notifications are disabled" style={$bannerTitle} />
+              <Text text="Tap to open Settings and enable notifications" style={$bannerDescription} />
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={20} color="#92400E" />
+          </Pressable>
+        )}
+
+        {notificationStatus === "error" && (
+          <Pressable
+            onPress={handleRetryNotifications}
+            disabled={isRetrying}
+            style={({ pressed }) => [
+              $notificationBanner,
+              $notificationBannerError,
+              pressed && { opacity: 0.8 },
+            ]}
+          >
+            <MaterialCommunityIcons name="alert-circle-outline" size={20} color="#991B1B" />
+            <View style={$bannerTextContainer}>
+              <Text text="Failed to set up notifications" style={[$bannerTitle, { color: "#991B1B" }]} />
+              <Text
+                text={notificationError || "Tap to retry"}
+                style={[$bannerDescription, { color: "#B91C1C" }]}
+                numberOfLines={1}
+              />
+            </View>
+            {isRetrying ? (
+              <ActivityIndicator size="small" color="#991B1B" />
+            ) : (
+              <MaterialCommunityIcons name="refresh" size={20} color="#991B1B" />
+            )}
+          </Pressable>
+        )}
+
+        {notificationStatus === "unsupported" && (
+          <View style={[$notificationBanner, $notificationBannerInfo]}>
+            <MaterialCommunityIcons name="information-outline" size={20} color="#1E40AF" />
+            <View style={$bannerTextContainer}>
+              <Text text="Push notifications unavailable" style={[$bannerTitle, { color: "#1E40AF" }]} />
+              <Text text="Use a physical device to receive notifications" style={[$bannerDescription, { color: "#1D4ED8" }]} />
+            </View>
+          </View>
+        )}
 
         {subscriptions.length === 0 && !isLoading ? (
           <View style={themed($emptyState)}>
@@ -530,4 +606,43 @@ const $versionContainer: ViewStyle = {
 const $versionText: TextStyle = {
   fontSize: 12,
   color: "#9CA3AF",
+}
+
+// Notification banner styles
+const $notificationBanner: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  paddingVertical: 12,
+  paddingHorizontal: 12,
+  borderRadius: 8,
+  marginBottom: 12,
+  gap: 10,
+}
+
+const $notificationBannerWarning: ViewStyle = {
+  backgroundColor: "#FEF3C7",
+}
+
+const $notificationBannerError: ViewStyle = {
+  backgroundColor: "#FEE2E2",
+}
+
+const $notificationBannerInfo: ViewStyle = {
+  backgroundColor: "#DBEAFE",
+}
+
+const $bannerTextContainer: ViewStyle = {
+  flex: 1,
+}
+
+const $bannerTitle: TextStyle = {
+  fontSize: 14,
+  fontWeight: "600",
+  color: "#92400E",
+}
+
+const $bannerDescription: TextStyle = {
+  fontSize: 12,
+  color: "#B45309",
+  marginTop: 2,
 }

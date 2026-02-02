@@ -22,6 +22,7 @@ import {
   initializePushNotifications,
   addNotificationResponseListener,
   getLastNotificationResponse,
+  NotificationStatus,
 } from "@/services/notifications"
 import { navigate, navigationRef } from "@/navigators/navigationUtilities"
 
@@ -66,6 +67,9 @@ export type AuthContextType = {
   requestMagicLink: (email: string) => Promise<boolean>
   verifyMagicLink: (email: string, token: string) => Promise<boolean>
   expoPushToken: string | null
+  notificationStatus: NotificationStatus
+  notificationError: string | null
+  retryNotificationSetup: () => Promise<void>
 }
 
 export const AuthContext = createContext<AuthContextType | null>(null)
@@ -77,6 +81,8 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   const [user, setUser] = useState<AuthUser | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [expoPushToken, setExpoPushToken] = useState<string | null>(null)
+  const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>("unknown")
+  const [notificationError, setNotificationError] = useState<string | null>(null)
   const [initialNotification, setInitialNotification] = useState<NotificationData | null>(null)
   const notificationListenerRef = useRef<ReturnType<typeof addNotificationResponseListener> | null>(null)
 
@@ -101,20 +107,47 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     checkAuthState()
   }, [checkAuthState])
 
+  /**
+   * Initialize push notifications and update status
+   */
+  const setupPushNotifications = useCallback(async () => {
+    try {
+      const result = await initializePushNotifications()
+
+      setNotificationStatus(result.status)
+      setExpoPushToken(result.token)
+
+      if (result.error) {
+        setNotificationError(result.error)
+        console.warn("Push notification setup warning:", result.error)
+      } else {
+        setNotificationError(null)
+      }
+
+      if (result.token) {
+        console.log("Push notifications initialized with token:", result.token)
+      }
+    } catch (error) {
+      console.error("Failed to initialize push notifications:", error)
+      setNotificationStatus("error")
+      setNotificationError(error instanceof Error ? error.message : "Unknown error")
+    }
+  }, [])
+
+  /**
+   * Retry push notification setup - exposed to UI for manual retry
+   */
+  const retryNotificationSetup = useCallback(async () => {
+    setNotificationStatus("unknown")
+    setNotificationError(null)
+    await setupPushNotifications()
+  }, [setupPushNotifications])
+
   // Initialize push notifications when user is authenticated
   useEffect(() => {
     if (user) {
       // Initialize push notifications and get token
-      initializePushNotifications()
-        .then((token) => {
-          if (token) {
-            setExpoPushToken(token)
-            console.log("Push notifications initialized with token:", token)
-          }
-        })
-        .catch((error) => {
-          console.error("Failed to initialize push notifications:", error)
-        })
+      setupPushNotifications()
 
       // Set up notification response listener (when user taps notification)
       notificationListenerRef.current = addNotificationResponseListener((response) => {
@@ -275,6 +308,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
     requestMagicLink,
     verifyMagicLink,
     expoPushToken,
+    notificationStatus,
+    notificationError,
+    retryNotificationSetup,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
