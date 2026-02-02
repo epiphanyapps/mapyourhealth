@@ -9,7 +9,7 @@
  * - Location button for GPS-based lookup
  */
 
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 import {
   View,
   TextInput,
@@ -63,12 +63,6 @@ export interface PlacesSearchBarProps {
    * @default false
    */
   isLocating?: boolean
-  /**
-   * Top offset for the dropdown (from top of screen)
-   * Accounts for safe area, nav header, and search bar height
-   * @default 160
-   */
-  dropdownTopOffset?: number
 }
 
 /**
@@ -83,7 +77,6 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     showLocationButton = false,
     onLocationPress,
     isLocating = false,
-    dropdownTopOffset = 160,
   } = props
 
   const { theme } = useAppTheme()
@@ -159,10 +152,15 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   }, [clearSuggestions])
 
   // Styles
+  const $wrapper: ViewStyle = {
+    position: "relative",
+    zIndex: 10,
+    marginHorizontal: 16,
+  }
+
   const $container: ViewStyle = {
     flexDirection: "row",
     alignItems: "center",
-    marginHorizontal: 16,
   }
 
   const $locationButton: ViewStyle = {
@@ -199,8 +197,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   }
 
   return (
-    <>
-      <View style={[$container, style]}>
+    <View style={[$wrapper, style]}>
+      <View style={$container}>
         <View style={$inputContainer}>
           <MaterialCommunityIcons name="magnify" size={20} color={theme.colors.textDim} />
           <TextInput
@@ -249,8 +247,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         visible={showSuggestions && suggestions.length > 0}
         onSelect={handleSuggestionSelect}
         onDismiss={handleDismiss}
-        topOffset={dropdownTopOffset}
       />
-    </>
+    </View>
   )
 }

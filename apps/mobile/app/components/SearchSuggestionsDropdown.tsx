@@ -6,23 +6,12 @@
  */
 
 import { useCallback } from "react"
-import {
-  View,
-  FlatList,
-  Pressable,
-  ViewStyle,
-  TextStyle,
-  Modal,
-  TouchableWithoutFeedback,
-  Dimensions,
-} from "react-native"
+import { View, FlatList, Pressable, ViewStyle, TextStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
 import { SearchSuggestion } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
-
-const SCREEN_HEIGHT = Dimensions.get("window").height
 
 interface SearchSuggestionsDropdownProps {
   /** List of suggestions to display */
@@ -31,12 +20,8 @@ interface SearchSuggestionsDropdownProps {
   visible: boolean
   /** Callback when a suggestion is selected */
   onSelect: (suggestion: SearchSuggestion) => void
-  /** Callback when the dropdown should be dismissed */
-  onDismiss: () => void
-  /** Top position offset for the dropdown (from top of screen)
-   * @default 160
-   */
-  topOffset?: number
+  /** Callback when the dropdown should be dismissed (unused, kept for API compatibility) */
+  onDismiss?: () => void
 }
 
 /**
@@ -69,7 +54,7 @@ function getIconForType(
  * />
  */
 export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps) {
-  const { suggestions, visible, onSelect, onDismiss, topOffset = 160 } = props
+  const { suggestions, visible, onSelect } = props
   const { theme } = useAppTheme()
 
   const renderItem = useCallback(
@@ -147,17 +132,12 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     return null
   }
 
-  const $modalOverlay: ViewStyle = {
-    flex: 1,
-    backgroundColor: "transparent",
-  }
-
   const $dropdownContainer: ViewStyle = {
     position: "absolute",
-    top: topOffset,
-    left: 16,
-    right: 16,
-    maxHeight: SCREEN_HEIGHT * 0.4,
+    top: 52,
+    left: 0,
+    right: 0,
+    maxHeight: 300,
     backgroundColor: theme.colors.background,
     borderRadius: 12,
     shadowColor: "#000",
@@ -168,6 +148,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     overflow: "hidden",
     borderWidth: 1,
     borderColor: theme.colors.border,
+    zIndex: 1000,
   }
 
   const $emptyContainer: ViewStyle = {
@@ -182,27 +163,19 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
   }
 
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onDismiss}>
-      <TouchableWithoutFeedback onPress={onDismiss}>
-        <View style={$modalOverlay}>
-          <TouchableWithoutFeedback>
-            <View style={$dropdownContainer}>
-              <FlatList
-                data={suggestions}
-                renderItem={renderItem}
-                keyExtractor={keyExtractor}
-                keyboardShouldPersistTaps="handled"
-                showsVerticalScrollIndicator={false}
-                ListEmptyComponent={
-                  <View style={$emptyContainer}>
-                    <Text style={$emptyText}>No locations found</Text>
-                  </View>
-                }
-              />
-            </View>
-          </TouchableWithoutFeedback>
-        </View>
-      </TouchableWithoutFeedback>
-    </Modal>
+    <View style={$dropdownContainer}>
+      <FlatList
+        data={suggestions}
+        renderItem={renderItem}
+        keyExtractor={keyExtractor}
+        keyboardShouldPersistTaps="always"
+        showsVerticalScrollIndicator={false}
+        ListEmptyComponent={
+          <View style={$emptyContainer}>
+            <Text style={$emptyText}>No locations found</Text>
+          </View>
+        }
+      />
+    </View>
   )
 }
