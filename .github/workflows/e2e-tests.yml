@@ -18,8 +18,8 @@ permissions:
   pull-requests: write
 
 jobs:
-  build-android:
-    name: Build Android APK
+  e2e-tests:
+    name: Run E2E Tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -51,52 +51,52 @@ jobs:
         working-directory: apps/mobile/android
         run: ./gradlew assembleRelease
 
-      - name: Upload APK artifact
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run E2E tests
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31
+          arch: x86_64
+          profile: pixel_6
+          heap-size: 512M
+          ram-size: 4096M
+          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
+          script: |
+            adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+
+      - name: Upload test results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
-          retention-days: 1
-
-  e2e-tests:
-    name: Run Maestro E2E Tests
-    needs: build-android
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Download APK artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: android-apk
-          path: ./
-
-      - name: Run Maestro Cloud tests
-        id: maestro
-        uses: mobile-dev-inc/action-maestro-cloud@v1
-        with:
-          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
-          project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
-          app-file: ./app-release.apk
-          workspace: apps/mobile/.maestro/flows
-          env: |
-            MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+          name: maestro-results
+          path: ~/.maestro/tests
+          retention-days: 7
 
       - name: Comment on PR with results
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ steps.maestro.outputs.MAESTRO_CLOUD_UPLOAD_STATUS }}' === 'completed' ? ':white_check_mark:' : ':x:';
-            const consoleUrl = '${{ steps.maestro.outputs.MAESTRO_CLOUD_CONSOLE_URL }}';
+            const status = '${{ job.status }}' === 'success' ? ':white_check_mark:' : ':x:';
             const body = `## E2E Test Results ${status}
 
-            **Platform:** Android
-            **Status:** ${{ steps.maestro.outputs.MAESTRO_CLOUD_UPLOAD_STATUS }}
+            **Platform:** Android (Emulator)
+            **Status:** ${{ job.status }}
             **Commit:** ${{ github.sha }}
 
-            [View detailed results in Maestro Cloud](${consoleUrl})`;
+            Download test artifacts for detailed results.`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
