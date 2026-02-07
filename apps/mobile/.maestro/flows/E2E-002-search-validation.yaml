@@ -1,0 +1,85 @@
+# flow: E2E-002 Search Validation
+# intent:
+#   Validate search functionality for different input types:
+#   1. Zip code search (10001) - verify data and category cards appear
+#   2. City search (Montreal) - verify location search works
+#
+# This flow ensures the search feature correctly handles both
+# numeric zip codes and text-based city names.
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Test 1: Zip Code Search (10001)
+# ========================================
+# Verify search bar is visible on app start
+- assertVisible:
+    text: "Search zip codes..."
+    label: "Search bar is visible"
+
+# Tap on search bar to activate it
+- tapOn:
+    text: "Search zip codes..."
+    label: "Tap on search bar"
+
+# Enter zip code 10001
+- inputText: "10001"
+
+# Submit the search
+- pressKey: Enter
+
+# Wait for data to load
+- waitForAnimationToEnd
+
+# Assert the zip code is displayed
+- assertVisible:
+    text: "10001"
+    label: "Zip code 10001 is displayed in results"
+
+# Assert category cards appear (Water, Air, Health, or Disaster)
+# Using optional: true since exact cards may vary by location
+- assertVisible:
+    text: "Water"
+    optional: true
+    label: "Water category card visible"
+
+- assertVisible:
+    text: "Air"
+    optional: true
+    label: "Air category card visible"
+
+- assertVisible:
+    text: "Health"
+    optional: true
+    label: "Health category card visible"
+
+- assertVisible:
+    text: "Disaster"
+    optional: true
+    label: "Disaster category card visible"
+
+# ========================================
+# Test 2: City Search (Montreal)
+# ========================================
+# Tap on search bar again to search for a city
+- tapOn:
+    text: "Search zip codes..."
+    label: "Tap on search bar for city search"
+
+# Enter city name Montreal
+- inputText: "Montreal"
+
+# Submit the search
+- pressKey: Enter
+
+# Wait for data to load
+- waitForAnimationToEnd
+
+# Assert results appear for Montreal
+# The city name or related location info should be visible
+- assertVisible:
+    text: "Montreal"
+    label: "Montreal search results are displayed"

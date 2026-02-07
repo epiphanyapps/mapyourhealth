@@ -32,9 +32,9 @@ export interface StatCategoryCardProps {
  * A category names mapping for display
  */
 export const CATEGORY_DISPLAY_NAMES: Record<StatCategory, string> = {
-  water: "Water Quality",
-  air: "Air Quality",
-  health: "Health",
+  water: "Tap Water Quality",
+  air: "Air Pollution",
+  health: "Pathogens",
   disaster: "Disaster Risk",
 }
 

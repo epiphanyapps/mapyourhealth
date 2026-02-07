@@ -1,0 +1,75 @@
+# flow: E2E-003 Category Reorganization Verification
+# intent:
+#   Verify that renamed categories appear correctly on the dashboard:
+#   1. "Tap Water Quality" (formerly "Water Quality")
+#   2. "Air Pollution" (formerly "Air Quality")
+#   3. "Pathogens" (formerly "Health")
+#   4. "Disaster Risk" (unchanged)
+#
+#   This test verifies the category renaming changes work in the UI
+#   by searching a location and checking all category cards display
+#   the correct new names.
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Search for a Location
+# ========================================
+- assertVisible:
+    text: "Search city or.*"
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or.*"
+    label: "Tap on search bar"
+
+- inputText: "10001"
+- pressKey: Enter
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "10001"
+    timeout: 10000
+
+# ========================================
+# Part 2: Verify All Category Names
+# ========================================
+# Assert NEW category names appear on dashboard
+- assertVisible:
+    text: "Tap Water.*"
+    label: "Water category renamed to 'Tap Water Quality'"
+
+- assertVisible:
+    text: "Air Pollut.*"
+    label: "Air category renamed to 'Air Pollution'"
+
+- assertVisible:
+    text: "Pathogen.*"
+    label: "Health category renamed to 'Pathogens'"
+
+- assertVisible:
+    text: "Disaster.*"
+    label: "Disaster Risk category visible"
+
+# ========================================
+# Part 3: Verify Category Card is Tappable
+# ========================================
+# Verify we can tap into a category detail screen
+- tapOn:
+    text: "Tap Water.*"
+    label: "Tap water quality category"
+
+- waitForAnimationToEnd
+
+# Verify we're on the detail screen with correct header
+- assertVisible:
+    text: "Tap Water.*"
+    label: "Category detail screen shows correct header"
+
+# Verify contaminant data is shown
+- assertVisible:
+    text: "contaminant.*"
+    optional: true
+    label: "Contaminant information visible"
