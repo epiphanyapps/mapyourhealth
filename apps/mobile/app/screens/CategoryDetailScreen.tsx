@@ -298,6 +298,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           title={categoryName}
           leftIcon="back"
           onLeftPress={() => navigation.goBack()}
+          safeAreaEdges={[]}
         />
         <View style={$loadingContainer}>
           <ActivityIndicator size="large" color={theme.colors.tint} />
@@ -315,6 +316,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           title={categoryName}
           leftIcon="back"
           onLeftPress={() => navigation.goBack()}
+          safeAreaEdges={[]}
         />
         <View style={$errorContainer}>
           <MaterialCommunityIcons
@@ -340,6 +342,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         leftIcon="back"
         onLeftPress={() => navigation.goBack()}
         RightActionComponent={ShareButton}
+        safeAreaEdges={[]}
       />
 
       <ScrollView
