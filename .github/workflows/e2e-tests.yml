@@ -17,15 +17,10 @@ permissions:
   contents: read
   pull-requests: write
 
-env:
-  EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-
 jobs:
   build-android:
     name: Build Android APK
     runs-on: ubuntu-latest
-    outputs:
-      build_id: ${{ steps.build.outputs.build_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,37 +31,31 @@ jobs:
           node-version: '20'
           cache: 'yarn'
 
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
-      - name: Setup EAS CLI
-        run: npm install -g eas-cli
-
-      - name: Build Android APK
-        id: build
+      - name: Generate native project
         working-directory: apps/mobile
-        timeout-minutes: 45
-        run: |
-          BUILD_OUTPUT=$(eas build \
-            --platform android \
-            --profile preview \
-            --non-interactive \
-            --wait \
-            --json)
-          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id')
-          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
+        run: npx expo prebuild --platform android --clean
 
-      - name: Download APK
-        working-directory: apps/mobile
-        run: |
-          BUILD_URL=$(eas build:view ${{ steps.build.outputs.build_id }} --json | jq -r '.artifacts.buildUrl')
-          curl -L -o app.apk "$BUILD_URL"
+      - name: Build APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
-          path: apps/mobile/app.apk
+          path: apps/mobile/android/app/build/outputs/apk/release/app-release.apk
           retention-days: 1
 
   e2e-tests:
@@ -89,7 +78,7 @@ jobs:
         with:
           api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
           project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
-          app-file: ./app.apk
+          app-file: ./app-release.apk
           workspace: apps/mobile/.maestro/flows
           env: |
             MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
