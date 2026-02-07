@@ -1,5 +1,5 @@
-import { FC, useState, useCallback } from "react"
-import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity } from "react-native"
+import { FC, useState, useCallback, useMemo } from "react"
+import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity, Linking } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
@@ -7,11 +7,15 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { CategoryIcon, CATEGORY_COLORS } from "@/components/CategoryIcon"
 import { StatItem } from "@/components/StatItem"
+import { ContaminantTable, ContaminantTableRow } from "@/components/ContaminantTable"
 import { Header } from "@/components/Header"
 import { useAppTheme } from "@/theme/context"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
+import { useContaminants } from "@/context/ContaminantsContext"
 import { useZipCodeData, getStatsForCategory } from "@/hooks/useZipCodeData"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
+import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
+import { StatCategory } from "@/data/types/safety"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 
 interface CategoryDetailScreenProps extends AppStackScreenProps<"CategoryDetail"> {}
@@ -29,12 +33,16 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { category, zipCode } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
+  const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
 
   // Fetch data for the passed zip code from Amplify (with caching and offline support)
   const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } = useZipCodeData(zipCode)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  // Get category config for description and links
+  const categoryConfig = CATEGORY_CONFIG[category]
 
   // Handle pull-to-refresh
   const onRefresh = useCallback(async () => {
@@ -51,6 +59,47 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
   const categoryColor = CATEGORY_COLORS[category]
+
+  // Get jurisdiction name for display
+  const localJurisdictionCode = zipData?.state ? `US-${zipData.state}` : "US"
+  const localJurisdiction = jurisdictionMap.get(localJurisdictionCode) || jurisdictionMap.get("US")
+  const localJurisdictionName = localJurisdiction?.name?.toUpperCase() || zipData?.state?.toUpperCase() || "LOCAL"
+
+  // Build table rows for water category
+  const tableRows: ContaminantTableRow[] = useMemo(() => {
+    if (category !== StatCategory.water || !stats.length) return []
+
+    return stats.map(({ stat, definition }) => {
+      const whoThreshold = getWHOThreshold(stat.statId)
+      const localThreshold = getThreshold(stat.statId, localJurisdictionCode)
+
+      return {
+        name: definition.name,
+        value: stat.value,
+        unit: definition.unit,
+        whoLimit: whoThreshold?.limitValue ?? null,
+        localLimit: localThreshold?.limitValue ?? null,
+        localJurisdictionName,
+        status: stat.status,
+        isUnregulated: localThreshold?.status === "not_controlled",
+      }
+    })
+  }, [stats, category, getWHOThreshold, getThreshold, localJurisdictionCode, localJurisdictionName])
+
+  // Count contaminants exceeding WHO standards
+  const exceedingCount = useMemo(() => {
+    return tableRows.filter(row => row.status === "danger" || row.status === "warning").length
+  }, [tableRows])
+
+  // Get category description with dynamic values
+  const categoryDescription = getCategoryDescription(category, { count: exceedingCount })
+
+  // Handle link press
+  const handleLinkPress = useCallback((url: string) => {
+    Linking.openURL(url).catch(err => {
+      console.error("Failed to open URL:", err)
+    })
+  }, [])
 
   // Handle Share button press - share category-specific safety data
   const handleShare = useCallback(async () => {
@@ -189,6 +238,38 @@ mapyourhealth://zip/${zipData.zipCode}`
     textAlign: "center",
   }
 
+  const $descriptionContainer: ViewStyle = {
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    paddingBottom: 8,
+  }
+
+  const $descriptionText: TextStyle = {
+    fontSize: 15,
+    color: theme.colors.text,
+    lineHeight: 22,
+  }
+
+  const $linksContainer: ViewStyle = {
+    paddingHorizontal: 16,
+    paddingTop: 8,
+    paddingBottom: 16,
+    gap: 8,
+  }
+
+  const $linkButton: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 8,
+  }
+
+  const $linkText: TextStyle = {
+    fontSize: 14,
+    color: theme.colors.tint,
+    textDecorationLine: "underline",
+    marginLeft: 6,
+  }
+
   const $offlineBanner: ViewStyle = {
     flexDirection: "row",
     alignItems: "center",
@@ -280,6 +361,29 @@ mapyourhealth://zip/${zipData.zipCode}`
           <Text style={$categoryName}>{categoryName}</Text>
         </View>
 
+        {/* Category Description */}
+        <View style={$descriptionContainer}>
+          <Text style={$descriptionText}>{categoryDescription}</Text>
+        </View>
+
+        {/* Links to external resources */}
+        {categoryConfig.links.length > 0 && (
+          <View style={$linksContainer}>
+            {categoryConfig.links.map((link, index) => (
+              <TouchableOpacity
+                key={index}
+                style={$linkButton}
+                onPress={() => handleLinkPress(link.url)}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${link.label}`}
+              >
+                <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
+                <Text style={$linkText}>{link.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
         {/* Offline Banner - shown when using cached data while offline */}
         {isOffline && isCachedData && (
           <View style={$offlineBanner}>
@@ -297,35 +401,41 @@ mapyourhealth://zip/${zipData.zipCode}`
           </View>
         )}
 
-        {/* Stats List */}
+        {/* Stats List - Table for water, list for others */}
         <View style={$statsContainer}>
           {stats.length > 0 ? (
-            stats.map(({ stat, definition }) => (
-              <StatItem
-                key={stat.statId}
-                name={definition.name}
-                value={stat.value}
-                unit={definition.unit}
-                status={stat.status}
-                history={stat.history}
-                onViewTrends={
-                  stat.history && stat.history.length > 0
-                    ? () =>
-                        navigation.navigate("StatTrend", {
-                          statName: definition.name,
-                          statId: stat.statId,
-                          unit: definition.unit,
-                          currentValue: stat.value,
-                          currentStatus: stat.status,
-                          history: stat.history || [],
-                          higherIsBad: definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
-                          lastUpdated: stat.lastUpdated,
-                          zipCode,
-                        })
-                    : undefined
-                }
-              />
-            ))
+            category === StatCategory.water && categoryConfig.showStandardsTable ? (
+              // Water category: Show contaminant table with WHO/Local standards
+              <ContaminantTable rows={tableRows} />
+            ) : (
+              // Other categories: Show stat items
+              stats.map(({ stat, definition }) => (
+                <StatItem
+                  key={stat.statId}
+                  name={definition.name}
+                  value={stat.value}
+                  unit={definition.unit}
+                  status={stat.status}
+                  history={stat.history}
+                  onViewTrends={
+                    stat.history && stat.history.length > 0
+                      ? () =>
+                          navigation.navigate("StatTrend", {
+                            statName: definition.name,
+                            statId: stat.statId,
+                            unit: definition.unit,
+                            currentValue: stat.value,
+                            currentStatus: stat.status,
+                            history: stat.history || [],
+                            higherIsBad: definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
+                            lastUpdated: stat.lastUpdated,
+                            zipCode,
+                          })
+                      : undefined
+                  }
+                />
+              ))
+            )
           ) : (
             <Text style={$emptyText}>No stats available for this category.</Text>
           )}
