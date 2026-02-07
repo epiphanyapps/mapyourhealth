@@ -1,6 +1,6 @@
 import { View, ViewStyle, TextStyle } from "react-native"
-import { Text } from "./Text"
 import { StatusIndicator } from "./StatusIndicator"
+import { Text } from "./Text"
 import { useAppTheme } from "@/theme/context"
 import type { StatStatus, ContaminantThreshold } from "@/data/types/safety"
 
