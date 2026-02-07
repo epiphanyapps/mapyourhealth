@@ -12,15 +12,10 @@ on:
       - 'apps/mobile/**'
       - '.github/workflows/e2e-tests.yml'
   workflow_dispatch:
-    inputs:
-      platform:
-        description: 'Platform to test'
-        required: true
-        default: 'android'
-        type: choice
-        options:
-          - android
-          - ios
+
+permissions:
+  contents: read
+  pull-requests: write
 
 env:
   EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -30,7 +25,7 @@ jobs:
     name: Build Android APK
     runs-on: ubuntu-latest
     outputs:
-      apk_path: ${{ steps.download.outputs.apk_path }}
+      build_id: ${{ steps.build.outputs.build_id }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -48,21 +43,24 @@ jobs:
         run: npm install -g eas-cli
 
       - name: Build Android APK
+        id: build
         working-directory: apps/mobile
+        timeout-minutes: 45
         run: |
-          eas build \
+          BUILD_OUTPUT=$(eas build \
             --platform android \
             --profile preview \
             --non-interactive \
-            --wait
+            --wait \
+            --json)
+          BUILD_ID=$(echo "$BUILD_OUTPUT" | jq -r '.[0].id')
+          echo "build_id=$BUILD_ID" >> $GITHUB_OUTPUT
 
       - name: Download APK
-        id: download
         working-directory: apps/mobile
         run: |
-          BUILD_URL=$(eas build:list --platform android --limit 1 --json --non-interactive | jq -r '.[0].artifacts.buildUrl')
+          BUILD_URL=$(eas build:view ${{ steps.build.outputs.build_id }} --json | jq -r '.artifacts.buildUrl')
           curl -L -o app.apk "$BUILD_URL"
-          echo "apk_path=$(pwd)/app.apk" >> $GITHUB_OUTPUT
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
@@ -85,35 +83,31 @@ jobs:
           name: android-apk
           path: ./
 
-      - name: Install Maestro CLI
-        run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
-          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
-
-      - name: Upload to Maestro Cloud
-        env:
-          MAESTRO_CLOUD_API_KEY: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
-        run: |
-          ~/.maestro/bin/maestro cloud \
-            --apiKey "$MAESTRO_CLOUD_API_KEY" \
-            --app-file ./app.apk \
-            --flows apps/mobile/.maestro/flows \
-            --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth \
-            --name "E2E Tests - ${{ github.ref_name }} - ${{ github.sha }}"
+      - name: Run Maestro Cloud tests
+        id: maestro
+        uses: mobile-dev-inc/action-maestro-cloud@v1
+        with:
+          api-key: ${{ secrets.MAESTRO_CLOUD_API_KEY }}
+          project-id: ${{ secrets.MAESTRO_PROJECT_ID }}
+          app-file: ./app.apk
+          workspace: apps/mobile/.maestro/flows
+          env: |
+            MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
 
       - name: Comment on PR with results
         if: github.event_name == 'pull_request' && always()
         uses: actions/github-script@v7
         with:
           script: |
-            const status = '${{ job.status }}' === 'success' ? ':white_check_mark:' : ':x:';
+            const status = '${{ steps.maestro.outputs.MAESTRO_CLOUD_UPLOAD_STATUS }}' === 'completed' ? ':white_check_mark:' : ':x:';
+            const consoleUrl = '${{ steps.maestro.outputs.MAESTRO_CLOUD_CONSOLE_URL }}';
             const body = `## E2E Test Results ${status}
 
             **Platform:** Android
-            **Status:** ${{ job.status }}
+            **Status:** ${{ steps.maestro.outputs.MAESTRO_CLOUD_UPLOAD_STATUS }}
             **Commit:** ${{ github.sha }}
 
-            View detailed results in the [Maestro Cloud Dashboard](https://cloud.mobile.dev)`;
+            [View detailed results in Maestro Cloud](${consoleUrl})`;
 
             github.rest.issues.createComment({
               issue_number: context.issue.number,
