@@ -1,4 +1,4 @@
-import React, { useCallback } from "react"
+import { useCallback, useMemo } from "react"
 import { Linking, StyleProp, Text, TextStyle } from "react-native"
 
 interface LinkedTextProps {
@@ -67,7 +67,7 @@ export function LinkedText({ text, style, linkStyle }: LinkedTextProps) {
     return parts
   }
 
-  const parts = parseText(text)
+  const parts = useMemo(() => parseText(text), [text])
 
   return (
     <Text style={style}>
