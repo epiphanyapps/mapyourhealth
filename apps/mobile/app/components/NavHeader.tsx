@@ -1,5 +1,6 @@
-import { View, ViewStyle, TextStyle, Pressable } from "react-native"
+import { Pressable, TextStyle, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
 

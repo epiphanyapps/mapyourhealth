@@ -7,8 +7,8 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 
-import { getAllLocations, AmplifyLocation } from "@/services/amplify/data"
 import { SearchSuggestion } from "@/data/types/safety"
+import { getAllLocations, AmplifyLocation } from "@/services/amplify/data"
 import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 
 /** Debounce delay for search in milliseconds */
@@ -165,15 +165,16 @@ export function useLocationSearch(): UseLocationSearchResult {
       if (isValidPostalCode(trimmedQuery)) {
         const normalized = normalizePostalCode(trimmedQuery)
         const matchingLocation = locations.find(
-          (loc) => loc.postalCode.toUpperCase() === normalized.toUpperCase()
+          (loc) => loc.postalCode.toUpperCase() === normalized.toUpperCase(),
         )
 
         if (matchingLocation) {
           results.push({
             type: "postalCode",
-            displayText: matchingLocation.city && matchingLocation.state
-              ? `${matchingLocation.postalCode} - ${matchingLocation.city}, ${matchingLocation.state}`
-              : matchingLocation.postalCode,
+            displayText:
+              matchingLocation.city && matchingLocation.state
+                ? `${matchingLocation.postalCode} - ${matchingLocation.city}, ${matchingLocation.state}`
+                : matchingLocation.postalCode,
             secondaryText: "Postal code",
             postalCodes: [matchingLocation.postalCode],
             city: matchingLocation.city ?? undefined,
@@ -192,8 +193,8 @@ export function useLocationSearch(): UseLocationSearchResult {
       }
 
       // Search cities (partial match at start of city name)
-      const matchingCities = groupedByCityState.filter(
-        (group) => group.city.toLowerCase().startsWith(queryLower)
+      const matchingCities = groupedByCityState.filter((group) =>
+        group.city.toLowerCase().startsWith(queryLower),
       )
 
       // Sort by relevance (exact matches first, then by location count)
@@ -223,7 +224,7 @@ export function useLocationSearch(): UseLocationSearchResult {
         const matchingStates = groupedByState.filter(
           (group) =>
             group.state.toLowerCase().startsWith(queryLower) ||
-            group.state.toLowerCase() === queryLower
+            group.state.toLowerCase() === queryLower,
         )
 
         // Sort by exact match first, then by location count
@@ -238,7 +239,7 @@ export function useLocationSearch(): UseLocationSearchResult {
         for (const state of matchingStates.slice(0, MAX_SUGGESTIONS - results.length)) {
           // Skip if we already have a city suggestion from this state
           const alreadyHasStateCity = results.some(
-            (r) => r.type === "city" && r.state === state.state
+            (r) => r.type === "city" && r.state === state.state,
           )
           if (alreadyHasStateCity) continue
 
@@ -257,7 +258,7 @@ export function useLocationSearch(): UseLocationSearchResult {
       setSuggestions(results.slice(0, MAX_SUGGESTIONS))
       setIsSearching(false)
     },
-    [locations, groupedByCityState, groupedByState]
+    [locations, groupedByCityState, groupedByState],
   )
 
   // Debounced search function
@@ -282,7 +283,7 @@ export function useLocationSearch(): UseLocationSearchResult {
         performSearch(query)
       }, SEARCH_DEBOUNCE_MS)
     },
-    [performSearch]
+    [performSearch],
   )
 
   // Clear suggestions

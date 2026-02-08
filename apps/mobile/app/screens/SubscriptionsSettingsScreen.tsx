@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 /**
  * SubscriptionsSettingsScreen
  *
@@ -6,21 +7,29 @@
  */
 
 import { FC, useState, useCallback, useEffect } from "react"
-import { View, TextStyle, ViewStyle, FlatList, Modal, Pressable, ActivityIndicator } from "react-native"
+import {
+  View,
+  TextStyle,
+  ViewStyle,
+  FlatList,
+  Modal,
+  Pressable,
+  ActivityIndicator,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
-import { Text } from "@/components/Text"
 import { SubscriptionCard } from "@/components/SubscriptionCard"
+import { Text } from "@/components/Text"
 import { ZipCodeSearch, ZipCodeSelection } from "@/components/ZipCodeSearch"
+import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import {
   getUserZipCodeSubscriptions,
   createZipCodeSubscription,
   deleteZipCodeSubscription,
   ZipCodeSubscription,
 } from "@/services/amplify/data"
-import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
@@ -28,7 +37,9 @@ const MAX_SUBSCRIPTIONS = 10
 
 interface SubscriptionsSettingsScreenProps extends AppStackScreenProps<"SubscriptionsSettings"> {}
 
-export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> = ({ navigation }) => {
+export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> = ({
+  navigation,
+}) => {
   const [subscriptions, setSubscriptions] = useState<ZipCodeSubscription[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isModalVisible, setIsModalVisible] = useState(false)
@@ -294,7 +305,11 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
                 onPress={handleCloseModal}
               />
               <Button
-                text={isSaving ? "Saving..." : `Add ${newSelections.length > 0 ? `(${newSelections.length})` : ""}`}
+                text={
+                  isSaving
+                    ? "Saving..."
+                    : `Add ${newSelections.length > 0 ? `(${newSelections.length})` : ""}`
+                }
                 style={$modalButton}
                 preset="reversed"
                 onPress={handleSaveNewSubscriptions}

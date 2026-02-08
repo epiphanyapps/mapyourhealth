@@ -1,5 +1,15 @@
-import { View, TextInput, ViewStyle, TextStyle, StyleProp, Pressable, ActivityIndicator } from "react-native"
+import {
+  ActivityIndicator,
+  Pressable,
+  StyleProp,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
 import { useAppTheme } from "@/theme/context"
 
 export interface SearchBarProps {

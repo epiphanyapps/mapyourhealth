@@ -1,4 +1,5 @@
-import { View, ViewStyle, StyleProp } from "react-native"
+import { StyleProp, View, ViewStyle } from "react-native"
+
 import type { StatStatus } from "@/data/types/safety"
 
 /**

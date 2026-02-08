@@ -5,16 +5,17 @@
  * @see https://docs.expo.dev/push-notifications/overview/
  */
 
-import { Platform } from 'react-native'
-import * as Device from 'expo-device'
-import * as Notifications from 'expo-notifications'
-import Constants from 'expo-constants'
-import { getUserSubscriptions, updateUserSubscription } from './amplify/data'
+import { Platform } from "react-native"
+import Constants from "expo-constants"
+import * as Device from "expo-device"
+import * as Notifications from "expo-notifications"
+
+import { getUserSubscriptions, updateUserSubscription } from "./amplify/data"
 
 /**
  * Status of push notification setup
  */
-export type NotificationStatus = 'unknown' | 'granted' | 'denied' | 'unsupported' | 'error'
+export type NotificationStatus = "unknown" | "granted" | "denied" | "unsupported" | "error"
 
 /**
  * Result of push notification initialization
@@ -50,7 +51,7 @@ Notifications.setNotificationHandler({
 export async function registerForPushNotificationsAsync(): Promise<string | null> {
   // Push notifications only work on physical devices
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device')
+    console.log("Push notifications require a physical device")
     return null
   }
 
@@ -59,13 +60,13 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
   let finalStatus = existingStatus
 
   // Request permission if not already granted
-  if (existingStatus !== 'granted') {
+  if (existingStatus !== "granted") {
     const { status } = await Notifications.requestPermissionsAsync()
     finalStatus = status
   }
 
-  if (finalStatus !== 'granted') {
-    console.log('Push notification permission not granted')
+  if (finalStatus !== "granted") {
+    console.log("Push notification permission not granted")
     return null
   }
 
@@ -74,7 +75,7 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
     const projectId = Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId
 
     if (!projectId) {
-      console.warn('No project ID found for push notifications')
+      console.warn("No project ID found for push notifications")
       // Fall back to getting token without project ID (works in development)
       const token = await Notifications.getExpoPushTokenAsync()
       return token.data
@@ -84,10 +85,10 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
       projectId,
     })
 
-    console.log('Expo push token:', token.data)
+    console.log("Expo push token:", token.data)
     return token.data
   } catch (error) {
-    console.error('Failed to get push token:', error)
+    console.error("Failed to get push token:", error)
     return null
   }
 }
@@ -96,13 +97,13 @@ export async function registerForPushNotificationsAsync(): Promise<string | null
  * Set up Android notification channel (required for Android 8+)
  */
 export async function setupNotificationChannel(): Promise<void> {
-  if (Platform.OS === 'android') {
-    await Notifications.setNotificationChannelAsync('water-quality-alerts', {
-      name: 'Water Quality Alerts',
+  if (Platform.OS === "android") {
+    await Notifications.setNotificationChannelAsync("water-quality-alerts", {
+      name: "Water Quality Alerts",
       importance: Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#3b82f6',
-      description: 'Notifications about water quality changes in your subscribed locations',
+      lightColor: "#3b82f6",
+      description: "Notifications about water quality changes in your subscribed locations",
     })
   }
 }
@@ -113,7 +114,7 @@ export async function setupNotificationChannel(): Promise<void> {
  */
 export async function updateSubscriptionsWithPushToken(
   token: string,
-  maxRetries = 3
+  maxRetries = 3,
 ): Promise<TokenSyncResult> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -134,7 +135,7 @@ export async function updateSubscriptionsWithPushToken(
       console.error(`Failed to update subscriptions (attempt ${attempt}/${maxRetries}):`, error)
 
       if (attempt === maxRetries) {
-        const errorMessage = error instanceof Error ? error.message : 'Failed to sync push token'
+        const errorMessage = error instanceof Error ? error.message : "Failed to sync push token"
         return { success: false, error: errorMessage }
       }
 
@@ -143,7 +144,7 @@ export async function updateSubscriptionsWithPushToken(
     }
   }
 
-  return { success: false, error: 'Max retries exceeded' }
+  return { success: false, error: "Max retries exceeded" }
 }
 
 /**
@@ -154,11 +155,11 @@ export async function updateSubscriptionsWithPushToken(
 export async function initializePushNotifications(): Promise<NotificationInitResult> {
   // Check if device supports push notifications
   if (!Device.isDevice) {
-    console.log('Push notifications require a physical device')
+    console.log("Push notifications require a physical device")
     return {
-      status: 'unsupported',
+      status: "unsupported",
       token: null,
-      error: 'Push notifications require a physical device',
+      error: "Push notifications require a physical device",
     }
   }
 
@@ -170,16 +171,16 @@ export async function initializePushNotifications(): Promise<NotificationInitRes
   let finalStatus = existingStatus
 
   // Request permission if not already granted
-  if (existingStatus !== 'granted') {
+  if (existingStatus !== "granted") {
     const { status } = await Notifications.requestPermissionsAsync()
     finalStatus = status
   }
 
   // Handle permission denied
-  if (finalStatus !== 'granted') {
-    console.log('Push notification permission not granted')
+  if (finalStatus !== "granted") {
+    console.log("Push notification permission not granted")
     return {
-      status: 'denied',
+      status: "denied",
       token: null,
     }
   }
@@ -190,7 +191,7 @@ export async function initializePushNotifications(): Promise<NotificationInitRes
 
     let token: string
     if (!projectId) {
-      console.warn('No project ID found for push notifications')
+      console.warn("No project ID found for push notifications")
       const tokenResponse = await Notifications.getExpoPushTokenAsync()
       token = tokenResponse.data
     } else {
@@ -198,30 +199,30 @@ export async function initializePushNotifications(): Promise<NotificationInitRes
       token = tokenResponse.data
     }
 
-    console.log('Expo push token:', token)
+    console.log("Expo push token:", token)
 
     // Sync token to backend subscriptions
     const syncResult = await updateSubscriptionsWithPushToken(token)
 
     if (!syncResult.success) {
-      console.warn('Token obtained but failed to sync to backend:', syncResult.error)
+      console.warn("Token obtained but failed to sync to backend:", syncResult.error)
       // Still return granted since we have the token - sync can be retried
       return {
-        status: 'granted',
+        status: "granted",
         token,
         error: syncResult.error,
       }
     }
 
     return {
-      status: 'granted',
+      status: "granted",
       token,
     }
   } catch (error) {
-    console.error('Failed to get push token:', error)
-    const errorMessage = error instanceof Error ? error.message : 'Failed to get push token'
+    console.error("Failed to get push token:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to get push token"
     return {
-      status: 'error',
+      status: "error",
       token: null,
       error: errorMessage,
     }
@@ -275,7 +276,7 @@ export async function clearNotifications(): Promise<void> {
 export async function getCurrentPushToken(): Promise<string | null> {
   try {
     const { status } = await Notifications.getPermissionsAsync()
-    if (status !== 'granted') {
+    if (status !== "granted") {
       return null
     }
 
@@ -286,7 +287,7 @@ export async function getCurrentPushToken(): Promise<string | null> {
 
     return token.data
   } catch (error) {
-    console.error('Failed to get current push token:', error)
+    console.error("Failed to get current push token:", error)
     return null
   }
 }

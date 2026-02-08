@@ -1,8 +1,10 @@
 import { View, ViewStyle, TextStyle } from "react-native"
+
+import type { StatStatus } from "@/data/types/safety"
+import { useAppTheme } from "@/theme/context"
+
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
-import { useAppTheme } from "@/theme/context"
-import type { StatStatus, ContaminantThreshold } from "@/data/types/safety"
 
 export interface ContaminantTableRow {
   /** Contaminant name */
@@ -145,13 +147,7 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
       {/* Data Rows */}
       {rows.map((row, index) => (
-        <View
-          key={row.name}
-          style={[
-            $row,
-            index === rows.length - 1 && $lastRow,
-          ]}
-        >
+        <View key={row.name} style={[$row, index === rows.length - 1 && $lastRow]}>
           <View style={$nameCell}>
             <Text style={$cellText}>{row.name}</Text>
           </View>
@@ -161,7 +157,9 @@ export function ContaminantTable(props: ContaminantTableProps) {
             </Text>
           </View>
           <View style={$valueCell}>
-            <Text style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}>
+            <Text
+              style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
+            >
               {formatValue(row.localLimit, row.isUnregulated)}
             </Text>
           </View>

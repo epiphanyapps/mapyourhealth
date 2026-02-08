@@ -114,7 +114,7 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
  */
 export function getCategoryDescription(
   category: StatCategory,
-  values: { count?: number } = {}
+  values: { count?: number } = {},
 ): string {
   const config = CATEGORY_CONFIG[category]
   let description = config.description

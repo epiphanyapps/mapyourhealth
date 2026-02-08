@@ -12,8 +12,8 @@
  * - 98101 (Seattle, WA) - Very safe overall
  */
 
-import { StatStatus, ZipCodeData, ZipCodeStat } from "../types/safety"
 import { allStatDefinitions } from "./stat-definitions"
+import { StatStatus, ZipCodeData, ZipCodeStat } from "../types/safety"
 
 /**
  * Helper function to calculate status based on thresholds

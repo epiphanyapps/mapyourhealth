@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
 import type { StatCategory } from "@/data/types/safety"
 
 /**

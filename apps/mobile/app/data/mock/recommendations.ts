@@ -50,11 +50,7 @@ export const airRecommendations: ProductRecommendation[] = [
     description:
       "NIOSH-approved N95 masks for protection against wildfire smoke, air pollution, and airborne particles.",
     url: "https://www.example.com/n95-masks",
-    hazardCategoryIds: [
-      "hazard-poor-air-quality",
-      "hazard-respiratory",
-      "hazard-wildfire",
-    ],
+    hazardCategoryIds: ["hazard-poor-air-quality", "hazard-respiratory", "hazard-wildfire"],
   },
   {
     id: "rec-air-quality-monitor",
@@ -76,10 +72,7 @@ export const healthRecommendations: ProductRecommendation[] = [
     description:
       "300+ piece first aid kit for home emergencies. Includes bandages, medications, CPR mask, and emergency blanket.",
     url: "https://www.example.com/first-aid-kit",
-    hazardCategoryIds: [
-      "hazard-limited-healthcare",
-      "hazard-general-emergency",
-    ],
+    hazardCategoryIds: ["hazard-limited-healthcare", "hazard-general-emergency"],
   },
   {
     id: "rec-sanitizer-supplies",
@@ -113,11 +106,7 @@ export const disasterRecommendations: ProductRecommendation[] = [
     description:
       "Complete emergency kit with food, water, first aid, flashlight, radio, and shelter supplies for family of 4.",
     url: "https://www.example.com/emergency-kit",
-    hazardCategoryIds: [
-      "hazard-wildfire",
-      "hazard-flood",
-      "hazard-general-emergency",
-    ],
+    hazardCategoryIds: ["hazard-wildfire", "hazard-flood", "hazard-general-emergency"],
   },
   {
     id: "rec-weather-radio",
@@ -125,11 +114,7 @@ export const disasterRecommendations: ProductRecommendation[] = [
     description:
       "NOAA weather radio with hand crank, solar panel, flashlight, and USB charging. Receives emergency alerts.",
     url: "https://www.example.com/weather-radio",
-    hazardCategoryIds: [
-      "hazard-wildfire",
-      "hazard-flood",
-      "hazard-general-emergency",
-    ],
+    hazardCategoryIds: ["hazard-wildfire", "hazard-flood", "hazard-general-emergency"],
   },
   {
     id: "rec-go-bag",
@@ -162,9 +147,7 @@ export const allRecommendations: ProductRecommendation[] = [
 /**
  * Helper to get recommendation by ID
  */
-export function getRecommendationById(
-  id: string,
-): ProductRecommendation | undefined {
+export function getRecommendationById(id: string): ProductRecommendation | undefined {
   return allRecommendations.find((rec) => rec.id === id)
 }
 
@@ -174,18 +157,14 @@ export function getRecommendationById(
 export function getRecommendationsByHazardCategory(
   hazardCategoryId: string,
 ): ProductRecommendation[] {
-  return allRecommendations.filter((rec) =>
-    rec.hazardCategoryIds.includes(hazardCategoryId),
-  )
+  return allRecommendations.filter((rec) => rec.hazardCategoryIds.includes(hazardCategoryId))
 }
 
 /**
  * Helper to get recommendations for multiple hazard categories
  * Returns unique recommendations (no duplicates)
  */
-export function getRecommendationsForHazards(
-  hazardCategoryIds: string[],
-): ProductRecommendation[] {
+export function getRecommendationsForHazards(hazardCategoryIds: string[]): ProductRecommendation[] {
   const seen = new Set<string>()
   const results: ProductRecommendation[] = []
 

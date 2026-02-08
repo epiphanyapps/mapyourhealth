@@ -8,6 +8,12 @@
  */
 
 import {
+  getZipCodeDataByCode,
+  getStatDefinitionsByCategory,
+  allStatDefinitions,
+  getMockLocationData as getMockLocationDataFromMock,
+} from "./mock"
+import {
   StatCategory,
   StatStatus,
   ZipCodeData,
@@ -15,12 +21,6 @@ import {
   StatDefinition,
   LocationData,
 } from "./types/safety"
-import {
-  getZipCodeDataByCode,
-  getStatDefinitionsByCategory,
-  allStatDefinitions,
-  getMockLocationData as getMockLocationDataFromMock,
-} from "./mock"
 import zipCodesMetadata from "./zip-codes-metadata.json"
 
 /**
@@ -112,15 +112,11 @@ export function getWorstStatusForCategory(
 ): StatStatus {
   // Get the stat IDs that belong to this category
   const categoryStatIds = new Set(
-    allStatDefinitions
-      .filter((def) => def.category === category)
-      .map((def) => def.id),
+    allStatDefinitions.filter((def) => def.category === category).map((def) => def.id),
   )
 
   // Filter zip code stats to only those in this category
-  const categoryStats = zipData.stats.filter((stat) =>
-    categoryStatIds.has(stat.statId),
-  )
+  const categoryStats = zipData.stats.filter((stat) => categoryStatIds.has(stat.statId))
 
   // If no stats found for this category, return safe
   if (categoryStats.length === 0) {
@@ -161,9 +157,7 @@ export function getStatsForCategory(
   category: StatCategory,
 ): Array<{ stat: ZipCodeStat; definition: StatDefinition }> {
   // Get stat definitions for this category
-  const categoryDefs = allStatDefinitions.filter(
-    (def) => def.category === category,
-  )
+  const categoryDefs = allStatDefinitions.filter((def) => def.category === category)
   const categoryStatIds = new Set(categoryDefs.map((def) => def.id))
 
   // Filter and map stats with their definitions

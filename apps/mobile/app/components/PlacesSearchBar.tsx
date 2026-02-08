@@ -9,15 +9,16 @@
  * - Location button for GPS-based lookup
  */
 
-import { useState, useCallback } from "react"
+import { useCallback, useState } from "react"
 import {
-  View,
-  TextInput,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-  Pressable,
   ActivityIndicator,
+  Pressable,
+  StyleProp,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 

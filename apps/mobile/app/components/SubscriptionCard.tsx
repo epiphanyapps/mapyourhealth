@@ -5,7 +5,7 @@
  * Shows zip code prominently with city/state info and a remove button.
  */
 
-import { View, ViewStyle, TextStyle, Pressable, Alert } from "react-native"
+import { Alert, Pressable, TextStyle, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
@@ -51,9 +51,8 @@ export function SubscriptionCard(props: SubscriptionCardProps) {
   const { theme } = useAppTheme()
 
   function handleDeletePress() {
-    const locationName = cityName && cityName !== "Unknown"
-      ? `${cityName}${state ? `, ${state}` : ""}`
-      : zipCode
+    const locationName =
+      cityName && cityName !== "Unknown" ? `${cityName}${state ? `, ${state}` : ""}` : zipCode
 
     Alert.alert(
       "Remove Subscription",
@@ -138,11 +137,7 @@ export function SubscriptionCard(props: SubscriptionCardProps) {
         accessibilityRole="button"
         accessibilityHint="Double tap to remove this zip code from your subscriptions"
       >
-        <MaterialCommunityIcons
-          name="trash-can-outline"
-          size={24}
-          color={theme.colors.error}
-        />
+        <MaterialCommunityIcons name="trash-can-outline" size={24} color={theme.colors.error} />
       </Pressable>
     </View>
   )

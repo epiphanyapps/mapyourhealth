@@ -5,27 +5,24 @@
  * Features text input, "Use my location" geolocation, and removable chips for selections.
  */
 
-import { useState, useCallback } from "react"
+import { useCallback, useState } from "react"
 import {
-  View,
-  TextInput,
-  ViewStyle,
-  TextStyle,
-  Pressable,
   ActivityIndicator,
+  Pressable,
   ScrollView,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
-import { getZipCodeDataByCode, getAvailableZipCodes } from "@/data/mock"
+import { getZipCodeDataByCode } from "@/data/mock"
 import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
-import {
-  isValidPostalCode,
-  normalizePostalCode,
-  getPostalCodeLabel,
-} from "@/utils/postalCode"
+import { isValidPostalCode, normalizePostalCode, getPostalCodeLabel } from "@/utils/postalCode"
 
 export interface ZipCodeSelection {
   zipCode: string
@@ -296,7 +293,7 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
       </View>
 
       {/* Error message */}
-      {(error || locationError) ? <Text style={$errorText}>{error || locationError}</Text> : null}
+      {error || locationError ? <Text style={$errorText}>{error || locationError}</Text> : null}
 
       {/* Selected zip codes as chips */}
       {selectedZipCodes.length > 0 && (

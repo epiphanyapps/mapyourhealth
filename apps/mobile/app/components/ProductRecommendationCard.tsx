@@ -1,7 +1,9 @@
-import { View, ViewStyle, TextStyle, Pressable, Linking, StyleProp } from "react-native"
+import { Linking, Pressable, StyleProp, TextStyle, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { Text } from "./Text"
+
 import type { ProductRecommendation } from "@/data/types/safety"
+
+import { Text } from "./Text"
 
 /**
  * Green color for recommendation cards
@@ -92,12 +94,7 @@ export function ProductRecommendationCard(props: ProductRecommendationCardProps)
   return (
     <View style={[$container, style]}>
       <View style={$headerRow}>
-        <MaterialCommunityIcons
-          name="heart"
-          size={18}
-          color={RECOMMENDATION_GREEN}
-          style={$icon}
-        />
+        <MaterialCommunityIcons name="heart" size={18} color={RECOMMENDATION_GREEN} style={$icon} />
         <Text style={$headerText}>We Recommend</Text>
       </View>
 

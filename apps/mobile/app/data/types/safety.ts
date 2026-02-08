@@ -392,7 +392,7 @@ export interface Subscription {
 export function calculateStatus(
   value: number,
   threshold: ContaminantThreshold | undefined,
-  higherIsBad: boolean = true
+  higherIsBad: boolean = true,
 ): SafetyStatus {
   // If no threshold or banned/not controlled, we can't determine status
   if (!threshold || threshold.status === "banned") {

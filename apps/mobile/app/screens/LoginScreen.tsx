@@ -6,7 +6,14 @@
  */
 
 import { ComponentType, FC, useEffect, useMemo, useRef, useState } from "react"
-import { Pressable, TextInput, TextStyle, View, ViewStyle } from "react-native"
+import {
+  Pressable,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
+} from "react-native"
 import { signIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"

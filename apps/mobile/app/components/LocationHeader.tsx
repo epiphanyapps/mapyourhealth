@@ -1,7 +1,9 @@
-import { View, ViewStyle, TextStyle, StyleProp } from "react-native"
+import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import { Text } from "./Text"
+
 import { useAppTheme } from "@/theme/context"
+
+import { Text } from "./Text"
 
 export interface LocationHeaderProps {
   /**

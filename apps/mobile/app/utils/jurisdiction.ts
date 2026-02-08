@@ -88,7 +88,7 @@ export function getJurisdictionForState(state: string, country: string): string 
 export function getJurisdictionForPostalCode(
   postalCode: string,
   state?: string,
-  country?: string
+  country?: string,
 ): string {
   // If country not provided, detect from postal code format
   const detectedCountry = country || detectPostalCodeRegion(postalCode) || "US"
@@ -133,7 +133,7 @@ export function getJurisdictionsForCountry(country: string): string[] {
   }
 
   // Add state-specific jurisdictions
-  for (const [state, jurisdiction] of Object.entries(STATE_JURISDICTIONS)) {
+  for (const [_state, jurisdiction] of Object.entries(STATE_JURISDICTIONS)) {
     if (jurisdiction.startsWith(`${normalizedCountry}-`)) {
       result.push(jurisdiction)
     }

@@ -1,4 +1,5 @@
-import { FC, useState, useCallback, useEffect } from "react"
+/* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
+import { FC, useCallback, useEffect, useState } from "react"
 import {
   View,
   ViewStyle,
@@ -157,13 +158,16 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   // Get localized label for postal codes
   const postalCodeLabel = getPostalCodeLabel()
-  const postalCodeLabelCap = getPostalCodeLabelCapitalized()
+  const _postalCodeLabelCap = getPostalCodeLabelCapitalized()
 
   // Handle postal code selection from PlacesSearchBar
-  const handlePostalCodeSelect = useCallback((postalCode: string, _cityName?: string, _state?: string) => {
-    setSelectedCity(null) // Clear any city selection
-    setCurrentZipCode(postalCode)
-  }, [])
+  const handlePostalCodeSelect = useCallback(
+    (postalCode: string, _cityName?: string, _state?: string) => {
+      setSelectedCity(null) // Clear any city selection
+      setCurrentZipCode(postalCode)
+    },
+    [],
+  )
 
   // Handle city selection from PlacesSearchBar
   const handleCitySelect = useCallback((city: string, state: string, postalCodes: string[]) => {
@@ -238,9 +242,14 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (isAuthenticated) {
       setIsSettingNotify(true)
       try {
-        await addSubscription(currentZipCode, undefined, undefined, { notifyWhenDataAvailable: true })
-        Alert.alert("You're on the list!", `We'll notify you when data for ${currentZipCode} becomes available.`)
-      } catch (error) {
+        await addSubscription(currentZipCode, undefined, undefined, {
+          notifyWhenDataAvailable: true,
+        })
+        Alert.alert(
+          "You're on the list!",
+          `We'll notify you when data for ${currentZipCode} becomes available.`,
+        )
+      } catch {
         Alert.alert("Error", "Failed to set up notification. Please try again.")
       } finally {
         setIsSettingNotify(false)
@@ -499,7 +508,9 @@ mapyourhealth://zip/${zipData.zipCode}`
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
           <Text style={$emptyStateTitle}>Unable to load data</Text>
           <Text style={$emptyStateSubtitle}>
-            We couldn't fetch safety data for {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode}. Check your connection and try again.
+            We couldn't fetch safety data for{" "}
+            {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode}. Check
+            your connection and try again.
           </Text>
           <Pressable
             style={[
@@ -542,10 +553,18 @@ mapyourhealth://zip/${zipData.zipCode}`
           />
         </View>
         <View style={$emptyStateContainer}>
-          <MaterialCommunityIcons name="map-marker-question" size={64} color={theme.colors.textDim} />
-          <Text style={$emptyStateTitle}>No data for {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode} yet</Text>
+          <MaterialCommunityIcons
+            name="map-marker-question"
+            size={64}
+            color={theme.colors.textDim}
+          />
+          <Text style={$emptyStateTitle}>
+            No data for{" "}
+            {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode} yet
+          </Text>
           <Text style={$emptyStateSubtitle}>
-            We're working on expanding our coverage. Want to know when safety data becomes available?
+            We're working on expanding our coverage. Want to know when safety data becomes
+            available?
           </Text>
           <Pressable
             onPress={handleNotifyMe}
@@ -651,7 +670,9 @@ mapyourhealth://zip/${zipData.zipCode}`
             isFollowing && { opacity: 0.6 },
           ]}
           accessibilityRole="button"
-          accessibilityLabel={selectedCity ? `Follow ${selectedCity.city}` : `Follow ${currentZipCode}`}
+          accessibilityLabel={
+            selectedCity ? `Follow ${selectedCity.city}` : `Follow ${currentZipCode}`
+          }
         >
           <MaterialCommunityIcons name="heart-plus-outline" size={20} color={theme.colors.tint} />
           <Text style={[$actionButtonText, { color: theme.colors.tint }]}>

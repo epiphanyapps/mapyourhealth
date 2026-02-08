@@ -21,8 +21,7 @@ export const waterStatDefinitions: StatDefinition[] = [
     id: "water-lead",
     name: "Lead Levels",
     unit: "ppb",
-    description:
-      "Lead concentration in drinking water. EPA action level is 15 ppb.",
+    description: "Lead concentration in drinking water. EPA action level is 15 ppb.",
     category: StatCategory.water,
     thresholds: {
       danger: 15,
@@ -34,8 +33,7 @@ export const waterStatDefinitions: StatDefinition[] = [
     id: "water-nitrate",
     name: "Nitrate Levels",
     unit: "mg/L",
-    description:
-      "Nitrate concentration in drinking water. EPA limit is 10 mg/L.",
+    description: "Nitrate concentration in drinking water. EPA limit is 10 mg/L.",
     category: StatCategory.water,
     thresholds: {
       danger: 10,
@@ -78,8 +76,7 @@ export const airStatDefinitions: StatDefinition[] = [
     id: "air-pm25",
     name: "PM2.5 Levels",
     unit: "µg/m³",
-    description:
-      "Fine particulate matter concentration. WHO guideline is 15 µg/m³ annual average.",
+    description: "Fine particulate matter concentration. WHO guideline is 15 µg/m³ annual average.",
     category: StatCategory.air,
     thresholds: {
       danger: 35,
@@ -91,8 +88,7 @@ export const airStatDefinitions: StatDefinition[] = [
     id: "air-ozone",
     name: "Ozone Levels",
     unit: "ppb",
-    description:
-      "Ground-level ozone concentration. EPA standard is 70 ppb (8-hour average).",
+    description: "Ground-level ozone concentration. EPA standard is 70 ppb (8-hour average).",
     category: StatCategory.air,
     thresholds: {
       danger: 70,
@@ -134,8 +130,7 @@ export const healthStatDefinitions: StatDefinition[] = [
     id: "health-access",
     name: "Healthcare Access",
     unit: "%",
-    description:
-      "Percentage of population with access to primary healthcare within 30 minutes.",
+    description: "Percentage of population with access to primary healthcare within 30 minutes.",
     category: StatCategory.health,
     thresholds: {
       danger: 70,
@@ -166,8 +161,7 @@ export const disasterStatDefinitions: StatDefinition[] = [
     id: "disaster-flood",
     name: "Flood Risk",
     unit: "level",
-    description:
-      "Flood risk assessment based on terrain, precipitation, and drainage. Scale 1-10.",
+    description: "Flood risk assessment based on terrain, precipitation, and drainage. Scale 1-10.",
     category: StatCategory.disaster,
     thresholds: {
       danger: 7,
@@ -197,8 +191,6 @@ export function getStatDefinitionById(id: string): StatDefinition | undefined {
 /**
  * Helper to get stat definitions by category
  */
-export function getStatDefinitionsByCategory(
-  category: StatCategory,
-): StatDefinition[] {
+export function getStatDefinitionsByCategory(category: StatCategory): StatDefinition[] {
   return allStatDefinitions.filter((stat) => stat.category === category)
 }

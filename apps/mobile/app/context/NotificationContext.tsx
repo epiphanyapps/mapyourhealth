@@ -6,7 +6,16 @@
  * Automatically sets up the foreground notification listener.
  */
 
-import { createContext, useContext, useState, useCallback, useEffect, useRef, FC, PropsWithChildren } from "react"
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+  useRef,
+  FC,
+  PropsWithChildren,
+} from "react"
 
 import { NotificationBanner } from "@/components/NotificationBanner"
 import { navigate } from "@/navigators/navigationUtilities"
