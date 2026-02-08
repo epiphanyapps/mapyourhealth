@@ -17,6 +17,7 @@ import { formatDistanceToNow } from "date-fns"
 import { CategoryIcon, CATEGORY_COLORS } from "@/components/CategoryIcon"
 import { ContaminantTable, ContaminantTableRow } from "@/components/ContaminantTable"
 import { Header } from "@/components/Header"
+import { LinkedText } from "@/components/LinkedText"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { StatItem } from "@/components/StatItem"
@@ -381,7 +382,11 @@ mapyourhealth://zip/${zipData.zipCode}`
 
         {/* Category Description */}
         <View style={$descriptionContainer}>
-          <Text style={$descriptionText}>{categoryDescription}</Text>
+          <LinkedText
+            text={categoryDescription}
+            style={$descriptionText}
+            linkStyle={{ color: theme.colors.tint }}
+          />
         </View>
 
         {/* Links to external resources */}
