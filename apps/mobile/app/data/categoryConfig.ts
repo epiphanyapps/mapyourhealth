@@ -38,7 +38,7 @@ export interface CategoryConfig {
 export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
   water: {
     description:
-      "There are {count} contaminants which filtration concentrations do not meet the World Health Organization's tap water quality standards.",
+      "There are {count} contaminants which filtration concentrations do not meet the [World Health Organization's tap water quality standards](https://www.who.int/publications/i/item/9789241549950).",
     links: [
       {
         label: "WHO Drinking Water Guidelines",
@@ -53,7 +53,7 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
   },
   air: {
     description:
-      "Air pollution data for your area, including radon levels and other airborne contaminants.",
+      "Air pollution data for your area, including [radon levels](https://www.epa.gov/radon) and other airborne contaminants.",
     links: [
       {
         label: "EPA Radon Information",
@@ -65,7 +65,7 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
         id: "radon",
         name: "Radon",
         description:
-          "Radon is a naturally occurring radioactive air pollutant responsible for approximately 21,000 lung cancer deaths per year in the United States.",
+          "Radon is a naturally occurring radioactive air pollutant responsible for approximately [21,000 lung cancer deaths per year](https://www.epa.gov/radon/health-risk-radon) in the United States.",
         links: [
           {
             label: "EPA Radon Guide",
@@ -76,7 +76,8 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
     ],
   },
   health: {
-    description: "Pathogen and disease risk information for your area.",
+    description:
+      "Pathogen and disease risk information for your area. See [CDC Disease Information](https://www.cdc.gov/) for more details.",
     links: [
       {
         label: "CDC Disease Information",
@@ -88,7 +89,7 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
         id: "lyme",
         name: "Lyme Disease",
         description:
-          "Lyme disease is caused by the bacterium Borrelia burgdorferi and is transmitted to humans through the bite of infected blacklegged ticks.",
+          "[Lyme disease](https://www.cdc.gov/lyme/) is caused by the bacterium Borrelia burgdorferi and is transmitted to humans through the bite of infected blacklegged ticks.",
         links: [
           {
             label: "CDC Lyme Disease",
@@ -99,7 +100,8 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
     ],
   },
   disaster: {
-    description: "Natural disaster risk assessment for your area.",
+    description:
+      "Natural disaster risk assessment for your area. Visit [FEMA](https://www.fema.gov/) for emergency preparedness resources.",
     links: [
       {
         label: "FEMA Disaster Information",
