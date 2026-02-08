@@ -46,8 +46,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [authStep, setAuthStep] = useState<AuthStep>("SIGN_IN");
-  const [resetPasswordOutput, setResetPasswordOutput] =
-    useState<ResetPasswordOutput | null>(null);
+  const [, setResetPasswordOutput] = useState<ResetPasswordOutput | null>(null);
 
   // Check if user is already authenticated on mount
   useEffect(() => {

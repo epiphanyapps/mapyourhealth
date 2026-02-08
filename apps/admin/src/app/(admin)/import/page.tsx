@@ -49,7 +49,7 @@ export default function ImportPage() {
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [isImporting, setIsImporting] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [contaminants, setContaminants] = useState<Map<string, Contaminant>>(new Map());
+  const [, setContaminants] = useState<Map<string, Contaminant>>(new Map());
   const [notifySubscribers, setNotifySubscribers] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
 

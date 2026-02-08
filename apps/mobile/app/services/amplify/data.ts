@@ -7,6 +7,8 @@
 
 import { generateClient } from 'aws-amplify/data'
 import { fetchAuthSession } from 'aws-amplify/auth'
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
+// TypeScript cannot resolve cross-package exports during standalone type checking
 import type { Schema } from '@mapyourhealth/backend/amplify/data/resource'
 
 // Lazy client initialization to ensure Amplify.configure() has been called first
@@ -381,7 +383,9 @@ export async function deleteUserSubscription(id: string): Promise<void> {
  * Get all subscriptions for the current user
  */
 export async function getUserSubscriptions(): Promise<AmplifyUserSubscription[]> {
-  const { data, errors } = await getPrivateClient().models.UserSubscription.list()
+  const { data, errors } = await getPrivateClient().models.UserSubscription.list({
+    limit: 1000,
+  })
   if (errors) {
     console.error('Error fetching user subscriptions:', errors)
     throw new Error('Failed to fetch user subscriptions')
@@ -420,7 +424,9 @@ export async function createHazardReport(reportData: {
  * Get all hazard reports for the current user
  */
 export async function getUserHazardReports(): Promise<AmplifyHazardReport[]> {
-  const { data, errors } = await getPrivateClient().models.HazardReport.list()
+  const { data, errors } = await getPrivateClient().models.HazardReport.list({
+    limit: 1000,
+  })
   if (errors) {
     console.error('Error fetching hazard reports:', errors)
     throw new Error('Failed to fetch hazard reports')
