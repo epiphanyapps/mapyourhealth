@@ -21,6 +21,7 @@ jobs:
   e2e-tests:
     name: Run E2E Tests
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -40,6 +41,16 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Cache Gradle
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
 
@@ -49,7 +60,7 @@ jobs:
 
       - name: Build APK
         working-directory: apps/mobile/android
-        run: ./gradlew assembleRelease
+        run: ./gradlew assembleDebug
 
       - name: Enable KVM
         run: |
@@ -73,7 +84,7 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            adb install apps/mobile/android/app/build/outputs/apk/release/app-release.apk
+            adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
             $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
 
       - name: Upload test results
@@ -83,6 +94,7 @@ jobs:
           name: maestro-results
           path: ~/.maestro/tests
           retention-days: 7
+          if-no-files-found: ignore
 
       - name: Comment on PR with results
         if: github.event_name == 'pull_request' && always()
