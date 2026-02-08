@@ -179,13 +179,14 @@ export default function JurisdictionsPage() {
     }
   };
 
-  // Group jurisdictions by country
-  const jurisdictionsByCountry = jurisdictions.reduce((acc, j) => {
+  // Group jurisdictions by country (currently unused, kept for future grouping feature)
+  const _jurisdictionsByCountry = jurisdictions.reduce((acc, j) => {
     const country = j.country;
     if (!acc[country]) acc[country] = [];
     acc[country].push(j);
     return acc;
   }, {} as Record<string, Jurisdiction[]>);
+  void _jurisdictionsByCountry;
 
   return (
     <div className="space-y-6">

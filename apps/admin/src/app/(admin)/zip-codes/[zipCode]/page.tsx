@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
@@ -105,7 +105,7 @@ export default function PostalCodeDetailPage({
     notes: "",
   });
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       setIsLoading(true);
       const client = generateClient<Schema>();
@@ -127,11 +127,11 @@ export default function PostalCodeDetailPage({
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [postalCode]);
 
   useEffect(() => {
     fetchData();
-  }, [postalCode]);
+  }, [fetchData]);
 
   const getContaminant = (contaminantId: string) => {
     return contaminants.find((c) => c.contaminantId === contaminantId);
