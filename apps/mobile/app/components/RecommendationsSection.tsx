@@ -1,13 +1,12 @@
-import { View, ViewStyle, TextStyle, StyleProp } from "react-native"
-import { Text } from "./Text"
-import { ProductRecommendationCard } from "./ProductRecommendationCard"
-import { useAppTheme } from "@/theme/context"
-import type { ZipCodeData, ProductRecommendation } from "@/data/types/safety"
+import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
+
 import { getAlertStats } from "@/data/helpers"
-import {
-  getHazardCategoriesByStatCategory,
-  getRecommendationsForHazards,
-} from "@/data/mock"
+import { getHazardCategoriesByStatCategory, getRecommendationsForHazards } from "@/data/mock"
+import type { ZipCodeData } from "@/data/types/safety"
+import { useAppTheme } from "@/theme/context"
+
+import { ProductRecommendationCard } from "./ProductRecommendationCard"
+import { Text } from "./Text"
 
 export interface RecommendationsSectionProps {
   /**
@@ -41,7 +40,9 @@ export function RecommendationsSection(props: RecommendationsSectionProps) {
   }
 
   // Get unique categories from alert stats
-  const alertCategories = [...new Set(alertStats.filter((a) => a.definition).map((a) => a.definition.category))]
+  const alertCategories = [
+    ...new Set(alertStats.filter((a) => a.definition).map((a) => a.definition.category)),
+  ]
 
   // Get hazard category IDs for these stat categories
   const hazardCategoryIds: string[] = []

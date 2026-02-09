@@ -7,7 +7,6 @@
 
 import type {
   Contaminant,
-  ContaminantCategory,
   ContaminantThreshold,
   Jurisdiction,
   LocationData,
@@ -134,7 +133,8 @@ export const mockContaminants: Contaminant[] = [
     category: "inorganic",
     unit: "μg/L",
     description: "Toxic heavy metal affecting brain development, especially in children.",
-    descriptionFr: "Métal lourd toxique affectant le développement cérébral, surtout chez les enfants.",
+    descriptionFr:
+      "Métal lourd toxique affectant le développement cérébral, surtout chez les enfants.",
     higherIsBad: true,
   },
   {
@@ -164,7 +164,8 @@ export const mockContaminants: Contaminant[] = [
     category: "inorganic",
     unit: "μg/L",
     description: "Essential nutrient but toxic at high levels. Causes gastrointestinal distress.",
-    descriptionFr: "Nutriment essentiel mais toxique à hauts niveaux. Cause des troubles gastro-intestinaux.",
+    descriptionFr:
+      "Nutriment essentiel mais toxique à hauts niveaux. Cause des troubles gastro-intestinaux.",
     higherIsBad: true,
   },
 
@@ -186,7 +187,8 @@ export const mockContaminants: Contaminant[] = [
     category: "pesticide",
     unit: "μg/L",
     description: "Most widely used herbicide. IARC classified as probably carcinogenic.",
-    descriptionFr: "Herbicide le plus utilisé au monde. Classé par le CIRC comme probablement cancérogène.",
+    descriptionFr:
+      "Herbicide le plus utilisé au monde. Classé par le CIRC comme probablement cancérogène.",
     higherIsBad: true,
   },
 
@@ -231,53 +233,215 @@ export const mockContaminants: Contaminant[] = [
 
 export const mockThresholds: ContaminantThreshold[] = [
   // Nitrate
-  { contaminantId: "nitrate", jurisdictionCode: "WHO", limitValue: 50000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "US", limitValue: 10000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "CA", limitValue: 45000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "CA-QC", limitValue: 10000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "US-NY", limitValue: 10000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "US-CA", limitValue: 10000, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "WHO",
+    limitValue: 50000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "US",
+    limitValue: 10000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "CA",
+    limitValue: 45000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "CA-QC",
+    limitValue: 10000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "US-NY",
+    limitValue: 10000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "US-CA",
+    limitValue: 10000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Nitrite
-  { contaminantId: "nitrite", jurisdictionCode: "WHO", limitValue: 3000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "nitrite", jurisdictionCode: "US", limitValue: 1000, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "nitrite",
+    jurisdictionCode: "WHO",
+    limitValue: 3000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrite",
+    jurisdictionCode: "US",
+    limitValue: 1000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Lead
-  { contaminantId: "lead", jurisdictionCode: "WHO", limitValue: 10, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "lead", jurisdictionCode: "US", limitValue: 15, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "lead", jurisdictionCode: "CA", limitValue: 5, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "WHO",
+    limitValue: 10,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "US",
+    limitValue: 15,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "CA",
+    limitValue: 5,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Arsenic
-  { contaminantId: "arsenic", jurisdictionCode: "WHO", limitValue: 10, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "arsenic", jurisdictionCode: "US", limitValue: 10, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "arsenic",
+    jurisdictionCode: "WHO",
+    limitValue: 10,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "arsenic",
+    jurisdictionCode: "US",
+    limitValue: 10,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Mercury
-  { contaminantId: "mercury", jurisdictionCode: "WHO", limitValue: 6, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "mercury", jurisdictionCode: "US", limitValue: 2, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "mercury",
+    jurisdictionCode: "WHO",
+    limitValue: 6,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "mercury",
+    jurisdictionCode: "US",
+    limitValue: 2,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Copper
-  { contaminantId: "copper", jurisdictionCode: "WHO", limitValue: 2000, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "copper", jurisdictionCode: "US", limitValue: 1300, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "copper",
+    jurisdictionCode: "WHO",
+    limitValue: 2000,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "copper",
+    jurisdictionCode: "US",
+    limitValue: 1300,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Atrazine
-  { contaminantId: "atrazine", jurisdictionCode: "WHO", limitValue: 100, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "atrazine", jurisdictionCode: "US", limitValue: 3, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "atrazine",
+    jurisdictionCode: "WHO",
+    limitValue: 100,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "atrazine",
+    jurisdictionCode: "US",
+    limitValue: 3,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // Glyphosate
-  { contaminantId: "glyphosate", jurisdictionCode: "US", limitValue: 700, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "glyphosate", jurisdictionCode: "CA", limitValue: 280, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "glyphosate",
+    jurisdictionCode: "US",
+    limitValue: 700,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "glyphosate",
+    jurisdictionCode: "CA",
+    limitValue: 280,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // TTHM
-  { contaminantId: "tthm", jurisdictionCode: "US", limitValue: 80, warningRatio: 0.8, status: "regulated" },
-  { contaminantId: "tthm", jurisdictionCode: "CA", limitValue: 100, warningRatio: 0.8, status: "regulated" },
+  {
+    contaminantId: "tthm",
+    jurisdictionCode: "US",
+    limitValue: 80,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
+  {
+    contaminantId: "tthm",
+    jurisdictionCode: "CA",
+    limitValue: 100,
+    warningRatio: 0.8,
+    status: "regulated",
+  },
 
   // E. coli
-  { contaminantId: "e-coli", jurisdictionCode: "WHO", limitValue: 0, warningRatio: 0, status: "regulated" },
-  { contaminantId: "e-coli", jurisdictionCode: "US", limitValue: 0, warningRatio: 0, status: "regulated" },
+  {
+    contaminantId: "e-coli",
+    jurisdictionCode: "WHO",
+    limitValue: 0,
+    warningRatio: 0,
+    status: "regulated",
+  },
+  {
+    contaminantId: "e-coli",
+    jurisdictionCode: "US",
+    limitValue: 0,
+    warningRatio: 0,
+    status: "regulated",
+  },
 
   // Total Coliform
-  { contaminantId: "total-coliform", jurisdictionCode: "WHO", limitValue: 0, warningRatio: 0, status: "regulated" },
-  { contaminantId: "total-coliform", jurisdictionCode: "US", limitValue: 0, warningRatio: 0, status: "regulated" },
+  {
+    contaminantId: "total-coliform",
+    jurisdictionCode: "WHO",
+    limitValue: 0,
+    warningRatio: 0,
+    status: "regulated",
+  },
+  {
+    contaminantId: "total-coliform",
+    jurisdictionCode: "US",
+    limitValue: 0,
+    warningRatio: 0,
+    status: "regulated",
+  },
 ]
 
 // =============================================================================
@@ -289,11 +453,11 @@ export const mockThresholds: ContaminantThreshold[] = [
  */
 export function getMockThreshold(
   contaminantId: string,
-  jurisdictionCode: string
+  jurisdictionCode: string,
 ): ContaminantThreshold | undefined {
   // Try exact match
   const exact = mockThresholds.find(
-    (t) => t.contaminantId === contaminantId && t.jurisdictionCode === jurisdictionCode
+    (t) => t.contaminantId === contaminantId && t.jurisdictionCode === jurisdictionCode,
   )
   if (exact) return exact
 
@@ -301,14 +465,14 @@ export function getMockThreshold(
   const jurisdiction = mockJurisdictions.find((j) => j.code === jurisdictionCode)
   if (jurisdiction?.parentCode) {
     const parent = mockThresholds.find(
-      (t) => t.contaminantId === contaminantId && t.jurisdictionCode === jurisdiction.parentCode
+      (t) => t.contaminantId === contaminantId && t.jurisdictionCode === jurisdiction.parentCode,
     )
     if (parent) return parent
   }
 
   // Fall back to WHO
   return mockThresholds.find(
-    (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "WHO"
+    (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "WHO",
   )
 }
 
@@ -318,7 +482,7 @@ export function getMockThreshold(
 function calculateMockStatus(
   value: number,
   threshold: ContaminantThreshold | undefined,
-  higherIsBad: boolean = true
+  higherIsBad: boolean = true,
 ): SafetyStatus {
   if (!threshold || threshold.status === "banned") {
     return "danger"
@@ -349,7 +513,7 @@ function createMeasurement(
   postalCode: string,
   contaminantId: string,
   value: number,
-  jurisdictionCode: string
+  jurisdictionCode: string,
 ): MeasurementWithStatus {
   const contaminant = mockContaminants.find((c) => c.id === contaminantId)
   const threshold = getMockThreshold(contaminantId, jurisdictionCode)

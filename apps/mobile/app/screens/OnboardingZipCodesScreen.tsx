@@ -13,8 +13,8 @@ import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { ZipCodeSearch, ZipCodeSelection } from "@/components/ZipCodeSearch"
-import { createZipCodeSubscription } from "@/services/amplify/data"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import { createZipCodeSubscription } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
@@ -78,11 +78,9 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
       })
     } catch (err) {
       console.error("Error saving subscriptions:", err)
-      Alert.alert(
-        "Error",
-        "Failed to save your zip code subscriptions. Please try again.",
-        [{ text: "OK" }],
-      )
+      Alert.alert("Error", "Failed to save your zip code subscriptions. Please try again.", [
+        { text: "OK" },
+      ])
       setError("Failed to save subscriptions. Please try again.")
     } finally {
       setIsSubmitting(false)
@@ -151,11 +149,7 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
         />
 
         {!canContinue && (
-          <Text
-            text="Select at least 1 zip code to continue"
-            style={themed($hintText)}
-            size="xs"
-          />
+          <Text text="Select at least 1 zip code to continue" style={themed($hintText)} size="xs" />
         )}
       </View>
     </Screen>

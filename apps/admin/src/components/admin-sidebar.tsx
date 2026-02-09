@@ -19,7 +19,6 @@ import { useAuth } from "@/providers/auth-provider";
 import { ChangePasswordDialog } from "@/components/change-password-dialog";
 import {
   LayoutDashboard,
-  ListChecks,
   MapPin,
   Upload,
   AlertTriangle,

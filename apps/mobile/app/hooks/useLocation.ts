@@ -88,7 +88,12 @@ export function useLocation(): UseLocationResult {
 
       if (address?.postalCode) {
         const normalized = normalizePostalCode(address.postalCode)
-        console.log("useLocation: Found postal code:", address.postalCode, "-> normalized:", normalized)
+        console.log(
+          "useLocation: Found postal code:",
+          address.postalCode,
+          "-> normalized:",
+          normalized,
+        )
         return normalized
       } else {
         // No postal code - common in ~40 countries (Ireland pre-2015, many African nations, etc.)

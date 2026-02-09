@@ -6,14 +6,8 @@
  * following a zip code or reporting a hazard.
  */
 
-import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useState,
-} from "react"
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useState } from "react"
+
 import { createZipCodeSubscription } from "@/services/amplify/data"
 
 export type PendingActionType = "follow_zip_code" | "report_hazard" | "notify_when_available"
@@ -100,9 +94,7 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
     executePendingAction,
   }
 
-  return (
-    <PendingActionContext.Provider value={value}>{children}</PendingActionContext.Provider>
-  )
+  return <PendingActionContext.Provider value={value}>{children}</PendingActionContext.Provider>
 }
 
 export const usePendingAction = () => {

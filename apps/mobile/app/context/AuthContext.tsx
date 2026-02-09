@@ -9,7 +9,6 @@ import {
   useRef,
   useState,
 } from "react"
-import { useMMKVString } from "react-native-mmkv"
 import {
   getCurrentUser,
   signOut as amplifySignOut,
@@ -17,14 +16,16 @@ import {
   confirmSignIn,
   AuthUser,
 } from "aws-amplify/auth"
+import { useMMKVString } from "react-native-mmkv"
+
 import Config from "@/config"
+import { navigate, navigationRef } from "@/navigators/navigationUtilities"
 import {
   initializePushNotifications,
   addNotificationResponseListener,
   getLastNotificationResponse,
   NotificationStatus,
 } from "@/services/notifications"
-import { navigate, navigationRef } from "@/navigators/navigationUtilities"
 
 /**
  * Notification data structure from backend (process-notifications Lambda)
@@ -84,7 +85,9 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
   const [notificationStatus, setNotificationStatus] = useState<NotificationStatus>("unknown")
   const [notificationError, setNotificationError] = useState<string | null>(null)
   const [initialNotification, setInitialNotification] = useState<NotificationData | null>(null)
-  const notificationListenerRef = useRef<ReturnType<typeof addNotificationResponseListener> | null>(null)
+  const notificationListenerRef = useRef<ReturnType<typeof addNotificationResponseListener> | null>(
+    null,
+  )
 
   /**
    * Check the current Amplify auth state

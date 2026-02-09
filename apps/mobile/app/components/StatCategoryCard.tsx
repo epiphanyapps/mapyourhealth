@@ -1,9 +1,11 @@
-import { Pressable, View, ViewStyle, TextStyle, StyleProp } from "react-native"
-import { Text } from "./Text"
+import { Pressable, StyleProp, TextStyle, View, ViewStyle } from "react-native"
+
+import type { StatCategory, StatStatus } from "@/data/types/safety"
+import { useAppTheme } from "@/theme/context"
+
 import { CategoryIcon } from "./CategoryIcon"
 import { StatusIndicator } from "./StatusIndicator"
-import { useAppTheme } from "@/theme/context"
-import type { StatCategory, StatStatus } from "@/data/types/safety"
+import { Text } from "./Text"
 
 export interface StatCategoryCardProps {
   /**
@@ -91,11 +93,7 @@ export function StatCategoryCard(props: StatCategoryCardProps) {
   return (
     <Pressable
       onPress={onPress}
-      style={({ pressed }) => [
-        $container,
-        pressed && { opacity: 0.8 },
-        style,
-      ]}
+      style={({ pressed }) => [$container, pressed && { opacity: 0.8 }, style]}
       accessibilityRole="button"
       accessibilityLabel={`${categoryName}, status: ${status}`}
     >

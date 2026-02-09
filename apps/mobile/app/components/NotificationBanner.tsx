@@ -5,17 +5,10 @@
  * Used to show push notifications when the app is in the foreground.
  */
 
-import { useEffect, useRef, useCallback } from "react"
-import {
-  Animated,
-  TouchableOpacity,
-  View,
-  ViewStyle,
-  TextStyle,
-  StyleSheet,
-} from "react-native"
-import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { useCallback, useEffect, useRef } from "react"
+import { Animated, StyleSheet, TextStyle, TouchableOpacity, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
 
 import { Text } from "./Text"
 
@@ -108,7 +101,18 @@ export function NotificationBanner({
   )
 }
 
+/* eslint-disable react-native/no-color-literals */
 const styles = StyleSheet.create({
+  body: {
+    fontSize: 13,
+    color: "#6B7280",
+    lineHeight: 18,
+  } as TextStyle,
+
+  closeButton: {
+    padding: 4,
+  } as ViewStyle,
+
   container: {
     position: "absolute",
     left: 16,
@@ -153,14 +157,4 @@ const styles = StyleSheet.create({
     color: "#111827",
     marginBottom: 2,
   } as TextStyle,
-
-  body: {
-    fontSize: 13,
-    color: "#6B7280",
-    lineHeight: 18,
-  } as TextStyle,
-
-  closeButton: {
-    padding: 4,
-  } as ViewStyle,
 })

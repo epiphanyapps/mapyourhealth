@@ -1,15 +1,16 @@
 import { useState, useRef, ReactNode } from "react"
 import {
-  View,
-  ViewStyle,
-  Pressable,
   Animated,
   LayoutAnimation,
   Platform,
-  UIManager,
+  Pressable,
   StyleProp,
+  UIManager,
+  View,
+  ViewStyle,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
 import { useAppTheme } from "@/theme/context"
 
 // Enable LayoutAnimation for Android
@@ -124,11 +125,7 @@ export function ExpandableCard(props: ExpandableCardProps) {
       >
         <View style={$headerContent}>{header}</View>
         <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-          <MaterialCommunityIcons
-            name="chevron-down"
-            size={24}
-            color={theme.colors.textDim}
-          />
+          <MaterialCommunityIcons name="chevron-down" size={24} color={theme.colors.textDim} />
         </Animated.View>
       </Pressable>
 

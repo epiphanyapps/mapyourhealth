@@ -1,4 +1,5 @@
-import { FC, useState, useCallback } from "react"
+/* eslint-disable react-native/no-inline-styles, react-native/no-color-literals */
+import { FC, useCallback, useState } from "react"
 import {
   View,
   ViewStyle,
@@ -17,12 +18,12 @@ import { Screen } from "@/components/Screen"
 import { StatusIndicator } from "@/components/StatusIndicator"
 import { Text } from "@/components/Text"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
-import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
 import { getZipCodeMetadata } from "@/data/helpers"
+import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
 import { useZipCodeData, getWorstStatusForCategory } from "@/hooks/useZipCodeData"
-import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 
 interface CompareScreenProps extends AppStackScreenProps<"Compare"> {}
 
@@ -142,9 +143,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
   const score2 = activeZip2 ? calculateSafetyScore(zipData2, statDefinitions) : null
 
   // Determine which zip code is safer for each category
-  const getCategorySaferZip = (
-    category: StatCategory,
-  ): "zip1" | "zip2" | "equal" | null => {
+  const getCategorySaferZip = (category: StatCategory): "zip1" | "zip2" | "equal" | null => {
     if (!zipData1 || !zipData2) return null
 
     const status1 = getWorstStatusForCategory(zipData1, category, statDefinitions)
@@ -325,7 +324,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
     fontWeight: "600",
   }
 
-  const $loadingContainer: ViewStyle = {
+  const _$loadingContainer: ViewStyle = {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
@@ -393,11 +392,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top"]} style={$container}>
-      <Header
-        title="Compare Zip Codes"
-        leftIcon="back"
-        onLeftPress={() => navigation.goBack()}
-      />
+      <Header title="Compare Zip Codes" leftIcon="back" onLeftPress={() => navigation.goBack()} />
 
       <ScrollView style={{ flex: 1 }} contentContainerStyle={$content}>
         {/* Zip Code 1 Input */}
@@ -473,11 +468,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
         {/* Empty state - no zip codes entered */}
         {!hasData && !isLoading1 && !isLoading2 && (
           <View style={$emptyState}>
-            <MaterialCommunityIcons
-              name="compare"
-              size={64}
-              color={theme.colors.textDim}
-            />
+            <MaterialCommunityIcons name="compare" size={64} color={theme.colors.textDim} />
             <Text style={$emptyText}>
               Enter two zip codes above to compare their safety data side by side.
             </Text>
@@ -514,11 +505,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
                 <View key={category} style={$categoryRow}>
                   {renderStatusCell(zipData1, category, saferZip, true)}
                   <View style={$categoryCenter}>
-                    <CategoryIcon
-                      category={category}
-                      size={24}
-                      color={CATEGORY_COLORS[category]}
-                    />
+                    <CategoryIcon category={category} size={24} color={CATEGORY_COLORS[category]} />
                     <Text style={$categoryName}>{CATEGORY_DISPLAY_NAMES[category]}</Text>
                   </View>
                   {renderStatusCell(zipData2, category, saferZip, false)}

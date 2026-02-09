@@ -21,11 +21,8 @@ import {
   Scale,
 } from "lucide-react";
 
-type Contaminant = Schema["Contaminant"]["type"];
 type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type HazardReport = Schema["HazardReport"]["type"];
-type Jurisdiction = Schema["Jurisdiction"]["type"];
-type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({

@@ -7,17 +7,10 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-import {
-  getLocationMeasurements,
-  AmplifyLocationMeasurement,
-} from "@/services/amplify/data"
 import { useContaminants } from "@/context/ContaminantsContext"
+import { type ZipCodeData, type ZipCodeStat, type StatStatus } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
-import {
-  type ZipCodeData,
-  type ZipCodeStat,
-  type StatStatus,
-} from "@/data/types/safety"
+import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
 import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
 import { detectPostalCodeRegion } from "@/utils/postalCode"
 
@@ -54,7 +47,7 @@ interface SelectedCity {
  * })
  */
 export function useMultiLocationData(
-  selectedCity: SelectedCity | null
+  selectedCity: SelectedCity | null,
 ): UseMultiLocationDataResult {
   const [zipData, setZipData] = useState<ZipCodeData | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -66,11 +59,7 @@ export function useMultiLocationData(
    * Calculate status based on value and threshold
    */
   const calculateStatus = useCallback(
-    (
-      value: number,
-      contaminantId: string,
-      jurisdictionCode: string
-    ): StatStatus => {
+    (value: number, contaminantId: string, jurisdictionCode: string): StatStatus => {
       const contaminant = contaminants.find((c) => c.id === contaminantId)
       const threshold = getThreshold(contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
@@ -93,7 +82,7 @@ export function useMultiLocationData(
 
       return "safe"
     },
-    [contaminants, getThreshold]
+    [contaminants, getThreshold],
   )
 
   /**
@@ -111,7 +100,7 @@ export function useMultiLocationData(
   const aggregateMeasurements = useCallback(
     (
       allMeasurements: { postalCode: string; measurements: AmplifyLocationMeasurement[] }[],
-      jurisdictionCode: string
+      jurisdictionCode: string,
     ): ZipCodeStat[] => {
       // Group by contaminant ID
       const byContaminant = new Map<
@@ -135,9 +124,7 @@ export function useMultiLocationData(
             })
           } else {
             // Take the worse value (higher if higherIsBad, lower otherwise)
-            const shouldReplace = higherIsBad
-              ? m.value > existing.value
-              : m.value < existing.value
+            const shouldReplace = higherIsBad ? m.value > existing.value : m.value < existing.value
 
             if (shouldReplace) {
               byContaminant.set(m.contaminantId, {
@@ -161,11 +148,11 @@ export function useMultiLocationData(
         lastUpdated: data.measuredAt,
       }))
     },
-    [contaminants, calculateStatus]
+    [contaminants, calculateStatus],
   )
 
   const fetchData = useCallback(
-    async (forceRefresh = false) => {
+    async (_forceRefresh = false) => {
       if (!selectedCity || selectedCity.postalCodes.length === 0) {
         setZipData(null)
         setIsLoading(false)
@@ -199,7 +186,7 @@ export function useMultiLocationData(
         // Check if we have any data
         const totalMeasurements = allMeasurements.reduce(
           (sum, { measurements }) => sum + measurements.length,
-          0
+          0,
         )
 
         if (totalMeasurements === 0) {
@@ -216,7 +203,7 @@ export function useMultiLocationData(
         const jurisdictionCode = getJurisdictionForPostalCode(
           firstPostalCode,
           selectedCity.state,
-          country
+          country,
         )
 
         // Aggregate measurements
@@ -240,7 +227,7 @@ export function useMultiLocationData(
         setIsLoading(false)
       }
     },
-    [selectedCity, defsLoading, isOffline, aggregateMeasurements]
+    [selectedCity, defsLoading, isOffline, aggregateMeasurements],
   )
 
   // Re-fetch when selected city changes or definitions finish loading

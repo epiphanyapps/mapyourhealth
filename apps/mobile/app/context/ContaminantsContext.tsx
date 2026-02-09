@@ -16,6 +16,14 @@ import {
   useState,
 } from "react"
 
+import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
+import type {
+  Contaminant,
+  ContaminantCategory,
+  ContaminantThreshold,
+  Jurisdiction,
+  SafetyStatus,
+} from "@/data/types/safety"
 import {
   getContaminants as fetchContaminants,
   getContaminantThresholds as fetchThresholds,
@@ -24,15 +32,6 @@ import {
   AmplifyContaminantThreshold,
   AmplifyJurisdiction,
 } from "@/services/amplify/data"
-import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
-import type {
-  Contaminant,
-  ContaminantCategory,
-  ContaminantThreshold,
-  Jurisdiction,
-  SafetyStatus,
-  calculateStatus,
-} from "@/data/types/safety"
 
 interface ContaminantsContextType {
   /** All contaminants */
@@ -62,14 +61,17 @@ interface ContaminantsContextType {
   /** Get a single contaminant by ID */
   getById: (id: string) => Contaminant | undefined
   /** Get threshold for a contaminant and jurisdiction */
-  getThreshold: (contaminantId: string, jurisdictionCode: string) => ContaminantThreshold | undefined
+  getThreshold: (
+    contaminantId: string,
+    jurisdictionCode: string,
+  ) => ContaminantThreshold | undefined
   /** Get WHO threshold for a contaminant */
   getWHOThreshold: (contaminantId: string) => ContaminantThreshold | undefined
   /** Calculate status for a measurement value */
   calculateMeasurementStatus: (
     value: number,
     contaminantId: string,
-    jurisdictionCode: string
+    jurisdictionCode: string,
   ) => SafetyStatus
   /** Get jurisdiction for a state/country */
   getJurisdictionForLocation: (state: string, country: string) => Jurisdiction | undefined
@@ -178,20 +180,17 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
   }, [fetchData])
 
   // Create maps for quick lookup
-  const contaminantMap = useMemo(
-    () => new Map(contaminants.map((c) => [c.id, c])),
-    [contaminants]
-  )
+  const contaminantMap = useMemo(() => new Map(contaminants.map((c) => [c.id, c])), [contaminants])
 
   const jurisdictionMap = useMemo(
     () => new Map(jurisdictions.map((j) => [j.code, j])),
-    [jurisdictions]
+    [jurisdictions],
   )
 
   // Create threshold lookup: `${contaminantId}:${jurisdictionCode}` -> threshold
   const thresholdMap = useMemo(
     () => new Map(thresholds.map((t) => [`${t.contaminantId}:${t.jurisdictionCode}`, t])),
-    [thresholds]
+    [thresholds],
   )
 
   // Get contaminants by category
@@ -199,7 +198,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     (category: ContaminantCategory): Contaminant[] => {
       return contaminants.filter((c) => c.category === category)
     },
-    [contaminants]
+    [contaminants],
   )
 
   // Get a single contaminant by ID
@@ -207,7 +206,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     (id: string): Contaminant | undefined => {
       return contaminantMap.get(id)
     },
-    [contaminantMap]
+    [contaminantMap],
   )
 
   // Get threshold for a contaminant and jurisdiction
@@ -227,7 +226,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
       // Fall back to WHO
       return thresholdMap.get(`${contaminantId}:WHO`)
     },
-    [thresholdMap, jurisdictionMap]
+    [thresholdMap, jurisdictionMap],
   )
 
   // Get WHO threshold for a contaminant
@@ -235,7 +234,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     (contaminantId: string): ContaminantThreshold | undefined => {
       return thresholdMap.get(`${contaminantId}:WHO`)
     },
-    [thresholdMap]
+    [thresholdMap],
   )
 
   // Calculate status for a measurement
@@ -270,7 +269,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
         return "safe"
       }
     },
-    [getThreshold, getById]
+    [getThreshold, getById],
   )
 
   // Get jurisdiction for a location (state + country)
@@ -288,7 +287,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
       // Default to WHO
       return jurisdictionMap.get("WHO")
     },
-    [jurisdictionMap]
+    [jurisdictionMap],
   )
 
   const value: ContaminantsContextType = {
@@ -311,9 +310,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     getJurisdictionForLocation,
   }
 
-  return (
-    <ContaminantsContext.Provider value={value}>{children}</ContaminantsContext.Provider>
-  )
+  return <ContaminantsContext.Provider value={value}>{children}</ContaminantsContext.Provider>
 }
 
 /**

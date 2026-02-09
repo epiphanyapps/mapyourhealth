@@ -16,7 +16,6 @@ import {
   useState,
 } from "react"
 
-import { useAuth } from "./AuthContext"
 import {
   getUserZipCodeSubscriptions,
   ZipCodeSubscription,
@@ -24,6 +23,8 @@ import {
   deleteZipCodeSubscription,
   CreateSubscriptionOptions,
 } from "@/services/amplify/data"
+
+import { useAuth } from "./AuthContext"
 
 interface SubscriptionsContextType {
   /** All user subscriptions */

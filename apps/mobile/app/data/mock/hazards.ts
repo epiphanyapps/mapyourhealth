@@ -57,8 +57,7 @@ export const healthHazards: HazardCategory[] = [
   {
     id: "hazard-infectious-disease",
     name: "Infectious Disease Outbreak",
-    description:
-      "Elevated cases of COVID-19, influenza, or other infectious diseases in the area.",
+    description: "Elevated cases of COVID-19, influenza, or other infectious diseases in the area.",
     relatedCategories: [StatCategory.health],
   },
   {
@@ -129,12 +128,8 @@ export function getHazardCategoryById(id: string): HazardCategory | undefined {
 /**
  * Helper to get hazard categories by stat category
  */
-export function getHazardCategoriesByStatCategory(
-  category: StatCategory,
-): HazardCategory[] {
-  return allHazardCategories.filter((hazard) =>
-    hazard.relatedCategories.includes(category),
-  )
+export function getHazardCategoriesByStatCategory(category: StatCategory): HazardCategory[] {
+  return allHazardCategories.filter((hazard) => hazard.relatedCategories.includes(category))
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   NavigatorScreenParams,
 } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
+
 import type { StatCategory, StatHistoryEntry, StatStatus } from "@/data/types/safety"
 
 // Demo Tab Navigator types

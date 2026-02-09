@@ -5,9 +5,11 @@
  * Provides typed access to Contaminants, Thresholds, Jurisdictions, Locations, Measurements, and Subscriptions.
  */
 
-import { generateClient } from 'aws-amplify/data'
-import { fetchAuthSession } from 'aws-amplify/auth'
-import type { Schema } from '@mapyourhealth/backend/amplify/data/resource'
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
+// TypeScript cannot resolve cross-package exports during standalone type checking
+import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
+import { fetchAuthSession } from "aws-amplify/auth"
+import { generateClient } from "aws-amplify/data"
 
 // Lazy client initialization to ensure Amplify.configure() has been called first
 // Use userPool auth for authenticated users, IAM for guest access
@@ -16,14 +18,14 @@ let _iamClient: ReturnType<typeof generateClient<Schema>> | null = null
 
 function getUserPoolClient() {
   if (!_userPoolClient) {
-    _userPoolClient = generateClient<Schema>({ authMode: 'userPool' })
+    _userPoolClient = generateClient<Schema>({ authMode: "userPool" })
   }
   return _userPoolClient
 }
 
 function getIamClient() {
   if (!_iamClient) {
-    _iamClient = generateClient<Schema>({ authMode: 'iam' })
+    _iamClient = generateClient<Schema>({ authMode: "iam" })
   }
   return _iamClient
 }
@@ -52,13 +54,13 @@ function getPrivateClient() {
 // New Model Types
 // =============================================================================
 
-export type AmplifyContaminant = Schema['Contaminant']['type']
-export type AmplifyContaminantThreshold = Schema['ContaminantThreshold']['type']
-export type AmplifyJurisdiction = Schema['Jurisdiction']['type']
-export type AmplifyLocation = Schema['Location']['type']
-export type AmplifyLocationMeasurement = Schema['LocationMeasurement']['type']
-export type AmplifyUserSubscription = Schema['UserSubscription']['type']
-export type AmplifyHazardReport = Schema['HazardReport']['type']
+export type AmplifyContaminant = Schema["Contaminant"]["type"]
+export type AmplifyContaminantThreshold = Schema["ContaminantThreshold"]["type"]
+export type AmplifyJurisdiction = Schema["Jurisdiction"]["type"]
+export type AmplifyLocation = Schema["Location"]["type"]
+export type AmplifyLocationMeasurement = Schema["LocationMeasurement"]["type"]
+export type AmplifyUserSubscription = Schema["UserSubscription"]["type"]
+export type AmplifyHazardReport = Schema["HazardReport"]["type"]
 
 // =============================================================================
 // Contaminants (Public Read)
@@ -73,8 +75,8 @@ export async function getContaminants(): Promise<AmplifyContaminant[]> {
     limit: 1000,
   })
   if (errors) {
-    console.error('Error fetching contaminants:', errors)
-    throw new Error('Failed to fetch contaminants')
+    console.error("Error fetching contaminants:", errors)
+    throw new Error("Failed to fetch contaminants")
   }
   return data
 }
@@ -82,14 +84,16 @@ export async function getContaminants(): Promise<AmplifyContaminant[]> {
 /**
  * Fetch a specific contaminant by ID
  */
-export async function getContaminantById(contaminantId: string): Promise<AmplifyContaminant | null> {
+export async function getContaminantById(
+  contaminantId: string,
+): Promise<AmplifyContaminant | null> {
   const client = await getPublicClient()
   const { data, errors } = await client.models.Contaminant.listContaminantByContaminantId({
     contaminantId,
   })
   if (errors) {
-    console.error('Error fetching contaminant:', errors)
-    throw new Error('Failed to fetch contaminant')
+    console.error("Error fetching contaminant:", errors)
+    throw new Error("Failed to fetch contaminant")
   }
   return data.length > 0 ? data[0] : null
 }
@@ -107,8 +111,8 @@ export async function getContaminantThresholds(): Promise<AmplifyContaminantThre
     limit: 1000,
   })
   if (errors) {
-    console.error('Error fetching thresholds:', errors)
-    throw new Error('Failed to fetch thresholds')
+    console.error("Error fetching thresholds:", errors)
+    throw new Error("Failed to fetch thresholds")
   }
   return data
 }
@@ -116,14 +120,17 @@ export async function getContaminantThresholds(): Promise<AmplifyContaminantThre
 /**
  * Fetch thresholds for a specific contaminant
  */
-export async function getThresholdsForContaminant(contaminantId: string): Promise<AmplifyContaminantThreshold[]> {
+export async function getThresholdsForContaminant(
+  contaminantId: string,
+): Promise<AmplifyContaminantThreshold[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.ContaminantThreshold.listContaminantThresholdByContaminantId({
-    contaminantId,
-  })
+  const { data, errors } =
+    await client.models.ContaminantThreshold.listContaminantThresholdByContaminantId({
+      contaminantId,
+    })
   if (errors) {
-    console.error('Error fetching thresholds for contaminant:', errors)
-    throw new Error('Failed to fetch thresholds for contaminant')
+    console.error("Error fetching thresholds for contaminant:", errors)
+    throw new Error("Failed to fetch thresholds for contaminant")
   }
   return data
 }
@@ -131,14 +138,17 @@ export async function getThresholdsForContaminant(contaminantId: string): Promis
 /**
  * Fetch thresholds for a specific jurisdiction
  */
-export async function getThresholdsForJurisdiction(jurisdictionCode: string): Promise<AmplifyContaminantThreshold[]> {
+export async function getThresholdsForJurisdiction(
+  jurisdictionCode: string,
+): Promise<AmplifyContaminantThreshold[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.ContaminantThreshold.listContaminantThresholdByJurisdictionCode({
-    jurisdictionCode,
-  })
+  const { data, errors } =
+    await client.models.ContaminantThreshold.listContaminantThresholdByJurisdictionCode({
+      jurisdictionCode,
+    })
   if (errors) {
-    console.error('Error fetching thresholds for jurisdiction:', errors)
-    throw new Error('Failed to fetch thresholds for jurisdiction')
+    console.error("Error fetching thresholds for jurisdiction:", errors)
+    throw new Error("Failed to fetch thresholds for jurisdiction")
   }
   return data
 }
@@ -156,8 +166,8 @@ export async function getJurisdictions(): Promise<AmplifyJurisdiction[]> {
     limit: 100,
   })
   if (errors) {
-    console.error('Error fetching jurisdictions:', errors)
-    throw new Error('Failed to fetch jurisdictions')
+    console.error("Error fetching jurisdictions:", errors)
+    throw new Error("Failed to fetch jurisdictions")
   }
   return data
 }
@@ -171,8 +181,8 @@ export async function getJurisdictionByCode(code: string): Promise<AmplifyJurisd
     code,
   })
   if (errors) {
-    console.error('Error fetching jurisdiction:', errors)
-    throw new Error('Failed to fetch jurisdiction')
+    console.error("Error fetching jurisdiction:", errors)
+    throw new Error("Failed to fetch jurisdiction")
   }
   return data.length > 0 ? data[0] : null
 }
@@ -186,8 +196,8 @@ export async function getJurisdictionsByCountry(country: string): Promise<Amplif
     country,
   })
   if (errors) {
-    console.error('Error fetching jurisdictions by country:', errors)
-    throw new Error('Failed to fetch jurisdictions by country')
+    console.error("Error fetching jurisdictions by country:", errors)
+    throw new Error("Failed to fetch jurisdictions by country")
   }
   return data
 }
@@ -205,8 +215,8 @@ export async function getLocationByPostalCode(postalCode: string): Promise<Ampli
     postalCode,
   })
   if (errors) {
-    console.error('Error fetching location:', errors)
-    throw new Error('Failed to fetch location')
+    console.error("Error fetching location:", errors)
+    throw new Error("Failed to fetch location")
   }
   return data.length > 0 ? data[0] : null
 }
@@ -221,8 +231,8 @@ export async function getLocationsByCity(city: string): Promise<AmplifyLocation[
     city,
   })
   if (errors) {
-    console.error('Error fetching locations by city:', errors)
-    throw new Error('Failed to fetch locations by city')
+    console.error("Error fetching locations by city:", errors)
+    throw new Error("Failed to fetch locations by city")
   }
   return data
 }
@@ -237,8 +247,8 @@ export async function getLocationsByState(state: string): Promise<AmplifyLocatio
     state,
   })
   if (errors) {
-    console.error('Error fetching locations by state:', errors)
-    throw new Error('Failed to fetch locations by state')
+    console.error("Error fetching locations by state:", errors)
+    throw new Error("Failed to fetch locations by state")
   }
   return data
 }
@@ -253,8 +263,8 @@ export async function getAllLocations(): Promise<AmplifyLocation[]> {
     limit: 1000,
   })
   if (errors) {
-    console.error('Error fetching all locations:', errors)
-    throw new Error('Failed to fetch all locations')
+    console.error("Error fetching all locations:", errors)
+    throw new Error("Failed to fetch all locations")
   }
   return data
 }
@@ -266,14 +276,17 @@ export async function getAllLocations(): Promise<AmplifyLocation[]> {
 /**
  * Fetch measurements for a specific postal code (public read - uses userPool when authenticated, IAM for guests)
  */
-export async function getLocationMeasurements(postalCode: string): Promise<AmplifyLocationMeasurement[]> {
+export async function getLocationMeasurements(
+  postalCode: string,
+): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
-    postalCode,
-  })
+  const { data, errors } =
+    await client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
+      postalCode,
+    })
   if (errors) {
-    console.error('Error fetching location measurements:', errors)
-    throw new Error('Failed to fetch location measurements')
+    console.error("Error fetching location measurements:", errors)
+    throw new Error("Failed to fetch location measurements")
   }
   return data
 }
@@ -281,14 +294,17 @@ export async function getLocationMeasurements(postalCode: string): Promise<Ampli
 /**
  * Fetch measurements for a specific contaminant across all locations
  */
-export async function getMeasurementsByContaminant(contaminantId: string): Promise<AmplifyLocationMeasurement[]> {
+export async function getMeasurementsByContaminant(
+  contaminantId: string,
+): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByContaminantId({
-    contaminantId,
-  })
+  const { data, errors } =
+    await client.models.LocationMeasurement.listLocationMeasurementByContaminantId({
+      contaminantId,
+    })
   if (errors) {
-    console.error('Error fetching measurements by contaminant:', errors)
-    throw new Error('Failed to fetch measurements by contaminant')
+    console.error("Error fetching measurements by contaminant:", errors)
+    throw new Error("Failed to fetch measurements by contaminant")
   }
   return data
 }
@@ -336,11 +352,11 @@ export async function createUserSubscription(
     expoPushToken: options?.expoPushToken,
   })
   if (errors) {
-    console.error('Error creating subscription:', errors)
-    throw new Error('Failed to create subscription')
+    console.error("Error creating subscription:", errors)
+    throw new Error("Failed to create subscription")
   }
   if (!data) {
-    throw new Error('No data returned from subscription creation')
+    throw new Error("No data returned from subscription creation")
   }
   return data
 }
@@ -357,11 +373,11 @@ export async function updateUserSubscription(
     ...updates,
   })
   if (errors) {
-    console.error('Error updating subscription:', errors)
-    throw new Error('Failed to update subscription')
+    console.error("Error updating subscription:", errors)
+    throw new Error("Failed to update subscription")
   }
   if (!data) {
-    throw new Error('No data returned from subscription update')
+    throw new Error("No data returned from subscription update")
   }
   return data
 }
@@ -372,8 +388,8 @@ export async function updateUserSubscription(
 export async function deleteUserSubscription(id: string): Promise<void> {
   const { errors } = await getPrivateClient().models.UserSubscription.delete({ id })
   if (errors) {
-    console.error('Error deleting subscription:', errors)
-    throw new Error('Failed to delete subscription')
+    console.error("Error deleting subscription:", errors)
+    throw new Error("Failed to delete subscription")
   }
 }
 
@@ -381,10 +397,12 @@ export async function deleteUserSubscription(id: string): Promise<void> {
  * Get all subscriptions for the current user
  */
 export async function getUserSubscriptions(): Promise<AmplifyUserSubscription[]> {
-  const { data, errors } = await getPrivateClient().models.UserSubscription.list()
+  const { data, errors } = await getPrivateClient().models.UserSubscription.list({
+    limit: 1000,
+  })
   if (errors) {
-    console.error('Error fetching user subscriptions:', errors)
-    throw new Error('Failed to fetch user subscriptions')
+    console.error("Error fetching user subscriptions:", errors)
+    throw new Error("Failed to fetch user subscriptions")
   }
   return data
 }
@@ -397,21 +415,21 @@ export async function getUserSubscriptions(): Promise<AmplifyUserSubscription[]>
  * Create a new hazard report
  */
 export async function createHazardReport(reportData: {
-  category: 'water' | 'air' | 'health' | 'disaster'
+  category: "water" | "air" | "health" | "disaster"
   description: string
   location: string
   zipCode?: string
 }): Promise<AmplifyHazardReport> {
   const { data, errors } = await getPrivateClient().models.HazardReport.create({
     ...reportData,
-    status: 'pending',
+    status: "pending",
   })
   if (errors) {
-    console.error('Error creating hazard report:', errors)
-    throw new Error('Failed to create hazard report')
+    console.error("Error creating hazard report:", errors)
+    throw new Error("Failed to create hazard report")
   }
   if (!data) {
-    throw new Error('No data returned from hazard report creation')
+    throw new Error("No data returned from hazard report creation")
   }
   return data
 }
@@ -420,10 +438,12 @@ export async function createHazardReport(reportData: {
  * Get all hazard reports for the current user
  */
 export async function getUserHazardReports(): Promise<AmplifyHazardReport[]> {
-  const { data, errors } = await getPrivateClient().models.HazardReport.list()
+  const { data, errors } = await getPrivateClient().models.HazardReport.list({
+    limit: 1000,
+  })
   if (errors) {
-    console.error('Error fetching hazard reports:', errors)
-    throw new Error('Failed to fetch hazard reports')
+    console.error("Error fetching hazard reports:", errors)
+    throw new Error("Failed to fetch hazard reports")
   }
   return data
 }
@@ -433,16 +453,16 @@ export async function getUserHazardReports(): Promise<AmplifyHazardReport[]> {
 // =============================================================================
 
 /** @deprecated Use AmplifyContaminant instead */
-export type StatDefinition = Schema['Contaminant']['type']
+export type StatDefinition = Schema["Contaminant"]["type"]
 
 /** @deprecated Use AmplifyLocationMeasurement instead */
-export type ZipCodeStat = Schema['LocationMeasurement']['type']
+export type ZipCodeStat = Schema["LocationMeasurement"]["type"]
 
 /** @deprecated Use AmplifyUserSubscription instead */
-export type ZipCodeSubscription = Schema['UserSubscription']['type']
+export type ZipCodeSubscription = Schema["UserSubscription"]["type"]
 
 /** @deprecated Use AmplifyHazardReport instead */
-export type HazardReport = Schema['HazardReport']['type']
+export type HazardReport = Schema["HazardReport"]["type"]
 
 /** @deprecated Use getContaminants instead */
 export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {

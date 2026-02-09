@@ -9,25 +9,19 @@
 
 import { useState, useEffect, useCallback } from "react"
 
-import {
-  getLocationMeasurements,
-  AmplifyLocationMeasurement,
-} from "@/services/amplify/data"
-import { getMockLocationData, getZipCodeMetadata } from "@/data/helpers"
 import { useContaminants } from "@/context/ContaminantsContext"
-import { useNetworkStatus } from "@/hooks/useNetworkStatus"
-import { load, save, remove } from "@/utils/storage"
+import { getMockLocationData, getZipCodeMetadata } from "@/data/helpers"
 import {
   type ZipCodeData,
   type ZipCodeStat,
   type StatStatus,
   StatCategory,
-  type StatDefinition,
-  type LocationData,
-  type MeasurementWithStatus,
 } from "@/data/types/safety"
+import { useNetworkStatus } from "@/hooks/useNetworkStatus"
+import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
 import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
 import { detectPostalCodeRegion } from "@/utils/postalCode"
+import { load, save, remove } from "@/utils/storage"
 
 /** Cache key prefix for zip code stats */
 const CACHE_KEY_PREFIX = "zipcode_stats_"
@@ -224,7 +218,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
         lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
       }
     },
-    [contaminants, getThreshold]
+    [contaminants, getThreshold],
   )
 
   const fetchData = useCallback(
@@ -404,7 +398,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
             setZipData(null)
             // Only set error for actual network/server errors, not "no data" cases
             setError(
-              isNotFoundError ? null : "Unable to connect. Check your connection and try again."
+              isNotFoundError ? null : "Unable to connect. Check your connection and try again.",
             )
           }
         }
@@ -412,7 +406,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
         setIsLoading(false)
       }
     },
-    [zipCode, defsLoading, isOffline, mapMeasurementToLegacyStat]
+    [zipCode, defsLoading, isOffline, mapMeasurementToLegacyStat],
   )
 
   // Re-fetch when zip code changes or definitions finish loading
@@ -446,7 +440,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
 export function getWorstStatusForCategory(
   zipData: ZipCodeData,
   category: StatCategory,
-  statDefinitions: { id: string; category: string }[]
+  statDefinitions: { id: string; category: string }[],
 ): StatStatus {
   // For the new ContaminantCategory (fertilizer, pesticide, etc.), all are water-related
   // So if checking StatCategory.water, include all contaminant categories
@@ -473,7 +467,7 @@ export function getWorstStatusForCategory(
         }
         return false
       })
-      .map((def) => def.id)
+      .map((def) => def.id),
   )
 
   // Filter zip code stats to only those in this category
@@ -524,7 +518,7 @@ interface GenericDefinition {
 export function getStatsForCategory(
   zipData: ZipCodeData,
   category: StatCategory,
-  statDefinitions: GenericDefinition[]
+  statDefinitions: GenericDefinition[],
 ): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
   // For the new ContaminantCategory, all are water-related
   const isWaterCategory = category === StatCategory.water
@@ -562,7 +556,7 @@ export function getStatsForCategory(
  */
 export function getAlertStats(
   zipData: ZipCodeData,
-  statDefinitions: GenericDefinition[]
+  statDefinitions: GenericDefinition[],
 ): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
   const defMap = new Map(statDefinitions.map((def) => [def.id, def]))
 

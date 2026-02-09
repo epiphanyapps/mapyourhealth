@@ -1,15 +1,18 @@
 import { useState } from "react"
 import {
-  View,
-  ViewStyle,
-  TextStyle,
-  TextInput,
   Pressable,
   StyleProp,
+  // eslint-disable-next-line no-restricted-imports
+  TextInput,
+  TextStyle,
+  View,
+  ViewStyle,
 } from "react-native"
-import { Text } from "./Text"
-import { useAppTheme } from "@/theme/context"
+
 import { StatCategory } from "@/data/types/safety"
+import { useAppTheme } from "@/theme/context"
+
+import { Text } from "./Text"
 
 export interface HazardReportFormData {
   category: StatCategory | null
@@ -210,9 +213,7 @@ export function HazardReportForm(props: HazardReportFormProps) {
             </Pressable>
           ))}
         </View>
-        {touched.category && errors.category && (
-          <Text style={$errorText}>{errors.category}</Text>
-        )}
+        {touched.category && errors.category && <Text style={$errorText}>{errors.category}</Text>}
       </View>
 
       {/* Description Input */}
@@ -220,9 +221,7 @@ export function HazardReportForm(props: HazardReportFormProps) {
         <Text style={$label}>Description (min 10 characters)</Text>
         <TextInput
           value={formData.description}
-          onChangeText={(text) =>
-            setFormData((prev) => ({ ...prev, description: text }))
-          }
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, description: text }))}
           onBlur={() => handleBlur("description")}
           placeholder="Describe the hazard you observed..."
           placeholderTextColor={theme.colors.textDim}
@@ -244,34 +243,25 @@ export function HazardReportForm(props: HazardReportFormProps) {
         <Text style={$label}>Location</Text>
         <TextInput
           value={formData.location}
-          onChangeText={(text) =>
-            setFormData((prev) => ({ ...prev, location: text }))
-          }
+          onChangeText={(text) => setFormData((prev) => ({ ...prev, location: text }))}
           onBlur={() => handleBlur("location")}
           placeholder="Enter address or description of location"
           placeholderTextColor={theme.colors.textDim}
           style={[$input, touched.location && errors.location && $inputError]}
           accessibilityLabel="Hazard location"
         />
-        {touched.location && errors.location && (
-          <Text style={$errorText}>{errors.location}</Text>
-        )}
+        {touched.location && errors.location && <Text style={$errorText}>{errors.location}</Text>}
       </View>
 
       {/* Submit Button */}
       <Pressable
         onPress={handleSubmit}
         disabled={isSubmitting}
-        style={({ pressed }) => [
-          $submitButton,
-          pressed && { opacity: 0.8 },
-        ]}
+        style={({ pressed }) => [$submitButton, pressed && { opacity: 0.8 }]}
         accessibilityRole="button"
         accessibilityLabel="Submit hazard report"
       >
-        <Text style={$submitButtonText}>
-          {isSubmitting ? "Submitting..." : "Submit Report"}
-        </Text>
+        <Text style={$submitButtonText}>{isSubmitting ? "Submitting..." : "Submit Report"}</Text>
       </Pressable>
     </View>
   )

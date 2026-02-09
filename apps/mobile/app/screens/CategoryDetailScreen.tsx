@@ -1,22 +1,33 @@
-import { FC, useState, useCallback, useMemo } from "react"
-import { View, ViewStyle, TextStyle, ScrollView, ActivityIndicator, RefreshControl, Share, TouchableOpacity, Linking } from "react-native"
+/* eslint-disable react-native/no-inline-styles */
+import { FC, useCallback, useMemo, useState } from "react"
+import {
+  View,
+  ViewStyle,
+  TextStyle,
+  ScrollView,
+  ActivityIndicator,
+  RefreshControl,
+  Share,
+  TouchableOpacity,
+  Linking,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
-import { Screen } from "@/components/Screen"
-import { Text } from "@/components/Text"
 import { CategoryIcon, CATEGORY_COLORS } from "@/components/CategoryIcon"
-import { StatItem } from "@/components/StatItem"
 import { ContaminantTable, ContaminantTableRow } from "@/components/ContaminantTable"
 import { Header } from "@/components/Header"
-import { useAppTheme } from "@/theme/context"
-import { useStatDefinitions } from "@/context/StatDefinitionsContext"
-import { useContaminants } from "@/context/ContaminantsContext"
-import { useZipCodeData, getStatsForCategory } from "@/hooks/useZipCodeData"
+import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
+import { StatItem } from "@/components/StatItem"
+import { Text } from "@/components/Text"
+import { useContaminants } from "@/context/ContaminantsContext"
+import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
+import { useZipCodeData, getStatsForCategory } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import { useAppTheme } from "@/theme/context"
 
 interface CategoryDetailScreenProps extends AppStackScreenProps<"CategoryDetail"> {}
 
@@ -36,7 +47,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
 
   // Fetch data for the passed zip code from Amplify (with caching and offline support)
-  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } = useZipCodeData(zipCode)
+  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
+    useZipCodeData(zipCode)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -63,7 +75,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   // Get jurisdiction name for display
   const localJurisdictionCode = zipData?.state ? `US-${zipData.state}` : "US"
   const localJurisdiction = jurisdictionMap.get(localJurisdictionCode) || jurisdictionMap.get("US")
-  const localJurisdictionName = localJurisdiction?.name?.toUpperCase() || zipData?.state?.toUpperCase() || "LOCAL"
+  const localJurisdictionName =
+    localJurisdiction?.name?.toUpperCase() || zipData?.state?.toUpperCase() || "LOCAL"
 
   // Build table rows for water category
   const tableRows: ContaminantTableRow[] = useMemo(() => {
@@ -88,7 +101,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   // Count contaminants exceeding WHO standards
   const exceedingCount = useMemo(() => {
-    return tableRows.filter(row => row.status === "danger" || row.status === "warning").length
+    return tableRows.filter((row) => row.status === "danger" || row.status === "warning").length
   }, [tableRows])
 
   // Get category description with dynamic values
@@ -96,7 +109,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   // Handle link press
   const handleLinkPress = useCallback((url: string) => {
-    Linking.openURL(url).catch(err => {
+    Linking.openURL(url).catch((err) => {
       console.error("Failed to open URL:", err)
     })
   }, [])
@@ -106,14 +119,18 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     if (!zipData) return
 
     // Build stat details for this category
-    const statDetails = stats.map(({ stat, definition }) => {
-      const statusEmoji = stat.status === "danger" ? "🔴" : stat.status === "warning" ? "🟡" : "🟢"
-      return `${statusEmoji} ${definition.name}: ${stat.value} ${definition.unit}`
-    }).join("\n")
+    const statDetails = stats
+      .map(({ stat, definition }) => {
+        const statusEmoji =
+          stat.status === "danger" ? "🔴" : stat.status === "warning" ? "🟡" : "🟢"
+        return `${statusEmoji} ${definition.name}: ${stat.value} ${definition.unit}`
+      })
+      .join("\n")
 
-    const locationName = zipData.cityName && zipData.state
-      ? `${zipData.cityName}, ${zipData.state}`
-      : zipData.cityName || zipData.state || "Unknown Location"
+    const locationName =
+      zipData.cityName && zipData.state
+        ? `${zipData.cityName}, ${zipData.state}`
+        : zipData.cityName || zipData.state || "Unknown Location"
 
     const shareMessage = `${categoryName} Safety Report for ${zipData.zipCode} (${locationName})
 
@@ -146,9 +163,7 @@ mapyourhealth://zip/${zipData.zipCode}`
   )
 
   // Format last updated time for offline banner
-  const lastUpdatedText = lastUpdated
-    ? formatDistanceToNow(lastUpdated, { addSuffix: true })
-    : null
+  const lastUpdatedText = lastUpdated ? formatDistanceToNow(lastUpdated, { addSuffix: true }) : null
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -430,7 +445,8 @@ mapyourhealth://zip/${zipData.zipCode}`
                             currentValue: stat.value,
                             currentStatus: stat.status,
                             history: stat.history || [],
-                            higherIsBad: definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
+                            higherIsBad:
+                              definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
                             lastUpdated: stat.lastUpdated,
                             zipCode,
                           })

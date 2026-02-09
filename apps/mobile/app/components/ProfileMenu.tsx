@@ -1,5 +1,6 @@
-import { View, ViewStyle, TextStyle, Modal, Pressable } from "react-native"
+import { Modal, Pressable, TextStyle, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
 
@@ -153,6 +154,16 @@ export function ProfileMenu(props: ProfileMenuProps) {
     color: theme.colors.error,
   }
 
+  const $headerSpacer: ViewStyle = {
+    width: 24,
+  }
+
+  const $headerTitle: TextStyle = {
+    fontSize: 18,
+    fontWeight: "600",
+    color: theme.colors.text,
+  }
+
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={$modalOverlay} onPress={onClose}>
@@ -162,13 +173,9 @@ export function ProfileMenu(props: ProfileMenuProps) {
 
           {/* Header with close button */}
           <View style={$header}>
-            <View style={{ width: 24 }} />
-            <Text style={{ fontSize: 18, fontWeight: "600", color: theme.colors.text }}>Menu</Text>
-            <Pressable
-              onPress={onClose}
-              accessibilityLabel="Close menu"
-              accessibilityRole="button"
-            >
+            <View style={$headerSpacer} />
+            <Text style={$headerTitle}>Menu</Text>
+            <Pressable onPress={onClose} accessibilityLabel="Close menu" accessibilityRole="button">
               <MaterialCommunityIcons name="close" size={24} color={theme.colors.text} />
             </Pressable>
           </View>
@@ -205,11 +212,7 @@ export function ProfileMenu(props: ProfileMenuProps) {
                 label="My Subscriptions"
                 onPress={() => onNavigate("SubscriptionsSettings")}
               />
-              <MenuItem
-                icon="cog"
-                label="Settings"
-                onPress={() => onNavigate("Profile")}
-              />
+              <MenuItem icon="cog" label="Settings" onPress={() => onNavigate("Profile")} />
               <View style={$divider} />
               <Pressable
                 onPress={onSignOut}
@@ -223,11 +226,7 @@ export function ProfileMenu(props: ProfileMenuProps) {
             </>
           ) : (
             <>
-              <MenuItem
-                icon="login"
-                label="Sign In"
-                onPress={() => onNavigate("Login")}
-              />
+              <MenuItem icon="login" label="Sign In" onPress={() => onNavigate("Login")} />
               <MenuItem
                 icon="account-plus"
                 label="Create Account"
