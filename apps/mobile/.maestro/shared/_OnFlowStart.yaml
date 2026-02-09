@@ -34,6 +34,13 @@ appId: ${MAESTRO_APP_ID}
       visible: 'Development servers'
     commands:
       # this regex allows for different hosts and ports
-      - tapOn: "http://.*:.*" 
+      - tapOn: "http://.*:.*"
       - waitForAnimationToEnd
-      - tapOn: "Close" # dismiss the bottom sheet
+
+# dismiss bottom sheet if Close button is visible (may not appear in newer Expo versions)
+- runFlow:
+    when:
+      visible: 'Close'
+    commands:
+      - tapOn: "Close"
+      - waitForAnimationToEnd
