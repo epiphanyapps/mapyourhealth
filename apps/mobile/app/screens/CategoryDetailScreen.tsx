@@ -16,6 +16,7 @@ import { formatDistanceToNow } from "date-fns"
 
 import { CategoryIcon, CATEGORY_COLORS } from "@/components/CategoryIcon"
 import { ContaminantTable, ContaminantTableRow } from "@/components/ContaminantTable"
+import { ExpandableCard } from "@/components/ExpandableCard"
 import { Header } from "@/components/Header"
 import { LinkedText } from "@/components/LinkedText"
 import { Screen } from "@/components/Screen"
@@ -286,6 +287,25 @@ mapyourhealth://zip/${zipData.zipCode}`
     marginLeft: 6,
   }
 
+  const $subCategoriesContainer: ViewStyle = {
+    paddingHorizontal: 0,
+    paddingTop: 8,
+    gap: 8,
+  }
+
+  const $subCategoryHeader: TextStyle = {
+    fontSize: 16,
+    fontWeight: "600",
+    color: theme.colors.text,
+  }
+
+  const $subCategoryDescription: TextStyle = {
+    fontSize: 14,
+    color: theme.colors.text,
+    lineHeight: 20,
+    marginBottom: 12,
+  }
+
   const $offlineBanner: ViewStyle = {
     flexDirection: "row",
     alignItems: "center",
@@ -403,6 +423,36 @@ mapyourhealth://zip/${zipData.zipCode}`
                 <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
                 <Text style={$linkText}>{link.label}</Text>
               </TouchableOpacity>
+            ))}
+          </View>
+        )}
+
+        {/* Sub-categories (expandable dropdowns) */}
+        {categoryConfig.subCategories && categoryConfig.subCategories.length > 0 && (
+          <View style={$subCategoriesContainer}>
+            {categoryConfig.subCategories.map((subCategory) => (
+              <ExpandableCard
+                key={subCategory.id}
+                header={<Text style={$subCategoryHeader}>{subCategory.name}</Text>}
+              >
+                <Text style={$subCategoryDescription}>{subCategory.description}</Text>
+                {subCategory.links?.map((link, idx) => (
+                  <TouchableOpacity
+                    key={idx}
+                    style={$linkButton}
+                    onPress={() => handleLinkPress(link.url)}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${link.label}`}
+                  >
+                    <MaterialCommunityIcons
+                      name="open-in-new"
+                      size={16}
+                      color={theme.colors.tint}
+                    />
+                    <Text style={$linkText}>{link.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ExpandableCard>
             ))}
           </View>
         )}
