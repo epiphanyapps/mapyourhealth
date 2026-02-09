@@ -1,5 +1,7 @@
 import { useCallback, useMemo } from "react"
-import { Linking, StyleProp, Text, TextStyle } from "react-native"
+import { Linking, StyleProp, TextStyle } from "react-native"
+
+import { Text } from "@/components/Text"
 
 interface LinkedTextProps {
   /** Text with markdown-style links: [link text](url) */
@@ -69,6 +71,10 @@ export function LinkedText({ text, style, linkStyle }: LinkedTextProps) {
 
   const parts = useMemo(() => parseText(text), [text])
 
+  const $linkBase: TextStyle = {
+    textDecorationLine: "underline",
+  }
+
   return (
     <Text style={style}>
       {parts.map((part, index) => {
@@ -76,7 +82,7 @@ export function LinkedText({ text, style, linkStyle }: LinkedTextProps) {
           return (
             <Text
               key={index}
-              style={[{ textDecorationLine: "underline" }, linkStyle]}
+              style={[$linkBase, linkStyle]}
               onPress={() => handleLinkPress(part.url!)}
               accessibilityRole="link"
               accessibilityLabel={`Open ${part.content}`}
