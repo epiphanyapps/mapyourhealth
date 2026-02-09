@@ -5,11 +5,11 @@
  * Provides typed access to Contaminants, Thresholds, Jurisdictions, Locations, Measurements, and Subscriptions.
  */
 
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
+// TypeScript cannot resolve cross-package exports during standalone type checking
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
 import { fetchAuthSession } from "aws-amplify/auth"
 import { generateClient } from "aws-amplify/data"
-// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
-// TypeScript cannot resolve cross-package exports during standalone type checking
 
 // Lazy client initialization to ensure Amplify.configure() has been called first
 // Use userPool auth for authenticated users, IAM for guest access
