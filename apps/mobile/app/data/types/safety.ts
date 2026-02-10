@@ -124,15 +124,16 @@ export interface Jurisdiction {
 // =============================================================================
 
 /**
- * Location metadata (maps postal code to jurisdiction)
+ * Location metadata (maps city to jurisdiction)
+ * Granularity: Country → State/Province → County/Region → City
  */
 export interface Location {
-  /** Postal/ZIP code */
-  postalCode: string
   /** City name */
-  city?: string
+  city: string
+  /** County or region name */
+  county?: string
   /** State/province code */
-  state?: string
+  state: string
   /** Country code */
   country: string
   /** Applicable jurisdiction code */
@@ -147,8 +148,12 @@ export interface Location {
  * A single contaminant measurement for a location
  */
 export interface LocationMeasurement {
-  /** Postal/ZIP code */
-  postalCode: string
+  /** City name */
+  city: string
+  /** State/province code */
+  state: string
+  /** Country code */
+  country: string
   /** Contaminant ID (references Contaminant.id) */
   contaminantId: string
   /** The measured value */
@@ -176,13 +181,13 @@ export interface MeasurementWithStatus extends LocationMeasurement {
 }
 
 /**
- * Complete safety data for a location
+ * Complete safety data for a location (city-level granularity)
  */
 export interface LocationData {
-  /** The postal/ZIP code */
-  postalCode: string
   /** City name */
-  cityName: string
+  city: string
+  /** County or region name */
+  county?: string
   /** State/province */
   state: string
   /** Country */
@@ -198,19 +203,19 @@ export interface LocationData {
 // =============================================================================
 
 /**
- * User subscription to a location for notifications
+ * User subscription to a location for notifications (city-level)
  */
 export interface UserSubscription {
   /** Unique identifier */
   id: string
-  /** Subscribed postal/ZIP code */
-  postalCode: string
   /** City name */
-  cityName?: string
+  city: string
   /** State/province */
-  state?: string
+  state: string
   /** Country */
-  country?: string
+  country: string
+  /** County/region (optional) */
+  county?: string
   /** Enable push notifications */
   enablePush: boolean
   /** Enable email notifications */
@@ -279,8 +284,12 @@ export interface HazardReport {
   description: string
   /** Location description */
   location: string
-  /** Postal/ZIP code where hazard was observed */
-  postalCode: string
+  /** City where hazard was observed */
+  city?: string
+  /** State/province */
+  state?: string
+  /** Country */
+  country?: string
   /** Submission timestamp */
   createdAt: string
   /** Report status */
@@ -356,15 +365,15 @@ export type TrendDirection = "improving" | "worsening" | "stable"
  */
 export interface SearchSuggestion {
   /** Type of search result */
-  type: "postalCode" | "city" | "state"
+  type: "city" | "county" | "state" | "country"
   /** Primary display text (e.g., "Montreal, QC") */
   displayText: string
-  /** Secondary text (e.g., "2 locations") */
+  /** Secondary text (e.g., "Quebec, Canada") */
   secondaryText: string
-  /** List of postal codes covered by this suggestion */
-  postalCodes: string[]
-  /** City name (for city and postalCode types) */
+  /** City name */
   city?: string
+  /** County/region name */
+  county?: string
   /** State/province code */
   state?: string
   /** Country code */
@@ -377,7 +386,9 @@ export interface SearchSuggestion {
 export interface Subscription {
   id: string
   userId: string
-  zipCode: string
+  city: string
+  state: string
+  country: string
   pushToken?: string
   createdAt: string
 }

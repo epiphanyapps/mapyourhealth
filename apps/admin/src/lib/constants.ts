@@ -106,7 +106,7 @@ export const reportStatusColors: Record<ReportStatus, string> = {
 // Safety Status
 // =============================================================================
 
-/** Status options for zip code stats */
+/** Status options for location stats */
 export const STAT_STATUS_OPTIONS = ["danger", "warning", "safe"] as const;
 export type StatStatus = (typeof STAT_STATUS_OPTIONS)[number];
 

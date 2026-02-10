@@ -76,30 +76,32 @@ const CATEGORY_INFO: Record<ImportCategory, { title: string; description: string
 // CSV templates for each category
 const CSV_TEMPLATES: Record<ImportCategory, { example: string; fields: string[] }> = {
   water: {
-    example: `postalCode,contaminantId,value,source
-90210,nitrate,12500,EPA
-90210,lead,8.2,Local Lab
-10001,arsenic,5.5,EPA`,
-    fields: ["postalCode", "contaminantId", "value", "source (optional)"],
+    example: `city,state,country,contaminantId,value,source
+Beverly Hills,CA,US,nitrate,12500,EPA
+Beverly Hills,CA,US,lead,8.2,Local Lab
+New York,NY,US,arsenic,5.5,EPA`,
+    fields: ["city", "state", "country", "contaminantId", "value", "source (optional)"],
   },
   air: {
-    example: `postalCode,contaminantId,value,source
-90210,radon,4.2,EPA
-10001,radon,2.1,State Survey
-H2X1Y6,radon,3.8,Health Canada`,
-    fields: ["postalCode", "contaminantId (e.g., radon)", "value (pCi/L)", "source (optional)"],
+    example: `city,state,country,contaminantId,value,source
+Beverly Hills,CA,US,radon,4.2,EPA
+New York,NY,US,radon,2.1,State Survey
+Montreal,QC,CA,radon,3.8,Health Canada`,
+    fields: ["city", "state", "country", "contaminantId (e.g., radon)", "value (pCi/L)", "source (optional)"],
   },
   pathogens: {
-    example: `postalCode,contaminantId,value,source
-10001,lyme_disease,15.2,CDC
-06001,lyme_disease,8.5,State Health Dept
-H2X1Y6,lyme_disease,3.2,PHAC`,
-    fields: ["postalCode", "contaminantId (e.g., lyme_disease)", "value (incidence per 100k)", "source (optional)"],
+    example: `city,state,country,contaminantId,value,source
+New York,NY,US,lyme_disease,15.2,CDC
+Hartford,CT,US,lyme_disease,8.5,State Health Dept
+Montreal,QC,CA,lyme_disease,3.2,PHAC`,
+    fields: ["city", "state", "country", "contaminantId (e.g., lyme_disease)", "value (incidence per 100k)", "source (optional)"],
   },
 };
 
 interface ImportRow {
-  postalCode: string;
+  city: string;
+  state: string;
+  country: string;
   contaminantId: string;
   value: number;
   source?: string;
@@ -149,8 +151,16 @@ export default function ImportPage() {
   ): ImportRow => {
     const errors: string[] = [];
 
-    if (!row.postalCode || row.postalCode.length < 2) {
-      errors.push("Invalid postal code");
+    if (!row.city || row.city.length < 1) {
+      errors.push("City is required");
+    }
+
+    if (!row.state || row.state.length < 1) {
+      errors.push("State is required");
+    }
+
+    if (!row.country || row.country.length < 1) {
+      errors.push("Country is required");
     }
 
     if (!row.contaminantId) {
@@ -165,7 +175,9 @@ export default function ImportPage() {
     }
 
     return {
-      postalCode: row.postalCode || "",
+      city: row.city || "",
+      state: row.state || "",
+      country: row.country || "",
       contaminantId: row.contaminantId || "",
       value: row.value || 0,
       source: row.source,
@@ -209,10 +221,10 @@ export default function ImportPage() {
 
     const header = parseCSVLine(lines[0]).map((h) => h.toLowerCase());
 
-    // Find column indices with multiple possible names
-    const postalCodeIdx = ["postalcode", "postal_code", "zipcode", "zip_code"]
-      .map((name) => header.indexOf(name))
-      .find((idx) => idx !== -1) ?? -1;
+    // Find column indices
+    const cityIdx = header.indexOf("city");
+    const stateIdx = header.indexOf("state");
+    const countryIdx = header.indexOf("country");
     const contaminantIdIdx = ["contaminantid", "contaminant_id", "statid", "stat_id"]
       .map((name) => header.indexOf(name))
       .find((idx) => idx !== -1) ?? -1;
@@ -221,7 +233,9 @@ export default function ImportPage() {
 
     // Validate required columns exist
     const missingColumns: string[] = [];
-    if (postalCodeIdx === -1) missingColumns.push("postalCode");
+    if (cityIdx === -1) missingColumns.push("city");
+    if (stateIdx === -1) missingColumns.push("state");
+    if (countryIdx === -1) missingColumns.push("country");
     if (contaminantIdIdx === -1) missingColumns.push("contaminantId");
     if (valueIdx === -1) missingColumns.push("value");
 
@@ -232,7 +246,9 @@ export default function ImportPage() {
     const rows = lines.slice(1).filter(line => line.trim()).map((line) => {
       const values = parseCSVLine(line);
       return {
-        postalCode: values[postalCodeIdx] || "",
+        city: values[cityIdx] || "",
+        state: values[stateIdx] || "",
+        country: values[countryIdx] || "",
         contaminantId: values[contaminantIdIdx] || "",
         value: parseFloat(values[valueIdx]) || 0,
         source: sourceIdx !== -1 ? values[sourceIdx] : undefined,
@@ -248,12 +264,10 @@ export default function ImportPage() {
       throw new Error("JSON must be an array");
     }
     return data.map((item: Record<string, unknown>) => ({
-      postalCode: String(
-        item.postalCode || item.postal_code || item.zipCode || item.zip_code || ""
-      ),
-      contaminantId: String(
-        item.contaminantId || item.contaminant_id || item.statId || item.stat_id || ""
-      ),
+      city: String(item.city || ""),
+      state: String(item.state || ""),
+      country: String(item.country || ""),
+      contaminantId: String(item.contaminantId || item.contaminant_id || item.statId || item.stat_id || ""),
       value: Number(item.value) || 0,
       source: item.source ? String(item.source) : undefined,
     }));
@@ -337,7 +351,9 @@ export default function ImportPage() {
       for (const row of validRows) {
         try {
           await client.models.LocationMeasurement.create({
-            postalCode: row.postalCode,
+            city: row.city,
+            state: row.state,
+            country: row.country,
             contaminantId: row.contaminantId,
             value: row.value,
             measuredAt: new Date().toISOString(),
@@ -347,9 +363,7 @@ export default function ImportPage() {
           result.success++;
         } catch (error) {
           result.failed++;
-          result.errors.push(
-            `${row.postalCode}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`
-          );
+          result.errors.push(`${row.city}, ${row.state}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
       }
 
@@ -375,10 +389,10 @@ export default function ImportPage() {
   };
 
   const sendNotifications = async (importedRows: ImportRow[]) => {
-    // Get unique postal codes from imported data
-    const postalCodes = [...new Set(importedRows.map((r) => r.postalCode))];
+    // Get unique cities from imported data
+    const cities = [...new Set(importedRows.map((r) => `${r.city}|${r.state}|${r.country}`))];
 
-    if (postalCodes.length === 0) return;
+    if (cities.length === 0) return;
 
     setIsNotifying(true);
     let notifiedCount = 0;
@@ -402,19 +416,20 @@ export default function ImportPage() {
         },
       });
 
-      // Send notification for each postal code
-      for (const postalCode of postalCodes) {
+      // Send notification for each city
+      for (const cityKey of cities) {
+        const [city, state, country] = cityKey.split("|");
         try {
           const command = new InvokeCommand({
             FunctionName: NOTIFICATIONS_LAMBDA_FUNCTION,
             InvocationType: "RequestResponse",
-            Payload: Buffer.from(
-              JSON.stringify({
-                postalCode,
-                triggerType: "data_update",
-                adminTriggered: true,
-              })
-            ),
+            Payload: Buffer.from(JSON.stringify({
+              city,
+              state,
+              country,
+              triggerType: "data_update",
+              adminTriggered: true,
+            })),
           });
 
           const response = await lambdaClient.send(command);
@@ -426,7 +441,7 @@ export default function ImportPage() {
             }
           }
         } catch (error) {
-          console.error(`Failed to send notifications for ${postalCode}:`, error);
+          console.error(`Failed to send notifications for ${city}, ${state}:`, error);
         }
       }
 
@@ -532,8 +547,8 @@ export default function ImportPage() {
     .split("\n")
     .slice(1, 3)
     .map((line) => {
-      const [postalCode, contaminantId, value, source] = line.split(",");
-      return `{"postalCode": "${postalCode}", "contaminantId": "${contaminantId}", "value": ${value}${source ? `, "source": "${source}"` : ""}}`;
+      const [city, state, country, contaminantId, value, source] = line.split(",");
+      return `{"city": "${city}", "state": "${state}", "country": "${country}", "contaminantId": "${contaminantId}", "value": ${value}${source ? `, "source": "${source}"` : ""}}`;
     })
     .join(",\n  ")}
 ]`}
@@ -643,7 +658,9 @@ export default function ImportPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Status</TableHead>
-                  <TableHead>Postal Code</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>State</TableHead>
+                  <TableHead>Country</TableHead>
                   <TableHead>Contaminant ID</TableHead>
                   <TableHead>Value</TableHead>
                   <TableHead>Source</TableHead>
@@ -660,7 +677,9 @@ export default function ImportPage() {
                         <XCircle className="h-4 w-4 text-red-500" />
                       )}
                     </TableCell>
-                    <TableCell>{row.postalCode}</TableCell>
+                    <TableCell>{row.city}</TableCell>
+                    <TableCell>{row.state}</TableCell>
+                    <TableCell>{row.country}</TableCell>
                     <TableCell>{row.contaminantId}</TableCell>
                     <TableCell>{row.value}</TableCell>
                     <TableCell>{row.source || "-"}</TableCell>

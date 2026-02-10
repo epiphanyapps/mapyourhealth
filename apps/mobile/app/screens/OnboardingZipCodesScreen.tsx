@@ -1,62 +1,66 @@
 /**
- * OnboardingZipCodesScreen
+ * OnboardingLocationsScreen
  *
- * Screen for new users to select their initial zip codes during onboarding.
- * Requires at least 1 zip code to continue to the dashboard.
+ * Screen for new users to select their initial locations during onboarding.
+ * Requires at least 1 location to continue to the dashboard.
  */
 
 import { FC, useState } from "react"
-import { View, TextStyle, ViewStyle, Alert } from "react-native"
+import { View, TextStyle, ViewStyle, Alert, Pressable, ScrollView } from "react-native"
+import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Button } from "@/components/Button"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { ZipCodeSearch, ZipCodeSelection } from "@/components/ZipCodeSearch"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { createZipCodeSubscription } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
+interface LocationSelection {
+  city: string
+  state: string
+  country: string
+}
+
 interface OnboardingZipCodesScreenProps extends AppStackScreenProps<"OnboardingZipCodes"> {}
 
 export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ navigation }) => {
-  const [selectedZipCodes, setSelectedZipCodes] = useState<ZipCodeSelection[]>([])
+  const [selectedLocations, setSelectedLocations] = useState<LocationSelection[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
 
-  const { themed } = useAppTheme()
+  const { themed, theme } = useAppTheme()
 
-  const canContinue = selectedZipCodes.length >= 1
+  const canContinue = selectedLocations.length >= 1
 
-  // Handle postal code selection from PlacesSearchBar
-  const handlePostalCodeSelect = (postalCode: string, cityName?: string, state?: string) => {
+  // Handle location selection from PlacesSearchBar
+  const handleLocationSelect = (city: string, state: string, country: string) => {
     // Check if already selected
-    if (selectedZipCodes.some((s) => s.zipCode === postalCode)) {
-      setError("This postal code is already selected")
+    if (selectedLocations.some((s) => s.city === city && s.state === state)) {
+      setError("This location is already selected")
       return
     }
 
     // Check max selections
-    if (selectedZipCodes.length >= 10) {
-      setError("Maximum 10 postal codes allowed")
+    if (selectedLocations.length >= 10) {
+      setError("Maximum 10 locations allowed")
       return
     }
 
     setError("")
-    setSelectedZipCodes([
-      ...selectedZipCodes,
-      {
-        zipCode: postalCode,
-        cityName: cityName || "Unknown",
-        state: state || "",
-      },
-    ])
+    setSelectedLocations([...selectedLocations, { city, state, country }])
+  }
+
+  // Remove a location from selection
+  const removeLocation = (index: number) => {
+    setSelectedLocations(selectedLocations.filter((_, i) => i !== index))
   }
 
   async function handleContinue() {
     if (!canContinue) {
-      setError("Please select at least 1 zip code to continue")
+      setError("Please select at least 1 location to continue")
       return
     }
 
@@ -64,21 +68,19 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
     setError("")
 
     try {
-      // Save all selected zip codes as subscriptions
-      const promises = selectedZipCodes.map((selection) =>
-        createZipCodeSubscription(selection.zipCode, selection.cityName, selection.state),
+      const promises = selectedLocations.map((selection) =>
+        createZipCodeSubscription(selection.city, selection.state, selection.country),
       )
 
       await Promise.all(promises)
 
-      // Navigate to dashboard
       navigation.reset({
         index: 0,
         routes: [{ name: "Dashboard" }],
       })
     } catch (err) {
       console.error("Error saving subscriptions:", err)
-      Alert.alert("Error", "Failed to save your zip code subscriptions. Please try again.", [
+      Alert.alert("Error", "Failed to save your location subscriptions. Please try again.", [
         { text: "OK" },
       ])
       setError("Failed to save subscriptions. Please try again.")
@@ -105,28 +107,56 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
       <View style={themed($contentContainer)}>
         <Text text="Select Your Locations" preset="formLabel" style={themed($sectionTitle)} />
         <Text
-          text="Add the locations you want to monitor. You can add up to 10 locations including your home, work, and places where family members live."
+          text="Add the cities you want to monitor. You can add up to 10 locations including your home, work, and places where family members live."
           style={themed($sectionDescription)}
           size="sm"
         />
 
-        {/* City search with Google Places */}
+        {/* City search */}
         <Text text="Search by city" style={themed($searchLabel)} size="sm" />
         <PlacesSearchBar
-          onPostalCodeSelect={handlePostalCodeSelect}
-          placeholder="Search city or postal code..."
+          onLocationSelect={handleLocationSelect}
+          placeholder="Search city or location..."
         />
 
-        {/* Manual postal code entry */}
-        <Text text="Or enter postal code directly" style={themed($searchLabelAlt)} size="sm" />
-        <View style={themed($searchContainer)}>
-          <ZipCodeSearch
-            selectedZipCodes={selectedZipCodes}
-            onSelectionChange={setSelectedZipCodes}
-            maxSelections={10}
-            placeholder="Enter postal code..."
-          />
-        </View>
+        {/* Selected locations */}
+        {selectedLocations.length > 0 && (
+          <View style={themed($chipsSection)}>
+            <Text size="sm" style={{ color: theme.colors.textDim, textAlign: "right" }}>
+              {selectedLocations.length} of 10 selected
+            </Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8 }}>
+                {selectedLocations.map((loc, index) => (
+                  <View
+                    key={`${loc.city}-${loc.state}-${index}`}
+                    style={{
+                      flexDirection: "row",
+                      alignItems: "center",
+                      backgroundColor: theme.colors.palette.neutral200,
+                      borderRadius: 20,
+                      paddingLeft: 12,
+                      paddingRight: 8,
+                      paddingVertical: 6,
+                      gap: 6,
+                    }}
+                  >
+                    <Text style={{ fontSize: 14, color: theme.colors.text }}>
+                      {loc.city}, {loc.state}
+                    </Text>
+                    <Pressable onPress={() => removeLocation(index)} style={{ padding: 2 }}>
+                      <MaterialCommunityIcons
+                        name="close-circle"
+                        size={20}
+                        color={theme.colors.textDim}
+                      />
+                    </Pressable>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+          </View>
+        )}
 
         {error ? <Text text={error} style={themed($errorText)} size="sm" /> : null}
 
@@ -149,7 +179,11 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
         />
 
         {!canContinue && (
-          <Text text="Select at least 1 zip code to continue" style={themed($hintText)} size="xs" />
+          <Text
+            text="Select at least 1 location to continue"
+            style={themed($hintText)}
+            size="xs"
+          />
         )}
       </View>
     </Screen>
@@ -190,20 +224,15 @@ const $sectionDescription: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   marginBottom: spacing.md,
 })
 
-const $searchContainer: ThemedStyle<ViewStyle> = ({ spacing }) => ({
-  marginTop: spacing.sm,
-})
-
 const $searchLabel: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
   color: colors.textDim,
   marginTop: spacing.md,
   marginBottom: spacing.xs,
 })
 
-const $searchLabelAlt: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
-  color: colors.textDim,
-  marginTop: spacing.lg,
-  marginBottom: spacing.xs,
+const $chipsSection: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  marginTop: spacing.md,
+  gap: 8,
 })
 
 const $errorText: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({

@@ -53,7 +53,7 @@ interface HazardReport {
   category: Category | null;
   description: string;
   location: string;
-  zipCode?: string | null;
+  city?: string | null;
   status: ReportStatus | null;
   adminNotes?: string | null;
   owner?: string | null;
@@ -233,9 +233,9 @@ export default function ReportsPage() {
                     <TableCell>
                       <div>
                         <div className="truncate max-w-32">{report.location}</div>
-                        {report.zipCode && (
+                        {report.city && (
                           <div className="text-xs text-muted-foreground">
-                            {report.zipCode}
+                            {report.city}
                           </div>
                         )}
                       </div>
@@ -313,9 +313,9 @@ export default function ReportsPage() {
               <div>
                 <Label className="text-muted-foreground">Location</Label>
                 <p className="mt-1">{selectedReport.location}</p>
-                {selectedReport.zipCode && (
+                {selectedReport.city && (
                   <p className="text-sm text-muted-foreground">
-                    Zip: {selectedReport.zipCode}
+                    City: {selectedReport.city}
                   </p>
                 )}
               </div>

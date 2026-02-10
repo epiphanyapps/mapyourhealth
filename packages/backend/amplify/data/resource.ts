@@ -113,15 +113,15 @@ const schema = a.schema({
     .secondaryIndexes((index) => [index("code"), index("country")]),
 
   /**
-   * Location - maps zip/postal codes to jurisdictions and cities
-   * Enables looking up which regulations apply to a location
-   * Enables querying measurements by city or state
+   * Location - maps cities/counties to jurisdictions
+   * Granularity: Country → State/Province → County/Region → City
+   * No postal code / ZIP code level data
    * Public read, admin write
    */
   Location: a
     .model({
-      postalCode: a.string().required(), // ZIP or postal code
-      city: a.string().required(), // City name for search
+      city: a.string().required(), // City name
+      county: a.string(), // County or region name
       state: a.string().required(), // State/province code (NY, QC, etc.)
       country: a.string().required(), // "US", "CA"
       jurisdictionCode: a.string().required(), // Which regulations apply: "US-NY", "CA-QC"
@@ -134,19 +134,23 @@ const schema = a.schema({
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ])
     .secondaryIndexes((index) => [
-      index("postalCode"),
       index("jurisdictionCode"),
-      index("city"),   // Query all postal codes in a city
-      index("state"),  // Query all postal codes in a state
+      index("city"),   // Query locations by city
+      index("state"),  // Query locations by state
+      index("county"), // Query locations by county
+      index("country"), // Query locations by country
     ]),
 
   /**
    * LocationMeasurement - actual contaminant measurements for locations
+   * Keyed by city+state instead of postal code
    * Public read, admin write
    */
   LocationMeasurement: a
     .model({
-      postalCode: a.string().required(),
+      city: a.string().required(), // City name
+      state: a.string().required(), // State/province code
+      country: a.string().required(), // "US", "CA"
       contaminantId: a.string().required(),
       value: a.float().required(),
       measuredAt: a.datetime().required(),
@@ -160,20 +164,22 @@ const schema = a.schema({
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ])
     .secondaryIndexes((index) => [
-      index("postalCode"),
+      index("city"),
+      index("state"),
       index("contaminantId"),
     ]),
 
   /**
    * UserSubscription - location following with notification preferences
+   * Subscriptions are at city level (no postal codes)
    * Owner only
    */
   UserSubscription: a
     .model({
-      postalCode: a.string().required(),
-      cityName: a.string(),
-      state: a.string(),
-      country: a.string(),
+      city: a.string().required(), // City name
+      state: a.string().required(), // State/province code
+      country: a.string().required(), // "US", "CA"
+      county: a.string(), // County/region (optional)
       // Notification preferences
       enablePush: a.boolean().default(true),
       enableEmail: a.boolean().default(false),
@@ -187,7 +193,7 @@ const schema = a.schema({
       expoPushToken: a.string(),
     })
     .authorization((allow) => [allow.owner()])
-    .secondaryIndexes((index) => [index("postalCode")]),
+    .secondaryIndexes((index) => [index("city"), index("state")]),
 
   /**
    * NotificationLog - audit trail for sent notifications
@@ -197,7 +203,9 @@ const schema = a.schema({
     .model({
       subscriptionId: a.string().required(),
       userId: a.string().required(),
-      postalCode: a.string().required(),
+      city: a.string().required(), // City name
+      state: a.string().required(), // State/province code
+      country: a.string().required(), // "US", "CA"
       type: a.enum(["push", "email"]),
       status: a.enum(["pending", "sent", "failed", "delivered"]),
       title: a.string().required(),
@@ -215,7 +223,7 @@ const schema = a.schema({
       // Lambda functions use resource-based IAM policies to write
     ])
     .secondaryIndexes((index) => [
-      index("postalCode"),
+      index("city"),
       index("userId"),
     ]),
 
@@ -228,7 +236,9 @@ const schema = a.schema({
       category: a.enum(["water", "air", "health", "disaster"]),
       description: a.string().required(),
       location: a.string().required(),
-      zipCode: a.string(),
+      city: a.string(),
+      state: a.string(),
+      country: a.string(),
       status: a.enum(["pending", "reviewed", "resolved", "dismissed"]),
       adminNotes: a.string(),
     })

@@ -7,13 +7,13 @@ import { Text } from "./Text"
 
 export interface LocationHeaderProps {
   /**
-   * The zip code to display prominently
+   * The location name to display prominently (city, state)
    */
-  zipCode: string
+  locationName: string
   /**
-   * The city/area name to display below the zip code
+   * Secondary text (e.g., county, country)
    */
-  cityName: string
+  secondaryText: string
   /**
    * Optional style override for the container
    */
@@ -25,10 +25,10 @@ export interface LocationHeaderProps {
  * with a location pin icon.
  *
  * @example
- * <LocationHeader zipCode="90210" cityName="Beverly Hills, CA" />
+ * <LocationHeader locationName="Beverly Hills, CA" secondaryText="Los Angeles County" />
  */
 export function LocationHeader(props: LocationHeaderProps) {
-  const { zipCode, cityName, style } = props
+  const { locationName, secondaryText, style } = props
   const { theme } = useAppTheme()
 
   const $container: ViewStyle = {
@@ -46,14 +46,14 @@ export function LocationHeader(props: LocationHeaderProps) {
     flex: 1,
   }
 
-  const $zipCodeText: TextStyle = {
-    fontSize: 28,
+  const $locationNameText: TextStyle = {
+    fontSize: 24,
     fontWeight: "700",
     color: theme.colors.text,
-    lineHeight: 34,
+    lineHeight: 30,
   }
 
-  const $cityNameText: TextStyle = {
+  const $secondaryTextStyle: TextStyle = {
     fontSize: 16,
     color: theme.colors.textDim,
     marginTop: 2,
@@ -70,10 +70,10 @@ export function LocationHeader(props: LocationHeaderProps) {
         />
       </View>
       <View style={$textContainer}>
-        <Text style={$zipCodeText} accessibilityRole="header">
-          {zipCode}
+        <Text style={$locationNameText} accessibilityRole="header">
+          {locationName}
         </Text>
-        <Text style={$cityNameText}>{cityName}</Text>
+        <Text style={$secondaryTextStyle}>{secondaryText}</Text>
       </View>
     </View>
   )

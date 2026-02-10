@@ -82,12 +82,13 @@ function calculateStatus(
   }
 }
 
-export default function PostalCodeDetailPage({
+export default function LocationDetailPage({
   params,
 }: {
   params: Promise<{ zipCode: string }>;
 }) {
-  const { zipCode: postalCode } = use(params);
+  const { zipCode: locationId } = use(params);
+  const cityName = decodeURIComponent(locationId);
   const router = useRouter();
   const [measurements, setMeasurements] = useState<LocationMeasurement[]>([]);
   const [contaminants, setContaminants] = useState<Contaminant[]>([]);
@@ -111,8 +112,8 @@ export default function PostalCodeDetailPage({
       const client = generateClient<Schema>();
 
       const [measurementsResult, contaminantsResult, thresholdsResult] = await Promise.all([
-        client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
-          postalCode,
+        client.models.LocationMeasurement.listLocationMeasurementByCity({
+          city: cityName,
         }),
         client.models.Contaminant.list({ limit: 1000 }),
         client.models.ContaminantThreshold.list({ limit: 1000 }),
@@ -127,7 +128,7 @@ export default function PostalCodeDetailPage({
     } finally {
       setIsLoading(false);
     }
-  }, [postalCode]);
+  }, [cityName]);
 
   useEffect(() => {
     fetchData();
@@ -190,7 +191,9 @@ export default function PostalCodeDetailPage({
       const now = new Date().toISOString();
 
       const measurementData = {
-        postalCode,
+        city: cityName,
+        state: "",
+        country: "",
         contaminantId: formData.contaminantId,
         value,
         measuredAt: now,
@@ -258,10 +261,10 @@ export default function PostalCodeDetailPage({
         <div>
           <div className="flex items-center gap-2">
             <MapPin className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">{postalCode}</h1>
+            <h1 className="text-3xl font-bold tracking-tight">{cityName}</h1>
           </div>
           <p className="text-muted-foreground">
-            Manage contaminant measurements for this postal code
+            Manage contaminant measurements for this location
           </p>
         </div>
       </div>

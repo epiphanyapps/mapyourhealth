@@ -207,22 +207,7 @@ export async function getJurisdictionsByCountry(country: string): Promise<Amplif
 // =============================================================================
 
 /**
- * Fetch location by postal code
- */
-export async function getLocationByPostalCode(postalCode: string): Promise<AmplifyLocation | null> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.listLocationByPostalCode({
-    postalCode,
-  })
-  if (errors) {
-    console.error("Error fetching location:", errors)
-    throw new Error("Failed to fetch location")
-  }
-  return data.length > 0 ? data[0] : null
-}
-
-/**
- * Fetch all locations by city name
+ * Fetch locations by city name
  * Uses the city index for efficient lookup
  */
 export async function getLocationsByCity(city: string): Promise<AmplifyLocation[]> {
@@ -254,6 +239,36 @@ export async function getLocationsByState(state: string): Promise<AmplifyLocatio
 }
 
 /**
+ * Fetch all locations by county/region
+ */
+export async function getLocationsByCounty(county: string): Promise<AmplifyLocation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.listLocationByCounty({
+    county,
+  })
+  if (errors) {
+    console.error("Error fetching locations by county:", errors)
+    throw new Error("Failed to fetch locations by county")
+  }
+  return data
+}
+
+/**
+ * Fetch all locations by country
+ */
+export async function getLocationsByCountry(country: string): Promise<AmplifyLocation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Location.listLocationByCountry({
+    country,
+  })
+  if (errors) {
+    console.error("Error fetching locations by country:", errors)
+    throw new Error("Failed to fetch locations by country")
+  }
+  return data
+}
+
+/**
  * Fetch all locations from the database
  * Used for building the search index
  */
@@ -274,19 +289,37 @@ export async function getAllLocations(): Promise<AmplifyLocation[]> {
 // =============================================================================
 
 /**
- * Fetch measurements for a specific postal code (public read - uses userPool when authenticated, IAM for guests)
+ * Fetch measurements for a specific city (public read - uses userPool when authenticated, IAM for guests)
  */
 export async function getLocationMeasurements(
-  postalCode: string,
+  city: string,
 ): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
   const { data, errors } =
-    await client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
-      postalCode,
+    await client.models.LocationMeasurement.listLocationMeasurementByCity({
+      city,
     })
   if (errors) {
     console.error("Error fetching location measurements:", errors)
     throw new Error("Failed to fetch location measurements")
+  }
+  return data
+}
+
+/**
+ * Fetch measurements for a specific state
+ */
+export async function getLocationMeasurementsByState(
+  state: string,
+): Promise<AmplifyLocationMeasurement[]> {
+  const client = await getPublicClient()
+  const { data, errors } =
+    await client.models.LocationMeasurement.listLocationMeasurementByState({
+      state,
+    })
+  if (errors) {
+    console.error("Error fetching location measurements by state:", errors)
+    throw new Error("Failed to fetch location measurements by state")
   }
   return data
 }
@@ -328,20 +361,20 @@ export interface CreateSubscriptionOptions {
 }
 
 /**
- * Create a new subscription for the current user
+ * Create a new subscription for the current user (city-level)
  */
 export async function createUserSubscription(
-  postalCode: string,
-  cityName?: string,
-  state?: string,
-  country?: string,
+  city: string,
+  state: string,
+  country: string,
+  county?: string,
   options?: CreateSubscriptionOptions,
 ): Promise<AmplifyUserSubscription> {
   const { data, errors } = await getPrivateClient().models.UserSubscription.create({
-    postalCode,
-    cityName,
+    city,
     state,
     country,
+    county,
     enablePush: options?.enablePush ?? true,
     enableEmail: options?.enableEmail ?? false,
     alertOnDanger: options?.alertOnDanger ?? true,
@@ -418,7 +451,9 @@ export async function createHazardReport(reportData: {
   category: "water" | "air" | "health" | "disaster"
   description: string
   location: string
-  zipCode?: string
+  city?: string
+  state?: string
+  country?: string
 }): Promise<AmplifyHazardReport> {
   const { data, errors } = await getPrivateClient().models.HazardReport.create({
     ...reportData,
@@ -470,18 +505,18 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
 }
 
 /** @deprecated Use getLocationMeasurements instead */
-export async function getZipCodeStats(zipCode: string): Promise<AmplifyLocationMeasurement[]> {
-  return getLocationMeasurements(zipCode)
+export async function getZipCodeStats(city: string): Promise<AmplifyLocationMeasurement[]> {
+  return getLocationMeasurements(city)
 }
 
 /** @deprecated Use createUserSubscription instead */
 export async function createZipCodeSubscription(
-  zipCode: string,
-  cityName?: string,
-  state?: string,
+  city: string,
+  state: string,
+  country: string,
   options?: { notifyWhenDataAvailable?: boolean },
 ): Promise<AmplifyUserSubscription> {
-  return createUserSubscription(zipCode, cityName, state, undefined, {
+  return createUserSubscription(city, state, country, undefined, {
     notifyWhenDataAvailable: options?.notifyWhenDataAvailable,
   })
 }

@@ -1,11 +1,10 @@
 /**
  * PlacesSearchBar
  *
- * A search bar component for postal code and city search.
+ * A search bar component for city and location search.
  *
  * Features:
- * - Direct postal code entry (US and Canadian formats)
- * - City/state autocomplete search
+ * - City/state/county autocomplete search
  * - Location button for GPS-based lookup
  */
 
@@ -26,24 +25,18 @@ import { SearchSuggestionsDropdown } from "@/components/SearchSuggestionsDropdow
 import { SearchSuggestion } from "@/data/types/safety"
 import { useLocationSearch } from "@/hooks/useLocationSearch"
 import { useAppTheme } from "@/theme/context"
-import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 
 export interface PlacesSearchBarProps {
   /**
-   * Callback when a postal code is entered directly
-   * @param postalCode The normalized postal code
-   */
-  onPostalCodeSelect: (postalCode: string, cityName?: string, state?: string) => void
-  /**
-   * Callback when a city is selected from suggestions
+   * Callback when a location is selected from suggestions
    * @param city The city name
    * @param state The state/province code
-   * @param postalCodes Array of postal codes in this city
+   * @param country The country code
    */
-  onCitySelect?: (city: string, state: string, postalCodes: string[]) => void
+  onLocationSelect: (city: string, state: string, country: string) => void
   /**
    * Placeholder text
-   * @default "Enter postal code..."
+   * @default "Search city or location..."
    */
   placeholder?: string
   /**
@@ -67,13 +60,12 @@ export interface PlacesSearchBarProps {
 }
 
 /**
- * PlacesSearchBar component for searching postal codes and cities
+ * PlacesSearchBar component for searching cities and locations
  */
 export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const {
-    onPostalCodeSelect,
-    onCitySelect,
-    placeholder = "Enter postal code...",
+    onLocationSelect,
+    placeholder = "Search city or location...",
     style,
     showLocationButton = false,
     onLocationPress,
@@ -112,37 +104,25 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       clearSuggestions()
       setInputValue("")
 
-      if (suggestion.type === "postalCode") {
-        // Direct postal code selection
-        onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
-      } else if (suggestion.type === "city" || suggestion.type === "state") {
-        // City or state selection
-        if (onCitySelect && suggestion.state) {
-          onCitySelect(suggestion.city || "", suggestion.state, suggestion.postalCodes)
-        } else if (suggestion.postalCodes.length === 1) {
-          // Single location - treat as postal code selection
-          onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
-        } else {
-          // Multiple locations but no onCitySelect - use first postal code
-          onPostalCodeSelect(suggestion.postalCodes[0], suggestion.city, suggestion.state)
-        }
+      if (suggestion.city && suggestion.state && suggestion.country) {
+        onLocationSelect(suggestion.city, suggestion.state, suggestion.country)
+      } else if (suggestion.state && suggestion.country) {
+        // State-level selection - use state as city placeholder
+        onLocationSelect("", suggestion.state, suggestion.country)
       }
     },
-    [onPostalCodeSelect, onCitySelect, clearSuggestions],
+    [onLocationSelect, clearSuggestions],
   )
 
   /**
-   * Handle direct postal code submission (Enter key)
+   * Handle search submission (Enter key)
    */
   const handleSubmit = useCallback(() => {
-    const trimmed = inputValue.trim()
-    if (isValidPostalCode(trimmed)) {
-      setShowSuggestions(false)
-      clearSuggestions()
-      onPostalCodeSelect(normalizePostalCode(trimmed))
-      setInputValue("")
+    // If there are suggestions, select the first one
+    if (suggestions.length > 0) {
+      handleSuggestionSelect(suggestions[0])
     }
-  }, [inputValue, onPostalCodeSelect, clearSuggestions])
+  }, [suggestions, handleSuggestionSelect])
 
   /**
    * Handle dropdown dismiss
@@ -212,8 +192,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
             returnKeyType="search"
             keyboardType="default"
             autoCapitalize="characters"
-            accessibilityLabel="Search postal codes and cities"
-            accessibilityHint="Enter a postal code or city name to search"
+            accessibilityLabel="Search cities and locations"
+            accessibilityHint="Enter a city or location name to search"
           />
           {isSearching && (
             <ActivityIndicator

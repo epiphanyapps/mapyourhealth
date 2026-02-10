@@ -1,7 +1,7 @@
 /**
  * useLocationSearch Hook
  *
- * Provides city/state/postal code search with autocomplete suggestions.
+ * Provides city/state/county search with autocomplete suggestions.
  * Fetches all locations once on mount and performs client-side filtering.
  */
 
@@ -9,7 +9,6 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 
 import { SearchSuggestion } from "@/data/types/safety"
 import { getAllLocations, AmplifyLocation } from "@/services/amplify/data"
-import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
 
 /** Debounce delay for search in milliseconds */
 const SEARCH_DEBOUNCE_MS = 300
@@ -24,7 +23,7 @@ interface GroupedLocation {
   city: string
   state: string
   country: string
-  postalCodes: string[]
+  county?: string
 }
 
 interface UseLocationSearchResult {
@@ -104,16 +103,12 @@ export function useLocationSearch(): UseLocationSearchResult {
       if (!loc.city || !loc.state) continue
 
       const key = `${loc.city.toLowerCase()}|${loc.state.toLowerCase()}`
-      const existing = groups.get(key)
-
-      if (existing) {
-        existing.postalCodes.push(loc.postalCode)
-      } else {
+      if (!groups.has(key)) {
         groups.set(key, {
           city: loc.city,
           state: loc.state,
           country: loc.country || "US",
-          postalCodes: [loc.postalCode],
+          county: (loc as any).county ?? undefined,
         })
       }
     }
@@ -123,21 +118,16 @@ export function useLocationSearch(): UseLocationSearchResult {
 
   // Group locations by state only
   const groupedByState = useMemo(() => {
-    const groups = new Map<string, { state: string; country: string; postalCodes: string[] }>()
+    const groups = new Map<string, { state: string; country: string }>()
 
     for (const loc of locations) {
       if (!loc.state) continue
 
       const key = loc.state.toLowerCase()
-      const existing = groups.get(key)
-
-      if (existing) {
-        existing.postalCodes.push(loc.postalCode)
-      } else {
+      if (!groups.has(key)) {
         groups.set(key, {
           state: loc.state,
           country: loc.country || "US",
-          postalCodes: [loc.postalCode],
         })
       }
     }
@@ -161,61 +151,31 @@ export function useLocationSearch(): UseLocationSearchResult {
       const results: SearchSuggestion[] = []
       const queryLower = trimmedQuery.toLowerCase()
 
-      // Check if query is a valid postal code
-      if (isValidPostalCode(trimmedQuery)) {
-        const normalized = normalizePostalCode(trimmedQuery)
-        const matchingLocation = locations.find(
-          (loc) => loc.postalCode.toUpperCase() === normalized.toUpperCase(),
-        )
-
-        if (matchingLocation) {
-          results.push({
-            type: "postalCode",
-            displayText:
-              matchingLocation.city && matchingLocation.state
-                ? `${matchingLocation.postalCode} - ${matchingLocation.city}, ${matchingLocation.state}`
-                : matchingLocation.postalCode,
-            secondaryText: "Postal code",
-            postalCodes: [matchingLocation.postalCode],
-            city: matchingLocation.city ?? undefined,
-            state: matchingLocation.state ?? undefined,
-            country: matchingLocation.country ?? "US",
-          })
-        } else {
-          // Even if not in our DB, still suggest as a postal code search
-          results.push({
-            type: "postalCode",
-            displayText: normalized,
-            secondaryText: "Search postal code",
-            postalCodes: [normalized],
-          })
-        }
-      }
-
       // Search cities (partial match at start of city name)
       const matchingCities = groupedByCityState.filter((group) =>
         group.city.toLowerCase().startsWith(queryLower),
       )
 
-      // Sort by relevance (exact matches first, then by location count)
+      // Sort by relevance (exact matches first, then alphabetically)
       matchingCities.sort((a, b) => {
         const aExact = a.city.toLowerCase() === queryLower
         const bExact = b.city.toLowerCase() === queryLower
         if (aExact && !bExact) return -1
         if (!aExact && bExact) return 1
-        return b.postalCodes.length - a.postalCodes.length
+        return a.city.localeCompare(b.city)
       })
 
-      for (const city of matchingCities.slice(0, MAX_SUGGESTIONS - results.length)) {
-        const locationCount = city.postalCodes.length
+      for (const city of matchingCities.slice(0, MAX_SUGGESTIONS)) {
         results.push({
           type: "city",
           displayText: `${city.city}, ${city.state}`,
-          secondaryText: locationCount === 1 ? "1 location" : `${locationCount} locations`,
-          postalCodes: city.postalCodes,
+          secondaryText: city.county
+            ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
+            : city.country === "CA" ? "Canada" : "United States",
           city: city.city,
           state: city.state,
           country: city.country,
+          county: city.county,
         })
       }
 
@@ -227,13 +187,12 @@ export function useLocationSearch(): UseLocationSearchResult {
             group.state.toLowerCase() === queryLower,
         )
 
-        // Sort by exact match first, then by location count
         matchingStates.sort((a, b) => {
           const aExact = a.state.toLowerCase() === queryLower
           const bExact = b.state.toLowerCase() === queryLower
           if (aExact && !bExact) return -1
           if (!aExact && bExact) return 1
-          return b.postalCodes.length - a.postalCodes.length
+          return a.state.localeCompare(b.state)
         })
 
         for (const state of matchingStates.slice(0, MAX_SUGGESTIONS - results.length)) {
@@ -243,12 +202,10 @@ export function useLocationSearch(): UseLocationSearchResult {
           )
           if (alreadyHasStateCity) continue
 
-          const locationCount = state.postalCodes.length
           results.push({
             type: "state",
             displayText: state.state,
-            secondaryText: locationCount === 1 ? "1 location" : `${locationCount} locations`,
-            postalCodes: state.postalCodes,
+            secondaryText: state.country === "CA" ? "Canada" : "United States",
             state: state.state,
             country: state.country,
           })
@@ -258,7 +215,7 @@ export function useLocationSearch(): UseLocationSearchResult {
       setSuggestions(results.slice(0, MAX_SUGGESTIONS))
       setIsSearching(false)
     },
-    [locations, groupedByCityState, groupedByState],
+    [groupedByCityState, groupedByState],
   )
 
   // Debounced search function
