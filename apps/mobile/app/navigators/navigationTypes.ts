@@ -30,7 +30,7 @@ export type AppStackParamList = {
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: { zipCode?: string } | undefined
-  CategoryDetail: { category: StatCategory; zipCode: string }
+  CategoryDetail: { category: StatCategory; zipCode: string; subCategoryId?: string }
   Report: undefined
   SubscriptionsSettings: undefined
   Profile: undefined
