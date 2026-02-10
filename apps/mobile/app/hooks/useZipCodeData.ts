@@ -568,3 +568,18 @@ export function getAlertStats(
     }))
     .filter((item) => item.definition) // Filter out any without matching definition
 }
+
+/**
+ * Helper to get only risk stats (danger/warning) for a specific category.
+ * This is used for the risk-only display mode where safe stats are hidden.
+ */
+export function getRiskStatsForCategory(
+  zipData: ZipCodeData,
+  category: StatCategory,
+  statDefinitions: GenericDefinition[],
+): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
+  // Get all stats for the category, then filter to only risks
+  return getStatsForCategory(zipData, category, statDefinitions).filter(
+    ({ stat }) => stat.status === "danger" || stat.status === "warning",
+  )
+}
