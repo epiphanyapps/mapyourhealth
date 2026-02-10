@@ -30,7 +30,9 @@ export interface InAppNotification {
   body: string
   data?: {
     screen?: string
-    postalCode?: string
+    city?: string
+    state?: string
+    country?: string
     contaminantId?: string
   }
 }
@@ -105,11 +107,11 @@ export const NotificationProvider: FC<PropsWithChildren> = ({ children }) => {
       return
     }
 
-    const { postalCode, screen } = notification.data
+    const { city, state, country, screen } = notification.data
 
     // Navigate based on notification data (same logic as AuthContext)
-    if (postalCode) {
-      navigate("Dashboard", { zipCode: postalCode })
+    if (city) {
+      navigate("Dashboard", { city, state, country })
     } else if (screen === "Dashboard") {
       navigate("Dashboard", undefined)
     }

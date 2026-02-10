@@ -33,9 +33,9 @@ interface SignupScreenProps extends AppStackScreenProps<"Signup"> {}
 function getContextMessage(action: PendingAction): string {
   switch (action.type) {
     case "notify_when_available":
-      return `Sign up to get notified when data for ${action.payload.zipCode} becomes available`
-    case "follow_zip_code":
-      return `Sign up to follow ${action.payload.zipCode} and receive safety alerts`
+      return `Sign up to get notified when data for ${action.payload.city || "this location"} becomes available`
+    case "follow_location":
+      return `Sign up to follow ${action.payload.city ? `${action.payload.city}, ${action.payload.state}` : "this location"} and receive safety alerts`
     case "report_hazard":
       return "Sign up to report a hazard in your area"
     default:

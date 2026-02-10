@@ -99,7 +99,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
       if (result.isSignedIn) {
         // Refresh auth state to update the navigator
         await refreshAuthState()
-        // Execute any pending action (e.g., follow zip code from guest flow)
+        // Execute any pending action (e.g., follow location from guest flow)
         await executePendingAction()
         // Navigate back to Dashboard
         navigation.navigate("Dashboard")

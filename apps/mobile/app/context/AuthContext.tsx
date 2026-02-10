@@ -32,7 +32,9 @@ import {
  */
 interface NotificationData {
   screen?: string
-  postalCode?: string
+  city?: string
+  state?: string
+  country?: string
   contaminantId?: string
 }
 
@@ -45,9 +47,9 @@ function handleNotificationNavigation(data: NotificationData | undefined): void 
 
   console.log("Navigating from notification:", data)
 
-  // Navigate to Dashboard with the postal code
-  if (data.postalCode) {
-    navigate("Dashboard", { zipCode: data.postalCode })
+  // Navigate to Dashboard with the location
+  if (data.city) {
+    navigate("Dashboard", { city: data.city, state: data.state, country: data.country })
   } else if (data.screen === "Dashboard") {
     navigate("Dashboard", undefined)
   }
