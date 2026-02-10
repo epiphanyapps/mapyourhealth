@@ -1,0 +1,155 @@
+# flow: E2E-005 Dashboard Accordion (Expandable Categories)
+# intent:
+#   Verify that categories with sub-categories expand/collapse on the dashboard:
+#   1. "Air Pollution" expands to show "Radon" sub-category
+#   2. "Pathogens" expands to show "Lyme Disease" sub-category
+#   3. "Tap Water Quality" navigates directly (no sub-categories)
+#   4. "Disaster Risk" navigates directly (no sub-categories)
+#   5. Tapping a sub-category navigates to detail with that sub-category expanded
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Search for a Location
+# ========================================
+- assertVisible:
+    text: "Search city or.*"
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or.*"
+    label: "Tap on search bar"
+
+- inputText: "10001"
+- pressKey: Enter
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "10001"
+    timeout: 10000
+
+# ========================================
+# Part 2: Verify Air Pollution Accordion
+# ========================================
+# Tap Air Pollution - should expand (not navigate)
+- tapOn:
+    text: "Air Pollut.*"
+    label: "Tap Air Pollution category to expand"
+
+- waitForAnimationToEnd
+
+# Verify Radon sub-category is visible after expansion
+- assertVisible:
+    text: "Radon"
+    label: "Radon sub-category is visible after expanding Air Pollution"
+
+# Tap Air Pollution again to collapse
+- tapOn:
+    text: "Air Pollut.*"
+    label: "Tap Air Pollution again to collapse"
+
+- waitForAnimationToEnd
+
+# Verify Radon is no longer visible (collapsed)
+- assertNotVisible:
+    text: "Radon"
+    label: "Radon sub-category is hidden after collapsing"
+
+# ========================================
+# Part 3: Verify Pathogens Accordion
+# ========================================
+# Tap Pathogens - should expand
+- tapOn:
+    text: "Pathogen.*"
+    label: "Tap Pathogens category to expand"
+
+- waitForAnimationToEnd
+
+# Verify Lyme Disease sub-category is visible
+- assertVisible:
+    text: "Lyme Disease"
+    label: "Lyme Disease sub-category is visible after expanding Pathogens"
+
+# Collapse it
+- tapOn:
+    text: "Pathogen.*"
+    label: "Tap Pathogens to collapse"
+
+- waitForAnimationToEnd
+
+# ========================================
+# Part 4: Tap Sub-category Navigates to Detail
+# ========================================
+# Expand Air Pollution again
+- tapOn:
+    text: "Air Pollut.*"
+    label: "Expand Air Pollution"
+
+- waitForAnimationToEnd
+
+# Tap on Radon sub-category - should navigate to detail
+- tapOn:
+    text: "Radon"
+    label: "Tap Radon sub-category to navigate to detail"
+
+- waitForAnimationToEnd
+
+# Verify we're on the Air Pollution detail screen
+- assertVisible:
+    text: "Air Pollution"
+    label: "Air Pollution detail screen header visible"
+
+# Verify Radon expandable card is visible and expanded
+- assertVisible:
+    text: "Radon"
+    label: "Radon section visible on detail screen"
+
+# Navigate back to dashboard
+- tapOn:
+    id: ".*back.*"
+    label: "Tap back button"
+
+- waitForAnimationToEnd
+
+# ========================================
+# Part 5: Categories Without Sub-categories Navigate Directly
+# ========================================
+# Tap Water Quality - should navigate directly (no sub-categories)
+- tapOn:
+    text: "Tap Water.*"
+    label: "Tap Tap Water Quality - should navigate directly"
+
+- waitForAnimationToEnd
+
+# Verify we're on the detail screen (header shows category name)
+- assertVisible:
+    text: "Tap Water Quality"
+    label: "Tap Water Quality detail screen is visible"
+
+# Navigate back
+- tapOn:
+    id: ".*back.*"
+    label: "Tap back button"
+
+- waitForAnimationToEnd
+
+# Verify we're back on dashboard
+- assertVisible:
+    text: "10001"
+    label: "Back on dashboard with zip code visible"
+
+# ========================================
+# Part 6: Disaster Risk Also Navigates Directly
+# ========================================
+- tapOn:
+    text: "Disaster.*"
+    label: "Tap Disaster Risk - should navigate directly"
+
+- waitForAnimationToEnd
+
+# Verify we're on the detail screen
+- assertVisible:
+    text: "Disaster Risk"
+    label: "Disaster Risk detail screen is visible"
