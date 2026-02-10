@@ -43,7 +43,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   props,
 ) {
   const { navigation, route } = props
-  const { category, zipCode } = route.params
+  const { category, zipCode, subCategoryId } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
@@ -434,6 +434,7 @@ mapyourhealth://zip/${zipData.zipCode}`
               <ExpandableCard
                 key={subCategory.id}
                 header={<Text style={$subCategoryHeader}>{subCategory.name}</Text>}
+                initiallyExpanded={subCategoryId === subCategory.id}
               >
                 <Text style={$subCategoryDescription}>{subCategory.description}</Text>
                 {subCategory.links?.map((link, idx) => (

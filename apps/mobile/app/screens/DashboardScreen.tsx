@@ -13,13 +13,14 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
+import { ExpandableCategoryCard } from "@/components/ExpandableCategoryCard"
 import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
-import { StatCategoryCard, CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
+import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
 import { WarningBanner } from "@/components/WarningBanner"
 import { useAuth } from "@/context/AuthContext"
@@ -735,13 +736,17 @@ mapyourhealth://zip/${zipData.zipCode}`
       {/* Category Cards */}
       <View style={$categoriesContainer}>
         {categories.map((category) => (
-          <StatCategoryCard
+          <ExpandableCategoryCard
             key={category}
             category={category}
             categoryName={CATEGORY_DISPLAY_NAMES[category]}
             status={getStatusForCategory(category)}
-            onPress={() => {
-              navigation.navigate("CategoryDetail", { category, zipCode: currentZipCode })
+            onPress={(subCategoryId) => {
+              navigation.navigate("CategoryDetail", {
+                category,
+                zipCode: currentZipCode,
+                subCategoryId,
+              })
             }}
           />
         ))}
