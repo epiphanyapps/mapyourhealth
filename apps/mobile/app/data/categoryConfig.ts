@@ -112,7 +112,8 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
 }
 
 /**
- * Get the description for a category with dynamic values filled in
+ * Get the description for a category with dynamic values filled in.
+ * For water category, shows risk count or "no risks detected" message.
  */
 export function getCategoryDescription(
   category: StatCategory,
@@ -122,6 +123,10 @@ export function getCategoryDescription(
   let description = config.description
 
   if (values.count !== undefined) {
+    if (values.count === 0 && category === StatCategory.water) {
+      // No risks detected for water category
+      return "No contaminants exceeding safety thresholds were detected. Your tap water meets [WHO drinking water quality standards](https://www.who.int/publications/i/item/9789241549950)."
+    }
     description = description.replace("{count}", values.count.toString())
   }
 

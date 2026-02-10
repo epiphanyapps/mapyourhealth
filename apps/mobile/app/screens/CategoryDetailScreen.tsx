@@ -27,7 +27,7 @@ import { useContaminants } from "@/context/ContaminantsContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
-import { useZipCodeData, getStatsForCategory } from "@/hooks/useZipCodeData"
+import { useZipCodeData, getRiskStatsForCategory } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -68,8 +68,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     }
   }, [refresh])
 
-  // Get stats for this category
-  const stats = zipData ? getStatsForCategory(zipData, category, statDefinitions) : []
+  // Get risk stats for this category (only warning/danger, no safe stats)
+  const stats = zipData ? getRiskStatsForCategory(zipData, category, statDefinitions) : []
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
   const categoryColor = CATEGORY_COLORS[category]
@@ -101,9 +101,9 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     })
   }, [stats, category, getWHOThreshold, getThreshold, localJurisdictionCode, localJurisdictionName])
 
-  // Count contaminants exceeding WHO standards
+  // Count of risk contaminants (all stats shown are already risks)
   const exceedingCount = useMemo(() => {
-    return tableRows.filter((row) => row.status === "danger" || row.status === "warning").length
+    return tableRows.length
   }, [tableRows])
 
   // Get category description with dynamic values
@@ -116,15 +116,14 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     })
   }, [])
 
-  // Handle Share button press - share category-specific safety data
+  // Handle Share button press - share category-specific risk data
   const handleShare = useCallback(async () => {
     if (!zipData) return
 
-    // Build stat details for this category
-    const statDetails = stats
+    // Build risk details for this category (only warning/danger stats)
+    const riskDetails = stats
       .map(({ stat, definition }) => {
-        const statusEmoji =
-          stat.status === "danger" ? "🔴" : stat.status === "warning" ? "🟡" : "🟢"
+        const statusEmoji = stat.status === "danger" ? "🔴" : "🟡"
         return `${statusEmoji} ${definition.name}: ${stat.value} ${definition.unit}`
       })
       .join("\n")
@@ -134,9 +133,9 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const shareMessage = `${categoryName} Safety Report for ${zipData.zipCode} (${locationName})
+    const shareMessage = `${categoryName} Risk Report for ${zipData.zipCode} (${locationName})
 
-${statDetails || "No data available"}
+${riskDetails || "No risks detected"}
 
 Check MapYourHealth for details.
 mapyourhealth://zip/${zipData.zipCode}`
@@ -144,7 +143,7 @@ mapyourhealth://zip/${zipData.zipCode}`
     try {
       await Share.share({
         message: shareMessage,
-        title: `${categoryName} Safety Report - ${zipData.zipCode}`,
+        title: `${categoryName} Risk Report - ${zipData.zipCode}`,
       })
     } catch (error) {
       // User cancelled or share failed - no need to show error
@@ -512,7 +511,7 @@ mapyourhealth://zip/${zipData.zipCode}`
               ))
             )
           ) : (
-            <Text style={$emptyText}>No stats available for this category.</Text>
+            <Text style={$emptyText}>No risks detected for this category.</Text>
           )}
         </View>
       </ScrollView>

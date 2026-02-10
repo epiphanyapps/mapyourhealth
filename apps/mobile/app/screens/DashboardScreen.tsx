@@ -279,17 +279,19 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [navigation],
   )
 
-  // Handle Share button press - share safety data
+  // Handle Share button press - share risk data (only categories with risks)
   const handleShare = useCallback(async () => {
     if (!zipData) return
 
-    // Build status summary for all categories
-    const categoryStatuses = categories
+    // Build risk summary - only include categories with warning or danger status
+    const categoryRisks = categories
       .map((category) => {
         const status = getStatusForCategory(category)
-        const statusEmoji = status === "danger" ? "🔴" : status === "warning" ? "🟡" : "🟢"
+        if (status === "safe") return null // Skip safe categories
+        const statusEmoji = status === "danger" ? "🔴" : "🟡"
         return `${statusEmoji} ${CATEGORY_DISPLAY_NAMES[category]}: ${status.charAt(0).toUpperCase() + status.slice(1)}`
       })
+      .filter(Boolean)
       .join("\n")
 
     const locationName =
@@ -297,9 +299,9 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const shareMessage = `Safety Alert for ${zipData.zipCode} (${locationName})
+    const shareMessage = `Risk Alert for ${zipData.zipCode} (${locationName})
 
-${categoryStatuses}
+${categoryRisks || "No risks detected"}
 
 Check MapYourHealth for details.
 mapyourhealth://zip/${zipData.zipCode}`
@@ -307,7 +309,7 @@ mapyourhealth://zip/${zipData.zipCode}`
     try {
       await Share.share({
         message: shareMessage,
-        title: `Safety Report - ${zipData.zipCode}`,
+        title: `Risk Report - ${zipData.zipCode}`,
       })
     } catch (error) {
       // User cancelled or share failed - no need to show error
