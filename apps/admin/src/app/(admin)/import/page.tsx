@@ -39,6 +39,9 @@ import { Label } from "@/components/ui/label";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { fetchAuthSession } from "aws-amplify/auth";
 
+// Lambda function name for notifications - should match the deployed function
+const NOTIFICATIONS_LAMBDA_FUNCTION = process.env.NEXT_PUBLIC_NOTIFICATIONS_LAMBDA || "process-notifications";
+
 type Contaminant = Schema["Contaminant"]["type"];
 
 // Category types for filtering contaminants
@@ -112,11 +115,12 @@ interface ImportResult {
 
 export default function ImportPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const activeCategoryRef = useRef<ImportCategory>("water");
   const [activeCategory, setActiveCategory] = useState<ImportCategory>("water");
   const [previewData, setPreviewData] = useState<ImportRow[]>([]);
   const [isImporting, setIsImporting] = useState(false);
+  const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [contaminantsMap, setContaminantsMap] = useState<Map<string, Contaminant>>(new Map());
   const [notifySubscribers, setNotifySubscribers] = useState(false);
   const [isNotifying, setIsNotifying] = useState(false);
 
@@ -135,7 +139,6 @@ export default function ImportPage() {
       }
     }
 
-    setContaminantsMap(contaminantMap);
     return contaminantMap;
   };
 
@@ -171,31 +174,63 @@ export default function ImportPage() {
     };
   };
 
-  const parseCSV = (content: string): Partial<ImportRow>[] => {
-    const lines = content.trim().split("\n");
-    const header = lines[0].toLowerCase().split(",").map((h) => h.trim());
+  // Parse a CSV line handling quoted values with commas
+  const parseCSVLine = (line: string): string[] => {
+    const values: string[] = [];
+    let current = "";
+    let inQuotes = false;
 
-    const postalCodeIdx =
-      header.indexOf("postalcode") !== -1
-        ? header.indexOf("postalcode")
-        : header.indexOf("postal_code") !== -1
-          ? header.indexOf("postal_code")
-          : header.indexOf("zipcode") !== -1
-            ? header.indexOf("zipcode")
-            : header.indexOf("zip_code");
-    const contaminantIdIdx =
-      header.indexOf("contaminantid") !== -1
-        ? header.indexOf("contaminantid")
-        : header.indexOf("contaminant_id") !== -1
-          ? header.indexOf("contaminant_id")
-          : header.indexOf("statid") !== -1
-            ? header.indexOf("statid")
-            : header.indexOf("stat_id");
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        // Check for escaped quote ""
+        if (inQuotes && line[i + 1] === '"') {
+          current += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (char === "," && !inQuotes) {
+        values.push(current.trim());
+        current = "";
+      } else {
+        current += char;
+      }
+    }
+    values.push(current.trim());
+    return values;
+  };
+
+  const parseCSV = (content: string): { rows: Partial<ImportRow>[]; error?: string } => {
+    const lines = content.trim().split("\n");
+    if (lines.length === 0) {
+      return { rows: [], error: "Empty CSV file" };
+    }
+
+    const header = parseCSVLine(lines[0]).map((h) => h.toLowerCase());
+
+    // Find column indices with multiple possible names
+    const postalCodeIdx = ["postalcode", "postal_code", "zipcode", "zip_code"]
+      .map((name) => header.indexOf(name))
+      .find((idx) => idx !== -1) ?? -1;
+    const contaminantIdIdx = ["contaminantid", "contaminant_id", "statid", "stat_id"]
+      .map((name) => header.indexOf(name))
+      .find((idx) => idx !== -1) ?? -1;
     const valueIdx = header.indexOf("value");
     const sourceIdx = header.indexOf("source");
 
-    return lines.slice(1).filter(line => line.trim()).map((line) => {
-      const values = line.split(",").map((v) => v.trim());
+    // Validate required columns exist
+    const missingColumns: string[] = [];
+    if (postalCodeIdx === -1) missingColumns.push("postalCode");
+    if (contaminantIdIdx === -1) missingColumns.push("contaminantId");
+    if (valueIdx === -1) missingColumns.push("value");
+
+    if (missingColumns.length > 0) {
+      return { rows: [], error: `Missing required columns: ${missingColumns.join(", ")}` };
+    }
+
+    const rows = lines.slice(1).filter(line => line.trim()).map((line) => {
+      const values = parseCSVLine(line);
       return {
         postalCode: values[postalCodeIdx] || "",
         contaminantId: values[contaminantIdIdx] || "",
@@ -203,6 +238,8 @@ export default function ImportPage() {
         source: sourceIdx !== -1 ? values[sourceIdx] : undefined,
       };
     });
+
+    return { rows };
   };
 
   const parseJSON = (content: string): Partial<ImportRow>[] => {
@@ -226,24 +263,42 @@ export default function ImportPage() {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // Capture the category at the start to detect race conditions
+    const categoryAtStart = activeCategory;
+
     setImportResult(null);
+    setIsProcessingFile(true);
 
     try {
-      const contaminantMap = await fetchContaminants(activeCategory);
+      const contaminantMap = await fetchContaminants(categoryAtStart);
       const content = await file.text();
+
+      // Check if category changed during async operation (race condition prevention)
+      if (categoryAtStart !== activeCategoryRef.current) {
+        toast.info("Category changed. Please re-upload the file.");
+        setIsProcessingFile(false);
+        return;
+      }
 
       let rows: Partial<ImportRow>[];
       if (file.name.endsWith(".json")) {
         rows = parseJSON(content);
       } else if (file.name.endsWith(".csv")) {
-        rows = parseCSV(content);
+        const result = parseCSV(content);
+        if (result.error) {
+          toast.error(result.error);
+          setIsProcessingFile(false);
+          return;
+        }
+        rows = result.rows;
       } else {
         toast.error("Unsupported file format. Use CSV or JSON.");
+        setIsProcessingFile(false);
         return;
       }
 
       const validatedRows = rows.map((row) =>
-        validateRow(row, contaminantMap, activeCategory)
+        validateRow(row, contaminantMap, categoryAtStart)
       );
       setPreviewData(validatedRows);
 
@@ -256,6 +311,8 @@ export default function ImportPage() {
     } catch (error) {
       console.error("Error parsing file:", error);
       toast.error("Failed to parse file");
+    } finally {
+      setIsProcessingFile(false);
     }
 
     // Reset file input
@@ -349,7 +406,7 @@ export default function ImportPage() {
       for (const postalCode of postalCodes) {
         try {
           const command = new InvokeCommand({
-            FunctionName: "process-notifications",
+            FunctionName: NOTIFICATIONS_LAMBDA_FUNCTION,
             InvocationType: "RequestResponse",
             Payload: Buffer.from(
               JSON.stringify({
@@ -387,7 +444,9 @@ export default function ImportPage() {
   };
 
   const handleCategoryChange = (category: string) => {
-    setActiveCategory(category as ImportCategory);
+    const newCategory = category as ImportCategory;
+    activeCategoryRef.current = newCategory;
+    setActiveCategory(newCategory);
     setPreviewData([]);
     setImportResult(null);
   };
@@ -505,20 +564,29 @@ export default function ImportPage() {
             accept=".csv,.json"
             onChange={handleFileSelect}
             className="hidden"
+            disabled={isProcessingFile}
           />
           <Button
             variant="outline"
             size="lg"
             className="w-full h-32 border-dashed"
             onClick={() => fileInputRef.current?.click()}
+            disabled={isProcessingFile}
           >
-            <div className="flex flex-col items-center gap-2">
-              <Upload className="h-8 w-8 text-muted-foreground" />
-              <span>Click to upload CSV or JSON file</span>
-              <span className="text-xs text-muted-foreground">
-                Validating against {CATEGORY_INFO[activeCategory].title} contaminants
-              </span>
-            </div>
+            {isProcessingFile ? (
+              <div className="flex flex-col items-center gap-2">
+                <Loader2 className="h-8 w-8 text-muted-foreground animate-spin" />
+                <span>Processing file...</span>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center gap-2">
+                <Upload className="h-8 w-8 text-muted-foreground" />
+                <span>Click to upload CSV or JSON file</span>
+                <span className="text-xs text-muted-foreground">
+                  Validating against {CATEGORY_INFO[activeCategory].title} contaminants
+                </span>
+              </div>
+            )}
           </Button>
         </CardContent>
       </Card>
@@ -584,7 +652,7 @@ export default function ImportPage() {
               </TableHeader>
               <TableBody>
                 {previewData.slice(0, 50).map((row, index) => (
-                  <TableRow key={index} className={!row.isValid ? "bg-red-50" : ""}>
+                  <TableRow key={index} className={!row.isValid ? "bg-red-50 dark:bg-red-950/30" : ""}>
                     <TableCell>
                       {row.isValid ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -596,7 +664,7 @@ export default function ImportPage() {
                     <TableCell>{row.contaminantId}</TableCell>
                     <TableCell>{row.value}</TableCell>
                     <TableCell>{row.source || "-"}</TableCell>
-                    <TableCell className="text-red-600 text-sm">{row.error}</TableCell>
+                    <TableCell className="text-red-600 dark:text-red-400 text-sm">{row.error}</TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -627,15 +695,15 @@ export default function ImportPage() {
               )}
             </div>
             {importResult.errors.length > 0 && (
-              <div className="bg-red-50 p-3 rounded-md">
-                <p className="font-medium text-red-800 mb-2">Errors:</p>
-                <ul className="text-sm text-red-700 list-disc list-inside">
+              <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md">
+                <p className="font-medium text-red-800 dark:text-red-300 mb-2">Errors:</p>
+                <ul className="text-sm text-red-700 dark:text-red-400 list-disc list-inside">
                   {importResult.errors.slice(0, 10).map((error, i) => (
                     <li key={i}>{error}</li>
                   ))}
                 </ul>
                 {importResult.errors.length > 10 && (
-                  <p className="text-sm text-red-600 mt-2">
+                  <p className="text-sm text-red-600 dark:text-red-400 mt-2">
                     ...and {importResult.errors.length - 10} more errors
                   </p>
                 )}
