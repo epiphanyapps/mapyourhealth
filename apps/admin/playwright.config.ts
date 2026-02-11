@@ -27,7 +27,7 @@ export default defineConfig({
     {
       name: "admin-chromium",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /admin\/.*.spec.ts/,
+      testMatch: /e2e\/admin\/.*.spec.ts/,
     },
 
     // Mobile Web Tests - Desktop Chrome
