@@ -194,7 +194,9 @@ const thresholds: ThresholdInput[] = [
 // ============================================================================
 
 interface LocationMeasurementInput {
-  postalCode: string;
+  city: string;
+  state: string;
+  country: string;
   contaminantId: string;
   value: number;
   source: string;
@@ -202,18 +204,18 @@ interface LocationMeasurementInput {
 
 const measurements: LocationMeasurementInput[] = [
   // Sample NYC measurements
-  { postalCode: "10001", contaminantId: "nitrate", value: 8500, source: "NYC DEP" },
-  { postalCode: "10001", contaminantId: "lead", value: 5.2, source: "NYC DEP" },
-  { postalCode: "10001", contaminantId: "arsenic", value: 3.1, source: "NYC DEP" },
+  { city: "New York", state: "NY", country: "US", contaminantId: "nitrate", value: 8500, source: "NYC DEP" },
+  { city: "New York", state: "NY", country: "US", contaminantId: "lead", value: 5.2, source: "NYC DEP" },
+  { city: "New York", state: "NY", country: "US", contaminantId: "arsenic", value: 3.1, source: "NYC DEP" },
 
   // Sample LA measurements
-  { postalCode: "90210", contaminantId: "nitrate", value: 12000, source: "LADWP" },
-  { postalCode: "90210", contaminantId: "lead", value: 8.5, source: "LADWP" },
-  { postalCode: "90210", contaminantId: "atrazine", value: 1.2, source: "LADWP" },
+  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "nitrate", value: 12000, source: "LADWP" },
+  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "lead", value: 8.5, source: "LADWP" },
+  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "atrazine", value: 1.2, source: "LADWP" },
 
   // Sample Montreal measurements
-  { postalCode: "H2X1Y4", contaminantId: "nitrate", value: 5200, source: "Ville de Montréal" },
-  { postalCode: "H2X1Y4", contaminantId: "lead", value: 4.8, source: "Ville de Montréal" },
+  { city: "Montréal", state: "QC", country: "CA", contaminantId: "nitrate", value: 5200, source: "Ville de Montréal" },
+  { city: "Montréal", state: "QC", country: "CA", contaminantId: "lead", value: 4.8, source: "Ville de Montréal" },
 ];
 
 // ============================================================================
@@ -367,31 +369,33 @@ async function seedMeasurements(): Promise<void> {
   let skipped = 0;
 
   for (const m of measurements) {
-    // Check if measurement already exists for this postal code + contaminant
-    const existingResult = await client.models.LocationMeasurement.listLocationMeasurementByPostalCode({
-      postalCode: m.postalCode,
+    // Check if measurement already exists for this city + contaminant
+    const existingResult = await client.models.LocationMeasurement.listLocationMeasurementByCity({
+      city: m.city,
     });
     const existing = existingResult.data || [];
     const alreadyExists = existing.some((e) => e.contaminantId === m.contaminantId);
 
     if (alreadyExists) {
-      console.log(`  Skipping ${m.postalCode}/${m.contaminantId} (already exists)`);
+      console.log(`  Skipping ${m.city}, ${m.state}/${m.contaminantId} (already exists)`);
       skipped++;
       continue;
     }
 
     try {
       await client.models.LocationMeasurement.create({
-        postalCode: m.postalCode,
+        city: m.city,
+        state: m.state,
+        country: m.country,
         contaminantId: m.contaminantId,
         value: m.value,
         measuredAt: new Date().toISOString(),
         source: m.source,
       });
-      console.log(`  Created ${m.postalCode}/${m.contaminantId}`);
+      console.log(`  Created ${m.city}, ${m.state}/${m.contaminantId}`);
       created++;
     } catch (error) {
-      console.error(`  Failed to create ${m.postalCode}/${m.contaminantId}:`, error);
+      console.error(`  Failed to create ${m.city}, ${m.state}/${m.contaminantId}:`, error);
     }
   }
 

@@ -53,7 +53,7 @@ const menuItems = [
     icon: Globe,
   },
   {
-    title: "Zip Code Stats",
+    title: "Location Stats",
     url: "/zip-codes",
     icon: MapPin,
   },

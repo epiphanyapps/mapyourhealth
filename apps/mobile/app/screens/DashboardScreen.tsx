@@ -29,11 +29,10 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
-import { useMultiLocationData } from "@/hooks/useMultiLocationData"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import { getPostalCodeLabel, getPostalCodeLabelCapitalized } from "@/utils/postalCode"
+// postalCode utilities removed - using city-level granularity
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -80,43 +79,39 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
 
-  // Determine the default zip code:
+  // Determine the default location:
   // 1. Route param takes priority (for navigation from other screens)
   // 2. For authenticated users, use their primary subscription
-  // 3. For guests, show empty state to prompt zip code lookup
-  const getDefaultZipCode = () => {
-    if (route.params?.zipCode) return route.params.zipCode
-    if (isAuthenticated && primarySubscription) return primarySubscription.postalCode
-    return ""
+  // 3. For guests, show empty state to prompt location lookup
+  const getDefaultLocation = (): { city: string; state: string; country: string } | null => {
+    if (route.params?.city && route.params?.state) {
+      return { city: route.params.city, state: route.params.state, country: route.params.country || "US" }
+    }
+    if (isAuthenticated && primarySubscription) {
+      return { city: primarySubscription.city, state: primarySubscription.state, country: primarySubscription.country }
+    }
+    return null
   }
 
-  // State for current zip code
-  const [currentZipCode, setCurrentZipCode] = useState(getDefaultZipCode())
+  // State for current location
+  const [currentLocation, setCurrentLocation] = useState(getDefaultLocation())
   const [isFollowing, setIsFollowing] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
-  // State for city selection (when user selects a city with multiple postal codes)
-  const [selectedCity, setSelectedCity] = useState<{
-    city: string
-    state: string
-    postalCodes: string[]
-  } | null>(null)
-
-  // Update zip code when primary subscription loads (for authenticated users)
+  // Update location when primary subscription loads (for authenticated users)
   useEffect(() => {
-    // Only auto-update if no route param was provided
-    if (!route.params?.zipCode && isAuthenticated && primarySubscription && !subsLoading) {
-      setCurrentZipCode(primarySubscription.postalCode)
+    if (!route.params?.city && isAuthenticated && primarySubscription && !subsLoading) {
+      setCurrentLocation({
+        city: primarySubscription.city,
+        state: primarySubscription.state,
+        country: primarySubscription.country,
+      })
     }
-  }, [primarySubscription, isAuthenticated, subsLoading, route.params?.zipCode])
+  }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city])
 
-  // Fetch data for current zip code from Amplify (with caching and offline support)
-  const singleLocationData = useZipCodeData(selectedCity ? "" : currentZipCode)
+  // Fetch data for current location from Amplify (with caching and offline support)
+  const locationData = useZipCodeData(currentLocation?.city || "")
 
-  // Fetch aggregated data when a city is selected
-  const multiLocationData = useMultiLocationData(selectedCity)
-
-  // Use multi-location data when a city is selected, otherwise use single location data
   const {
     zipData,
     isLoading,
@@ -126,9 +121,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     lastUpdated = null,
     isOffline,
     refresh,
-  } = selectedCity
-    ? { ...multiLocationData, isMockData: false, isCachedData: false, lastUpdated: null }
-    : singleLocationData
+  } = locationData
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -157,70 +150,51 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     StatCategory.disaster,
   ]
 
-  // Get localized label for postal codes
-  const postalCodeLabel = getPostalCodeLabel()
-  const _postalCodeLabelCap = getPostalCodeLabelCapitalized()
-
-  // Handle postal code selection from PlacesSearchBar
-  const handlePostalCodeSelect = useCallback(
-    (postalCode: string, _cityName?: string, _state?: string) => {
-      setSelectedCity(null) // Clear any city selection
-      setCurrentZipCode(postalCode)
+  // Handle location selection from PlacesSearchBar
+  const handleLocationSelect = useCallback(
+    (city: string, state: string, country: string) => {
+      setCurrentLocation({ city, state, country })
     },
     [],
   )
 
-  // Handle city selection from PlacesSearchBar
-  const handleCitySelect = useCallback((city: string, state: string, postalCodes: string[]) => {
-    if (postalCodes.length === 1) {
-      // Single postal code - treat as regular postal code selection
-      setSelectedCity(null)
-      setCurrentZipCode(postalCodes[0])
-    } else {
-      // Multiple postal codes - aggregate data
-      setSelectedCity({ city, state, postalCodes })
-      setCurrentZipCode("") // Clear single zip code when city is selected
-    }
-  }, [])
-
-  // Handle location button press - get zip code from GPS
+  // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
     const zipCode = await getLocationZipCode()
     if (zipCode) {
-      setSelectedCity(null) // Clear any city selection
-      setCurrentZipCode(zipCode)
+      // GPS returns a zip code, but we treat it as a city lookup
+      // TODO: Reverse geocode to city/state instead
+      setCurrentLocation({ city: zipCode, state: "", country: "US" })
     }
   }, [getLocationZipCode])
 
   // Handle Follow button press - auth gated
   const handleFollow = useCallback(async () => {
-    if (!zipData) return
+    if (!currentLocation) return
 
     if (isAuthenticated) {
-      // User is authenticated - create subscription via context
       setIsFollowing(true)
       try {
-        await addSubscription(zipData.zipCode, zipData.cityName, zipData.state)
-        Alert.alert("Success", `You are now following ${zipData.zipCode}`)
+        await addSubscription(currentLocation.city, currentLocation.state, currentLocation.country)
+        Alert.alert("Success", `You are now following ${currentLocation.city}, ${currentLocation.state}`)
       } catch (error) {
-        const message = error instanceof Error ? error.message : "Failed to follow zip code"
+        const message = error instanceof Error ? error.message : "Failed to follow location"
         Alert.alert("Error", message)
       } finally {
         setIsFollowing(false)
       }
     } else {
-      // Guest user - set pending action and navigate to login
       setPendingAction({
-        type: "follow_zip_code",
+        type: "follow_location",
         payload: {
-          zipCode: zipData.zipCode,
-          cityName: zipData.cityName,
-          state: zipData.state,
+          city: currentLocation.city,
+          state: currentLocation.state,
+          country: currentLocation.country,
         },
       })
       navigation.navigate("Login")
     }
-  }, [isAuthenticated, zipData, setPendingAction, navigation, addSubscription])
+  }, [isAuthenticated, currentLocation, setPendingAction, navigation, addSubscription])
 
   // Handle Report Hazard press - auth gated
   const handleReportHazard = useCallback(() => {
@@ -230,25 +204,27 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       setPendingAction({
         type: "report_hazard",
         payload: {
-          zipCode: currentZipCode,
+          city: currentLocation?.city,
+          state: currentLocation?.state,
         },
       })
       navigation.navigate("Login")
     }
-  }, [isAuthenticated, currentZipCode, setPendingAction, navigation])
+  }, [isAuthenticated, currentLocation, setPendingAction, navigation])
 
-  // Handle Notify Me press - for zip codes without data
+  // Handle Notify Me press - for locations without data
   const [isSettingNotify, setIsSettingNotify] = useState(false)
   const handleNotifyMe = useCallback(async () => {
+    if (!currentLocation) return
     if (isAuthenticated) {
       setIsSettingNotify(true)
       try {
-        await addSubscription(currentZipCode, undefined, undefined, {
+        await addSubscription(currentLocation.city, currentLocation.state, currentLocation.country, {
           notifyWhenDataAvailable: true,
         })
         Alert.alert(
           "You're on the list!",
-          `We'll notify you when data for ${currentZipCode} becomes available.`,
+          `We'll notify you when data for ${currentLocation.city}, ${currentLocation.state} becomes available.`,
         )
       } catch {
         Alert.alert("Error", "Failed to set up notification. Please try again.")
@@ -258,11 +234,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     } else {
       setPendingAction({
         type: "notify_when_available",
-        payload: { zipCode: currentZipCode },
+        payload: { city: currentLocation.city, state: currentLocation.state },
       })
       navigation.navigate("Signup")
     }
-  }, [isAuthenticated, currentZipCode, addSubscription, setPendingAction, navigation])
+  }, [isAuthenticated, currentLocation, addSubscription, setPendingAction, navigation])
 
   // Handle Sign Out from profile menu
   const handleSignOut = useCallback(async () => {
@@ -294,22 +270,20 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       .filter(Boolean)
       .join("\n")
 
-    const locationName =
-      zipData.cityName && zipData.state
-        ? `${zipData.cityName}, ${zipData.state}`
-        : zipData.cityName || zipData.state || "Unknown Location"
+    const locationName = currentLocation
+      ? `${currentLocation.city}, ${currentLocation.state}`
+      : "Unknown Location"
 
-    const shareMessage = `Risk Alert for ${zipData.zipCode} (${locationName})
+    const shareMessage = `Safety Alert for ${locationName}
 
 ${categoryRisks || "No risks detected"}
 
-Check MapYourHealth for details.
-mapyourhealth://zip/${zipData.zipCode}`
+Check MapYourHealth for details.`
 
     try {
       await Share.share({
         message: shareMessage,
-        title: `Risk Report - ${zipData.zipCode}`,
+        title: `Safety Report - ${currentLocation?.city || "Location"}`,
       })
     } catch (error) {
       // User cancelled or share failed - no need to show error
@@ -417,8 +391,8 @@ mapyourhealth://zip/${zipData.zipCode}`
     marginTop: 8,
   }
 
-  // Empty state for guests - prompt to look up a zip code
-  if (!currentZipCode && !selectedCity) {
+  // Empty state for guests - prompt to search for a location
+  if (!currentLocation) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
         <NavHeader
@@ -427,9 +401,8 @@ mapyourhealth://zip/${zipData.zipCode}`
         />
         <View style={$searchBarContainer}>
           <PlacesSearchBar
-            onPostalCodeSelect={handlePostalCodeSelect}
-            onCitySelect={handleCitySelect}
-            placeholder={`Search city or ${postalCodeLabel}...`}
+            onLocationSelect={handleLocationSelect}
+            placeholder="Search city or location..."
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -437,7 +410,7 @@ mapyourhealth://zip/${zipData.zipCode}`
         </View>
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="shield-search" size={64} color={theme.colors.tint} />
-          <Text style={$emptyStateTitle}>Find out how safe your {postalCodeLabel} is</Text>
+          <Text style={$emptyStateTitle}>Find out how safe your location is</Text>
           <Text style={$emptyStateSubtitle}>
             Search above to get safety insights on water quality, air pollution, health risks, and
             natural disasters in any area
@@ -465,9 +438,8 @@ mapyourhealth://zip/${zipData.zipCode}`
         />
         <View style={$searchBarContainer}>
           <PlacesSearchBar
-            onPostalCodeSelect={handlePostalCodeSelect}
-            onCitySelect={handleCitySelect}
-            placeholder={`Search city or ${postalCodeLabel}...`}
+            onLocationSelect={handleLocationSelect}
+            placeholder="Search city or location..."
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -499,9 +471,8 @@ mapyourhealth://zip/${zipData.zipCode}`
         />
         <View style={$searchBarContainer}>
           <PlacesSearchBar
-            onPostalCodeSelect={handlePostalCodeSelect}
-            onCitySelect={handleCitySelect}
-            placeholder={`Search city or ${postalCodeLabel}...`}
+            onLocationSelect={handleLocationSelect}
+            placeholder="Search city or location..."
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -512,7 +483,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           <Text style={$emptyStateTitle}>Unable to load data</Text>
           <Text style={$emptyStateSubtitle}>
             We couldn't fetch safety data for{" "}
-            {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode}. Check
+            {currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"}. Check
             your connection and try again.
           </Text>
           <Pressable
@@ -547,9 +518,8 @@ mapyourhealth://zip/${zipData.zipCode}`
         />
         <View style={$searchBarContainer}>
           <PlacesSearchBar
-            onPostalCodeSelect={handlePostalCodeSelect}
-            onCitySelect={handleCitySelect}
-            placeholder={`Search city or ${postalCodeLabel}...`}
+            onLocationSelect={handleLocationSelect}
+            placeholder="Search city or location..."
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
@@ -563,7 +533,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           />
           <Text style={$emptyStateTitle}>
             No data for{" "}
-            {selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : currentZipCode} yet
+            {currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"} yet
           </Text>
           <Text style={$emptyStateSubtitle}>
             We're working on expanding our coverage. Want to know when safety data becomes
@@ -623,8 +593,8 @@ mapyourhealth://zip/${zipData.zipCode}`
       {/* Search Bar */}
       <View style={$searchBarContainer}>
         <PlacesSearchBar
-          onPostalCodeSelect={handlePostalCodeSelect}
-          placeholder={`Search city or ${postalCodeLabel}...`}
+          onLocationSelect={handleLocationSelect}
+          placeholder="Search city or location..."
           showLocationButton
           onLocationPress={handleLocationPress}
           isLocating={isLocating}
@@ -633,14 +603,8 @@ mapyourhealth://zip/${zipData.zipCode}`
 
       {/* Location Header */}
       <LocationHeader
-        zipCode={selectedCity ? `${selectedCity.city}, ${selectedCity.state}` : zipData.zipCode}
-        cityName={
-          selectedCity
-            ? `${selectedCity.postalCodes.length} locations`
-            : zipData.cityName && zipData.state
-              ? `${zipData.cityName}, ${zipData.state}`
-              : zipData.cityName || zipData.state || "United States"
-        }
+        locationName={currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"}
+        secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
       />
 
       {/* Offline Banner - shown when using cached data while offline */}
@@ -674,7 +638,7 @@ mapyourhealth://zip/${zipData.zipCode}`
           ]}
           accessibilityRole="button"
           accessibilityLabel={
-            selectedCity ? `Follow ${selectedCity.city}` : `Follow ${currentZipCode}`
+            currentLocation ? `Follow ${currentLocation.city}, ${currentLocation.state}` : "Follow"
           }
         >
           <MaterialCommunityIcons name="heart-plus-outline" size={20} color={theme.colors.tint} />
@@ -728,7 +692,8 @@ mapyourhealth://zip/${zipData.zipCode}`
               // Navigate to category detail for this stat
               navigation.navigate("CategoryDetail", {
                 category: mapToStatCategory(priorityAlert.definition.category),
-                zipCode: currentZipCode,
+                city: currentLocation?.city || "",
+                state: currentLocation?.state || "",
               })
             }}
           />
@@ -746,7 +711,8 @@ mapyourhealth://zip/${zipData.zipCode}`
             onPress={(subCategoryId) => {
               navigation.navigate("CategoryDetail", {
                 category,
-                zipCode: currentZipCode,
+                city: currentLocation?.city || "",
+                state: currentLocation?.state || "",
                 subCategoryId,
               })
             }}

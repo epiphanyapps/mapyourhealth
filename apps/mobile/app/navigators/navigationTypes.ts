@@ -29,8 +29,8 @@ export type AppStackParamList = {
   MagicLinkVerify: { email: string; token: string }
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
-  Dashboard: { zipCode?: string } | undefined
-  CategoryDetail: { category: StatCategory; zipCode: string; subCategoryId?: string }
+  Dashboard: { city?: string; state?: string; country?: string } | undefined
+  CategoryDetail: { category: StatCategory; city: string; state: string; subCategoryId?: string }
   Report: undefined
   SubscriptionsSettings: undefined
   Profile: undefined
@@ -43,7 +43,8 @@ export type AppStackParamList = {
     history: StatHistoryEntry[]
     higherIsBad: boolean
     lastUpdated: string
-    zipCode: string
+    city: string
+    state: string
   }
   Compare: undefined
   // 🔥 Your screens go here

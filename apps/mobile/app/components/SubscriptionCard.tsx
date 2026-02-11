@@ -13,17 +13,21 @@ import { useAppTheme } from "@/theme/context"
 
 export interface SubscriptionCardProps {
   /**
-   * The zip code for this subscription
+   * City name
    */
-  zipCode: string
-  /**
-   * City name for the zip code
-   */
-  cityName?: string
+  city: string
   /**
    * State abbreviation
    */
-  state?: string
+  state: string
+  /**
+   * Country code
+   */
+  country: string
+  /**
+   * County/region (optional)
+   */
+  county?: string
   /**
    * Callback when the delete button is pressed (after confirmation)
    */
@@ -39,21 +43,20 @@ export interface SubscriptionCardProps {
  *
  * @example
  * <SubscriptionCard
- *   zipCode="90210"
- *   cityName="Beverly Hills"
+ *   city="Beverly Hills"
  *   state="CA"
+ *   country="US"
  *   onDelete={() => handleDelete(subscription.id)}
  * />
  */
 export function SubscriptionCard(props: SubscriptionCardProps) {
-  const { zipCode, cityName, state, onDelete, isDeleting = false } = props
+  const { city, state, country, county, onDelete, isDeleting = false } = props
 
   const { theme } = useAppTheme()
 
-  function handleDeletePress() {
-    const locationName =
-      cityName && cityName !== "Unknown" ? `${cityName}${state ? `, ${state}` : ""}` : zipCode
+  const locationName = `${city}, ${state}`
 
+  function handleDeletePress() {
     Alert.alert(
       "Remove Subscription",
       `Are you sure you want to stop monitoring ${locationName}?`,
@@ -90,13 +93,13 @@ export function SubscriptionCard(props: SubscriptionCardProps) {
     flex: 1,
   }
 
-  const $zipCode: TextStyle = {
-    fontSize: 20,
+  const $cityText: TextStyle = {
+    fontSize: 18,
     fontWeight: "700",
     color: theme.colors.text,
   }
 
-  const $cityState: TextStyle = {
+  const $stateCountry: TextStyle = {
     fontSize: 14,
     color: theme.colors.textDim,
     marginTop: 2,
@@ -120,22 +123,18 @@ export function SubscriptionCard(props: SubscriptionCardProps) {
       </View>
 
       <View style={$contentContainer}>
-        <Text style={$zipCode}>{zipCode}</Text>
-        {cityName && cityName !== "Unknown" && (
-          <Text style={$cityState}>
-            {cityName}
-            {state ? `, ${state}` : ""}
-          </Text>
-        )}
+        <Text style={$cityText}>{locationName}</Text>
+        {county && <Text style={$stateCountry}>{county}</Text>}
+        <Text style={$stateCountry}>{country === "CA" ? "Canada" : "United States"}</Text>
       </View>
 
       <Pressable
         onPress={handleDeletePress}
         style={$deleteButton}
         disabled={isDeleting}
-        accessibilityLabel={`Remove ${zipCode} subscription`}
+        accessibilityLabel={`Remove ${locationName} subscription`}
         accessibilityRole="button"
-        accessibilityHint="Double tap to remove this zip code from your subscriptions"
+        accessibilityHint="Double tap to remove this location from your subscriptions"
       >
         <MaterialCommunityIcons name="trash-can-outline" size={24} color={theme.colors.error} />
       </Pressable>

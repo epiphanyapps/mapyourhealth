@@ -52,11 +52,11 @@ export default function AdminDashboard() {
         // Count contaminants
         const contaminants = contaminantsResult.data?.length || 0;
 
-        // Count unique postal codes with data
-        const uniquePostalCodes = new Set(
-          measurementsResult.data?.map((m: LocationMeasurement) => m.postalCode) || []
+        // Count unique cities with data
+        const uniqueCities = new Set(
+          measurementsResult.data?.map((m: LocationMeasurement) => `${(m as any).city}|${(m as any).state}`) || []
         );
-        const locationsWithData = uniquePostalCodes.size;
+        const locationsWithData = uniqueCities.size;
 
         // Count pending reports
         const pendingReports =
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
     },
     {
       title: "Location Measurements",
-      description: "Add or modify measurements for postal codes",
+      description: "Add or modify measurements for cities",
       icon: MapPin,
       href: "/zip-codes",
     },
@@ -197,7 +197,7 @@ export default function AdminDashboard() {
               {isLoading ? "..." : stats.locationsWithData}
             </div>
             <p className="text-xs text-muted-foreground">
-              Postal codes tracked
+              Cities tracked
             </p>
           </CardContent>
         </Card>

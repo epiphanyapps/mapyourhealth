@@ -27,7 +27,7 @@ export interface SearchBarProps {
   onSubmit?: () => void
   /**
    * Placeholder text
-   * @default "Search zip codes..."
+   * @default "Search locations..."
    */
   placeholder?: string
   /**
@@ -64,7 +64,7 @@ export function SearchBar(props: SearchBarProps) {
     value,
     onChangeText,
     onSubmit,
-    placeholder = "Search zip codes...",
+    placeholder = "Search locations...",
     style,
     showLocationButton = false,
     onLocationPress,
@@ -130,8 +130,8 @@ export function SearchBar(props: SearchBarProps) {
           returnKeyType="search"
           keyboardType="default"
           autoCapitalize="characters"
-          accessibilityLabel="Search postal codes"
-          accessibilityHint="Enter a postal code (US or Canadian) to search"
+          accessibilityLabel="Search locations"
+          accessibilityHint="Enter a city or location name to search"
         />
       </View>
       {showLocationButton && (
@@ -145,7 +145,7 @@ export function SearchBar(props: SearchBarProps) {
           ]}
           accessibilityLabel="Use my location"
           accessibilityRole="button"
-          accessibilityHint="Get zip code from your current GPS location"
+          accessibilityHint="Get location from your current GPS position"
         >
           {isLocating ? (
             <ActivityIndicator size="small" color="#FFFFFF" />

@@ -3,21 +3,21 @@
  *
  * Stores pending actions that require authentication to complete.
  * Used for guest users who try to perform auth-gated actions like
- * following a zip code or reporting a hazard.
+ * following a location or reporting a hazard.
  */
 
 import { createContext, FC, PropsWithChildren, useCallback, useContext, useState } from "react"
 
-import { createZipCodeSubscription } from "@/services/amplify/data"
+import { createUserSubscription } from "@/services/amplify/data"
 
-export type PendingActionType = "follow_zip_code" | "report_hazard" | "notify_when_available"
+export type PendingActionType = "follow_location" | "report_hazard" | "notify_when_available"
 
 export interface PendingAction {
   type: PendingActionType
   payload: {
-    zipCode: string
-    cityName?: string
+    city?: string
     state?: string
+    country?: string
   }
 }
 
@@ -56,9 +56,9 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
 
     try {
       switch (pendingAction.type) {
-        case "follow_zip_code": {
-          const { zipCode, cityName, state } = pendingAction.payload
-          await createZipCodeSubscription(zipCode, cityName, state)
+        case "follow_location": {
+          const { city, state, country } = pendingAction.payload
+          await createUserSubscription(city || "", state || "", country || "US")
           clearPendingAction()
           return true
         }
@@ -69,8 +69,8 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
           return true
         }
         case "notify_when_available": {
-          const { zipCode } = pendingAction.payload
-          await createZipCodeSubscription(zipCode, undefined, undefined, {
+          const { city, state, country } = pendingAction.payload
+          await createUserSubscription(city || "", state || "", country || "US", undefined, {
             notifyWhenDataAvailable: true,
           })
           clearPendingAction()

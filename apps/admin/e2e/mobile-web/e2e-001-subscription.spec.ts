@@ -6,7 +6,7 @@ import { testUrls, testZipCodes } from '../fixtures/test-data';
  *
  * Tests the complete guest-to-subscriber journey on mobile web:
  * 1. Guest sees empty state prompting to search
- * 2. Guest can search for zip codes and view safety data
+ * 2. Guest can search for cities and view safety data
  * 3. Follow button triggers auth gate for unauthenticated users
  * 4. User can navigate to signup
  */
@@ -18,12 +18,12 @@ test.describe('E2E-001: Subscription Flow', () => {
 
   test('guest sees empty state with search prompt', async ({ page }) => {
     // Verify the guest empty state is shown
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
     // Verify search bar is visible
-    await expect(page.getByPlaceholder('Search zip codes...')).toBeVisible();
+    await expect(page.getByPlaceholder('Search cities...')).toBeVisible();
 
     // Verify the subtitle text
     await expect(
@@ -31,18 +31,18 @@ test.describe('E2E-001: Subscription Flow', () => {
     ).toBeVisible();
   });
 
-  test('guest can search for zip codes and view data', async ({ page }) => {
+  test('guest can search for cities and view data', async ({ page }) => {
     // Wait for empty state to load
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    // Search for a zip code
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    // Search for a city
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 
-    // Wait for zip code data to load - should see the zip code displayed
+    // Wait for city data to load - should see the city displayed
     await expect(page.getByText(testZipCodes.default)).toBeVisible({ timeout: 15000 });
 
     // Verify category cards are visible (at least one category)
@@ -60,35 +60,35 @@ test.describe('E2E-001: Subscription Flow', () => {
     expect(foundCategory).toBe(true);
   });
 
-  test('guest can search for a different zip code', async ({ page }) => {
+  test('guest can search for a different city', async ({ page }) => {
     // Wait for empty state
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    // Search for first zip code
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    // Search for first city
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 
-    // Wait for first zip code to load
+    // Wait for first city to load
     await expect(page.getByText(testZipCodes.default)).toBeVisible({ timeout: 15000 });
 
-    // Search for a different zip code
+    // Search for a different city
     await searchInput.fill(testZipCodes.search);
     await searchInput.press('Enter');
 
-    // Verify new zip code is displayed
+    // Verify new city is displayed
     await expect(page.getByText(testZipCodes.search)).toBeVisible({ timeout: 15000 });
   });
 
   test('follow button triggers auth gate for guests', async ({ page }) => {
-    // Navigate to zip code first
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    // Navigate to city first
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 
@@ -105,12 +105,12 @@ test.describe('E2E-001: Subscription Flow', () => {
   });
 
   test('can navigate from login to signup', async ({ page }) => {
-    // Navigate to zip code first
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    // Navigate to city first
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 
@@ -129,12 +129,12 @@ test.describe('E2E-001: Subscription Flow', () => {
   });
 
   test('share button is accessible after searching', async ({ page }) => {
-    // Navigate to zip code first
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    // Navigate to city first
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 
@@ -147,12 +147,12 @@ test.describe('E2E-001: Subscription Flow', () => {
   });
 
   test('compare button navigates correctly', async ({ page }) => {
-    // Navigate to zip code first
-    await expect(page.getByText('Find out how safe your zip code is')).toBeVisible({
+    // Navigate to city first
+    await expect(page.getByText('Find out how safe your city is')).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder('Search zip codes...');
+    const searchInput = page.getByPlaceholder('Search cities...');
     await searchInput.fill(testZipCodes.default);
     await searchInput.press('Enter');
 

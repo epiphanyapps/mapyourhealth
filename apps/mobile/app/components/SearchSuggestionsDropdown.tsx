@@ -31,12 +31,14 @@ function getIconForType(
   type: SearchSuggestion["type"],
 ): React.ComponentProps<typeof MaterialCommunityIcons>["name"] {
   switch (type) {
-    case "postalCode":
-      return "map-marker"
     case "city":
       return "city"
+    case "county":
+      return "map-marker-radius"
     case "state":
       return "map"
+    case "country":
+      return "earth"
     default:
       return "map-marker"
   }

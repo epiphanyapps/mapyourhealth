@@ -96,7 +96,7 @@ function getCityStateForZipCode(zipCode: string): { cityName: string; state: str
   // Fall back to mock data for any zip codes not in bundled metadata
   const mockData = getMockLocationData(zipCode)
   if (mockData) {
-    return { cityName: mockData.cityName, state: mockData.state }
+    return { cityName: mockData.city, state: mockData.state }
   }
 
   // For Canadian postal codes, extract province from first letter
@@ -272,8 +272,8 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
         if (mockData) {
           // Convert LocationData to ZipCodeData format
           const legacyData: ZipCodeData = {
-            zipCode: mockData.postalCode,
-            cityName: mockData.cityName,
+            zipCode: mockData.city,
+            cityName: mockData.city,
             state: mockData.state,
             stats: mockData.measurements.map((m) => ({
               statId: m.contaminantId,
@@ -335,8 +335,8 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
             const mockData = getMockLocationData(zipCode)
             if (mockData) {
               const legacyData: ZipCodeData = {
-                zipCode: mockData.postalCode,
-                cityName: mockData.cityName,
+                zipCode: mockData.city,
+                cityName: mockData.city,
                 state: mockData.state,
                 stats: mockData.measurements.map((m) => ({
                   statId: m.contaminantId,
@@ -372,8 +372,8 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
           const mockData = getMockLocationData(zipCode)
           if (mockData) {
             const legacyData: ZipCodeData = {
-              zipCode: mockData.postalCode,
-              cityName: mockData.cityName,
+              zipCode: mockData.city,
+              cityName: mockData.city,
               state: mockData.state,
               stats: mockData.measurements.map((m) => ({
                 statId: m.contaminantId,

@@ -22,9 +22,9 @@ export default function TestingPage() {
   useEffect(() => {
     console.log("=== TESTING PAGE MOUNTED ===");
     console.log("majorCities:", majorCities);
-    console.log("queensZipCodes:", queensZipCodes);
-    console.log("manhattanZipCodes:", manhattanZipCodes);
-    console.log("Total zip codes:", majorCities.length + queensZipCodes.length + manhattanZipCodes.length);
+    console.log("queensNeighborhoods:", queensNeighborhoods);
+    console.log("manhattanNeighborhoods:", manhattanNeighborhoods);
+    console.log("Total locations:", majorCities.length + queensNeighborhoods.length + manhattanNeighborhoods.length);
   }, []);
 
   console.log("=== TESTING PAGE RENDER ===");
@@ -32,7 +32,7 @@ export default function TestingPage() {
   return (
     <div className="space-y-8">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Testing Zip Codes</h1>
+        <h1 className="text-3xl font-bold tracking-tight">Testing Locations</h1>
         <p className="text-muted-foreground">
           Reference guide for testing with seeded data
         </p>
@@ -72,15 +72,15 @@ export default function TestingPage() {
         </CardContent>
       </Card>
 
-      {/* Seeded Zip Codes */}
+      {/* Seeded Locations */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            Seeded Zip Codes (34 total)
+            Seeded Locations (34 total)
           </CardTitle>
           <CardDescription>
-            These zip codes have been pre-populated with test data
+            These locations have been pre-populated with test data
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
@@ -90,7 +90,6 @@ export default function TestingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Zip Code</TableHead>
                   <TableHead>City</TableHead>
                   <TableHead>State</TableHead>
                   <TableHead>Notable Conditions</TableHead>
@@ -98,9 +97,8 @@ export default function TestingPage() {
               </TableHeader>
               <TableBody>
                 {majorCities.map((city) => (
-                  <TableRow key={city.zipCode}>
-                    <TableCell className="font-mono">{city.zipCode}</TableCell>
-                    <TableCell>{city.city}</TableCell>
+                  <TableRow key={city.city}>
+                    <TableCell className="font-medium">{city.city}</TableCell>
                     <TableCell>{city.state}</TableCell>
                     <TableCell className="text-muted-foreground">
                       {city.conditions}
@@ -117,18 +115,16 @@ export default function TestingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Zip Code</TableHead>
                   <TableHead>Neighborhood</TableHead>
                   <TableHead>Notable Conditions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {queensZipCodes.map((zip) => (
-                  <TableRow key={zip.zipCode}>
-                    <TableCell className="font-mono">{zip.zipCode}</TableCell>
-                    <TableCell>{zip.neighborhood}</TableCell>
+                {queensNeighborhoods.map((loc) => (
+                  <TableRow key={loc.neighborhood}>
+                    <TableCell className="font-medium">{loc.neighborhood}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {zip.conditions}
+                      {loc.conditions}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -142,18 +138,16 @@ export default function TestingPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Zip Code</TableHead>
                   <TableHead>Neighborhood</TableHead>
                   <TableHead>Notable Conditions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {manhattanZipCodes.map((zip) => (
-                  <TableRow key={zip.zipCode}>
-                    <TableCell className="font-mono">{zip.zipCode}</TableCell>
-                    <TableCell>{zip.neighborhood}</TableCell>
+                {manhattanNeighborhoods.map((loc) => (
+                  <TableRow key={loc.neighborhood}>
+                    <TableCell className="font-medium">{loc.neighborhood}</TableCell>
                     <TableCell className="text-muted-foreground">
-                      {zip.conditions}
+                      {loc.conditions}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -177,28 +171,28 @@ export default function TestingPage() {
             <ul className="space-y-2 text-sm">
               <li>
                 <span className="font-medium">Safe area:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">98101</code>{" "}
-                (Seattle) - should show mostly green/safe
+                <code className="px-1 py-0.5 bg-muted rounded">Seattle</code>{" "}
+                - should show mostly green/safe
               </li>
               <li>
                 <span className="font-medium">Mixed warnings:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">10001</code>{" "}
-                (NYC) - should show multiple yellow warnings
+                <code className="px-1 py-0.5 bg-muted rounded">New York</code>{" "}
+                - should show multiple yellow warnings
               </li>
               <li>
                 <span className="font-medium">Danger alerts:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">60601</code>{" "}
-                (Chicago) - should show red danger for lead
+                <code className="px-1 py-0.5 bg-muted rounded">Chicago</code>{" "}
+                - should show red danger for lead
               </li>
               <li>
                 <span className="font-medium">Flood risk:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">33139</code>{" "}
-                (Miami Beach) - should show flood danger
+                <code className="px-1 py-0.5 bg-muted rounded">Miami Beach</code>{" "}
+                - should show flood danger
               </li>
               <li>
                 <span className="font-medium">Wildfire risk:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">85001</code>{" "}
-                (Phoenix) - should show wildfire danger
+                <code className="px-1 py-0.5 bg-muted rounded">Phoenix</code>{" "}
+                - should show wildfire danger
               </li>
             </ul>
           </div>
@@ -215,8 +209,8 @@ export default function TestingPage() {
                 location permission when prompted
               </li>
               <li>
-                <span className="font-medium">Auto-populate:</span> Verify zip
-                code is auto-populated from device location
+                <span className="font-medium">Auto-populate:</span> Verify city
+                is auto-populated from device location
               </li>
               <li>
                 <span className="font-medium">Loading state:</span> GPS button
@@ -237,9 +231,9 @@ export default function TestingPage() {
             <h3 className="font-semibold mb-3">Admin Dashboard</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <span className="font-medium">Zip Codes page:</span>{" "}
+                <span className="font-medium">Locations page:</span>{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">/zip-codes</code>{" "}
-                - should list all 34 zip codes
+                - should list all 34 locations
               </li>
               <li>
                 <span className="font-medium">Stats page:</span>{" "}
@@ -247,9 +241,9 @@ export default function TestingPage() {
                 should show 11 stat definitions
               </li>
               <li>
-                <span className="font-medium">Zip Code detail:</span>{" "}
+                <span className="font-medium">Location detail:</span>{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">
-                  /zip-codes/10001
+                  /zip-codes/New%20York
                 </code>{" "}
                 - should show all stats for NYC
               </li>
@@ -372,44 +366,44 @@ export default function TestingPage() {
 }
 
 const majorCities = [
-  { zipCode: "90210", city: "Beverly Hills", state: "CA", conditions: "Wildfire warning" },
-  { zipCode: "10001", city: "New York", state: "NY", conditions: "Air quality & lead warnings" },
-  { zipCode: "33139", city: "Miami Beach", state: "FL", conditions: "Flood danger" },
-  { zipCode: "60601", city: "Chicago", state: "IL", conditions: "Lead danger, bacteria warning" },
-  { zipCode: "98101", city: "Seattle", state: "WA", conditions: "Very safe overall" },
-  { zipCode: "30301", city: "Atlanta", state: "GA", conditions: "Air quality warnings" },
-  { zipCode: "75201", city: "Dallas", state: "TX", conditions: "Ozone & flood warnings" },
-  { zipCode: "85001", city: "Phoenix", state: "AZ", conditions: "Ozone danger, wildfire danger" },
-  { zipCode: "80202", city: "Denver", state: "CO", conditions: "Wildfire danger" },
-  { zipCode: "02101", city: "Boston", state: "MA", conditions: "Lead & flu warnings" },
+  { city: "Beverly Hills", state: "CA", conditions: "Wildfire warning" },
+  { city: "New York", state: "NY", conditions: "Air quality & lead warnings" },
+  { city: "Miami Beach", state: "FL", conditions: "Flood danger" },
+  { city: "Chicago", state: "IL", conditions: "Lead danger, bacteria warning" },
+  { city: "Seattle", state: "WA", conditions: "Very safe overall" },
+  { city: "Atlanta", state: "GA", conditions: "Air quality warnings" },
+  { city: "Dallas", state: "TX", conditions: "Ozone & flood warnings" },
+  { city: "Phoenix", state: "AZ", conditions: "Ozone danger, wildfire danger" },
+  { city: "Denver", state: "CO", conditions: "Wildfire danger" },
+  { city: "Boston", state: "MA", conditions: "Lead & flu warnings" },
 ];
 
-const queensZipCodes = [
-  { zipCode: "11368", neighborhood: "Corona", conditions: "Dense urban, multiple warnings" },
-  { zipCode: "11356", neighborhood: "College Point", conditions: "Flood danger (coastal)" },
-  { zipCode: "11101", neighborhood: "Long Island City", conditions: "Industrial area, flood warning" },
-  { zipCode: "11102", neighborhood: "Astoria", conditions: "Good transit, moderate air" },
-  { zipCode: "11354", neighborhood: "Flushing", conditions: "Busy commercial, air warnings" },
-  { zipCode: "11372", neighborhood: "Jackson Heights", conditions: "Dense, health warnings" },
-  { zipCode: "11373", neighborhood: "Elmhurst", conditions: "Dense residential" },
-  { zipCode: "11375", neighborhood: "Forest Hills", conditions: "Suburban feel, mostly safe" },
-  { zipCode: "11361", neighborhood: "Bayside", conditions: "Quiet residential" },
-  { zipCode: "11432", neighborhood: "Jamaica", conditions: "Transit hub, multiple warnings" },
-  { zipCode: "11385", neighborhood: "Ridgewood", conditions: "Border with Brooklyn" },
-  { zipCode: "11693", neighborhood: "Rockaway Beach", conditions: "Flood danger (coastal)" },
+const queensNeighborhoods = [
+  { neighborhood: "Corona", conditions: "Dense urban, multiple warnings" },
+  { neighborhood: "College Point", conditions: "Flood danger (coastal)" },
+  { neighborhood: "Long Island City", conditions: "Industrial area, flood warning" },
+  { neighborhood: "Astoria", conditions: "Good transit, moderate air" },
+  { neighborhood: "Flushing", conditions: "Busy commercial, air warnings" },
+  { neighborhood: "Jackson Heights", conditions: "Dense, health warnings" },
+  { neighborhood: "Elmhurst", conditions: "Dense residential" },
+  { neighborhood: "Forest Hills", conditions: "Suburban feel, mostly safe" },
+  { neighborhood: "Bayside", conditions: "Quiet residential" },
+  { neighborhood: "Jamaica", conditions: "Transit hub, multiple warnings" },
+  { neighborhood: "Ridgewood", conditions: "Border with Brooklyn" },
+  { neighborhood: "Rockaway Beach", conditions: "Flood danger (coastal)" },
 ];
 
-const manhattanZipCodes = [
-  { zipCode: "10002", neighborhood: "Lower East Side", conditions: "Older buildings, lead warning" },
-  { zipCode: "10003", neighborhood: "Greenwich Village", conditions: "Generally good" },
-  { zipCode: "10012", neighborhood: "SoHo", conditions: "Moderate air quality" },
-  { zipCode: "10013", neighborhood: "Tribeca", conditions: "Excellent healthcare, flood warning" },
-  { zipCode: "10016", neighborhood: "Murray Hill", conditions: "Dense residential" },
-  { zipCode: "10017", neighborhood: "Midtown East", conditions: "High traffic, air warnings" },
-  { zipCode: "10023", neighborhood: "Upper West Side", conditions: "Family-friendly, safe" },
-  { zipCode: "10028", neighborhood: "Upper East Side", conditions: "Affluent, excellent services" },
-  { zipCode: "10029", neighborhood: "East Harlem", conditions: "Lead danger, health disparities" },
-  { zipCode: "10027", neighborhood: "Harlem", conditions: "Aging infrastructure" },
-  { zipCode: "10032", neighborhood: "Washington Heights", conditions: "Diverse community" },
-  { zipCode: "10038", neighborhood: "Financial District", conditions: "Modern infrastructure, flood warning" },
+const manhattanNeighborhoods = [
+  { neighborhood: "Lower East Side", conditions: "Older buildings, lead warning" },
+  { neighborhood: "Greenwich Village", conditions: "Generally good" },
+  { neighborhood: "SoHo", conditions: "Moderate air quality" },
+  { neighborhood: "Tribeca", conditions: "Excellent healthcare, flood warning" },
+  { neighborhood: "Murray Hill", conditions: "Dense residential" },
+  { neighborhood: "Midtown East", conditions: "High traffic, air warnings" },
+  { neighborhood: "Upper West Side", conditions: "Family-friendly, safe" },
+  { neighborhood: "Upper East Side", conditions: "Affluent, excellent services" },
+  { neighborhood: "East Harlem", conditions: "Lead danger, health disparities" },
+  { neighborhood: "Harlem", conditions: "Aging infrastructure" },
+  { neighborhood: "Washington Heights", conditions: "Diverse community" },
+  { neighborhood: "Financial District", conditions: "Modern infrastructure, flood warning" },
 ];

@@ -43,14 +43,14 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   props,
 ) {
   const { navigation, route } = props
-  const { category, zipCode, subCategoryId } = route.params
+  const { category, city, state, subCategoryId } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
 
-  // Fetch data for the passed zip code from Amplify (with caching and offline support)
+  // Fetch data for the passed city from Amplify (with caching and offline support)
   const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
-    useZipCodeData(zipCode)
+    useZipCodeData(city)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -503,7 +503,8 @@ mapyourhealth://zip/${zipData.zipCode}`
                             higherIsBad:
                               definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
                             lastUpdated: stat.lastUpdated,
-                            zipCode,
+                            city,
+                            state,
                           })
                       : undefined
                   }

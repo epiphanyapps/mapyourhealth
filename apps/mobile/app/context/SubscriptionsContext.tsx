@@ -37,11 +37,11 @@ interface SubscriptionsContextType {
   error: string | null
   /** Refresh subscriptions from the backend */
   refresh: () => Promise<void>
-  /** Add a new subscription */
+  /** Add a new subscription (city-level) */
   addSubscription: (
-    zipCode: string,
-    cityName?: string,
-    state?: string,
+    city: string,
+    state: string,
+    country: string,
     options?: CreateSubscriptionOptions,
   ) => Promise<void>
   /** Remove a subscription by ID */
@@ -102,13 +102,13 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
   const primarySubscription = subscriptions.length > 0 ? subscriptions[0] : null
 
   /**
-   * Add a new subscription
+   * Add a new subscription (city-level)
    */
   const addSubscription = useCallback(
     async (
-      zipCode: string,
-      cityName?: string,
-      state?: string,
+      city: string,
+      state: string,
+      country: string,
       options?: CreateSubscriptionOptions,
     ) => {
       if (!isAuthenticated) {
@@ -116,7 +116,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       }
 
       try {
-        const newSub = await createZipCodeSubscription(zipCode, cityName, state, options)
+        const newSub = await createZipCodeSubscription(city, state, country, options)
         setSubscriptions((prev) => [...prev, newSub])
       } catch (err) {
         console.error("Failed to add subscription:", err)

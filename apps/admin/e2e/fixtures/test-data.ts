@@ -11,8 +11,8 @@ export const testUrls = {
 };
 
 export const testZipCodes = {
-  default: '90210',
-  search: '10001',
+  default: 'Beverly Hills',
+  search: 'New York',
 };
 
 export const adminCredentials = {

@@ -29,8 +29,9 @@ type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 type Contaminant = Schema["Contaminant"]["type"];
 
-interface PostalCodeStats {
-  postalCode: string;
+interface LocationStats {
+  city: string;
+  state: string;
   measurementCount: number;
   worstStatus: StatStatus;
   lastUpdated: string;
@@ -68,10 +69,10 @@ function calculateStatus(
 
 export default function ZipCodesPage() {
   const router = useRouter();
-  const [postalCodeStats, setPostalCodeStats] = useState<PostalCodeStats[]>([]);
+  const [locationStats, setLocationStats] = useState<LocationStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [newPostalCode, setNewPostalCode] = useState("");
+  const [newCity, setNewCity] = useState("");
 
   const fetchData = async () => {
     try {
@@ -105,16 +106,23 @@ export default function ZipCodesPage() {
         contaminantMap.set(c.contaminantId, c);
       }
 
-      // Group by postal code and calculate status
-      const postalCodeMap = new Map<string, {
+      // Group by city+state and calculate status
+      const locationMap = new Map<string, {
+        city: string;
+        state: string;
         measurements: LocationMeasurement[];
         worstStatus: StatStatus;
         lastUpdated: string;
       }>();
 
       for (const measurement of measurements) {
-        const existing = postalCodeMap.get(measurement.postalCode) || {
-          measurements: [],
+        const city = (measurement as any).city ?? "Unknown";
+        const state = (measurement as any).state ?? "";
+        const key = `${city}|${state}`;
+        const existing = locationMap.get(key) || {
+          city,
+          state,
+          measurements: [] as LocationMeasurement[],
           worstStatus: "safe" as StatStatus,
           lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
         };
@@ -122,7 +130,6 @@ export default function ZipCodesPage() {
         existing.measurements.push(measurement);
 
         // Calculate status for this measurement
-        // Try WHO threshold first, then US
         const threshold =
           thresholdMap.get(`${measurement.contaminantId}:WHO`) ||
           thresholdMap.get(`${measurement.contaminantId}:US`);
@@ -130,36 +137,34 @@ export default function ZipCodesPage() {
         const higherIsBad = contaminant?.higherIsBad ?? true;
         const status = calculateStatus(measurement.value, threshold, higherIsBad);
 
-        // Update worst status
         if (status === "danger") {
           existing.worstStatus = "danger";
         } else if (status === "warning" && existing.worstStatus !== "danger") {
           existing.worstStatus = "warning";
         }
 
-        // Update last updated
         const measurementDate = new Date(measurement.measuredAt ?? 0);
         const existingDate = new Date(existing.lastUpdated);
         if (measurementDate > existingDate) {
           existing.lastUpdated = measurement.measuredAt ?? existing.lastUpdated;
         }
 
-        postalCodeMap.set(measurement.postalCode, existing);
+        locationMap.set(key, existing);
       }
 
-      const result: PostalCodeStats[] = Array.from(postalCodeMap.entries()).map(
-        ([postalCode, { measurements, worstStatus, lastUpdated }]) => ({
-          postalCode,
-          measurementCount: measurements.length,
+      const result: LocationStats[] = Array.from(locationMap.values()).map(
+        ({ city, state, measurements: m, worstStatus, lastUpdated }) => ({
+          city,
+          state,
+          measurementCount: m.length,
           worstStatus,
           lastUpdated,
         })
       );
 
-      // Sort by postal code
-      result.sort((a, b) => a.postalCode.localeCompare(b.postalCode));
+      result.sort((a, b) => `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`));
 
-      setPostalCodeStats(result);
+      setLocationStats(result);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -171,13 +176,13 @@ export default function ZipCodesPage() {
     fetchData();
   }, []);
 
-  const filteredPostalCodes = postalCodeStats.filter((z) =>
-    z.postalCode.toLowerCase().includes(searchQuery.toLowerCase())
+  const filteredLocations = locationStats.filter((loc) =>
+    `${loc.city}, ${loc.state}`.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleAddPostalCode = () => {
-    if (newPostalCode.trim()) {
-      router.push(`/zip-codes/${encodeURIComponent(newPostalCode.trim())}`);
+  const handleAddLocation = () => {
+    if (newCity.trim()) {
+      router.push(`/zip-codes/${encodeURIComponent(newCity.trim())}`);
     }
   };
 
@@ -186,7 +191,7 @@ export default function ZipCodesPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Location Measurements</h1>
         <p className="text-muted-foreground">
-          View and manage contaminant measurements for each postal code
+          View and manage contaminant measurements by city
         </p>
       </div>
 
@@ -194,7 +199,7 @@ export default function ZipCodesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by postal code..."
+            placeholder="Search by city..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -202,12 +207,12 @@ export default function ZipCodesPage() {
         </div>
         <div className="flex gap-2">
           <Input
-            placeholder="New postal code"
-            value={newPostalCode}
-            onChange={(e) => setNewPostalCode(e.target.value)}
+            placeholder="New city"
+            value={newCity}
+            onChange={(e) => setNewCity(e.target.value)}
             className="w-40"
           />
-          <Button onClick={handleAddPostalCode} disabled={!newPostalCode.trim()}>
+          <Button onClick={handleAddLocation} disabled={!newCity.trim()}>
             <Plus className="mr-2 h-4 w-4" />
             Add
           </Button>
@@ -218,7 +223,7 @@ export default function ZipCodesPage() {
         <CardHeader>
           <CardTitle>All Locations</CardTitle>
           <CardDescription>
-            {postalCodeStats.length} postal code{postalCodeStats.length !== 1 ? "s" : ""} with measurements
+            {locationStats.length} cit{locationStats.length !== 1 ? "ies" : "y"} with measurements
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -226,17 +231,18 @@ export default function ZipCodesPage() {
             <div className="flex items-center justify-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
-          ) : filteredPostalCodes.length === 0 ? (
+          ) : filteredLocations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery
-                ? "No postal codes match your search."
-                : "No measurement data yet. Add a postal code to get started."}
+                ? "No locations match your search."
+                : "No measurement data yet. Add a location to get started."}
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Postal Code</TableHead>
+                  <TableHead>City</TableHead>
+                  <TableHead>State</TableHead>
                   <TableHead>Measurements</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Last Updated</TableHead>
@@ -244,14 +250,15 @@ export default function ZipCodesPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPostalCodes.map((location) => (
-                  <TableRow key={location.postalCode}>
+                {filteredLocations.map((location) => (
+                  <TableRow key={`${location.city}-${location.state}`}>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium">{location.postalCode}</span>
+                        <span className="font-medium">{location.city}</span>
                       </div>
                     </TableCell>
+                    <TableCell>{location.state}</TableCell>
                     <TableCell>{location.measurementCount} measurements</TableCell>
                     <TableCell>
                       <Badge
@@ -268,7 +275,7 @@ export default function ZipCodesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/zip-codes/${encodeURIComponent(location.postalCode)}`)}
+                        onClick={() => router.push(`/zip-codes/${encodeURIComponent(location.city)}`)}
                       >
                         Manage
                       </Button>
