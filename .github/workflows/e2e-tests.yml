@@ -106,18 +106,18 @@ jobs:
             adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
 
             # Start Metro bundler in background (dev-client needs it to serve the JS bundle)
-            cd apps/mobile
-            npx expo start --port 8081 --localhost --no-dev &
+            yarn --cwd apps/mobile expo start --port 8081 --localhost --no-dev &
             METRO_PID=$!
-            cd ../..
 
             # Wait for Metro to be ready
             echo "Waiting for Metro bundler..."
-            for i in $(seq 1 60); do
+            i=0
+            while [ "$i" -lt 60 ]; do
               if curl -s http://localhost:8081 2>/dev/null | grep -q "React"; then
                 echo "Metro is ready!"
                 break
               fi
+              i=$((i + 1))
               echo "  Attempt $i/60..."
               sleep 3
             done
