@@ -102,8 +102,33 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
+            # Install the dev-client APK
             adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+
+            # Start Metro bundler in background (dev-client needs it to serve the JS bundle)
+            cd apps/mobile
+            npx react-native start --port 8081 &
+            METRO_PID=$!
+            cd ../..
+
+            # Wait for Metro to be ready
+            echo "Waiting for Metro bundler..."
+            for i in $(seq 1 60); do
+              if curl -s http://localhost:8081/status 2>/dev/null | grep -q "packager-status:running"; then
+                echo "Metro is ready!"
+                break
+              fi
+              sleep 2
+            done
+
+            # Forward Metro port to emulator
+            adb reverse tcp:8081 tcp:8081
+
+            # Run Maestro tests
             $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+
+            # Cleanup
+            kill $METRO_PID 2>/dev/null || true
 
       - name: Upload test results
         if: always()
