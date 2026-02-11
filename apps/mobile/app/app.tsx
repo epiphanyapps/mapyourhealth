@@ -19,7 +19,7 @@ if (__DEV__) {
 import "./utils/gestureHandler"
 
 import { Amplify } from "aws-amplify"
-import outputs from "../amplify_outputs.json"
+import outputs from "../amplify_outputs.json" // eslint-disable-line import/no-unresolved
 
 if (__DEV__) {
   console.log("=== AMPLIFY CONFIG ===")
