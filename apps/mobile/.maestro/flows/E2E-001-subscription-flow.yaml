@@ -2,7 +2,7 @@
 # intent:
 #   Test the complete guest-to-subscriber journey:
 #   1. Guest sees empty state with search prompt
-#   2. Guest can search for zip codes and view data
+#   2. Guest can search for cities and view data
 #   3. Follow button triggers auth gate
 #   4. User can navigate to signup
 #
@@ -17,60 +17,52 @@ onFlowStart:
 # ========================================
 # Part 1: Guest Empty State
 # ========================================
-# Verify empty state is shown for guests
 - assertVisible:
-    text: "Find out how safe your zip code is"
+    text: "Find out how safe your location is"
     label: "Guest empty state title is visible"
 
 - assertVisible:
     text: "Search above to get safety insights"
     optional: true
 
-# Verify search bar is visible
 - assertVisible:
-    text: "Search zip codes..."
+    text: "Search city or location..."
     label: "Search bar is visible"
 
 # ========================================
-# Part 2: Search for a Zip Code
+# Part 2: Search for a City
 # ========================================
 - tapOn:
-    text: "Search zip codes..."
+    text: "Search city or location..."
     label: "Tap on search bar"
 
-- inputText: "90210"
+- inputText: "Beverly Hills"
 - pressKey: Enter
 
-# Wait for zip code data to load
 - waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Beverly Hills"
+    timeout: 10000
 
-# Verify we navigated to the zip code with data
+# Verify category cards are visible
 - assertVisible:
-    text: "90210"
-    label: "Zip code is visible"
-
-# Verify category cards are visible (any of: Water, Air, Health, Disaster)
-- assertVisible:
-    text: "Water.*"
+    text: "Tap Water.*"
     optional: true
 
 # ========================================
-# Part 3: Search for a Different Zip Code
+# Part 3: Search for a Different City
 # ========================================
 - tapOn:
-    text: "Search zip codes..."
+    text: "Search city or.*"
     label: "Tap on search bar"
 
-- inputText: "10001"
+- inputText: "New York"
 - pressKey: Enter
 
-# Wait for zip code data to load
 - waitForAnimationToEnd
-
-# Verify we navigated to the new zip code
-- assertVisible:
-    text: "10001"
-    label: "New zip code is visible"
+- extendedWaitUntil:
+    visible: "New York"
+    timeout: 10000
 
 # ========================================
 # Part 4: Follow Button Triggers Auth Gate
@@ -79,7 +71,6 @@ onFlowStart:
     text: "Follow"
     label: "Tap Follow button (should trigger auth gate)"
 
-# Verify auth gate appears (Login screen)
 - assertVisible:
     text: "Welcome Back"
     label: "Login screen is visible"
@@ -104,7 +95,7 @@ onFlowStart:
     label: "Sign Up button is visible"
 
 # ========================================
-# Part 6: Go Back to Dashboard (via back navigation)
+# Part 6: Go Back to Dashboard
 # ========================================
 - tapOn:
     id: "back"
@@ -113,12 +104,3 @@ onFlowStart:
 - tapOn:
     id: "back"
     optional: true
-
-# Verify we can get back to dashboard
-- runFlow:
-    when:
-      visible: "Search zip codes..."
-    commands:
-      - assertVisible:
-          text: "10001"
-          optional: true

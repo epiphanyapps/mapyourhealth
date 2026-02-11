@@ -18,12 +18,12 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("guest sees empty state with search prompt", async ({ page }) => {
     // Verify the guest empty state is shown
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
     // Verify search bar is visible
-    await expect(page.getByPlaceholder("Search cities...")).toBeVisible();
+    await expect(page.getByPlaceholder("Search city or location...")).toBeVisible();
 
     // Verify the subtitle text
     await expect(
@@ -33,12 +33,12 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("guest can search for cities and view data", async ({ page }) => {
     // Wait for empty state to load
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
     // Search for a city
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
@@ -66,12 +66,12 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("guest can search for a different city", async ({ page }) => {
     // Wait for empty state
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
     // Search for first city
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
@@ -92,11 +92,11 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("follow button triggers auth gate for guests", async ({ page }) => {
     // Navigate to city first
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
@@ -118,11 +118,11 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("can navigate from login to signup", async ({ page }) => {
     // Navigate to city first
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
@@ -148,11 +148,11 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("share button is accessible after searching", async ({ page }) => {
     // Navigate to city first
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
@@ -168,11 +168,11 @@ test.describe("E2E-001: Subscription Flow", () => {
 
   test("compare button navigates correctly", async ({ page }) => {
     // Navigate to city first
-    await expect(page.getByText("Find out how safe your city is")).toBeVisible({
+    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
       timeout: 30000,
     });
 
-    const searchInput = page.getByPlaceholder("Search cities...");
+    const searchInput = page.getByPlaceholder("Search city or location...");
     await searchInput.fill(testZipCodes.default);
     await searchInput.press("Enter");
 
