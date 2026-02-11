@@ -58,6 +58,12 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Create Amplify outputs stub for CI build
+        run: |
+          # Amplify Gen2 outputs file (gitignored) - stub so the app can build/launch in CI
+          STUB='{"version":"1","auth":{"aws_region":"us-east-1","user_pool_id":"us-east-1_test","user_pool_client_id":"test","identity_pool_id":"us-east-1:test"},"data":{"url":"https://test.appsync-api.us-east-1.amazonaws.com/graphql","aws_region":"us-east-1","default_authorization_type":"API_KEY","api_key":"da2-test"}}'
+          echo "$STUB" > apps/mobile/amplify_outputs.json
+
       - name: Generate native project
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean

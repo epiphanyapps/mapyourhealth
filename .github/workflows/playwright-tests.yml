@@ -43,6 +43,7 @@ jobs:
           STUB='{"version":"1","auth":{"aws_region":"us-east-1","user_pool_id":"us-east-1_test","user_pool_client_id":"test"}}'
           echo "$STUB" > amplify_outputs.json
           echo "$STUB" > apps/admin/amplify_outputs.json
+          echo "$STUB" > apps/mobile/amplify_outputs.json
 
       - name: Install Playwright Browsers
         working-directory: apps/admin
@@ -53,6 +54,7 @@ jobs:
         run: npx playwright test --project=admin-chromium
         env:
           CI: true
+          SKIP_MOBILE_SERVER: "true"
           # Note: Admin tests requiring auth are auto-skipped without credentials.
           # Mobile-web tests are excluded — they need Expo web server infrastructure.
           # ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
