@@ -53,7 +53,8 @@ export default function ContaminantsPage() {
   const [contaminants, setContaminants] = useState<Contaminant[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContaminant, setEditingContaminant] = useState<Contaminant | null>(null);
+  const [editingContaminant, setEditingContaminant] =
+    useState<Contaminant | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state
@@ -133,7 +134,12 @@ export default function ContaminantsPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.contaminantId || !formData.name || !formData.unit || !formData.category) {
+    if (
+      !formData.contaminantId ||
+      !formData.name ||
+      !formData.unit ||
+      !formData.category
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -228,7 +234,10 @@ export default function ContaminantsPage() {
                     placeholder="e.g., nitrate"
                     value={formData.contaminantId}
                     onChange={(e) =>
-                      setFormData({ ...formData, contaminantId: e.target.value })
+                      setFormData({
+                        ...formData,
+                        contaminantId: e.target.value,
+                      })
                     }
                     disabled={!!editingContaminant}
                   />
@@ -379,7 +388,8 @@ export default function ContaminantsPage() {
         <CardHeader>
           <CardTitle>All Contaminants</CardTitle>
           <CardDescription>
-            {contaminants.length} contaminant{contaminants.length !== 1 ? "s" : ""} configured
+            {contaminants.length} contaminant
+            {contaminants.length !== 1 ? "s" : ""} configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -389,7 +399,8 @@ export default function ContaminantsPage() {
             </div>
           ) : contaminants.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No contaminants yet. Click &quot;Add Contaminant&quot; to create one.
+              No contaminants yet. Click &quot;Add Contaminant&quot; to create
+              one.
             </div>
           ) : (
             <Table>
@@ -409,24 +420,34 @@ export default function ContaminantsPage() {
                     <TableCell className="font-mono text-sm">
                       {contaminant.contaminantId}
                     </TableCell>
-                    <TableCell className="font-medium">{contaminant.name}</TableCell>
+                    <TableCell className="font-medium">
+                      {contaminant.name}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
                         className={
                           contaminant.category
-                            ? contaminantCategoryColors[contaminant.category as ContaminantCategory]
+                            ? contaminantCategoryColors[
+                                contaminant.category as ContaminantCategory
+                              ]
                             : ""
                         }
                       >
                         {contaminant.category
-                          ? contaminantCategoryNames[contaminant.category as ContaminantCategory]
+                          ? contaminantCategoryNames[
+                              contaminant.category as ContaminantCategory
+                            ]
                           : "—"}
                       </Badge>
                     </TableCell>
                     <TableCell>{contaminant.unit}</TableCell>
                     <TableCell>
-                      <Badge variant={contaminant.higherIsBad ? "destructive" : "default"}>
+                      <Badge
+                        variant={
+                          contaminant.higherIsBad ? "destructive" : "default"
+                        }
+                      >
                         {contaminant.higherIsBad ? "Bad" : "Good"}
                       </Badge>
                     </TableCell>

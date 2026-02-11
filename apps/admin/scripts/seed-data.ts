@@ -85,7 +85,14 @@ const jurisdictions = [
 // Sample Contaminants
 // ============================================================================
 
-type ContaminantCategory = "fertilizer" | "pesticide" | "radioactive" | "disinfectant" | "inorganic" | "organic" | "microbiological";
+type ContaminantCategory =
+  | "fertilizer"
+  | "pesticide"
+  | "radioactive"
+  | "disinfectant"
+  | "inorganic"
+  | "organic"
+  | "microbiological";
 
 interface ContaminantInput {
   contaminantId: string;
@@ -105,8 +112,10 @@ const contaminants: ContaminantInput[] = [
     nameFr: "Nitrate",
     category: "fertilizer",
     unit: "μg/L",
-    description: "Common fertilizer runoff contaminant. Can cause methemoglobinemia in infants.",
-    descriptionFr: "Contaminant courant provenant des engrais. Peut causer la méthémoglobinémie chez les nourrissons.",
+    description:
+      "Common fertilizer runoff contaminant. Can cause methemoglobinemia in infants.",
+    descriptionFr:
+      "Contaminant courant provenant des engrais. Peut causer la méthémoglobinémie chez les nourrissons.",
     higherIsBad: true,
   },
   {
@@ -115,8 +124,10 @@ const contaminants: ContaminantInput[] = [
     nameFr: "Nitrite",
     category: "fertilizer",
     unit: "μg/L",
-    description: "Intermediate product of nitrogen cycle. More toxic than nitrate.",
-    descriptionFr: "Produit intermédiaire du cycle de l'azote. Plus toxique que le nitrate.",
+    description:
+      "Intermediate product of nitrogen cycle. More toxic than nitrate.",
+    descriptionFr:
+      "Produit intermédiaire du cycle de l'azote. Plus toxique que le nitrate.",
     higherIsBad: true,
   },
   {
@@ -125,8 +136,10 @@ const contaminants: ContaminantInput[] = [
     nameFr: "Plomb",
     category: "inorganic",
     unit: "μg/L",
-    description: "Heavy metal that can cause neurological damage, especially in children.",
-    descriptionFr: "Métal lourd pouvant causer des dommages neurologiques, surtout chez les enfants.",
+    description:
+      "Heavy metal that can cause neurological damage, especially in children.",
+    descriptionFr:
+      "Métal lourd pouvant causer des dommages neurologiques, surtout chez les enfants.",
     higherIsBad: true,
   },
   {
@@ -135,8 +148,10 @@ const contaminants: ContaminantInput[] = [
     nameFr: "Arsenic",
     category: "inorganic",
     unit: "μg/L",
-    description: "Naturally occurring element that can cause cancer with long-term exposure.",
-    descriptionFr: "Élément naturel pouvant causer le cancer avec une exposition prolongée.",
+    description:
+      "Naturally occurring element that can cause cancer with long-term exposure.",
+    descriptionFr:
+      "Élément naturel pouvant causer le cancer avec une exposition prolongée.",
     higherIsBad: true,
   },
   {
@@ -145,8 +160,10 @@ const contaminants: ContaminantInput[] = [
     nameFr: "Atrazine",
     category: "pesticide",
     unit: "μg/L",
-    description: "Herbicide commonly used on corn. Potential endocrine disruptor.",
-    descriptionFr: "Herbicide couramment utilisé sur le maïs. Perturbateur endocrinien potentiel.",
+    description:
+      "Herbicide commonly used on corn. Potential endocrine disruptor.",
+    descriptionFr:
+      "Herbicide couramment utilisé sur le maïs. Perturbateur endocrinien potentiel.",
     higherIsBad: true,
   },
 ];
@@ -165,28 +182,98 @@ interface ThresholdInput {
 
 const thresholds: ThresholdInput[] = [
   // Nitrate
-  { contaminantId: "nitrate", jurisdictionCode: "WHO", limitValue: 50000, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "US", limitValue: 10000, status: "regulated" },
-  { contaminantId: "nitrate", jurisdictionCode: "CA-QC", limitValue: 10000, status: "regulated" },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "WHO",
+    limitValue: 50000,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "US",
+    limitValue: 10000,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrate",
+    jurisdictionCode: "CA-QC",
+    limitValue: 10000,
+    status: "regulated",
+  },
 
   // Nitrite
-  { contaminantId: "nitrite", jurisdictionCode: "WHO", limitValue: 3000, status: "regulated" },
-  { contaminantId: "nitrite", jurisdictionCode: "US", limitValue: 1000, status: "regulated" },
-  { contaminantId: "nitrite", jurisdictionCode: "CA-QC", limitValue: 1000, status: "regulated" },
+  {
+    contaminantId: "nitrite",
+    jurisdictionCode: "WHO",
+    limitValue: 3000,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrite",
+    jurisdictionCode: "US",
+    limitValue: 1000,
+    status: "regulated",
+  },
+  {
+    contaminantId: "nitrite",
+    jurisdictionCode: "CA-QC",
+    limitValue: 1000,
+    status: "regulated",
+  },
 
   // Lead
-  { contaminantId: "lead", jurisdictionCode: "WHO", limitValue: 10, status: "regulated" },
-  { contaminantId: "lead", jurisdictionCode: "US", limitValue: 15, status: "regulated" },
-  { contaminantId: "lead", jurisdictionCode: "CA-QC", limitValue: 10, status: "regulated" },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "WHO",
+    limitValue: 10,
+    status: "regulated",
+  },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "US",
+    limitValue: 15,
+    status: "regulated",
+  },
+  {
+    contaminantId: "lead",
+    jurisdictionCode: "CA-QC",
+    limitValue: 10,
+    status: "regulated",
+  },
 
   // Arsenic
-  { contaminantId: "arsenic", jurisdictionCode: "WHO", limitValue: 10, status: "regulated" },
-  { contaminantId: "arsenic", jurisdictionCode: "US", limitValue: 10, status: "regulated" },
+  {
+    contaminantId: "arsenic",
+    jurisdictionCode: "WHO",
+    limitValue: 10,
+    status: "regulated",
+  },
+  {
+    contaminantId: "arsenic",
+    jurisdictionCode: "US",
+    limitValue: 10,
+    status: "regulated",
+  },
 
   // Atrazine
-  { contaminantId: "atrazine", jurisdictionCode: "WHO", limitValue: 100, status: "regulated" },
-  { contaminantId: "atrazine", jurisdictionCode: "US", limitValue: 3, status: "regulated" },
-  { contaminantId: "atrazine", jurisdictionCode: "CA-QC", limitValue: null, status: "banned" },
+  {
+    contaminantId: "atrazine",
+    jurisdictionCode: "WHO",
+    limitValue: 100,
+    status: "regulated",
+  },
+  {
+    contaminantId: "atrazine",
+    jurisdictionCode: "US",
+    limitValue: 3,
+    status: "regulated",
+  },
+  {
+    contaminantId: "atrazine",
+    jurisdictionCode: "CA-QC",
+    limitValue: null,
+    status: "banned",
+  },
 ];
 
 // ============================================================================
@@ -204,18 +291,74 @@ interface LocationMeasurementInput {
 
 const measurements: LocationMeasurementInput[] = [
   // Sample NYC measurements
-  { city: "New York", state: "NY", country: "US", contaminantId: "nitrate", value: 8500, source: "NYC DEP" },
-  { city: "New York", state: "NY", country: "US", contaminantId: "lead", value: 5.2, source: "NYC DEP" },
-  { city: "New York", state: "NY", country: "US", contaminantId: "arsenic", value: 3.1, source: "NYC DEP" },
+  {
+    city: "New York",
+    state: "NY",
+    country: "US",
+    contaminantId: "nitrate",
+    value: 8500,
+    source: "NYC DEP",
+  },
+  {
+    city: "New York",
+    state: "NY",
+    country: "US",
+    contaminantId: "lead",
+    value: 5.2,
+    source: "NYC DEP",
+  },
+  {
+    city: "New York",
+    state: "NY",
+    country: "US",
+    contaminantId: "arsenic",
+    value: 3.1,
+    source: "NYC DEP",
+  },
 
   // Sample LA measurements
-  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "nitrate", value: 12000, source: "LADWP" },
-  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "lead", value: 8.5, source: "LADWP" },
-  { city: "Beverly Hills", state: "CA", country: "US", contaminantId: "atrazine", value: 1.2, source: "LADWP" },
+  {
+    city: "Beverly Hills",
+    state: "CA",
+    country: "US",
+    contaminantId: "nitrate",
+    value: 12000,
+    source: "LADWP",
+  },
+  {
+    city: "Beverly Hills",
+    state: "CA",
+    country: "US",
+    contaminantId: "lead",
+    value: 8.5,
+    source: "LADWP",
+  },
+  {
+    city: "Beverly Hills",
+    state: "CA",
+    country: "US",
+    contaminantId: "atrazine",
+    value: 1.2,
+    source: "LADWP",
+  },
 
   // Sample Montreal measurements
-  { city: "Montréal", state: "QC", country: "CA", contaminantId: "nitrate", value: 5200, source: "Ville de Montréal" },
-  { city: "Montréal", state: "QC", country: "CA", contaminantId: "lead", value: 4.8, source: "Ville de Montréal" },
+  {
+    city: "Montréal",
+    state: "QC",
+    country: "CA",
+    contaminantId: "nitrate",
+    value: 5200,
+    source: "Ville de Montréal",
+  },
+  {
+    city: "Montréal",
+    state: "QC",
+    country: "CA",
+    contaminantId: "lead",
+    value: 4.8,
+    source: "Ville de Montréal",
+  },
 ];
 
 // ============================================================================
@@ -227,8 +370,12 @@ async function authenticateAdmin(): Promise<void> {
   const password = process.env.ADMIN_PASSWORD;
 
   if (!username || !password) {
-    console.log("No admin credentials provided. Attempting unauthenticated access...");
-    console.log("Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables for authenticated access.");
+    console.log(
+      "No admin credentials provided. Attempting unauthenticated access...",
+    );
+    console.log(
+      "Set ADMIN_USERNAME and ADMIN_PASSWORD environment variables for authenticated access.",
+    );
     return;
   }
 
@@ -237,7 +384,10 @@ async function authenticateAdmin(): Promise<void> {
   try {
     await signIn({ username, password });
   } catch (error: unknown) {
-    if (error instanceof Error && error.name === "UserAlreadyAuthenticatedException") {
+    if (
+      error instanceof Error &&
+      error.name === "UserAlreadyAuthenticatedException"
+    ) {
       console.log("Already authenticated.");
       return;
     }
@@ -329,9 +479,13 @@ async function seedContaminants(): Promise<void> {
 async function seedThresholds(): Promise<void> {
   console.log("\n--- Seeding ContaminantThresholds ---");
 
-  const existingResult = await client.models.ContaminantThreshold.list({ limit: 1000 });
+  const existingResult = await client.models.ContaminantThreshold.list({
+    limit: 1000,
+  });
   const existing = existingResult.data || [];
-  const existingKeys = new Set(existing.map((t) => `${t.contaminantId}:${t.jurisdictionCode}`));
+  const existingKeys = new Set(
+    existing.map((t) => `${t.contaminantId}:${t.jurisdictionCode}`),
+  );
 
   let created = 0;
   let skipped = 0;
@@ -370,14 +524,19 @@ async function seedMeasurements(): Promise<void> {
 
   for (const m of measurements) {
     // Check if measurement already exists for this city + contaminant
-    const existingResult = await client.models.LocationMeasurement.listLocationMeasurementByCity({
-      city: m.city,
-    });
+    const existingResult =
+      await client.models.LocationMeasurement.listLocationMeasurementByCity({
+        city: m.city,
+      });
     const existing = existingResult.data || [];
-    const alreadyExists = existing.some((e) => e.contaminantId === m.contaminantId);
+    const alreadyExists = existing.some(
+      (e) => e.contaminantId === m.contaminantId,
+    );
 
     if (alreadyExists) {
-      console.log(`  Skipping ${m.city}, ${m.state}/${m.contaminantId} (already exists)`);
+      console.log(
+        `  Skipping ${m.city}, ${m.state}/${m.contaminantId} (already exists)`,
+      );
       skipped++;
       continue;
     }
@@ -395,7 +554,10 @@ async function seedMeasurements(): Promise<void> {
       console.log(`  Created ${m.city}, ${m.state}/${m.contaminantId}`);
       created++;
     } catch (error) {
-      console.error(`  Failed to create ${m.city}, ${m.state}/${m.contaminantId}:`, error);
+      console.error(
+        `  Failed to create ${m.city}, ${m.state}/${m.contaminantId}:`,
+        error,
+      );
     }
   }
 

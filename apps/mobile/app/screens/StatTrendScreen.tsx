@@ -286,7 +286,9 @@ export function StatTrendScreen() {
           <Text style={$sectionTitle}>Location</Text>
           <View style={$locationRow}>
             <MaterialCommunityIcons name="map-marker" size={18} color={theme.colors.textDim} />
-            <Text style={$locationText}>{city}, {state}</Text>
+            <Text style={$locationText}>
+              {city}, {state}
+            </Text>
           </View>
         </View>
       </ScrollView>

@@ -1,4 +1,4 @@
-import { defineConfig, devices } from '@playwright/test';
+import { defineConfig, devices } from "@playwright/test";
 
 /**
  * Playwright E2E Test Configuration
@@ -10,37 +10,37 @@ import { defineConfig, devices } from '@playwright/test';
  * @see https://playwright.dev/docs/test-configuration
  */
 export default defineConfig({
-  testDir: './e2e',
+  testDir: "./e2e",
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  reporter: "html",
 
   use: {
-    trace: 'on-first-retry',
-    screenshot: 'only-on-failure',
+    trace: "on-first-retry",
+    screenshot: "only-on-failure",
   },
 
   projects: [
     // Admin Portal Tests - Desktop Chrome
     {
-      name: 'admin-chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "admin-chromium",
+      use: { ...devices["Desktop Chrome"] },
       testMatch: /admin\/.*.spec.ts/,
     },
 
     // Mobile Web Tests - Desktop Chrome
     {
-      name: 'mobile-web-chromium',
-      use: { ...devices['Desktop Chrome'] },
+      name: "mobile-web-chromium",
+      use: { ...devices["Desktop Chrome"] },
       testMatch: /mobile-web\/.*.spec.ts/,
     },
 
     // Mobile Web Tests - Mobile viewport (iPhone 14)
     {
-      name: 'mobile-web-mobile',
-      use: { ...devices['iPhone 14'] },
+      name: "mobile-web-mobile",
+      use: { ...devices["iPhone 14"] },
       testMatch: /mobile-web\/.*.spec.ts/,
     },
   ],
@@ -48,17 +48,17 @@ export default defineConfig({
   // Web servers to start before tests
   webServer: [
     {
-      command: 'npm run dev',
-      url: 'http://localhost:3000',
+      command: "npm run dev",
+      url: "http://localhost:3000",
       reuseExistingServer: !process.env.CI,
-      cwd: '.',
+      cwd: ".",
       timeout: 120000,
     },
     {
-      command: 'npm run web',
-      url: 'http://localhost:8081',
+      command: "npm run web",
+      url: "http://localhost:8081",
       reuseExistingServer: !process.env.CI,
-      cwd: '../mobile',
+      cwd: "../mobile",
       timeout: 120000,
     },
   ],

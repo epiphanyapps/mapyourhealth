@@ -57,7 +57,8 @@ export default function ThresholdsPage() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingThreshold, setEditingThreshold] = useState<ContaminantThreshold | null>(null);
+  const [editingThreshold, setEditingThreshold] =
+    useState<ContaminantThreshold | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Filters
@@ -78,11 +79,12 @@ export default function ThresholdsPage() {
       setIsLoading(true);
       const client = generateClient<Schema>();
 
-      const [thresholdsResult, contaminantsResult, jurisdictionsResult] = await Promise.all([
-        client.models.ContaminantThreshold.list({ limit: 1000 }),
-        client.models.Contaminant.list({ limit: 1000 }),
-        client.models.Jurisdiction.list({ limit: 100 }),
-      ]);
+      const [thresholdsResult, contaminantsResult, jurisdictionsResult] =
+        await Promise.all([
+          client.models.ContaminantThreshold.list({ limit: 1000 }),
+          client.models.Contaminant.list({ limit: 1000 }),
+          client.models.Jurisdiction.list({ limit: 100 }),
+        ]);
 
       if (thresholdsResult.errors) {
         console.error("Error fetching thresholds:", thresholdsResult.errors);
@@ -92,13 +94,19 @@ export default function ThresholdsPage() {
       }
 
       if (contaminantsResult.errors) {
-        console.error("Error fetching contaminants:", contaminantsResult.errors);
+        console.error(
+          "Error fetching contaminants:",
+          contaminantsResult.errors,
+        );
       } else {
         setContaminants(contaminantsResult.data || []);
       }
 
       if (jurisdictionsResult.errors) {
-        console.error("Error fetching jurisdictions:", jurisdictionsResult.errors);
+        console.error(
+          "Error fetching jurisdictions:",
+          jurisdictionsResult.errors,
+        );
       } else {
         setJurisdictions(jurisdictionsResult.data || []);
       }
@@ -143,7 +151,11 @@ export default function ThresholdsPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.contaminantId || !formData.jurisdictionCode || !formData.status) {
+    if (
+      !formData.contaminantId ||
+      !formData.jurisdictionCode ||
+      !formData.status
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -155,8 +167,12 @@ export default function ThresholdsPage() {
       const thresholdData = {
         contaminantId: formData.contaminantId,
         jurisdictionCode: formData.jurisdictionCode,
-        limitValue: formData.limitValue ? parseFloat(formData.limitValue) : null,
-        warningRatio: formData.warningRatio ? parseFloat(formData.warningRatio) : 0.8,
+        limitValue: formData.limitValue
+          ? parseFloat(formData.limitValue)
+          : null,
+        warningRatio: formData.warningRatio
+          ? parseFloat(formData.warningRatio)
+          : 0.8,
         status: formData.status,
       };
 
@@ -183,8 +199,14 @@ export default function ThresholdsPage() {
   };
 
   const handleDelete = async (threshold: ContaminantThreshold) => {
-    const contaminantName = contaminants.find(c => c.contaminantId === threshold.contaminantId)?.name || threshold.contaminantId;
-    if (!confirm(`Are you sure you want to delete the threshold for "${contaminantName}" in ${threshold.jurisdictionCode}?`)) {
+    const contaminantName =
+      contaminants.find((c) => c.contaminantId === threshold.contaminantId)
+        ?.name || threshold.contaminantId;
+    if (
+      !confirm(
+        `Are you sure you want to delete the threshold for "${contaminantName}" in ${threshold.jurisdictionCode}?`,
+      )
+    ) {
       return;
     }
 
@@ -201,20 +223,27 @@ export default function ThresholdsPage() {
 
   // Get contaminant name by ID
   const getContaminantName = (contaminantId: string) => {
-    const contaminant = contaminants.find(c => c.contaminantId === contaminantId);
+    const contaminant = contaminants.find(
+      (c) => c.contaminantId === contaminantId,
+    );
     return contaminant?.name || contaminantId;
   };
 
   // Get jurisdiction name by code
   const getJurisdictionName = (code: string) => {
-    const jurisdiction = jurisdictions.find(j => j.code === code);
+    const jurisdiction = jurisdictions.find((j) => j.code === code);
     return jurisdiction?.name || code;
   };
 
   // Filter thresholds
-  const filteredThresholds = thresholds.filter(t => {
-    if (filterContaminant !== "all" && t.contaminantId !== filterContaminant) return false;
-    if (filterJurisdiction !== "all" && t.jurisdictionCode !== filterJurisdiction) return false;
+  const filteredThresholds = thresholds.filter((t) => {
+    if (filterContaminant !== "all" && t.contaminantId !== filterContaminant)
+      return false;
+    if (
+      filterJurisdiction !== "all" &&
+      t.jurisdictionCode !== filterJurisdiction
+    )
+      return false;
     return true;
   });
 
@@ -332,7 +361,10 @@ export default function ThresholdsPage() {
                 <Select
                   value={formData.status}
                   onValueChange={(value) =>
-                    setFormData({ ...formData, status: value as ThresholdStatus })
+                    setFormData({
+                      ...formData,
+                      status: value as ThresholdStatus,
+                    })
                   }
                 >
                   <SelectTrigger>
@@ -382,7 +414,10 @@ export default function ThresholdsPage() {
           <div className="flex gap-4">
             <div className="w-64">
               <Label className="mb-2 block">Contaminant</Label>
-              <Select value={filterContaminant} onValueChange={setFilterContaminant}>
+              <Select
+                value={filterContaminant}
+                onValueChange={setFilterContaminant}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -398,7 +433,10 @@ export default function ThresholdsPage() {
             </div>
             <div className="w-64">
               <Label className="mb-2 block">Jurisdiction</Label>
-              <Select value={filterJurisdiction} onValueChange={setFilterJurisdiction}>
+              <Select
+                value={filterJurisdiction}
+                onValueChange={setFilterJurisdiction}
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
@@ -420,8 +458,11 @@ export default function ThresholdsPage() {
         <CardHeader>
           <CardTitle>Thresholds</CardTitle>
           <CardDescription>
-            {filteredThresholds.length} threshold{filteredThresholds.length !== 1 ? "s" : ""}
-            {filterContaminant !== "all" || filterJurisdiction !== "all" ? " (filtered)" : ""}
+            {filteredThresholds.length} threshold
+            {filteredThresholds.length !== 1 ? "s" : ""}
+            {filterContaminant !== "all" || filterJurisdiction !== "all"
+              ? " (filtered)"
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -431,7 +472,8 @@ export default function ThresholdsPage() {
             </div>
           ) : filteredThresholds.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No thresholds found. Click &quot;Add Threshold&quot; to create one.
+              No thresholds found. Click &quot;Add Threshold&quot; to create
+              one.
             </div>
           ) : (
             <Table>
@@ -460,7 +502,9 @@ export default function ThresholdsPage() {
                       </span>
                     </TableCell>
                     <TableCell>
-                      {threshold.limitValue !== null ? threshold.limitValue : "—"}
+                      {threshold.limitValue !== null
+                        ? threshold.limitValue
+                        : "—"}
                     </TableCell>
                     <TableCell>{threshold.warningRatio ?? 0.8}</TableCell>
                     <TableCell>
@@ -468,12 +512,16 @@ export default function ThresholdsPage() {
                         variant="secondary"
                         className={
                           threshold.status
-                            ? thresholdStatusColors[threshold.status as ThresholdStatus]
+                            ? thresholdStatusColors[
+                                threshold.status as ThresholdStatus
+                              ]
                             : ""
                         }
                       >
                         {threshold.status
-                          ? thresholdStatusNames[threshold.status as ThresholdStatus]
+                          ? thresholdStatusNames[
+                              threshold.status as ThresholdStatus
+                            ]
                           : "—"}
                       </Badge>
                     </TableCell>

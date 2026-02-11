@@ -29,6 +29,12 @@ type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 type Contaminant = Schema["Contaminant"]["type"];
 
+// Extended type for LocationMeasurement with city/state fields from schema
+type LocationMeasurementWithLocation = LocationMeasurement & {
+  city: string;
+  state: string;
+};
+
 interface LocationStats {
   city: string;
   state: string;
@@ -43,7 +49,7 @@ interface LocationStats {
 function calculateStatus(
   value: number,
   threshold: ContaminantThreshold | undefined,
-  higherIsBad: boolean = true
+  higherIsBad: boolean = true,
 ): StatStatus {
   if (!threshold || threshold.limitValue === null) {
     return "safe";
@@ -80,14 +86,18 @@ export default function ZipCodesPage() {
       const client = generateClient<Schema>();
 
       // Fetch measurements, thresholds, and contaminants in parallel
-      const [measurementsResult, thresholdsResult, contaminantsResult] = await Promise.all([
-        client.models.LocationMeasurement.list({ limit: 1000 }),
-        client.models.ContaminantThreshold.list({ limit: 1000 }),
-        client.models.Contaminant.list({ limit: 1000 }),
-      ]);
+      const [measurementsResult, thresholdsResult, contaminantsResult] =
+        await Promise.all([
+          client.models.LocationMeasurement.list({ limit: 1000 }),
+          client.models.ContaminantThreshold.list({ limit: 1000 }),
+          client.models.Contaminant.list({ limit: 1000 }),
+        ]);
 
       if (measurementsResult.errors) {
-        console.error("Error fetching measurements:", measurementsResult.errors);
+        console.error(
+          "Error fetching measurements:",
+          measurementsResult.errors,
+        );
         return;
       }
 
@@ -107,17 +117,21 @@ export default function ZipCodesPage() {
       }
 
       // Group by city+state and calculate status
-      const locationMap = new Map<string, {
-        city: string;
-        state: string;
-        measurements: LocationMeasurement[];
-        worstStatus: StatStatus;
-        lastUpdated: string;
-      }>();
+      const locationMap = new Map<
+        string,
+        {
+          city: string;
+          state: string;
+          measurements: LocationMeasurement[];
+          worstStatus: StatStatus;
+          lastUpdated: string;
+        }
+      >();
 
       for (const measurement of measurements) {
-        const city = (measurement as any).city ?? "Unknown";
-        const state = (measurement as any).state ?? "";
+        const m = measurement as LocationMeasurementWithLocation;
+        const city = m.city ?? "Unknown";
+        const state = m.state ?? "";
         const key = `${city}|${state}`;
         const existing = locationMap.get(key) || {
           city,
@@ -135,7 +149,11 @@ export default function ZipCodesPage() {
           thresholdMap.get(`${measurement.contaminantId}:US`);
         const contaminant = contaminantMap.get(measurement.contaminantId);
         const higherIsBad = contaminant?.higherIsBad ?? true;
-        const status = calculateStatus(measurement.value, threshold, higherIsBad);
+        const status = calculateStatus(
+          measurement.value,
+          threshold,
+          higherIsBad,
+        );
 
         if (status === "danger") {
           existing.worstStatus = "danger";
@@ -159,10 +177,12 @@ export default function ZipCodesPage() {
           measurementCount: m.length,
           worstStatus,
           lastUpdated,
-        })
+        }),
       );
 
-      result.sort((a, b) => `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`));
+      result.sort((a, b) =>
+        `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`),
+      );
 
       setLocationStats(result);
     } catch (error) {
@@ -177,7 +197,9 @@ export default function ZipCodesPage() {
   }, []);
 
   const filteredLocations = locationStats.filter((loc) =>
-    `${loc.city}, ${loc.state}`.toLowerCase().includes(searchQuery.toLowerCase())
+    `${loc.city}, ${loc.state}`
+      .toLowerCase()
+      .includes(searchQuery.toLowerCase()),
   );
 
   const handleAddLocation = () => {
@@ -189,7 +211,9 @@ export default function ZipCodesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Location Measurements</h1>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Location Measurements
+        </h1>
         <p className="text-muted-foreground">
           View and manage contaminant measurements by city
         </p>
@@ -223,7 +247,8 @@ export default function ZipCodesPage() {
         <CardHeader>
           <CardTitle>All Locations</CardTitle>
           <CardDescription>
-            {locationStats.length} cit{locationStats.length !== 1 ? "ies" : "y"} with measurements
+            {locationStats.length} cit{locationStats.length !== 1 ? "ies" : "y"}{" "}
+            with measurements
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -259,7 +284,9 @@ export default function ZipCodesPage() {
                       </div>
                     </TableCell>
                     <TableCell>{location.state}</TableCell>
-                    <TableCell>{location.measurementCount} measurements</TableCell>
+                    <TableCell>
+                      {location.measurementCount} measurements
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
@@ -275,7 +302,11 @@ export default function ZipCodesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => router.push(`/zip-codes/${encodeURIComponent(location.city)}`)}
+                        onClick={() =>
+                          router.push(
+                            `/zip-codes/${encodeURIComponent(location.city)}`,
+                          )
+                        }
                       >
                         Manage
                       </Button>

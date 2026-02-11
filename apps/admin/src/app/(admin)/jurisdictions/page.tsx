@@ -48,7 +48,8 @@ export default function JurisdictionsPage() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingJurisdiction, setEditingJurisdiction] = useState<Jurisdiction | null>(null);
+  const [editingJurisdiction, setEditingJurisdiction] =
+    useState<Jurisdiction | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   // Form state
@@ -180,12 +181,15 @@ export default function JurisdictionsPage() {
   };
 
   // Group jurisdictions by country (currently unused, kept for future grouping feature)
-  const _jurisdictionsByCountry = jurisdictions.reduce((acc, j) => {
-    const country = j.country;
-    if (!acc[country]) acc[country] = [];
-    acc[country].push(j);
-    return acc;
-  }, {} as Record<string, Jurisdiction[]>);
+  const _jurisdictionsByCountry = jurisdictions.reduce(
+    (acc, j) => {
+      const country = j.country;
+      if (!acc[country]) acc[country] = [];
+      acc[country].push(j);
+      return acc;
+    },
+    {} as Record<string, Jurisdiction[]>,
+  );
   void _jurisdictionsByCountry;
 
   return (
@@ -207,7 +211,9 @@ export default function JurisdictionsPage() {
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
-                {editingJurisdiction ? "Edit Jurisdiction" : "Create Jurisdiction"}
+                {editingJurisdiction
+                  ? "Edit Jurisdiction"
+                  : "Create Jurisdiction"}
               </DialogTitle>
               <DialogDescription>
                 {editingJurisdiction
@@ -224,7 +230,10 @@ export default function JurisdictionsPage() {
                     placeholder="e.g., US-NY, CA-QC, WHO"
                     value={formData.code}
                     onChange={(e) =>
-                      setFormData({ ...formData, code: e.target.value.toUpperCase() })
+                      setFormData({
+                        ...formData,
+                        code: e.target.value.toUpperCase(),
+                      })
                     }
                     disabled={!!editingJurisdiction}
                   />
@@ -236,7 +245,10 @@ export default function JurisdictionsPage() {
                     placeholder="e.g., US, CA, INTL"
                     value={formData.country}
                     onChange={(e) =>
-                      setFormData({ ...formData, country: e.target.value.toUpperCase() })
+                      setFormData({
+                        ...formData,
+                        country: e.target.value.toUpperCase(),
+                      })
                     }
                   />
                 </div>
@@ -275,7 +287,10 @@ export default function JurisdictionsPage() {
                     placeholder="e.g., NY, QC"
                     value={formData.region}
                     onChange={(e) =>
-                      setFormData({ ...formData, region: e.target.value.toUpperCase() })
+                      setFormData({
+                        ...formData,
+                        region: e.target.value.toUpperCase(),
+                      })
                     }
                   />
                 </div>
@@ -284,7 +299,10 @@ export default function JurisdictionsPage() {
                   <Select
                     value={formData.parentCode || "none"}
                     onValueChange={(value) =>
-                      setFormData({ ...formData, parentCode: value === "none" ? "" : value })
+                      setFormData({
+                        ...formData,
+                        parentCode: value === "none" ? "" : value,
+                      })
                     }
                   >
                     <SelectTrigger>
@@ -293,7 +311,7 @@ export default function JurisdictionsPage() {
                     <SelectContent>
                       <SelectItem value="none">None (top-level)</SelectItem>
                       {jurisdictions
-                        .filter(j => j.code !== formData.code)
+                        .filter((j) => j.code !== formData.code)
                         .map((j) => (
                           <SelectItem key={j.id} value={j.code}>
                             {j.code} - {j.name}
@@ -349,7 +367,8 @@ export default function JurisdictionsPage() {
         <CardHeader>
           <CardTitle>All Jurisdictions</CardTitle>
           <CardDescription>
-            {jurisdictions.length} jurisdiction{jurisdictions.length !== 1 ? "s" : ""} configured
+            {jurisdictions.length} jurisdiction
+            {jurisdictions.length !== 1 ? "s" : ""} configured
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -359,7 +378,8 @@ export default function JurisdictionsPage() {
             </div>
           ) : jurisdictions.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No jurisdictions yet. Click &quot;Add Jurisdiction&quot; to create one.
+              No jurisdictions yet. Click &quot;Add Jurisdiction&quot; to create
+              one.
             </div>
           ) : (
             <Table>
@@ -387,15 +407,15 @@ export default function JurisdictionsPage() {
                     <TableCell>{jurisdiction.region || "—"}</TableCell>
                     <TableCell>
                       {jurisdiction.parentCode ? (
-                        <Badge variant="secondary">{jurisdiction.parentCode}</Badge>
+                        <Badge variant="secondary">
+                          {jurisdiction.parentCode}
+                        </Badge>
                       ) : (
                         "—"
                       )}
                     </TableCell>
                     <TableCell>
-                      {jurisdiction.isDefault ? (
-                        <Badge>Default</Badge>
-                      ) : null}
+                      {jurisdiction.isDefault ? <Badge>Default</Badge> : null}
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">

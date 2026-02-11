@@ -40,7 +40,8 @@ import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { fetchAuthSession } from "aws-amplify/auth";
 
 // Lambda function name for notifications - should match the deployed function
-const NOTIFICATIONS_LAMBDA_FUNCTION = process.env.NEXT_PUBLIC_NOTIFICATIONS_LAMBDA || "process-notifications";
+const NOTIFICATIONS_LAMBDA_FUNCTION =
+  process.env.NEXT_PUBLIC_NOTIFICATIONS_LAMBDA || "process-notifications";
 
 type Contaminant = Schema["Contaminant"]["type"];
 
@@ -49,52 +50,90 @@ type ImportCategory = "water" | "air" | "pathogens";
 
 // Contaminant categories that belong to each import category
 const CATEGORY_CONTAMINANT_TYPES: Record<ImportCategory, string[]> = {
-  water: ["fertilizer", "pesticide", "radioactive", "disinfectant", "inorganic", "organic", "microbiological"],
+  water: [
+    "fertilizer",
+    "pesticide",
+    "radioactive",
+    "disinfectant",
+    "inorganic",
+    "organic",
+    "microbiological",
+  ],
   air: ["air"], // radon and other air pollutants
   pathogens: ["pathogen", "disease"], // lyme disease, etc.
 };
 
 // Category display information
-const CATEGORY_INFO: Record<ImportCategory, { title: string; description: string; icon: typeof Droplets }> = {
+const CATEGORY_INFO: Record<
+  ImportCategory,
+  { title: string; description: string; icon: typeof Droplets }
+> = {
   water: {
     title: "Tap Water Quality",
-    description: "Import contaminant measurements for water quality (nitrate, lead, arsenic, etc.)",
+    description:
+      "Import contaminant measurements for water quality (nitrate, lead, arsenic, etc.)",
     icon: Droplets,
   },
   air: {
     title: "Air Pollution",
-    description: "Import air quality data including radon levels and other airborne contaminants",
+    description:
+      "Import air quality data including radon levels and other airborne contaminants",
     icon: Wind,
   },
   pathogens: {
     title: "Pathogens",
-    description: "Import disease incidence data such as Lyme disease rates and other pathogen risks",
+    description:
+      "Import disease incidence data such as Lyme disease rates and other pathogen risks",
     icon: Bug,
   },
 };
 
 // CSV templates for each category
-const CSV_TEMPLATES: Record<ImportCategory, { example: string; fields: string[] }> = {
+const CSV_TEMPLATES: Record<
+  ImportCategory,
+  { example: string; fields: string[] }
+> = {
   water: {
     example: `city,state,country,contaminantId,value,source
 Beverly Hills,CA,US,nitrate,12500,EPA
 Beverly Hills,CA,US,lead,8.2,Local Lab
 New York,NY,US,arsenic,5.5,EPA`,
-    fields: ["city", "state", "country", "contaminantId", "value", "source (optional)"],
+    fields: [
+      "city",
+      "state",
+      "country",
+      "contaminantId",
+      "value",
+      "source (optional)",
+    ],
   },
   air: {
     example: `city,state,country,contaminantId,value,source
 Beverly Hills,CA,US,radon,4.2,EPA
 New York,NY,US,radon,2.1,State Survey
 Montreal,QC,CA,radon,3.8,Health Canada`,
-    fields: ["city", "state", "country", "contaminantId (e.g., radon)", "value (pCi/L)", "source (optional)"],
+    fields: [
+      "city",
+      "state",
+      "country",
+      "contaminantId (e.g., radon)",
+      "value (pCi/L)",
+      "source (optional)",
+    ],
   },
   pathogens: {
     example: `city,state,country,contaminantId,value,source
 New York,NY,US,lyme_disease,15.2,CDC
 Hartford,CT,US,lyme_disease,8.5,State Health Dept
 Montreal,QC,CA,lyme_disease,3.2,PHAC`,
-    fields: ["city", "state", "country", "contaminantId (e.g., lyme_disease)", "value (incidence per 100k)", "source (optional)"],
+    fields: [
+      "city",
+      "state",
+      "country",
+      "contaminantId (e.g., lyme_disease)",
+      "value (incidence per 100k)",
+      "source (optional)",
+    ],
   },
 };
 
@@ -136,7 +175,9 @@ export default function ImportPage() {
 
     for (const c of data || []) {
       // Include if contaminant's category matches any of the category types
-      if (categoryTypes.some(type => c.category?.toLowerCase().includes(type))) {
+      if (
+        categoryTypes.some((type) => c.category?.toLowerCase().includes(type))
+      ) {
         contaminantMap.set(c.contaminantId, c);
       }
     }
@@ -147,7 +188,7 @@ export default function ImportPage() {
   const validateRow = (
     row: Partial<ImportRow>,
     contaminantMap: Map<string, Contaminant>,
-    category: ImportCategory
+    category: ImportCategory,
   ): ImportRow => {
     const errors: string[] = [];
 
@@ -167,7 +208,9 @@ export default function ImportPage() {
       errors.push("Missing contaminant ID");
     } else if (!contaminantMap.has(row.contaminantId)) {
       // Check if it's a valid contaminant but wrong category
-      errors.push(`Unknown contaminant ID for ${CATEGORY_INFO[category].title}`);
+      errors.push(
+        `Unknown contaminant ID for ${CATEGORY_INFO[category].title}`,
+      );
     }
 
     if (row.value === undefined || isNaN(row.value)) {
@@ -213,7 +256,9 @@ export default function ImportPage() {
     return values;
   };
 
-  const parseCSV = (content: string): { rows: Partial<ImportRow>[]; error?: string } => {
+  const parseCSV = (
+    content: string,
+  ): { rows: Partial<ImportRow>[]; error?: string } => {
     const lines = content.trim().split("\n");
     if (lines.length === 0) {
       return { rows: [], error: "Empty CSV file" };
@@ -225,9 +270,10 @@ export default function ImportPage() {
     const cityIdx = header.indexOf("city");
     const stateIdx = header.indexOf("state");
     const countryIdx = header.indexOf("country");
-    const contaminantIdIdx = ["contaminantid", "contaminant_id", "statid", "stat_id"]
-      .map((name) => header.indexOf(name))
-      .find((idx) => idx !== -1) ?? -1;
+    const contaminantIdIdx =
+      ["contaminantid", "contaminant_id", "statid", "stat_id"]
+        .map((name) => header.indexOf(name))
+        .find((idx) => idx !== -1) ?? -1;
     const valueIdx = header.indexOf("value");
     const sourceIdx = header.indexOf("source");
 
@@ -240,20 +286,26 @@ export default function ImportPage() {
     if (valueIdx === -1) missingColumns.push("value");
 
     if (missingColumns.length > 0) {
-      return { rows: [], error: `Missing required columns: ${missingColumns.join(", ")}` };
+      return {
+        rows: [],
+        error: `Missing required columns: ${missingColumns.join(", ")}`,
+      };
     }
 
-    const rows = lines.slice(1).filter(line => line.trim()).map((line) => {
-      const values = parseCSVLine(line);
-      return {
-        city: values[cityIdx] || "",
-        state: values[stateIdx] || "",
-        country: values[countryIdx] || "",
-        contaminantId: values[contaminantIdIdx] || "",
-        value: parseFloat(values[valueIdx]) || 0,
-        source: sourceIdx !== -1 ? values[sourceIdx] : undefined,
-      };
-    });
+    const rows = lines
+      .slice(1)
+      .filter((line) => line.trim())
+      .map((line) => {
+        const values = parseCSVLine(line);
+        return {
+          city: values[cityIdx] || "",
+          state: values[stateIdx] || "",
+          country: values[countryIdx] || "",
+          contaminantId: values[contaminantIdIdx] || "",
+          value: parseFloat(values[valueIdx]) || 0,
+          source: sourceIdx !== -1 ? values[sourceIdx] : undefined,
+        };
+      });
 
     return { rows };
   };
@@ -267,13 +319,21 @@ export default function ImportPage() {
       city: String(item.city || ""),
       state: String(item.state || ""),
       country: String(item.country || ""),
-      contaminantId: String(item.contaminantId || item.contaminant_id || item.statId || item.stat_id || ""),
+      contaminantId: String(
+        item.contaminantId ||
+          item.contaminant_id ||
+          item.statId ||
+          item.stat_id ||
+          "",
+      ),
       value: Number(item.value) || 0,
       source: item.source ? String(item.source) : undefined,
     }));
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>,
+  ) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -312,7 +372,7 @@ export default function ImportPage() {
       }
 
       const validatedRows = rows.map((row) =>
-        validateRow(row, contaminantMap, categoryAtStart)
+        validateRow(row, contaminantMap, categoryAtStart),
       );
       setPreviewData(validatedRows);
 
@@ -363,7 +423,9 @@ export default function ImportPage() {
           result.success++;
         } catch (error) {
           result.failed++;
-          result.errors.push(`${row.city}, ${row.state}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`);
+          result.errors.push(
+            `${row.city}, ${row.state}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`,
+          );
         }
       }
 
@@ -373,7 +435,9 @@ export default function ImportPage() {
         toast.success(`Successfully imported ${result.success} rows`);
         setPreviewData([]);
       } else {
-        toast.warning(`Imported ${result.success} rows, ${result.failed} failed`);
+        toast.warning(
+          `Imported ${result.success} rows, ${result.failed} failed`,
+        );
       }
 
       // Send notifications if enabled and we had successful imports
@@ -390,7 +454,9 @@ export default function ImportPage() {
 
   const sendNotifications = async (importedRows: ImportRow[]) => {
     // Get unique cities from imported data
-    const cities = [...new Set(importedRows.map((r) => `${r.city}|${r.state}|${r.country}`))];
+    const cities = [
+      ...new Set(importedRows.map((r) => `${r.city}|${r.state}|${r.country}`)),
+    ];
 
     if (cities.length === 0) return;
 
@@ -423,13 +489,15 @@ export default function ImportPage() {
           const command = new InvokeCommand({
             FunctionName: NOTIFICATIONS_LAMBDA_FUNCTION,
             InvocationType: "RequestResponse",
-            Payload: Buffer.from(JSON.stringify({
-              city,
-              state,
-              country,
-              triggerType: "data_update",
-              adminTriggered: true,
-            })),
+            Payload: Buffer.from(
+              JSON.stringify({
+                city,
+                state,
+                country,
+                triggerType: "data_update",
+                adminTriggered: true,
+              }),
+            ),
           });
 
           const response = await lambdaClient.send(command);
@@ -441,12 +509,17 @@ export default function ImportPage() {
             }
           }
         } catch (error) {
-          console.error(`Failed to send notifications for ${city}, ${state}:`, error);
+          console.error(
+            `Failed to send notifications for ${city}, ${state}:`,
+            error,
+          );
         }
       }
 
       if (notifiedCount > 0) {
-        toast.success(`Notified ${notifiedCount} subscriber(s) about the update`);
+        toast.success(
+          `Notified ${notifiedCount} subscriber(s) about the update`,
+        );
       } else {
         toast.info("No subscribers to notify for these locations");
       }
@@ -538,7 +611,9 @@ export default function ImportPage() {
                     <FileJson className="h-5 w-5" />
                     JSON Format
                   </CardTitle>
-                  <CardDescription>Array of objects with same fields</CardDescription>
+                  <CardDescription>
+                    Array of objects with same fields
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto">
@@ -547,7 +622,8 @@ export default function ImportPage() {
     .split("\n")
     .slice(1, 3)
     .map((line) => {
-      const [city, state, country, contaminantId, value, source] = line.split(",");
+      const [city, state, country, contaminantId, value, source] =
+        line.split(",");
       return `{"city": "${city}", "state": "${state}", "country": "${country}", "contaminantId": "${contaminantId}", "value": ${value}${source ? `, "source": "${source}"` : ""}}`;
     })
     .join(",\n  ")}
@@ -598,7 +674,8 @@ export default function ImportPage() {
                 <Upload className="h-8 w-8 text-muted-foreground" />
                 <span>Click to upload CSV or JSON file</span>
                 <span className="text-xs text-muted-foreground">
-                  Validating against {CATEGORY_INFO[activeCategory].title} contaminants
+                  Validating against {CATEGORY_INFO[activeCategory].title}{" "}
+                  contaminants
                 </span>
               </div>
             )}
@@ -669,7 +746,12 @@ export default function ImportPage() {
               </TableHeader>
               <TableBody>
                 {previewData.slice(0, 50).map((row, index) => (
-                  <TableRow key={index} className={!row.isValid ? "bg-red-50 dark:bg-red-950/30" : ""}>
+                  <TableRow
+                    key={index}
+                    className={
+                      !row.isValid ? "bg-red-50 dark:bg-red-950/30" : ""
+                    }
+                  >
                     <TableCell>
                       {row.isValid ? (
                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -683,7 +765,9 @@ export default function ImportPage() {
                     <TableCell>{row.contaminantId}</TableCell>
                     <TableCell>{row.value}</TableCell>
                     <TableCell>{row.source || "-"}</TableCell>
-                    <TableCell className="text-red-600 dark:text-red-400 text-sm">{row.error}</TableCell>
+                    <TableCell className="text-red-600 dark:text-red-400 text-sm">
+                      {row.error}
+                    </TableCell>
                   </TableRow>
                 ))}
               </TableBody>
@@ -704,7 +788,10 @@ export default function ImportPage() {
           </CardHeader>
           <CardContent>
             <div className="flex gap-4 mb-4">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge
+                variant="secondary"
+                className="bg-green-100 text-green-800"
+              >
                 {importResult.success} Imported
               </Badge>
               {importResult.failed > 0 && (
@@ -715,7 +802,9 @@ export default function ImportPage() {
             </div>
             {importResult.errors.length > 0 && (
               <div className="bg-red-50 dark:bg-red-950/30 p-3 rounded-md">
-                <p className="font-medium text-red-800 dark:text-red-300 mb-2">Errors:</p>
+                <p className="font-medium text-red-800 dark:text-red-300 mb-2">
+                  Errors:
+                </p>
                 <ul className="text-sm text-red-700 dark:text-red-400 list-disc list-inside">
                   {importResult.errors.slice(0, 10).map((error, i) => (
                     <li key={i}>{error}</li>

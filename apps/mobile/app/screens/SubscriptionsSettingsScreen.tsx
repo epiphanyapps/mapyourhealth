@@ -44,7 +44,9 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
   const [isLoading, setIsLoading] = useState(true)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
-  const [newSelections, setNewSelections] = useState<{ city: string; state: string; country: string }[]>([])
+  const [newSelections, setNewSelections] = useState<
+    { city: string; state: string; country: string }[]
+  >([])
   const [isSaving, setIsSaving] = useState(false)
   const [error, setError] = useState("")
 

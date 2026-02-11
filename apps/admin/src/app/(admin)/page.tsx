@@ -24,6 +24,12 @@ import {
 type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type HazardReport = Schema["HazardReport"]["type"];
 
+// Extended type for LocationMeasurement with city/state fields from schema
+type LocationMeasurementWithLocation = LocationMeasurement & {
+  city: string;
+  state: string;
+};
+
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
     contaminants: 0,
@@ -40,28 +46,37 @@ export default function AdminDashboard() {
         const client = generateClient<Schema>();
 
         // Fetch all counts in parallel
-        const [contaminantsResult, measurementsResult, reportsResult, jurisdictionsResult, thresholdsResult] =
-          await Promise.all([
-            client.models.Contaminant.list({ limit: 1000 }),
-            client.models.LocationMeasurement.list({ limit: 1000 }),
-            client.models.HazardReport.list({ limit: 1000 }),
-            client.models.Jurisdiction.list({ limit: 100 }),
-            client.models.ContaminantThreshold.list({ limit: 1000 }),
-          ]);
+        const [
+          contaminantsResult,
+          measurementsResult,
+          reportsResult,
+          jurisdictionsResult,
+          thresholdsResult,
+        ] = await Promise.all([
+          client.models.Contaminant.list({ limit: 1000 }),
+          client.models.LocationMeasurement.list({ limit: 1000 }),
+          client.models.HazardReport.list({ limit: 1000 }),
+          client.models.Jurisdiction.list({ limit: 100 }),
+          client.models.ContaminantThreshold.list({ limit: 1000 }),
+        ]);
 
         // Count contaminants
         const contaminants = contaminantsResult.data?.length || 0;
 
         // Count unique cities with data
         const uniqueCities = new Set(
-          measurementsResult.data?.map((m: LocationMeasurement) => `${(m as any).city}|${(m as any).state}`) || []
+          measurementsResult.data?.map((m) => {
+            const measurement = m as LocationMeasurementWithLocation;
+            return `${measurement.city}|${measurement.state}`;
+          }) || [],
         );
         const locationsWithData = uniqueCities.size;
 
         // Count pending reports
         const pendingReports =
-          reportsResult.data?.filter((report: HazardReport) => report.status === "pending")
-            .length || 0;
+          reportsResult.data?.filter(
+            (report: HazardReport) => report.status === "pending",
+          ).length || 0;
 
         // Count jurisdictions and thresholds
         const jurisdictions = jurisdictionsResult.data?.length || 0;
@@ -136,9 +151,7 @@ export default function AdminDashboard() {
       <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-5">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Contaminants
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Contaminants</CardTitle>
             <Droplets className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -153,35 +166,27 @@ export default function AdminDashboard() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Jurisdictions
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Jurisdictions</CardTitle>
             <Globe className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {isLoading ? "..." : stats.jurisdictions}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Regulatory regions
-            </p>
+            <p className="text-xs text-muted-foreground">Regulatory regions</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Thresholds
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Thresholds</CardTitle>
             <Scale className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
               {isLoading ? "..." : stats.thresholds}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Configured limits
-            </p>
+            <p className="text-xs text-muted-foreground">Configured limits</p>
           </CardContent>
         </Card>
 
@@ -196,9 +201,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               {isLoading ? "..." : stats.locationsWithData}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Cities tracked
-            </p>
+            <p className="text-xs text-muted-foreground">Cities tracked</p>
           </CardContent>
         </Card>
 
@@ -213,9 +216,7 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               {isLoading ? "..." : stats.pendingReports}
             </div>
-            <p className="text-xs text-muted-foreground">
-              Awaiting review
-            </p>
+            <p className="text-xs text-muted-foreground">Awaiting review</p>
           </CardContent>
         </Card>
       </div>
@@ -225,7 +226,10 @@ export default function AdminDashboard() {
         <h2 className="text-xl font-semibold mb-4">Quick Actions</h2>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {quickActions.map((action) => (
-            <Card key={action.title} className="hover:bg-muted/50 transition-colors">
+            <Card
+              key={action.title}
+              className="hover:bg-muted/50 transition-colors"
+            >
               <Link href={action.href}>
                 <CardHeader>
                   <div className="flex items-center justify-between">
