@@ -19,7 +19,7 @@ export {
   mockJurisdictions,
   getMockThreshold,
   getMockLocationData,
-  getAvailableMockPostalCodes,
+  getAvailableMockCities,
   allMockLocationData,
   mockLocationDataMap,
   beverlyHillsLocationData,

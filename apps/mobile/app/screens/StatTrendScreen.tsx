@@ -74,7 +74,8 @@ export function StatTrendScreen() {
     history,
     higherIsBad,
     lastUpdated,
-    zipCode,
+    city,
+    state,
   } = route.params
 
   const trend = calculateTrendDirection(history, currentValue, higherIsBad)
@@ -285,7 +286,7 @@ export function StatTrendScreen() {
           <Text style={$sectionTitle}>Location</Text>
           <View style={$locationRow}>
             <MaterialCommunityIcons name="map-marker" size={18} color={theme.colors.textDim} />
-            <Text style={$locationText}>Zip Code: {zipCode}</Text>
+            <Text style={$locationText}>{city}, {state}</Text>
           </View>
         </View>
       </ScrollView>

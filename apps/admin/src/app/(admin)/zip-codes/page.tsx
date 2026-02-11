@@ -122,7 +122,7 @@ export default function ZipCodesPage() {
         const existing = locationMap.get(key) || {
           city,
           state,
-          measurements: [],
+          measurements: [] as LocationMeasurement[],
           worstStatus: "safe" as StatStatus,
           lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
         };

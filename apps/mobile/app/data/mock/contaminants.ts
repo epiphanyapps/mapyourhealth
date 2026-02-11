@@ -510,7 +510,9 @@ function calculateMockStatus(
  * Create a measurement with computed status
  */
 function createMeasurement(
-  postalCode: string,
+  city: string,
+  state: string,
+  country: string,
   contaminantId: string,
   value: number,
   jurisdictionCode: string,
@@ -521,7 +523,9 @@ function createMeasurement(
   const status = calculateMockStatus(value, threshold, contaminant?.higherIsBad ?? true)
 
   return {
-    postalCode,
+    city,
+    state,
+    country,
     contaminantId,
     value,
     measuredAt: new Date().toISOString(),
@@ -540,17 +544,16 @@ function createMeasurement(
  * Beverly Hills, CA - Generally safe
  */
 export const beverlyHillsLocationData: LocationData = {
-  postalCode: "90210",
-  cityName: "Beverly Hills",
+  city: "Beverly Hills",
   state: "CA",
   country: "US",
   jurisdictionCode: "US-CA",
   measurements: [
-    createMeasurement("90210", "nitrate", 2000, "US-CA"),
-    createMeasurement("90210", "lead", 3, "US-CA"),
-    createMeasurement("90210", "arsenic", 2, "US-CA"),
-    createMeasurement("90210", "copper", 150, "US-CA"),
-    createMeasurement("90210", "e-coli", 0, "US-CA"),
+    createMeasurement("Beverly Hills", "CA", "US", "nitrate", 2000, "US-CA"),
+    createMeasurement("Beverly Hills", "CA", "US", "lead", 3, "US-CA"),
+    createMeasurement("Beverly Hills", "CA", "US", "arsenic", 2, "US-CA"),
+    createMeasurement("Beverly Hills", "CA", "US", "copper", 150, "US-CA"),
+    createMeasurement("Beverly Hills", "CA", "US", "e-coli", 0, "US-CA"),
   ],
 }
 
@@ -558,18 +561,17 @@ export const beverlyHillsLocationData: LocationData = {
  * New York, NY - Mixed with lead warning
  */
 export const newYorkLocationData: LocationData = {
-  postalCode: "10001",
-  cityName: "New York",
+  city: "New York",
   state: "NY",
   country: "US",
   jurisdictionCode: "US-NY",
   measurements: [
-    createMeasurement("10001", "nitrate", 5000, "US-NY"),
-    createMeasurement("10001", "lead", 12, "US-NY"), // Warning level
-    createMeasurement("10001", "arsenic", 5, "US-NY"),
-    createMeasurement("10001", "copper", 800, "US-NY"),
-    createMeasurement("10001", "tthm", 65, "US-NY"),
-    createMeasurement("10001", "e-coli", 0, "US-NY"),
+    createMeasurement("New York", "NY", "US", "nitrate", 5000, "US-NY"),
+    createMeasurement("New York", "NY", "US", "lead", 12, "US-NY"), // Warning level
+    createMeasurement("New York", "NY", "US", "arsenic", 5, "US-NY"),
+    createMeasurement("New York", "NY", "US", "copper", 800, "US-NY"),
+    createMeasurement("New York", "NY", "US", "tthm", 65, "US-NY"),
+    createMeasurement("New York", "NY", "US", "e-coli", 0, "US-NY"),
   ],
 }
 
@@ -577,17 +579,16 @@ export const newYorkLocationData: LocationData = {
  * Miami Beach, FL - Safe
  */
 export const miamiBeachLocationData: LocationData = {
-  postalCode: "33139",
-  cityName: "Miami Beach",
+  city: "Miami Beach",
   state: "FL",
   country: "US",
   jurisdictionCode: "US-FL",
   measurements: [
-    createMeasurement("33139", "nitrate", 3000, "US-FL"),
-    createMeasurement("33139", "lead", 5, "US-FL"),
-    createMeasurement("33139", "arsenic", 3, "US-FL"),
-    createMeasurement("33139", "copper", 200, "US-FL"),
-    createMeasurement("33139", "e-coli", 0, "US-FL"),
+    createMeasurement("Miami Beach", "FL", "US", "nitrate", 3000, "US-FL"),
+    createMeasurement("Miami Beach", "FL", "US", "lead", 5, "US-FL"),
+    createMeasurement("Miami Beach", "FL", "US", "arsenic", 3, "US-FL"),
+    createMeasurement("Miami Beach", "FL", "US", "copper", 200, "US-FL"),
+    createMeasurement("Miami Beach", "FL", "US", "e-coli", 0, "US-FL"),
   ],
 }
 
@@ -595,17 +596,16 @@ export const miamiBeachLocationData: LocationData = {
  * Chicago, IL - Lead danger
  */
 export const chicagoLocationData: LocationData = {
-  postalCode: "60601",
-  cityName: "Chicago",
+  city: "Chicago",
   state: "IL",
   country: "US",
   jurisdictionCode: "US-IL",
   measurements: [
-    createMeasurement("60601", "nitrate", 4500, "US-IL"),
-    createMeasurement("60601", "lead", 18, "US-IL"), // DANGER
-    createMeasurement("60601", "arsenic", 4, "US-IL"),
-    createMeasurement("60601", "copper", 500, "US-IL"),
-    createMeasurement("60601", "total-coliform", 2, "US-IL"), // DANGER
+    createMeasurement("Chicago", "IL", "US", "nitrate", 4500, "US-IL"),
+    createMeasurement("Chicago", "IL", "US", "lead", 18, "US-IL"), // DANGER
+    createMeasurement("Chicago", "IL", "US", "arsenic", 4, "US-IL"),
+    createMeasurement("Chicago", "IL", "US", "copper", 500, "US-IL"),
+    createMeasurement("Chicago", "IL", "US", "total-coliform", 2, "US-IL"), // DANGER
   ],
 }
 
@@ -613,17 +613,16 @@ export const chicagoLocationData: LocationData = {
  * Seattle, WA - Very safe
  */
 export const seattleLocationData: LocationData = {
-  postalCode: "98101",
-  cityName: "Seattle",
+  city: "Seattle",
   state: "WA",
   country: "US",
   jurisdictionCode: "US-WA",
   measurements: [
-    createMeasurement("98101", "nitrate", 1500, "US-WA"),
-    createMeasurement("98101", "lead", 2, "US-WA"),
-    createMeasurement("98101", "arsenic", 1, "US-WA"),
-    createMeasurement("98101", "copper", 100, "US-WA"),
-    createMeasurement("98101", "e-coli", 0, "US-WA"),
+    createMeasurement("Seattle", "WA", "US", "nitrate", 1500, "US-WA"),
+    createMeasurement("Seattle", "WA", "US", "lead", 2, "US-WA"),
+    createMeasurement("Seattle", "WA", "US", "arsenic", 1, "US-WA"),
+    createMeasurement("Seattle", "WA", "US", "copper", 100, "US-WA"),
+    createMeasurement("Seattle", "WA", "US", "e-coli", 0, "US-WA"),
   ],
 }
 
@@ -639,26 +638,26 @@ export const allMockLocationData: LocationData[] = [
 ]
 
 /**
- * Map of postal codes to location data
+ * Map of city names to location data
  */
 export const mockLocationDataMap: Record<string, LocationData> = {
-  "90210": beverlyHillsLocationData,
-  "10001": newYorkLocationData,
-  "33139": miamiBeachLocationData,
-  "60601": chicagoLocationData,
-  "98101": seattleLocationData,
+  "Beverly Hills": beverlyHillsLocationData,
+  "New York": newYorkLocationData,
+  "Miami Beach": miamiBeachLocationData,
+  "Chicago": chicagoLocationData,
+  "Seattle": seattleLocationData,
 }
 
 /**
- * Get location data by postal code
+ * Get location data by city name
  */
-export function getMockLocationData(postalCode: string): LocationData | undefined {
-  return mockLocationDataMap[postalCode]
+export function getMockLocationData(city: string): LocationData | undefined {
+  return mockLocationDataMap[city]
 }
 
 /**
- * Get all available postal codes
+ * Get all available cities
  */
-export function getAvailableMockPostalCodes(): string[] {
+export function getAvailableMockCities(): string[] {
   return Object.keys(mockLocationDataMap)
 }
