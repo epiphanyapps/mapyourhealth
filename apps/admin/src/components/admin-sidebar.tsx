@@ -115,7 +115,11 @@ export function AdminSidebar() {
           </p>
           <ChangePasswordDialog
             trigger={
-              <Button variant="ghost" size="sm" className="w-full justify-start">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full justify-start"
+              >
                 <KeyRound className="mr-2 h-4 w-4" />
                 Change Password
               </Button>

@@ -85,10 +85,18 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // 3. For guests, show empty state to prompt location lookup
   const getDefaultLocation = (): { city: string; state: string; country: string } | null => {
     if (route.params?.city && route.params?.state) {
-      return { city: route.params.city, state: route.params.state, country: route.params.country || "US" }
+      return {
+        city: route.params.city,
+        state: route.params.state,
+        country: route.params.country || "US",
+      }
     }
     if (isAuthenticated && primarySubscription) {
-      return { city: primarySubscription.city, state: primarySubscription.state, country: primarySubscription.country }
+      return {
+        city: primarySubscription.city,
+        state: primarySubscription.state,
+        country: primarySubscription.country,
+      }
     }
     return null
   }
@@ -151,12 +159,9 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   ]
 
   // Handle location selection from PlacesSearchBar
-  const handleLocationSelect = useCallback(
-    (city: string, state: string, country: string) => {
-      setCurrentLocation({ city, state, country })
-    },
-    [],
-  )
+  const handleLocationSelect = useCallback((city: string, state: string, country: string) => {
+    setCurrentLocation({ city, state, country })
+  }, [])
 
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
@@ -176,7 +181,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       setIsFollowing(true)
       try {
         await addSubscription(currentLocation.city, currentLocation.state, currentLocation.country)
-        Alert.alert("Success", `You are now following ${currentLocation.city}, ${currentLocation.state}`)
+        Alert.alert(
+          "Success",
+          `You are now following ${currentLocation.city}, ${currentLocation.state}`,
+        )
       } catch (error) {
         const message = error instanceof Error ? error.message : "Failed to follow location"
         Alert.alert("Error", message)
@@ -219,9 +227,14 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (isAuthenticated) {
       setIsSettingNotify(true)
       try {
-        await addSubscription(currentLocation.city, currentLocation.state, currentLocation.country, {
-          notifyWhenDataAvailable: true,
-        })
+        await addSubscription(
+          currentLocation.city,
+          currentLocation.state,
+          currentLocation.country,
+          {
+            notifyWhenDataAvailable: true,
+          },
+        )
         Alert.alert(
           "You're on the list!",
           `We'll notify you when data for ${currentLocation.city}, ${currentLocation.state} becomes available.`,
@@ -483,8 +496,8 @@ Check MapYourHealth for details.`
           <Text style={$emptyStateTitle}>Unable to load data</Text>
           <Text style={$emptyStateSubtitle}>
             We couldn't fetch safety data for{" "}
-            {currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"}. Check
-            your connection and try again.
+            {currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"}.
+            Check your connection and try again.
           </Text>
           <Pressable
             style={[
@@ -603,7 +616,9 @@ Check MapYourHealth for details.`
 
       {/* Location Header */}
       <LocationHeader
-        locationName={currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"}
+        locationName={
+          currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"
+        }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
       />
 

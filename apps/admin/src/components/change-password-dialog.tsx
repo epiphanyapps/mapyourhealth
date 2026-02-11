@@ -147,7 +147,8 @@ export function ChangePasswordDialog({ trigger }: ChangePasswordDialogProps) {
               minLength={8}
             />
             <p className="text-xs text-muted-foreground">
-              Must be at least 8 characters with uppercase, lowercase, numbers, and symbols
+              Must be at least 8 characters with uppercase, lowercase, numbers,
+              and symbols
             </p>
           </div>
 

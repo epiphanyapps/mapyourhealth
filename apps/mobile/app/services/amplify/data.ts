@@ -291,14 +291,11 @@ export async function getAllLocations(): Promise<AmplifyLocation[]> {
 /**
  * Fetch measurements for a specific city (public read - uses userPool when authenticated, IAM for guests)
  */
-export async function getLocationMeasurements(
-  city: string,
-): Promise<AmplifyLocationMeasurement[]> {
+export async function getLocationMeasurements(city: string): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
-  const { data, errors } =
-    await client.models.LocationMeasurement.listLocationMeasurementByCity({
-      city,
-    })
+  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByCity({
+    city,
+  })
   if (errors) {
     console.error("Error fetching location measurements:", errors)
     throw new Error("Failed to fetch location measurements")
@@ -313,10 +310,9 @@ export async function getLocationMeasurementsByState(
   state: string,
 ): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
-  const { data, errors } =
-    await client.models.LocationMeasurement.listLocationMeasurementByState({
-      state,
-    })
+  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByState({
+    state,
+  })
   if (errors) {
     console.error("Error fetching location measurements by state:", errors)
     throw new Error("Failed to fetch location measurements by state")

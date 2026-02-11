@@ -37,7 +37,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Eye, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import {
+  Loader2,
+  Eye,
+  CheckCircle,
+  XCircle,
+  AlertTriangle,
+} from "lucide-react";
 import { toast } from "sonner";
 import {
   CATEGORIES,
@@ -65,7 +71,9 @@ export default function ReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
-  const [selectedReport, setSelectedReport] = useState<HazardReport | null>(null);
+  const [selectedReport, setSelectedReport] = useState<HazardReport | null>(
+    null,
+  );
   const [adminNotes, setAdminNotes] = useState("");
   const [isSaving, setIsSaving] = useState(false);
 
@@ -103,7 +111,8 @@ export default function ReportsPage() {
 
   const filteredReports = reports.filter((report) => {
     if (statusFilter !== "all" && report.status !== statusFilter) return false;
-    if (categoryFilter !== "all" && report.category !== categoryFilter) return false;
+    if (categoryFilter !== "all" && report.category !== categoryFilter)
+      return false;
     return true;
   });
 
@@ -189,8 +198,11 @@ export default function ReportsPage() {
         <CardHeader>
           <CardTitle>All Reports</CardTitle>
           <CardDescription>
-            {filteredReports.length} report{filteredReports.length !== 1 ? "s" : ""}{" "}
-            {statusFilter !== "all" || categoryFilter !== "all" ? "(filtered)" : ""}
+            {filteredReports.length} report
+            {filteredReports.length !== 1 ? "s" : ""}{" "}
+            {statusFilter !== "all" || categoryFilter !== "all"
+              ? "(filtered)"
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -232,7 +244,9 @@ export default function ReportsPage() {
                     </TableCell>
                     <TableCell>
                       <div>
-                        <div className="truncate max-w-32">{report.location}</div>
+                        <div className="truncate max-w-32">
+                          {report.location}
+                        </div>
                         {report.city && (
                           <div className="text-xs text-muted-foreground">
                             {report.city}
@@ -243,7 +257,9 @@ export default function ReportsPage() {
                     <TableCell>
                       <Badge
                         variant="secondary"
-                        className={reportStatusColors[report.status || "pending"]}
+                        className={
+                          reportStatusColors[report.status || "pending"]
+                        }
                       >
                         {report.status || "pending"}
                       </Badge>
@@ -271,7 +287,10 @@ export default function ReportsPage() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+      <Dialog
+        open={!!selectedReport}
+        onOpenChange={() => setSelectedReport(null)}
+      >
         <DialogContent className="sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>Review Report</DialogTitle>
@@ -298,11 +317,15 @@ export default function ReportsPage() {
                   </p>
                 </div>
                 <div>
-                  <Label className="text-muted-foreground">Current Status</Label>
+                  <Label className="text-muted-foreground">
+                    Current Status
+                  </Label>
                   <p className="mt-1">
                     <Badge
                       variant="secondary"
-                      className={reportStatusColors[selectedReport.status || "pending"]}
+                      className={
+                        reportStatusColors[selectedReport.status || "pending"]
+                      }
                     >
                       {selectedReport.status || "pending"}
                     </Badge>

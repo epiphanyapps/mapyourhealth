@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 /**
  * OnboardingLocationsScreen
  *
@@ -179,11 +180,7 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
         />
 
         {!canContinue && (
-          <Text
-            text="Select at least 1 location to continue"
-            style={themed($hintText)}
-            size="xs"
-          />
+          <Text text="Select at least 1 location to continue" style={themed($hintText)} size="xs" />
         )}
       </View>
     </Screen>

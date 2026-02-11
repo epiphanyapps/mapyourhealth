@@ -171,7 +171,9 @@ export function useLocationSearch(): UseLocationSearchResult {
           displayText: `${city.city}, ${city.state}`,
           secondaryText: city.county
             ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
-            : city.country === "CA" ? "Canada" : "United States",
+            : city.country === "CA"
+              ? "Canada"
+              : "United States",
           city: city.city,
           state: city.state,
           country: city.country,

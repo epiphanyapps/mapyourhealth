@@ -56,8 +56,9 @@ export default function LoginPage() {
         if (user) {
           const session = await fetchAuthSession();
           const groups =
-            (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
-            [];
+            (session.tokens?.idToken?.payload?.[
+              "cognito:groups"
+            ] as string[]) || [];
 
           if (groups.includes("admin")) {
             window.location.href = "/";
@@ -120,7 +121,7 @@ export default function LoginPage() {
 
         default:
           setError(
-            `Sign in requires additional step: ${signInResult.nextStep?.signInStep}. Please contact your administrator.`
+            `Sign in requires additional step: ${signInResult.nextStep?.signInStep}. Please contact your administrator.`,
           );
       }
     } catch (err) {
@@ -156,7 +157,7 @@ export default function LoginPage() {
         await validateAdminAndRedirect();
       } else {
         setError(
-          `Additional step required: ${result.nextStep?.signInStep}. Please contact your administrator.`
+          `Additional step required: ${result.nextStep?.signInStep}. Please contact your administrator.`,
         );
       }
     } catch (err) {
@@ -184,7 +185,9 @@ export default function LoginPage() {
       const output = await resetPassword({ username: email });
       setResetPasswordOutput(output);
 
-      if (output.nextStep.resetPasswordStep === "CONFIRM_RESET_PASSWORD_WITH_CODE") {
+      if (
+        output.nextStep.resetPasswordStep === "CONFIRM_RESET_PASSWORD_WITH_CODE"
+      ) {
         setAuthStep("CONFIRM_RESET_PASSWORD");
         const destination = output.nextStep.codeDeliveryDetails?.destination;
         setSuccess(`A reset code has been sent to ${destination}`);
@@ -194,7 +197,9 @@ export default function LoginPage() {
       }
     } catch (err) {
       const errorMessage =
-        err instanceof Error ? err.message : "Failed to initiate password reset";
+        err instanceof Error
+          ? err.message
+          : "Failed to initiate password reset";
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -226,7 +231,9 @@ export default function LoginPage() {
         newPassword: newPassword,
       });
 
-      setSuccess("Password reset successful! Please sign in with your new password.");
+      setSuccess(
+        "Password reset successful! Please sign in with your new password.",
+      );
       setAuthStep("SIGN_IN");
       setPassword("");
       setNewPassword("");
@@ -295,7 +302,8 @@ export default function LoginPage() {
                   minLength={8}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Must be at least 8 characters with uppercase, lowercase, numbers, and symbols
+                  Must be at least 8 characters with uppercase, lowercase,
+                  numbers, and symbols
                 </p>
               </div>
 
@@ -465,7 +473,8 @@ export default function LoginPage() {
                   minLength={8}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Must be at least 8 characters with uppercase, lowercase, numbers, and symbols
+                  Must be at least 8 characters with uppercase, lowercase,
+                  numbers, and symbols
                 </p>
               </div>
 
@@ -521,9 +530,7 @@ export default function LoginPage() {
             </div>
           </div>
           <CardTitle className="text-2xl">MapYourHealth Admin</CardTitle>
-          <CardDescription>
-            Sign in to access the admin portal
-          </CardDescription>
+          <CardDescription>Sign in to access the admin portal</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSignIn} className="space-y-4">

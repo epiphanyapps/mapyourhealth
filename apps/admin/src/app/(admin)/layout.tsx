@@ -2,7 +2,11 @@
 
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  SidebarProvider,
+  SidebarInset,
+  SidebarTrigger,
+} from "@/components/ui/sidebar";
 import { AdminSidebar } from "@/components/admin-sidebar";
 import { useAuth } from "@/providers/auth-provider";
 import { Separator } from "@/components/ui/separator";
@@ -17,7 +21,11 @@ export default function AdminLayout({
   const router = useRouter();
 
   useEffect(() => {
-    console.log("=== ADMIN LAYOUT: useEffect ===", { isLoading, isAuthenticated, isAdmin });
+    console.log("=== ADMIN LAYOUT: useEffect ===", {
+      isLoading,
+      isAuthenticated,
+      isAdmin,
+    });
     if (!isLoading && (!isAuthenticated || !isAdmin)) {
       console.log("=== ADMIN LAYOUT: Redirecting to /login ===");
       router.push("/login");

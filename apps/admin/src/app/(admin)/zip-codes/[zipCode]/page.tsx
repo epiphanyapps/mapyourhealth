@@ -58,7 +58,7 @@ type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 function calculateStatus(
   value: number,
   threshold: ContaminantThreshold | undefined,
-  higherIsBad: boolean = true
+  higherIsBad: boolean = true,
 ): StatStatus {
   if (!threshold || threshold.limitValue === null) {
     return "safe";
@@ -95,7 +95,8 @@ export default function LocationDetailPage({
   const [thresholds, setThresholds] = useState<ContaminantThreshold[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingMeasurement, setEditingMeasurement] = useState<LocationMeasurement | null>(null);
+  const [editingMeasurement, setEditingMeasurement] =
+    useState<LocationMeasurement | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -111,13 +112,14 @@ export default function LocationDetailPage({
       setIsLoading(true);
       const client = generateClient<Schema>();
 
-      const [measurementsResult, contaminantsResult, thresholdsResult] = await Promise.all([
-        client.models.LocationMeasurement.listLocationMeasurementByCity({
-          city: cityName,
-        }),
-        client.models.Contaminant.list({ limit: 1000 }),
-        client.models.ContaminantThreshold.list({ limit: 1000 }),
-      ]);
+      const [measurementsResult, contaminantsResult, thresholdsResult] =
+        await Promise.all([
+          client.models.LocationMeasurement.listLocationMeasurementByCity({
+            city: cityName,
+          }),
+          client.models.Contaminant.list({ limit: 1000 }),
+          client.models.ContaminantThreshold.list({ limit: 1000 }),
+        ]);
 
       setMeasurements(measurementsResult.data || []);
       setContaminants(contaminantsResult.data || []);
@@ -142,10 +144,11 @@ export default function LocationDetailPage({
     // Try WHO first, then US as fallback
     return (
       thresholds.find(
-        (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "WHO"
+        (t) =>
+          t.contaminantId === contaminantId && t.jurisdictionCode === "WHO",
       ) ||
       thresholds.find(
-        (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "US"
+        (t) => t.contaminantId === contaminantId && t.jurisdictionCode === "US",
       )
     );
   };
@@ -228,7 +231,7 @@ export default function LocationDetailPage({
     const contaminant = getContaminant(measurement.contaminantId);
     if (
       !confirm(
-        `Are you sure you want to delete "${contaminant?.name || measurement.contaminantId}"?`
+        `Are you sure you want to delete "${contaminant?.name || measurement.contaminantId}"?`,
       )
     ) {
       return;
@@ -249,13 +252,17 @@ export default function LocationDetailPage({
   const availableContaminants = editingMeasurement
     ? contaminants
     : contaminants.filter(
-        (c) => !measurements.some((m) => m.contaminantId === c.contaminantId)
+        (c) => !measurements.some((m) => m.contaminantId === c.contaminantId),
       );
 
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-4">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/zip-codes")}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push("/zip-codes")}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -274,12 +281,15 @@ export default function LocationDetailPage({
           <div>
             <CardTitle>Measurements</CardTitle>
             <CardDescription>
-              {measurements.length} measurement{measurements.length !== 1 ? "s" : ""} for this
-              location
+              {measurements.length} measurement
+              {measurements.length !== 1 ? "s" : ""} for this location
             </CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <Button onClick={openCreateDialog} disabled={availableContaminants.length === 0}>
+            <Button
+              onClick={openCreateDialog}
+              disabled={availableContaminants.length === 0}
+            >
               <Plus className="mr-2 h-4 w-4" />
               Add Measurement
             </Button>
@@ -309,7 +319,10 @@ export default function LocationDetailPage({
                     </SelectTrigger>
                     <SelectContent>
                       {availableContaminants.map((c) => (
-                        <SelectItem key={c.contaminantId} value={c.contaminantId}>
+                        <SelectItem
+                          key={c.contaminantId}
+                          value={c.contaminantId}
+                        >
                           {c.name} ({c.unit})
                         </SelectItem>
                       ))}
@@ -325,7 +338,9 @@ export default function LocationDetailPage({
                     step="any"
                     placeholder="Enter measured value"
                     value={formData.value}
-                    onChange={(e) => setFormData({ ...formData, value: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, value: e.target.value })
+                    }
                   />
                   {formData.contaminantId && formData.value && (
                     <p className="text-sm text-muted-foreground">
@@ -337,7 +352,8 @@ export default function LocationDetailPage({
                             calculateStatus(
                               parseFloat(formData.value),
                               getThreshold(formData.contaminantId),
-                              getContaminant(formData.contaminantId)?.higherIsBad ?? true
+                              getContaminant(formData.contaminantId)
+                                ?.higherIsBad ?? true,
                             )
                           ]
                         }
@@ -345,7 +361,8 @@ export default function LocationDetailPage({
                         {calculateStatus(
                           parseFloat(formData.value),
                           getThreshold(formData.contaminantId),
-                          getContaminant(formData.contaminantId)?.higherIsBad ?? true
+                          getContaminant(formData.contaminantId)?.higherIsBad ??
+                            true,
                         )}
                       </Badge>
                     </p>
@@ -358,7 +375,9 @@ export default function LocationDetailPage({
                     id="source"
                     placeholder="e.g., EPA, CDC, Local Health Dept"
                     value={formData.source}
-                    onChange={(e) => setFormData({ ...formData, source: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, source: e.target.value })
+                    }
                   />
                 </div>
 
@@ -369,7 +388,9 @@ export default function LocationDetailPage({
                     type="url"
                     placeholder="https://..."
                     value={formData.sourceUrl}
-                    onChange={(e) => setFormData({ ...formData, sourceUrl: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sourceUrl: e.target.value })
+                    }
                   />
                 </div>
 
@@ -379,7 +400,9 @@ export default function LocationDetailPage({
                     id="notes"
                     placeholder="Additional notes..."
                     value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
+                    }
                   />
                 </div>
               </div>
@@ -414,7 +437,8 @@ export default function LocationDetailPage({
             </div>
           ) : measurements.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
-              No measurements for this location yet. Click &quot;Add Measurement&quot; to add one.
+              No measurements for this location yet. Click &quot;Add
+              Measurement&quot; to add one.
             </div>
           ) : (
             <Table>
@@ -436,7 +460,7 @@ export default function LocationDetailPage({
                   const status = calculateStatus(
                     measurement.value,
                     threshold,
-                    contaminant?.higherIsBad ?? true
+                    contaminant?.higherIsBad ?? true,
                   );
 
                   return (
@@ -454,7 +478,11 @@ export default function LocationDetailPage({
                               ]
                             }
                           >
-                            {contaminantCategoryNames[contaminant.category as ContaminantCategory]}
+                            {
+                              contaminantCategoryNames[
+                                contaminant.category as ContaminantCategory
+                              ]
+                            }
                           </Badge>
                         )}
                       </TableCell>
@@ -462,14 +490,19 @@ export default function LocationDetailPage({
                         {measurement.value} {contaminant?.unit}
                       </TableCell>
                       <TableCell>
-                        <Badge variant="secondary" className={statStatusColors[status]}>
+                        <Badge
+                          variant="secondary"
+                          className={statStatusColors[status]}
+                        >
                           {status}
                         </Badge>
                       </TableCell>
                       <TableCell>{measurement.source || "—"}</TableCell>
                       <TableCell>
                         {measurement.measuredAt
-                          ? new Date(measurement.measuredAt).toLocaleDateString()
+                          ? new Date(
+                              measurement.measuredAt,
+                            ).toLocaleDateString()
                           : "—"}
                       </TableCell>
                       <TableCell className="text-right">

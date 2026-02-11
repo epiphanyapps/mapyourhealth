@@ -16,7 +16,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ExternalLink, MapPin, TestTube, Droplets, Wind, Heart, AlertTriangle } from "lucide-react";
+import {
+  ExternalLink,
+  MapPin,
+  TestTube,
+  Droplets,
+  Wind,
+  Heart,
+  AlertTriangle,
+} from "lucide-react";
 
 export default function TestingPage() {
   useEffect(() => {
@@ -24,7 +32,12 @@ export default function TestingPage() {
     console.log("majorCities:", majorCities);
     console.log("queensNeighborhoods:", queensNeighborhoods);
     console.log("manhattanNeighborhoods:", manhattanNeighborhoods);
-    console.log("Total locations:", majorCities.length + queensNeighborhoods.length + manhattanNeighborhoods.length);
+    console.log(
+      "Total locations:",
+      majorCities.length +
+        queensNeighborhoods.length +
+        manhattanNeighborhoods.length,
+    );
   }, []);
 
   console.log("=== TESTING PAGE RENDER ===");
@@ -122,7 +135,9 @@ export default function TestingPage() {
               <TableBody>
                 {queensNeighborhoods.map((loc) => (
                   <TableRow key={loc.neighborhood}>
-                    <TableCell className="font-medium">{loc.neighborhood}</TableCell>
+                    <TableCell className="font-medium">
+                      {loc.neighborhood}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {loc.conditions}
                     </TableCell>
@@ -145,7 +160,9 @@ export default function TestingPage() {
               <TableBody>
                 {manhattanNeighborhoods.map((loc) => (
                   <TableRow key={loc.neighborhood}>
-                    <TableCell className="font-medium">{loc.neighborhood}</TableCell>
+                    <TableCell className="font-medium">
+                      {loc.neighborhood}
+                    </TableCell>
                     <TableCell className="text-muted-foreground">
                       {loc.conditions}
                     </TableCell>
@@ -171,28 +188,30 @@ export default function TestingPage() {
             <ul className="space-y-2 text-sm">
               <li>
                 <span className="font-medium">Safe area:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">Seattle</code>{" "}
-                - should show mostly green/safe
+                <code className="px-1 py-0.5 bg-muted rounded">Seattle</code> -
+                should show mostly green/safe
               </li>
               <li>
                 <span className="font-medium">Mixed warnings:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">New York</code>{" "}
-                - should show multiple yellow warnings
+                <code className="px-1 py-0.5 bg-muted rounded">New York</code> -
+                should show multiple yellow warnings
               </li>
               <li>
                 <span className="font-medium">Danger alerts:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">Chicago</code>{" "}
-                - should show red danger for lead
+                <code className="px-1 py-0.5 bg-muted rounded">Chicago</code> -
+                should show red danger for lead
               </li>
               <li>
                 <span className="font-medium">Flood risk:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">Miami Beach</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">
+                  Miami Beach
+                </code>{" "}
                 - should show flood danger
               </li>
               <li>
                 <span className="font-medium">Wildfire risk:</span> Search{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">Phoenix</code>{" "}
-                - should show wildfire danger
+                <code className="px-1 py-0.5 bg-muted rounded">Phoenix</code> -
+                should show wildfire danger
               </li>
             </ul>
           </div>
@@ -265,15 +284,21 @@ export default function TestingPage() {
             </div>
             <ul className="text-sm space-y-1 ml-6">
               <li>
-                <code className="text-xs bg-muted px-1 rounded">water-lead</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  water-lead
+                </code>{" "}
                 - Lead Levels (ppb)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">water-nitrate</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  water-nitrate
+                </code>{" "}
                 - Nitrate Levels (mg/L)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">water-bacteria</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  water-bacteria
+                </code>{" "}
                 - Bacteria Count (CFU/100mL)
               </li>
             </ul>
@@ -290,8 +315,8 @@ export default function TestingPage() {
                 Air Quality Index
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">air-pm25</code> -
-                PM2.5 Levels (µg/m³)
+                <code className="text-xs bg-muted px-1 rounded">air-pm25</code>{" "}
+                - PM2.5 Levels (µg/m³)
               </li>
               <li>
                 <code className="text-xs bg-muted px-1 rounded">air-ozone</code>{" "}
@@ -307,15 +332,21 @@ export default function TestingPage() {
             </div>
             <ul className="text-sm space-y-1 ml-6">
               <li>
-                <code className="text-xs bg-muted px-1 rounded">health-covid</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  health-covid
+                </code>{" "}
                 - COVID-19 Cases (per 100k)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">health-flu</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  health-flu
+                </code>{" "}
                 - Flu Cases (per 100k)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">health-access</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  health-access
+                </code>{" "}
                 - Healthcare Access (%)
               </li>
             </ul>
@@ -328,11 +359,15 @@ export default function TestingPage() {
             </div>
             <ul className="text-sm space-y-1 ml-6">
               <li>
-                <code className="text-xs bg-muted px-1 rounded">disaster-wildfire</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  disaster-wildfire
+                </code>{" "}
                 - Wildfire Risk (level 1-10)
               </li>
               <li>
-                <code className="text-xs bg-muted px-1 rounded">disaster-flood</code>{" "}
+                <code className="text-xs bg-muted px-1 rounded">
+                  disaster-flood
+                </code>{" "}
                 - Flood Risk (level 1-10)
               </li>
             </ul>
@@ -381,7 +416,10 @@ const majorCities = [
 const queensNeighborhoods = [
   { neighborhood: "Corona", conditions: "Dense urban, multiple warnings" },
   { neighborhood: "College Point", conditions: "Flood danger (coastal)" },
-  { neighborhood: "Long Island City", conditions: "Industrial area, flood warning" },
+  {
+    neighborhood: "Long Island City",
+    conditions: "Industrial area, flood warning",
+  },
   { neighborhood: "Astoria", conditions: "Good transit, moderate air" },
   { neighborhood: "Flushing", conditions: "Busy commercial, air warnings" },
   { neighborhood: "Jackson Heights", conditions: "Dense, health warnings" },
@@ -394,16 +432,31 @@ const queensNeighborhoods = [
 ];
 
 const manhattanNeighborhoods = [
-  { neighborhood: "Lower East Side", conditions: "Older buildings, lead warning" },
+  {
+    neighborhood: "Lower East Side",
+    conditions: "Older buildings, lead warning",
+  },
   { neighborhood: "Greenwich Village", conditions: "Generally good" },
   { neighborhood: "SoHo", conditions: "Moderate air quality" },
-  { neighborhood: "Tribeca", conditions: "Excellent healthcare, flood warning" },
+  {
+    neighborhood: "Tribeca",
+    conditions: "Excellent healthcare, flood warning",
+  },
   { neighborhood: "Murray Hill", conditions: "Dense residential" },
   { neighborhood: "Midtown East", conditions: "High traffic, air warnings" },
   { neighborhood: "Upper West Side", conditions: "Family-friendly, safe" },
-  { neighborhood: "Upper East Side", conditions: "Affluent, excellent services" },
-  { neighborhood: "East Harlem", conditions: "Lead danger, health disparities" },
+  {
+    neighborhood: "Upper East Side",
+    conditions: "Affluent, excellent services",
+  },
+  {
+    neighborhood: "East Harlem",
+    conditions: "Lead danger, health disparities",
+  },
   { neighborhood: "Harlem", conditions: "Aging infrastructure" },
   { neighborhood: "Washington Heights", conditions: "Diverse community" },
-  { neighborhood: "Financial District", conditions: "Modern infrastructure, flood warning" },
+  {
+    neighborhood: "Financial District",
+    conditions: "Modern infrastructure, flood warning",
+  },
 ];

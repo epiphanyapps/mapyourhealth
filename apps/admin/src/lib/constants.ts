@@ -91,7 +91,12 @@ export const categoryColors: Record<Category, string> = {
 // =============================================================================
 
 /** Status options for hazard reports */
-export const REPORT_STATUS_OPTIONS = ["pending", "reviewed", "resolved", "dismissed"] as const;
+export const REPORT_STATUS_OPTIONS = [
+  "pending",
+  "reviewed",
+  "resolved",
+  "dismissed",
+] as const;
 export type ReportStatus = (typeof REPORT_STATUS_OPTIONS)[number];
 
 /** Color mappings for report statuses */

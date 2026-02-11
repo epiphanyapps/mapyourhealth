@@ -6,21 +6,21 @@
  */
 
 export const testUrls = {
-  admin: 'http://localhost:3000',
-  mobileWeb: 'http://localhost:8081',
+  admin: "http://localhost:3000",
+  mobileWeb: "http://localhost:8081",
 };
 
 export const testZipCodes = {
-  default: 'Beverly Hills',
-  search: 'New York',
+  default: "Beverly Hills",
+  search: "New York",
 };
 
 export const adminCredentials = {
-  email: process.env.ADMIN_TEST_EMAIL || 'admin@example.com',
-  password: process.env.ADMIN_TEST_PASSWORD || 'TestPassword123!',
+  email: process.env.ADMIN_TEST_EMAIL || "admin@example.com",
+  password: process.env.ADMIN_TEST_PASSWORD || "TestPassword123!",
 };
 
 export const testUserCredentials = {
-  email: process.env.TEST_USER_EMAIL || 'testuser@example.com',
-  password: process.env.TEST_USER_PASSWORD || 'TestPassword123!',
+  email: process.env.TEST_USER_EMAIL || "testuser@example.com",
+  password: process.env.TEST_USER_PASSWORD || "TestPassword123!",
 };

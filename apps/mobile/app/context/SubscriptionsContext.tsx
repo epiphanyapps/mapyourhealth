@@ -105,12 +105,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
    * Add a new subscription (city-level)
    */
   const addSubscription = useCallback(
-    async (
-      city: string,
-      state: string,
-      country: string,
-      options?: CreateSubscriptionOptions,
-    ) => {
+    async (city: string, state: string, country: string, options?: CreateSubscriptionOptions) => {
       if (!isAuthenticated) {
         throw new Error("Must be authenticated to add subscription")
       }

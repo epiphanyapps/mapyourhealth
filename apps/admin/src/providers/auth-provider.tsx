@@ -41,7 +41,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.log("=== AUTH PROVIDER: session ===", session);
 
       // Get groups from the ID token
-      const groups = (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || [];
+      const groups =
+        (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
+        [];
       const isAdmin = groups.includes("admin");
       console.log("=== AUTH PROVIDER: groups ===", groups, "isAdmin:", isAdmin);
 
