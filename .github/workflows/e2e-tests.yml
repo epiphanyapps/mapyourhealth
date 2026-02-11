@@ -107,18 +107,19 @@ jobs:
 
             # Start Metro bundler in background (dev-client needs it to serve the JS bundle)
             cd apps/mobile
-            npx react-native start --port 8081 &
+            npx expo start --port 8081 --localhost --no-dev &
             METRO_PID=$!
             cd ../..
 
             # Wait for Metro to be ready
             echo "Waiting for Metro bundler..."
             for i in $(seq 1 60); do
-              if curl -s http://localhost:8081/status 2>/dev/null | grep -q "packager-status:running"; then
+              if curl -s http://localhost:8081 2>/dev/null | grep -q "React"; then
                 echo "Metro is ready!"
                 break
               fi
-              sleep 2
+              echo "  Attempt $i/60..."
+              sleep 3
             done
 
             # Forward Metro port to emulator
