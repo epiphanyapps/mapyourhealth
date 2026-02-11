@@ -115,3 +115,6 @@ apps/mobile/.expo
 # Playwright test artifacts
 playwright-report/
 test-results/
+
+# Test output
+output/
