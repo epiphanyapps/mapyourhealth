@@ -68,20 +68,12 @@ jobs:
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean
 
-      - name: Bundle JS and build debug APK
-        working-directory: apps/mobile
+      - name: Build debug APK with embedded JS bundle
+        working-directory: apps/mobile/android
         run: |
-          # Create the JS bundle so the app doesn't need Metro at runtime
-          mkdir -p android/app/src/main/assets
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file index.tsx \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res
-
-          # Build the APK with the embedded bundle
-          cd android && ./gradlew assembleDebug
+          # bundleInDebug tells Gradle to run the JS bundler during debug builds
+          # so the APK includes the JS bundle and doesn't need Metro at runtime
+          ./gradlew assembleDebug -PbundleInDebug=true
 
       - name: Free up disk space
         run: |
