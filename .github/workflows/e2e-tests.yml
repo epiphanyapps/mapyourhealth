@@ -1,7 +1,5 @@
 name: E2E Tests
 
-
-
 on:
   pull_request:
     branches: [main]
@@ -21,9 +19,11 @@ permissions:
 
 jobs:
   e2e-tests:
-    name: Run E2E Tests
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
+    name: Run E2E Tests (iOS Simulator)
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 45
+    env:
+      MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,84 +36,100 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Setup Java
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          restore-keys: |
-            ${{ runner.os }}-gradle-
-
       - name: Install dependencies
         run: yarn install --immutable
 
       - name: Create Amplify outputs stub for CI build
         run: |
-          # Amplify Gen2 outputs file (gitignored) - stub so the app can build/launch in CI
           STUB='{"version":"1","auth":{"aws_region":"us-east-1","user_pool_id":"us-east-1_test","user_pool_client_id":"test","identity_pool_id":"us-east-1:test"},"data":{"url":"https://test.appsync-api.us-east-1.amazonaws.com/graphql","aws_region":"us-east-1","default_authorization_type":"API_KEY","api_key":"da2-test"}}'
           echo "$STUB" > apps/mobile/amplify_outputs.json
 
-      - name: Generate native project
+      - name: Install CocoaPods dependencies
+        run: |
+          cd apps/mobile/ios 2>/dev/null && pod install --repo-update || echo "Pods will be installed during prebuild"
+
+      - name: Generate native project & build for iOS Simulator
         working-directory: apps/mobile
-        run: npx expo prebuild --platform android --clean
-
-      - name: Build debug APK with embedded JS bundle
-        working-directory: apps/mobile/android
         run: |
-          # bundleInDebug tells Gradle to run the JS bundler during debug builds
-          # so the APK includes the JS bundle and doesn't need Metro at runtime
-          ./gradlew assembleDebug -PbundleInDebug=true
+          npx expo prebuild --platform ios --clean
+          cd ios
+          pod install --repo-update
 
-      - name: Free up disk space
+      - name: Build iOS app for simulator
+        working-directory: apps/mobile/ios
         run: |
-          sudo rm -rf /usr/share/dotnet
-          sudo rm -rf /usr/local/lib/android/sdk/ndk
-          sudo rm -rf /opt/ghc
-          sudo rm -rf /usr/local/share/boost
-          df -h
+          # Determine the .xcworkspace name
+          WORKSPACE=$(ls -d *.xcworkspace | head -1)
+          SCHEME=$(echo "$WORKSPACE" | sed 's/.xcworkspace//')
 
-      - name: Enable KVM
+          xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO \
+            | xcbeautify || xcodebuild \
+            -workspace "$WORKSPACE" \
+            -scheme "$SCHEME" \
+            -sdk iphonesimulator \
+            -configuration Debug \
+            -derivedDataPath build \
+            -destination 'platform=iOS Simulator,name=iPhone 16,OS=latest' \
+            CODE_SIGNING_ALLOWED=NO
+
+      - name: Boot iOS Simulator
         run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
+          # Find an available iPhone 16 simulator (or fall back to any iPhone)
+          DEVICE_ID=$(xcrun simctl list devices available -j | python3 -c "
+          import json, sys
+          data = json.load(sys.stdin)
+          for runtime, devices in data['devices'].items():
+              for d in devices:
+                  if 'iPhone 16' in d['name'] and d['isAvailable']:
+                      print(d['udid'])
+                      sys.exit(0)
+          # fallback: any available iPhone
+          for runtime, devices in data['devices'].items():
+              for d in devices:
+                  if 'iPhone' in d['name'] and d['isAvailable']:
+                      print(d['udid'])
+                      sys.exit(0)
+          sys.exit(1)
+          ")
+
+          echo "Booting simulator: $DEVICE_ID"
+          xcrun simctl boot "$DEVICE_ID" 2>/dev/null || true
+          echo "SIMULATOR_UDID=$DEVICE_ID" >> $GITHUB_ENV
+
+      - name: Install app on simulator
+        run: |
+          # Find the .app bundle from DerivedData
+          APP_PATH=$(find apps/mobile/ios/build/Build/Products/Debug-iphonesimulator -name "*.app" -type d | head -1)
+          echo "Installing: $APP_PATH"
+          xcrun simctl install "$SIMULATOR_UDID" "$APP_PATH"
 
       - name: Install Maestro
         run: |
-          curl -Ls "https://get.maestro.mobile.dev" | bash
+          if ! command -v maestro &>/dev/null && [ ! -f "$HOME/.maestro/bin/maestro" ]; then
+            curl -Ls "https://get.maestro.mobile.dev" | bash
+          fi
           echo "$HOME/.maestro/bin" >> $GITHUB_PATH
 
       - name: Run E2E tests
-        uses: reactivecircus/android-emulator-runner@v2
-        with:
-          api-level: 31
-          arch: x86_64
-          profile: pixel_6
-          heap-size: 512M
-          ram-size: 4096M
-          emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
-          disable-animations: true
-          script: |
-            # Install the APK (JS bundle is already embedded, no Metro needed)
-            adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
+        run: |
+          # Launch the app
+          xcrun simctl launch "$SIMULATOR_UDID" "$MAESTRO_APP_ID"
+          sleep 10
 
-            # Launch the app and wait for it to settle
-            adb shell am start -n com.epiphanyapps.mapyourhealth/.MainActivity
-            sleep 10
+          # Run Maestro flows
+          $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows \
+            --env MAESTRO_APP_ID="$MAESTRO_APP_ID"
 
-            # Run Maestro tests
-            $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+      - name: Shutdown simulator
+        if: always()
+        run: xcrun simctl shutdown "$SIMULATOR_UDID" 2>/dev/null || true
 
       - name: Upload test results
         if: always()
@@ -132,7 +148,7 @@ jobs:
             const status = '${{ job.status }}' === 'success' ? ':white_check_mark:' : ':x:';
             const body = `## E2E Test Results ${status}
 
-            **Platform:** Android (Emulator)
+            **Platform:** iOS (Simulator)
             **Status:** ${{ job.status }}
             **Commit:** ${{ github.sha }}
 
