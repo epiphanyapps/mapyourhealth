@@ -23,7 +23,7 @@ jobs:
   e2e-tests:
     name: Run E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    timeout-minutes: 30
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -68,9 +68,20 @@ jobs:
         working-directory: apps/mobile
         run: npx expo prebuild --platform android --clean
 
-      - name: Build APK
-        working-directory: apps/mobile/android
-        run: ./gradlew assembleDebug
+      - name: Bundle JS and build debug APK
+        working-directory: apps/mobile
+        run: |
+          # Create the JS bundle so the app doesn't need Metro at runtime
+          mkdir -p android/app/src/main/assets
+          npx react-native bundle \
+            --platform android \
+            --dev false \
+            --entry-file index.tsx \
+            --bundle-output android/app/src/main/assets/index.android.bundle \
+            --assets-dest android/app/src/main/res
+
+          # Build the APK with the embedded bundle
+          cd android && ./gradlew assembleDebug
 
       - name: Free up disk space
         run: |
@@ -102,34 +113,15 @@ jobs:
           emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
           disable-animations: true
           script: |
-            # Install the dev-client APK
+            # Install the APK (JS bundle is already embedded, no Metro needed)
             adb install apps/mobile/android/app/build/outputs/apk/debug/app-debug.apk
 
-            # Start Metro bundler in background (dev-client needs it to serve the JS bundle)
-            yarn --cwd apps/mobile expo start --port 8081 --localhost --no-dev &
-            METRO_PID=$!
-
-            # Wait for Metro to be ready
-            echo "Waiting for Metro bundler..."
-            i=0
-            while [ "$i" -lt 60 ]; do
-              if curl -s http://localhost:8081 2>/dev/null | grep -q "React"; then
-                echo "Metro is ready!"
-                break
-              fi
-              i=$((i + 1))
-              echo "  Attempt $i/60..."
-              sleep 3
-            done
-
-            # Forward Metro port to emulator
-            adb reverse tcp:8081 tcp:8081
+            # Launch the app and wait for it to settle
+            adb shell am start -n com.epiphanyapps.mapyourhealth/.MainActivity
+            sleep 10
 
             # Run Maestro tests
             $HOME/.maestro/bin/maestro test apps/mobile/.maestro/flows --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
-
-            # Cleanup
-            kill $METRO_PID 2>/dev/null || true
 
       - name: Upload test results
         if: always()
