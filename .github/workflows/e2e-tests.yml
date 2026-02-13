@@ -24,6 +24,8 @@ jobs:
     timeout-minutes: 45
     env:
       MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
+      JAVA_HOME: /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+      PATH: /usr/local/opt/openjdk@17/bin:${{ env.PATH }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
