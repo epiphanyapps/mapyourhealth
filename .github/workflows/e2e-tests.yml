@@ -25,6 +25,7 @@ jobs:
     env:
       MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
       JAVA_HOME: /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+      MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
     steps:
       - name: Set up Java in PATH
         run: echo "/usr/local/opt/openjdk@17/bin" >> $GITHUB_PATH
