@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   createContext,
   FC,
@@ -9,6 +10,7 @@ import {
 } from "react"
 
 import { translate } from "@/i18n/translate"
+import { queryKeys } from "@/lib/queryKeys"
 import { api } from "@/services/api"
 import type { EpisodeItem } from "@/services/api/types"
 import { formatDate } from "@/utils/formatDate"
@@ -29,18 +31,26 @@ export const EpisodeContext = createContext<EpisodeContextType | null>(null)
 export interface EpisodeProviderProps {}
 
 export const EpisodeProvider: FC<PropsWithChildren<EpisodeProviderProps>> = ({ children }) => {
-  const [episodes, setEpisodes] = useState<EpisodeItem[]>([])
   const [favorites, setFavorites] = useState<string[]>([])
   const [favoritesOnly, setFavoritesOnly] = useState<boolean>(false)
+  const queryClientInstance = useQueryClient()
+
+  const { data: episodes = [] } = useQuery({
+    queryKey: queryKeys.episodes.list(),
+    queryFn: async () => {
+      const response = await api.getEpisodes()
+      if (response.kind === "ok") {
+        return response.episodes
+      }
+      console.error(`Error fetching episodes: ${JSON.stringify(response)}`)
+      return []
+    },
+    staleTime: 10 * 60 * 1000,
+  })
 
   const fetchEpisodes = useCallback(async () => {
-    const response = await api.getEpisodes()
-    if (response.kind === "ok") {
-      setEpisodes(response.episodes)
-    } else {
-      console.error(`Error fetching episodes: ${JSON.stringify(response)}`)
-    }
-  }, [])
+    await queryClientInstance.invalidateQueries({ queryKey: queryKeys.episodes.list() })
+  }, [queryClientInstance])
 
   const toggleFavoritesOnly = useCallback(() => {
     setFavoritesOnly((prev) => !prev)

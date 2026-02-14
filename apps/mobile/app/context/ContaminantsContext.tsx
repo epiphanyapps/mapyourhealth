@@ -2,18 +2,18 @@
  * ContaminantsContext - Caches contaminants and thresholds from Amplify backend.
  *
  * This context fetches contaminants, thresholds, and jurisdictions on app startup
- * and caches them for use throughout the app. Falls back to mock data if API fails.
+ * using React Query and caches them for use throughout the app.
+ * Falls back to mock data if API fails.
  */
 
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   createContext,
   FC,
   PropsWithChildren,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
 } from "react"
 
 import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
@@ -24,6 +24,7 @@ import type {
   Jurisdiction,
   SafetyStatus,
 } from "@/data/types/safety"
+import { queryKeys } from "@/lib/queryKeys"
 import {
   getContaminants as fetchContaminants,
   getContaminantThresholds as fetchThresholds,
@@ -126,58 +127,111 @@ function mapAmplifyJurisdiction(amplify: AmplifyJurisdiction): Jurisdiction {
   }
 }
 
-export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
-  const [contaminants, setContaminants] = useState<Contaminant[]>([])
-  const [thresholds, setThresholds] = useState<ContaminantThreshold[]>([])
-  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isMockData, setIsMockData] = useState(false)
-
-  /**
-   * Fetch all data from Amplify, falling back to mock data on error
-   */
-  const fetchData = useCallback(async () => {
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const [amplifyContaminants, amplifyThresholds, amplifyJurisdictions] = await Promise.all([
-        fetchContaminants(),
-        fetchThresholds(),
-        fetchJurisdictions(),
-      ])
-
-      if (amplifyContaminants.length > 0) {
-        setContaminants(amplifyContaminants.map(mapAmplifyContaminant))
-        setThresholds(amplifyThresholds.map(mapAmplifyThreshold))
-        setJurisdictions(amplifyJurisdictions.map(mapAmplifyJurisdiction))
-        setIsMockData(false)
-      } else {
-        // No data in backend, use mock data
-        console.log("No contaminants in backend, using mock data")
-        setContaminants(mockContaminants)
-        setThresholds(mockThresholds)
-        setJurisdictions(mockJurisdictions)
-        setIsMockData(true)
-      }
-    } catch (err) {
-      console.error("Failed to fetch contaminant data:", err)
-      // Fall back to mock data
-      setContaminants(mockContaminants)
-      setThresholds(mockThresholds)
-      setJurisdictions(mockJurisdictions)
-      setIsMockData(true)
-      setError("Failed to load contaminant data from server. Using local data.")
-    } finally {
-      setIsLoading(false)
+/**
+ * Fetches contaminants from API; returns mock data on failure or empty result.
+ */
+async function fetchContaminantsWithFallback(): Promise<{
+  contaminants: Contaminant[]
+  isMock: boolean
+}> {
+  try {
+    const amplifyContaminants = await fetchContaminants()
+    if (amplifyContaminants.length > 0) {
+      return { contaminants: amplifyContaminants.map(mapAmplifyContaminant), isMock: false }
     }
-  }, [])
+  } catch (err) {
+    console.error("Failed to fetch contaminants:", err)
+  }
+  return { contaminants: mockContaminants, isMock: true }
+}
 
-  // Fetch on mount
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
+async function fetchThresholdsWithFallback(): Promise<{
+  thresholds: ContaminantThreshold[]
+  isMock: boolean
+}> {
+  try {
+    const amplifyThresholds = await fetchThresholds()
+    if (amplifyThresholds.length > 0) {
+      return { thresholds: amplifyThresholds.map(mapAmplifyThreshold), isMock: false }
+    }
+  } catch (err) {
+    console.error("Failed to fetch thresholds:", err)
+  }
+  return { thresholds: mockThresholds, isMock: true }
+}
+
+async function fetchJurisdictionsWithFallback(): Promise<{
+  jurisdictions: Jurisdiction[]
+  isMock: boolean
+}> {
+  try {
+    const amplifyJurisdictions = await fetchJurisdictions()
+    if (amplifyJurisdictions.length > 0) {
+      return { jurisdictions: amplifyJurisdictions.map(mapAmplifyJurisdiction), isMock: false }
+    }
+  } catch (err) {
+    console.error("Failed to fetch jurisdictions:", err)
+  }
+  return { jurisdictions: mockJurisdictions, isMock: true }
+}
+
+export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
+  const queryClientInstance = useQueryClient()
+
+  const {
+    data: contaminantsResult,
+    isLoading: contaminantsLoading,
+    error: contaminantsError,
+  } = useQuery({
+    queryKey: queryKeys.contaminants.definitions(),
+    queryFn: fetchContaminantsWithFallback,
+    staleTime: 60 * 60 * 1000, // 1 hour
+    gcTime: 24 * 60 * 60 * 1000,
+  })
+
+  const {
+    data: thresholdsResult,
+    isLoading: thresholdsLoading,
+    error: thresholdsError,
+  } = useQuery({
+    queryKey: queryKeys.contaminants.thresholds(),
+    queryFn: fetchThresholdsWithFallback,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+  })
+
+  const {
+    data: jurisdictionsResult,
+    isLoading: jurisdictionsLoading,
+    error: jurisdictionsError,
+  } = useQuery({
+    queryKey: queryKeys.contaminants.jurisdictions(),
+    queryFn: fetchJurisdictionsWithFallback,
+    staleTime: 60 * 60 * 1000,
+    gcTime: 24 * 60 * 60 * 1000,
+  })
+
+  const contaminants = contaminantsResult?.contaminants ?? []
+  const thresholds = thresholdsResult?.thresholds ?? []
+  const jurisdictions = jurisdictionsResult?.jurisdictions ?? []
+  const isLoading = contaminantsLoading || thresholdsLoading || jurisdictionsLoading
+  const isMockData =
+    (contaminantsResult?.isMock ?? true) ||
+    (thresholdsResult?.isMock ?? true) ||
+    (jurisdictionsResult?.isMock ?? true)
+
+  const error =
+    contaminantsError || thresholdsError || jurisdictionsError
+      ? "Failed to load contaminant data from server. Using local data."
+      : null
+
+  const refresh = useCallback(async () => {
+    await Promise.all([
+      queryClientInstance.invalidateQueries({ queryKey: queryKeys.contaminants.definitions() }),
+      queryClientInstance.invalidateQueries({ queryKey: queryKeys.contaminants.thresholds() }),
+      queryClientInstance.invalidateQueries({ queryKey: queryKeys.contaminants.jurisdictions() }),
+    ])
+  }, [queryClientInstance])
 
   // Create maps for quick lookup
   const contaminantMap = useMemo(() => new Map(contaminants.map((c) => [c.id, c])), [contaminants])
@@ -301,7 +355,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     isLoading,
     error,
     isMockData,
-    refresh: fetchData,
+    refresh,
     getByCategory,
     getById,
     getThreshold,
