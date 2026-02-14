@@ -29,11 +29,14 @@ if (__DEV__) {
 
 Amplify.configure(outputs)
 
+import { QueryClientProvider } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+
+import { queryClient } from "./lib/queryClient"
 
 import { AuthProvider } from "./context/AuthContext"
 import { NotificationProvider } from "./context/NotificationContext"
@@ -120,26 +123,28 @@ export function App() {
 
   // otherwise, we're ready to render the app
   return (
-    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
-      <KeyboardProvider>
-        <NotificationProvider>
-          <AuthProvider>
-            <SubscriptionsProvider>
-              <PendingActionProvider>
-                <StatDefinitionsProvider>
-                  <ThemeProvider>
-                    <AppNavigator
-                      linking={linking}
-                      initialState={initialNavigationState}
-                      onStateChange={onNavigationStateChange}
-                    />
-                  </ThemeProvider>
-                </StatDefinitionsProvider>
-              </PendingActionProvider>
-            </SubscriptionsProvider>
-          </AuthProvider>
-        </NotificationProvider>
-      </KeyboardProvider>
-    </SafeAreaProvider>
+    <QueryClientProvider client={queryClient}>
+      <SafeAreaProvider initialMetrics={initialWindowMetrics}>
+        <KeyboardProvider>
+          <NotificationProvider>
+            <AuthProvider>
+              <SubscriptionsProvider>
+                <PendingActionProvider>
+                  <StatDefinitionsProvider>
+                    <ThemeProvider>
+                      <AppNavigator
+                        linking={linking}
+                        initialState={initialNavigationState}
+                        onStateChange={onNavigationStateChange}
+                      />
+                    </ThemeProvider>
+                  </StatDefinitionsProvider>
+                </PendingActionProvider>
+              </SubscriptionsProvider>
+            </AuthProvider>
+          </NotificationProvider>
+        </KeyboardProvider>
+      </SafeAreaProvider>
+    </QueryClientProvider>
   )
 }

@@ -1,15 +1,17 @@
 /**
  * useMultiLocationData Hook
  *
- * Fetches and aggregates water quality data for multiple postal codes.
+ * Fetches and aggregates water quality data for multiple postal codes via React Query.
  * Takes the worst-case value for each contaminant across all locations.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { useCallback } from "react"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import { type ZipCodeData, type ZipCodeStat, type StatStatus } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
+import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
 import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
 import { detectPostalCodeRegion } from "@/utils/postalCode"
@@ -34,39 +36,30 @@ interface SelectedCity {
 }
 
 /**
+ * Get the worse status between two
+ */
+function getWorseStatus(a: StatStatus, b: StatStatus): StatStatus {
+  const priority = { danger: 3, warning: 2, safe: 1 }
+  return priority[a] >= priority[b] ? a : b
+}
+
+/**
  * Hook to fetch and aggregate safety data for multiple postal codes
- *
- * @param selectedCity - The selected city with its postal codes, or null
- * @returns Object with aggregated zipData, loading state, error, and refresh function
- *
- * @example
- * const { zipData, isLoading, error, refresh } = useMultiLocationData({
- *   city: "Montreal",
- *   state: "QC",
- *   postalCodes: ["H2X1Y6", "H3B2Y5"]
- * })
  */
 export function useMultiLocationData(
   selectedCity: SelectedCity | null,
 ): UseMultiLocationDataResult {
-  const [zipData, setZipData] = useState<ZipCodeData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
   const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
+  const qc = useQueryClient()
 
-  /**
-   * Calculate status based on value and threshold
-   */
   const calculateStatus = useCallback(
     (value: number, contaminantId: string, jurisdictionCode: string): StatStatus => {
       const contaminant = contaminants.find((c) => c.id === contaminantId)
       const threshold = getThreshold(contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
 
-      if (!threshold || threshold.limitValue === null) {
-        return "safe"
-      }
+      if (!threshold || threshold.limitValue === null) return "safe"
 
       const limit = threshold.limitValue
       const warningRatio = threshold.warningRatio ?? 0.8
@@ -79,30 +72,16 @@ export function useMultiLocationData(
         if (value <= limit) return "danger"
         if (value <= warningThreshold) return "warning"
       }
-
       return "safe"
     },
     [contaminants, getThreshold],
   )
 
-  /**
-   * Get the worse status between two
-   */
-  const getWorseStatus = (a: StatStatus, b: StatStatus): StatStatus => {
-    const priority = { danger: 3, warning: 2, safe: 1 }
-    return priority[a] >= priority[b] ? a : b
-  }
-
-  /**
-   * Aggregate measurements from multiple locations
-   * Takes the worst value for each contaminant
-   */
   const aggregateMeasurements = useCallback(
     (
       allMeasurements: { postalCode: string; measurements: AmplifyLocationMeasurement[] }[],
       jurisdictionCode: string,
     ): ZipCodeStat[] => {
-      // Group by contaminant ID
       const byContaminant = new Map<
         string,
         { value: number; measuredAt: string; status: StatStatus }
@@ -123,7 +102,6 @@ export function useMultiLocationData(
               status,
             })
           } else {
-            // Take the worse value (higher if higherIsBad, lower otherwise)
             const shouldReplace = higherIsBad ? m.value > existing.value : m.value < existing.value
 
             if (shouldReplace) {
@@ -133,14 +111,12 @@ export function useMultiLocationData(
                 status,
               })
             } else {
-              // Keep existing value but take worse status
               existing.status = getWorseStatus(existing.status, status)
             }
           }
         }
       }
 
-      // Convert to ZipCodeStat array
       return Array.from(byContaminant.entries()).map(([contaminantId, data]) => ({
         statId: contaminantId,
         value: data.value,
@@ -151,99 +127,60 @@ export function useMultiLocationData(
     [contaminants, calculateStatus],
   )
 
-  const fetchData = useCallback(
-    async (_forceRefresh = false) => {
-      if (!selectedCity || selectedCity.postalCodes.length === 0) {
-        setZipData(null)
-        setIsLoading(false)
-        return
-      }
+  const postalCodes = selectedCity?.postalCodes ?? []
 
-      // Wait for contaminants to be loaded
-      if (defsLoading) {
-        return
-      }
+  const query = useQuery({
+    queryKey: queryKeys.measurements.multiLocation(postalCodes),
+    queryFn: async (): Promise<ZipCodeData | null> => {
+      if (!selectedCity || postalCodes.length === 0) return null
 
-      // Can't fetch when offline
       if (isOffline) {
-        setError("You're offline - cannot fetch city data")
-        setIsLoading(false)
-        return
+        throw new Error("You're offline - cannot fetch city data")
       }
 
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        // Fetch measurements for all postal codes in parallel
-        const measurementPromises = selectedCity.postalCodes.map(async (postalCode) => {
+      // Fetch measurements for all postal codes in parallel
+      const allMeasurements = await Promise.all(
+        postalCodes.map(async (postalCode) => {
           const measurements = await getLocationMeasurements(postalCode)
           return { postalCode, measurements }
-        })
+        }),
+      )
 
-        const allMeasurements = await Promise.all(measurementPromises)
+      const totalMeasurements = allMeasurements.reduce(
+        (sum, { measurements }) => sum + measurements.length,
+        0,
+      )
 
-        // Check if we have any data
-        const totalMeasurements = allMeasurements.reduce(
-          (sum, { measurements }) => sum + measurements.length,
-          0,
-        )
+      if (totalMeasurements === 0) return null
 
-        if (totalMeasurements === 0) {
-          // No data for any postal code in this city
-          setZipData(null)
-          setError(null)
-          setIsLoading(false)
-          return
-        }
+      const firstPostalCode = postalCodes[0]
+      const country = detectPostalCodeRegion(firstPostalCode) || "US"
+      const jurisdictionCode = getJurisdictionForPostalCode(
+        firstPostalCode,
+        selectedCity.state,
+        country,
+      )
 
-        // Determine jurisdiction from the first postal code
-        const firstPostalCode = selectedCity.postalCodes[0]
-        const country = detectPostalCodeRegion(firstPostalCode) || "US"
-        const jurisdictionCode = getJurisdictionForPostalCode(
-          firstPostalCode,
-          selectedCity.state,
-          country,
-        )
+      const aggregatedStats = aggregateMeasurements(allMeasurements, jurisdictionCode)
 
-        // Aggregate measurements
-        const aggregatedStats = aggregateMeasurements(allMeasurements, jurisdictionCode)
-
-        // Create the aggregated ZipCodeData
-        const newData: ZipCodeData = {
-          zipCode: selectedCity.postalCodes.join(", "), // Show all postal codes
-          cityName: selectedCity.city,
-          state: selectedCity.state,
-          stats: aggregatedStats,
-        }
-
-        setZipData(newData)
-        setError(null)
-      } catch (err) {
-        console.error("Failed to fetch multi-location data:", err)
-        setError("Unable to fetch city data. Please try again.")
-        setZipData(null)
-      } finally {
-        setIsLoading(false)
+      return {
+        zipCode: postalCodes.join(", "),
+        cityName: selectedCity.city,
+        state: selectedCity.state,
+        stats: aggregatedStats,
       }
     },
-    [selectedCity, defsLoading, isOffline, aggregateMeasurements],
-  )
+    enabled: !!selectedCity && postalCodes.length > 0 && !defsLoading && !isOffline,
+  })
 
-  // Re-fetch when selected city changes or definitions finish loading
-  useEffect(() => {
-    fetchData()
-  }, [fetchData])
-
-  // Create refresh function that forces a refresh
   const refresh = useCallback(async () => {
-    await fetchData(true)
-  }, [fetchData])
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.multiLocation(postalCodes) })
+  }, [qc, postalCodes])
 
   return {
-    zipData,
-    isLoading: isLoading || defsLoading || !networkReady,
-    error,
+    zipData: query.data ?? null,
+    isLoading: query.isLoading || defsLoading || !networkReady,
+    error: query.error?.message ?? null,
     isOffline,
     refresh,
   }
