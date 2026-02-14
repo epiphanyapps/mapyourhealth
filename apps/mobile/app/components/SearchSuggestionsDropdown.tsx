@@ -6,7 +6,16 @@
  */
 
 import { useCallback } from "react"
-import { View, FlatList, ScrollView, Pressable, ViewStyle, TextStyle, Platform } from "react-native"
+import {
+  View,
+  FlatList,
+  ScrollView,
+  Pressable,
+  ViewStyle,
+  TextStyle,
+  Platform,
+  StyleSheet,
+} from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
@@ -57,25 +66,49 @@ function WebSuggestionItem({
   onSelect: (item: SearchSuggestion) => void
   theme: ReturnType<typeof useAppTheme>["theme"]
 }) {
+  const buttonStyle: React.CSSProperties = {
+    display: "flex",
+    flexDirection: "row",
+    alignItems: "center",
+    width: "100%",
+    padding: "12px 16px",
+    border: "none",
+    borderBottom: `1px solid ${theme.colors.border}`,
+    backgroundColor: "transparent",
+    cursor: "pointer",
+    textAlign: "left",
+    position: "relative",
+    zIndex: 1,
+  }
+
+  const $webIconContainer: ViewStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.palette.neutral200,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 12,
+  }
+
+  const $webDisplayText: TextStyle = {
+    fontSize: 16,
+    color: theme.colors.text,
+    fontWeight: "500",
+  }
+
+  const $webSecondaryText: TextStyle = {
+    fontSize: 13,
+    color: theme.colors.textDim,
+    marginTop: 2,
+  }
+
   return (
     <button
       type="button"
       onClick={() => onSelect(item)}
       aria-label={`Select ${item.displayText}`}
-      style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        width: "100%",
-        padding: "12px 16px",
-        border: "none",
-        borderBottom: `1px solid ${theme.colors.border}`,
-        backgroundColor: "transparent",
-        cursor: "pointer",
-        textAlign: "left",
-        position: "relative",
-        zIndex: 1,
-      }}
+      style={buttonStyle}
       onMouseEnter={(e) => {
         e.currentTarget.style.backgroundColor = theme.colors.palette.neutral200
       }}
@@ -83,30 +116,16 @@ function WebSuggestionItem({
         e.currentTarget.style.backgroundColor = "transparent"
       }}
     >
-      <View
-        style={{
-          width: 36,
-          height: 36,
-          borderRadius: 18,
-          backgroundColor: theme.colors.palette.neutral200,
-          justifyContent: "center",
-          alignItems: "center",
-          marginRight: 12,
-        }}
-      >
+      <View style={$webIconContainer}>
         <MaterialCommunityIcons
           name={getIconForType(item.type)}
           size={20}
           color={theme.colors.tint}
         />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={{ fontSize: 16, color: theme.colors.text, fontWeight: "500" }}>
-          {item.displayText}
-        </Text>
-        <Text style={{ fontSize: 13, color: theme.colors.textDim, marginTop: 2 }}>
-          {item.secondaryText}
-        </Text>
+      <View style={webStyles.textContainer}>
+        <Text style={$webDisplayText}>{item.displayText}</Text>
+        <Text style={$webSecondaryText}>{item.secondaryText}</Text>
       </View>
       <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
     </button>
@@ -238,10 +257,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
   if (Platform.OS === "web") {
     return (
       <View style={$dropdownContainer}>
-        <ScrollView
-          keyboardShouldPersistTaps="always"
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
           {suggestions.length === 0 ? (
             <View style={$emptyContainer}>
               <Text style={$emptyText}>No locations found</Text>
@@ -278,3 +294,9 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     </View>
   )
 }
+
+const webStyles = StyleSheet.create({
+  textContainer: {
+    flex: 1,
+  },
+})
