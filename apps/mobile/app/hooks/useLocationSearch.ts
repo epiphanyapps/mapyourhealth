@@ -5,8 +5,8 @@
  * Uses React Query to fetch all locations once on mount, then performs client-side filtering.
  */
 
-import { useQuery } from "@tanstack/react-query"
 import { useState, useCallback, useRef, useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 
 import { SearchSuggestion } from "@/data/types/safety"
 import { queryKeys } from "@/lib/queryKeys"

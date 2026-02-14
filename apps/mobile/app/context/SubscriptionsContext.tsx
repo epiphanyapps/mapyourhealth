@@ -6,14 +6,8 @@
  * showing the default zip code on the dashboard.
  */
 
+import { createContext, FC, PropsWithChildren, useCallback, useContext } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-} from "react"
 
 import { queryKeys } from "@/lib/queryKeys"
 import {
