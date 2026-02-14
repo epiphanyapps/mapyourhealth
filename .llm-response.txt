@@ -1,0 +1,18 @@
+FILE: apps/mobile/app/config/config.prod.ts
+SEARCH:
+  API_URL: "https://api.rss2json.com/v1/",
+REPLACE:
+  API_URL: "https://app.mapyourhealth.info",
+END
+
+FILE: apps/mobile/app/utils/openLinkInBrowser.ts
+SEARCH:
+export function openLinkInBrowser(url: string) {
+  Linking.canOpenURL(url).then((canOpen) => canOpen && Linking.openURL(url))
+}
+REPLACE:
+export function openLinkInBrowser(url: string) {
+  const link = url.replace("https://api.rss2json.com/v1/", "https://app.mapyourhealth.info/");
+  Linking.canOpenURL(link).then((canOpen) => canOpen && Linking.openURL(link))
+}
+END
