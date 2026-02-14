@@ -1,0 +1,89 @@
+appId: ${MAESTRO_APP_ID}
+name: E2E-010 - Accordion Expand and Sub-item Selection
+tags:
+  - e2e
+  - accordion
+  - navigation
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# E2E-010: Test accordion expand/collapse and sub-item selection
+# Verifies that category cards can be expanded to show sub-items
+# and that tapping a sub-item navigates to the detail view
+
+# Wait for dashboard to load
+- waitForAnimationToEnd
+
+# ========================================
+# Step 1: Navigate to New York dashboard
+# ========================================
+
+# Tap on the search input field
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search input field"
+
+# Type partial search query
+- inputText: "new y"
+
+# Wait for autocomplete suggestions to appear
+- waitForAnimationToEnd
+
+# Tap on the autocomplete suggestion
+- tapOn:
+    text: "Select New York, NY"
+    label: "Tap on New York suggestion"
+
+# Wait for navigation
+- waitForAnimationToEnd
+
+# Verify we're on New York dashboard
+- assertVisible:
+    text: "New York, NY"
+    label: "On New York dashboard"
+
+# ========================================
+# Step 2: Test Air Pollution accordion
+# ========================================
+
+# Scroll down to ensure Air Pollution is visible
+- scroll
+
+# Wait for scroll to settle
+- waitForAnimationToEnd
+
+# Tap to expand the Air Pollution category (using full accessibility label pattern)
+- tapOn:
+    text: "Air Pollution.*expandable"
+    label: "Expand Air Pollution category"
+
+# Wait for expand animation
+- waitForAnimationToEnd
+
+# Verify sub-item appears after expansion
+- assertVisible:
+    text: "Radon sub-category"
+    label: "Radon sub-item is visible after expansion"
+
+# ========================================
+# Step 3: Select sub-item and verify detail view
+# ========================================
+
+# Tap on the Radon sub-item
+- tapOn:
+    text: "Radon sub-category"
+    label: "Tap on Radon sub-item"
+
+# Wait for navigation to detail view
+- waitForAnimationToEnd
+
+# Verify we navigated to the category detail screen
+# The header should show "Air Pollution" and EPA link should be visible
+- assertVisible:
+    text: "air category"
+    label: "Category detail screen is displayed"
+
+- assertVisible:
+    text: "Open EPA Radon.*"
+    label: "Radon EPA link is displayed"

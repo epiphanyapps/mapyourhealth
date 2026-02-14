@@ -311,10 +311,18 @@ Check MapYourHealth for details.`
 
   const $searchBarContainer: ViewStyle = {
     marginBottom: 16,
+    // Ensure dropdown appears above content below
+    zIndex: 10,
   }
 
   const $categoriesContainer: ViewStyle = {
-    gap: 8,
+    // No gap - separators handle spacing
+  }
+
+  const $categorySeparator: ViewStyle = {
+    height: 1,
+    backgroundColor: theme.colors.separator,
+    marginHorizontal: 32,
   }
 
   const $warningBannerContainer: ViewStyle = {
@@ -717,21 +725,23 @@ Check MapYourHealth for details.`
 
       {/* Category Cards */}
       <View style={$categoriesContainer}>
-        {categories.map((category) => (
-          <ExpandableCategoryCard
-            key={category}
-            category={category}
-            categoryName={CATEGORY_DISPLAY_NAMES[category]}
-            status={getStatusForCategory(category)}
-            onPress={(subCategoryId) => {
-              navigation.navigate("CategoryDetail", {
-                category,
-                city: currentLocation?.city || "",
-                state: currentLocation?.state || "",
-                subCategoryId,
-              })
-            }}
-          />
+        {categories.map((category, index) => (
+          <View key={category}>
+            {index > 0 && <View style={$categorySeparator} />}
+            <ExpandableCategoryCard
+              category={category}
+              categoryName={CATEGORY_DISPLAY_NAMES[category]}
+              status={getStatusForCategory(category)}
+              onPress={(subCategoryId) => {
+                navigation.navigate("CategoryDetail", {
+                  category,
+                  city: currentLocation?.city || "",
+                  state: currentLocation?.state || "",
+                  subCategoryId,
+                })
+              }}
+            />
+          </View>
         ))}
       </View>
 

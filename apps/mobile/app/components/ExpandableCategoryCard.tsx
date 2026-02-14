@@ -263,10 +263,14 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
         <View style={$statusContainer}>
           <StatusIndicator status={status} size="medium" />
         </View>
-        {hasSubCategories && (
+        {hasSubCategories ? (
           <Animated.View style={[$chevronContainer, animatedChevronStyle]}>
             <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
           </Animated.View>
+        ) : (
+          <View style={$chevronContainer}>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
+          </View>
         )}
       </Pressable>
 
