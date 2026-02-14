@@ -206,7 +206,10 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
 
   const contaminants = useMemo(() => contaminantsResult?.contaminants ?? [], [contaminantsResult])
   const thresholds = useMemo(() => thresholdsResult?.thresholds ?? [], [thresholdsResult])
-  const jurisdictions = useMemo(() => jurisdictionsResult?.jurisdictions ?? [], [jurisdictionsResult])
+  const jurisdictions = useMemo(
+    () => jurisdictionsResult?.jurisdictions ?? [],
+    [jurisdictionsResult],
+  )
   const isLoading = contaminantsLoading || thresholdsLoading || jurisdictionsLoading
   const isMockData =
     (contaminantsResult?.isMock ?? true) ||
