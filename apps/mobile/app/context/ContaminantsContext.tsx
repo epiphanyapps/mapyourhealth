@@ -6,15 +6,8 @@
  * Falls back to mock data if API fails.
  */
 
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import {
-  createContext,
-  FC,
-  PropsWithChildren,
-  useCallback,
-  useContext,
-  useMemo,
-} from "react"
 
 import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
 import type {
@@ -211,9 +204,9 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     gcTime: 24 * 60 * 60 * 1000,
   })
 
-  const contaminants = contaminantsResult?.contaminants ?? []
-  const thresholds = thresholdsResult?.thresholds ?? []
-  const jurisdictions = jurisdictionsResult?.jurisdictions ?? []
+  const contaminants = useMemo(() => contaminantsResult?.contaminants ?? [], [contaminantsResult])
+  const thresholds = useMemo(() => thresholdsResult?.thresholds ?? [], [thresholdsResult])
+  const jurisdictions = useMemo(() => jurisdictionsResult?.jurisdictions ?? [], [jurisdictionsResult])
   const isLoading = contaminantsLoading || thresholdsLoading || jurisdictionsLoading
   const isMockData =
     (contaminantsResult?.isMock ?? true) ||

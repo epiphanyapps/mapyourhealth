@@ -5,10 +5,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { queryKeys } from "@/lib/queryKeys"
-import {
-  createHazardReport,
-  AmplifyHazardReport,
-} from "@/services/amplify/data"
+import { createHazardReport, AmplifyHazardReport } from "@/services/amplify/data"
 
 interface CreateHazardReportInput {
   category: "water" | "air" | "health" | "disaster"

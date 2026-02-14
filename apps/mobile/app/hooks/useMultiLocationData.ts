@@ -5,8 +5,8 @@
  * Takes the worst-case value for each contaminant across all locations.
  */
 
+import { useCallback, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useCallback } from "react"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import { type ZipCodeData, type ZipCodeStat, type StatStatus } from "@/data/types/safety"
@@ -127,7 +127,7 @@ export function useMultiLocationData(
     [contaminants, calculateStatus],
   )
 
-  const postalCodes = selectedCity?.postalCodes ?? []
+  const postalCodes = useMemo(() => selectedCity?.postalCodes ?? [], [selectedCity])
 
   const query = useQuery({
     queryKey: queryKeys.measurements.multiLocation(postalCodes),
