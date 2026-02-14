@@ -11,6 +11,7 @@
 import { useCallback, useState } from "react"
 import {
   ActivityIndicator,
+  Platform,
   Pressable,
   StyleProp,
   // eslint-disable-next-line no-restricted-imports
@@ -137,6 +138,10 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     position: "relative",
     zIndex: 10,
     marginHorizontal: 16,
+    // Web needs higher z-index to escape scroll container stacking
+    ...(Platform.OS === "web" && {
+      zIndex: 9999,
+    }),
   }
 
   const $container: ViewStyle = {

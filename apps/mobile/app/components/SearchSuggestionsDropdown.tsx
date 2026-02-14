@@ -6,7 +6,7 @@
  */
 
 import { useCallback } from "react"
-import { View, FlatList, Pressable, ViewStyle, TextStyle } from "react-native"
+import { View, FlatList, Pressable, ViewStyle, TextStyle, Platform } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
@@ -68,6 +68,10 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
         paddingHorizontal: 16,
         borderBottomWidth: 1,
         borderBottomColor: theme.colors.border,
+        // Web-specific cursor style
+        ...(Platform.OS === "web" && {
+          cursor: "pointer" as unknown as undefined,
+        }),
       }
 
       const $iconContainer: ViewStyle = {
@@ -151,6 +155,11 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     borderWidth: 1,
     borderColor: theme.colors.border,
     zIndex: 1000,
+    // Web-specific fixes for click handling
+    ...(Platform.OS === "web" && {
+      cursor: "pointer" as unknown as undefined,
+      pointerEvents: "auto" as const,
+    }),
   }
 
   const $emptyContainer: ViewStyle = {
