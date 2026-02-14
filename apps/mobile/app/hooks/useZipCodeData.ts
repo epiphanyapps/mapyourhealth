@@ -7,8 +7,8 @@
  * @deprecated This hook uses the legacy data format. Consider using useLocationData for new code.
  */
 
+import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
-import { useCallback, useMemo } from "react"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import { getMockLocationData, getZipCodeMetadata } from "@/data/helpers"
@@ -60,9 +60,24 @@ interface UseZipCodeDataResult {
  * Canadian postal code first-letter to province mapping.
  */
 const CANADIAN_POSTAL_PREFIX_TO_PROVINCE: Record<string, string> = {
-  A: "NL", B: "NS", C: "PE", E: "NB", G: "QC", H: "QC", J: "QC",
-  K: "ON", L: "ON", M: "ON", N: "ON", P: "ON", R: "MB", S: "SK",
-  T: "AB", V: "BC", X: "NT", Y: "YT",
+  A: "NL",
+  B: "NS",
+  C: "PE",
+  E: "NB",
+  G: "QC",
+  H: "QC",
+  J: "QC",
+  K: "ON",
+  L: "ON",
+  M: "ON",
+  N: "ON",
+  P: "ON",
+  R: "MB",
+  S: "SK",
+  T: "AB",
+  V: "BC",
+  X: "NT",
+  Y: "YT",
 }
 
 /**
@@ -172,14 +187,26 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
     warning: string | null
   }> => {
     if (!zipCode) {
-      return { zipData: null, isMockData: false, isCachedData: false, lastUpdated: null, warning: null }
+      return {
+        zipData: null,
+        isMockData: false,
+        isCachedData: false,
+        lastUpdated: null,
+        warning: null,
+      }
     }
 
     // If offline, use MMKV cache or mock data
     if (isOffline) {
       const cached = getCachedData(zipCode)
       if (cached) {
-        return { zipData: cached.data, isMockData: false, isCachedData: true, lastUpdated: cached.cachedAt, warning: null }
+        return {
+          zipData: cached.data,
+          isMockData: false,
+          isCachedData: true,
+          lastUpdated: cached.cachedAt,
+          warning: null,
+        }
       }
       const mockData = getMockLocationData(zipCode)
       if (mockData) {
@@ -188,10 +215,19 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
           cityName: mockData.city,
           state: mockData.state,
           stats: mockData.measurements.map((m) => ({
-            statId: m.contaminantId, value: m.value, status: m.status, lastUpdated: m.measuredAt,
+            statId: m.contaminantId,
+            value: m.value,
+            status: m.status,
+            lastUpdated: m.measuredAt,
           })),
         }
-        return { zipData: legacyData, isMockData: true, isCachedData: false, lastUpdated: null, warning: "You're offline - showing sample data" }
+        return {
+          zipData: legacyData,
+          isMockData: true,
+          isCachedData: false,
+          lastUpdated: null,
+          warning: "You're offline - showing sample data",
+        }
       }
       throw new Error("You're offline and no cached data is available")
     }
@@ -206,13 +242,25 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: ZipCodeData = { zipCode, cityName, state, stats }
       setCachedData(zipCode, newData)
-      return { zipData: newData, isMockData: false, isCachedData: false, lastUpdated: Date.now(), warning: null }
+      return {
+        zipData: newData,
+        isMockData: false,
+        isCachedData: false,
+        lastUpdated: Date.now(),
+        warning: null,
+      }
     }
 
     // No data from backend - try cache, then mock
     const cached = getCachedData(zipCode)
     if (cached) {
-      return { zipData: cached.data, isMockData: false, isCachedData: true, lastUpdated: cached.cachedAt, warning: null }
+      return {
+        zipData: cached.data,
+        isMockData: false,
+        isCachedData: true,
+        lastUpdated: cached.cachedAt,
+        warning: null,
+      }
     }
 
     const mockData = getMockLocationData(zipCode)
@@ -222,13 +270,28 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
         cityName: mockData.city,
         state: mockData.state,
         stats: mockData.measurements.map((m) => ({
-          statId: m.contaminantId, value: m.value, status: m.status, lastUpdated: m.measuredAt,
+          statId: m.contaminantId,
+          value: m.value,
+          status: m.status,
+          lastUpdated: m.measuredAt,
         })),
       }
-      return { zipData: legacyData, isMockData: true, isCachedData: false, lastUpdated: null, warning: null }
+      return {
+        zipData: legacyData,
+        isMockData: true,
+        isCachedData: false,
+        lastUpdated: null,
+        warning: null,
+      }
     }
 
-    return { zipData: null, isMockData: false, isCachedData: false, lastUpdated: null, warning: null }
+    return {
+      zipData: null,
+      isMockData: false,
+      isCachedData: false,
+      lastUpdated: null,
+      warning: null,
+    }
   }, [zipCode, isOffline, mapMeasurementToLegacyStat])
 
   const query = useQuery({
@@ -241,7 +304,13 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       if (!zipCode) return undefined
       const cached = getCachedData(zipCode)
       if (cached) {
-        return { zipData: cached.data, isMockData: false, isCachedData: true, lastUpdated: cached.cachedAt, warning: null }
+        return {
+          zipData: cached.data,
+          isMockData: false,
+          isCachedData: true,
+          lastUpdated: cached.cachedAt,
+          warning: null,
+        }
       }
       return undefined
     },
@@ -287,8 +356,13 @@ export function getWorstStatusForCategory(
         if (def.category === category) return true
         if (isWaterCategory) {
           const contaminantCategories = [
-            "fertilizer", "pesticide", "radioactive", "disinfectant",
-            "inorganic", "organic", "microbiological",
+            "fertilizer",
+            "pesticide",
+            "radioactive",
+            "disinfectant",
+            "inorganic",
+            "organic",
+            "microbiological",
           ]
           return contaminantCategories.includes(def.category)
         }
@@ -325,8 +399,13 @@ export function getStatsForCategory(
 ): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
   const isWaterCategory = category === StatCategory.water
   const contaminantCategories = [
-    "fertilizer", "pesticide", "radioactive", "disinfectant",
-    "inorganic", "organic", "microbiological",
+    "fertilizer",
+    "pesticide",
+    "radioactive",
+    "disinfectant",
+    "inorganic",
+    "organic",
+    "microbiological",
   ]
 
   const categoryDefs = statDefinitions.filter((def) => {

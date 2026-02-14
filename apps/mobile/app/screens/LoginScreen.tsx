@@ -58,7 +58,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
     if (prefillEmail && prefillEmail !== email) {
       setEmail(prefillEmail)
     }
-  }, [prefillEmail])
+  }, [prefillEmail, email])
 
   function validateEmail(value: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

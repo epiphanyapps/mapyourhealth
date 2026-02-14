@@ -69,7 +69,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   }, [refresh])
 
   // Get risk stats for this category (only warning/danger, no safe stats)
-  const stats = zipData ? getRiskStatsForCategory(zipData, category, statDefinitions) : []
+  const stats = useMemo(
+    () => (zipData ? getRiskStatsForCategory(zipData, category, statDefinitions) : []),
+    [zipData, category, statDefinitions],
+  )
 
   const categoryName = CATEGORY_DISPLAY_NAMES[category]
   const categoryColor = CATEGORY_COLORS[category]
@@ -133,9 +136,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const deepLink = zipData.cityName && zipData.state
-      ? `mapyourhealth://location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
-      : `mapyourhealth://location/${encodeURIComponent(zipData.zipCode)}//US`
+    const deepLink =
+      zipData.cityName && zipData.state
+        ? `mapyourhealth://location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
+        : `mapyourhealth://location/${encodeURIComponent(zipData.zipCode)}//US`
 
     const shareMessage = `${categoryName} Risk Report for ${locationName}
 
