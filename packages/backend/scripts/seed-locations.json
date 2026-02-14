@@ -1,17 +1,8 @@
 {
   "locations": [
     {
-      "postalCode": "H2X1Y6",
       "city": "Montreal",
-      "state": "QC",
-      "country": "CA",
-      "jurisdictionCode": "CA-QC",
-      "latitude": 45.5152,
-      "longitude": -73.5612
-    },
-    {
-      "postalCode": "H3B2Y5",
-      "city": "Montreal",
+      "county": "Montreal",
       "state": "QC",
       "country": "CA",
       "jurisdictionCode": "CA-QC",
@@ -19,8 +10,8 @@
       "longitude": -73.5673
     },
     {
-      "postalCode": "J4B5E4",
       "city": "Boucherville",
+      "county": "Longueuil",
       "state": "QC",
       "country": "CA",
       "jurisdictionCode": "CA-QC",
@@ -28,26 +19,53 @@
       "longitude": -73.4360
     },
     {
-      "postalCode": "M5V3L9",
       "city": "Toronto",
+      "county": "Toronto",
       "state": "ON",
       "country": "CA",
       "jurisdictionCode": "CA-ON",
-      "latitude": 43.6426,
-      "longitude": -79.3871
+      "latitude": 43.6532,
+      "longitude": -79.3832
     },
     {
-      "postalCode": "10001",
+      "city": "Vancouver",
+      "county": "Greater Vancouver",
+      "state": "BC",
+      "country": "CA",
+      "jurisdictionCode": "CA-BC",
+      "latitude": 49.2827,
+      "longitude": -123.1207
+    },
+    {
+      "city": "Calgary",
+      "county": "Calgary",
+      "state": "AB",
+      "country": "CA",
+      "jurisdictionCode": "CA-AB",
+      "latitude": 51.0447,
+      "longitude": -114.0719
+    },
+    {
       "city": "New York",
+      "county": "New York County",
       "state": "NY",
       "country": "US",
       "jurisdictionCode": "US-NY",
-      "latitude": 40.7484,
-      "longitude": -73.9967
+      "latitude": 40.7128,
+      "longitude": -74.0060
     },
     {
-      "postalCode": "90210",
+      "city": "Los Angeles",
+      "county": "Los Angeles",
+      "state": "CA",
+      "country": "US",
+      "jurisdictionCode": "US-CA",
+      "latitude": 34.0522,
+      "longitude": -118.2437
+    },
+    {
       "city": "Beverly Hills",
+      "county": "Los Angeles",
       "state": "CA",
       "country": "US",
       "jurisdictionCode": "US-CA",
@@ -55,13 +73,94 @@
       "longitude": -118.4065
     },
     {
-      "postalCode": "33139",
+      "city": "Miami",
+      "county": "Miami-Dade",
+      "state": "FL",
+      "country": "US",
+      "jurisdictionCode": "US-FL",
+      "latitude": 25.7617,
+      "longitude": -80.1918
+    },
+    {
       "city": "Miami Beach",
+      "county": "Miami-Dade",
       "state": "FL",
       "country": "US",
       "jurisdictionCode": "US-FL",
       "latitude": 25.7907,
       "longitude": -80.1300
+    },
+    {
+      "city": "Chicago",
+      "county": "Cook",
+      "state": "IL",
+      "country": "US",
+      "jurisdictionCode": "US-IL",
+      "latitude": 41.8781,
+      "longitude": -87.6298
+    },
+    {
+      "city": "Houston",
+      "county": "Harris",
+      "state": "TX",
+      "country": "US",
+      "jurisdictionCode": "US-TX",
+      "latitude": 29.7604,
+      "longitude": -95.3698
+    },
+    {
+      "city": "Dallas",
+      "county": "Dallas",
+      "state": "TX",
+      "country": "US",
+      "jurisdictionCode": "US-TX",
+      "latitude": 32.7767,
+      "longitude": -96.7970
+    },
+    {
+      "city": "Phoenix",
+      "county": "Maricopa",
+      "state": "AZ",
+      "country": "US",
+      "jurisdictionCode": "US-AZ",
+      "latitude": 33.4484,
+      "longitude": -112.0740
+    },
+    {
+      "city": "Seattle",
+      "county": "King",
+      "state": "WA",
+      "country": "US",
+      "jurisdictionCode": "US-WA",
+      "latitude": 47.6062,
+      "longitude": -122.3321
+    },
+    {
+      "city": "Denver",
+      "county": "Denver",
+      "state": "CO",
+      "country": "US",
+      "jurisdictionCode": "US-CO",
+      "latitude": 39.7392,
+      "longitude": -104.9903
+    },
+    {
+      "city": "Atlanta",
+      "county": "Fulton",
+      "state": "GA",
+      "country": "US",
+      "jurisdictionCode": "US-GA",
+      "latitude": 33.7490,
+      "longitude": -84.3880
+    },
+    {
+      "city": "Boston",
+      "county": "Suffolk",
+      "state": "MA",
+      "country": "US",
+      "jurisdictionCode": "US-MA",
+      "latitude": 42.3601,
+      "longitude": -71.0589
     }
   ]
 }

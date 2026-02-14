@@ -277,6 +277,68 @@ const thresholds: ThresholdInput[] = [
 ];
 
 // ============================================================================
+// Sample Locations
+// ============================================================================
+
+interface LocationInput {
+  city: string;
+  county?: string;
+  state: string;
+  country: string;
+  jurisdictionCode: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+const locations: LocationInput[] = [
+  {
+    city: "Montreal",
+    county: "Montreal",
+    state: "QC",
+    country: "CA",
+    jurisdictionCode: "CA-QC",
+    latitude: 45.5017,
+    longitude: -73.5673,
+  },
+  {
+    city: "Toronto",
+    county: "Toronto",
+    state: "ON",
+    country: "CA",
+    jurisdictionCode: "CA-ON",
+    latitude: 43.6532,
+    longitude: -79.3832,
+  },
+  {
+    city: "New York",
+    county: "New York County",
+    state: "NY",
+    country: "US",
+    jurisdictionCode: "US-NY",
+    latitude: 40.7128,
+    longitude: -74.006,
+  },
+  {
+    city: "Los Angeles",
+    county: "Los Angeles",
+    state: "CA",
+    country: "US",
+    jurisdictionCode: "US-CA",
+    latitude: 34.0522,
+    longitude: -118.2437,
+  },
+  {
+    city: "Beverly Hills",
+    county: "Los Angeles",
+    state: "CA",
+    country: "US",
+    jurisdictionCode: "US-CA",
+    latitude: 34.0901,
+    longitude: -118.4065,
+  },
+];
+
+// ============================================================================
 // Sample Location Measurements
 // ============================================================================
 
@@ -344,20 +406,20 @@ const measurements: LocationMeasurementInput[] = [
 
   // Sample Montreal measurements
   {
-    city: "Montréal",
+    city: "Montreal",
     state: "QC",
     country: "CA",
     contaminantId: "nitrate",
     value: 5200,
-    source: "Ville de Montréal",
+    source: "Ville de Montreal",
   },
   {
-    city: "Montréal",
+    city: "Montreal",
     state: "QC",
     country: "CA",
     contaminantId: "lead",
     value: 4.8,
-    source: "Ville de Montréal",
+    source: "Ville de Montreal",
   },
 ];
 
@@ -516,6 +578,46 @@ async function seedThresholds(): Promise<void> {
   console.log(`Thresholds: ${created} created, ${skipped} skipped`);
 }
 
+async function seedLocations(): Promise<void> {
+  console.log("\n--- Seeding Locations ---");
+
+  const existingResult = await client.models.Location.list({ limit: 1000 });
+  const existing = existingResult.data || [];
+  const existingKeys = new Set(
+    existing.map((l) => `${l.city}:${l.state}:${l.country}`),
+  );
+
+  let created = 0;
+  let skipped = 0;
+
+  for (const loc of locations) {
+    const key = `${loc.city}:${loc.state}:${loc.country}`;
+    if (existingKeys.has(key)) {
+      console.log(`  Skipping ${loc.city}, ${loc.state} (already exists)`);
+      skipped++;
+      continue;
+    }
+
+    try {
+      await client.models.Location.create({
+        city: loc.city,
+        county: loc.county || null,
+        state: loc.state,
+        country: loc.country,
+        jurisdictionCode: loc.jurisdictionCode,
+        latitude: loc.latitude || null,
+        longitude: loc.longitude || null,
+      });
+      console.log(`  Created ${loc.city}, ${loc.state}`);
+      created++;
+    } catch (error) {
+      console.error(`  Failed to create ${loc.city}, ${loc.state}:`, error);
+    }
+  }
+
+  console.log(`Locations: ${created} created, ${skipped} skipped`);
+}
+
 async function seedMeasurements(): Promise<void> {
   console.log("\n--- Seeding LocationMeasurements ---");
 
@@ -579,6 +681,7 @@ async function main(): Promise<void> {
     await seedJurisdictions();
     await seedContaminants();
     await seedThresholds();
+    await seedLocations();
     await seedMeasurements();
 
     console.log("\n========================================");
