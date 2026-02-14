@@ -322,7 +322,7 @@ Check MapYourHealth for details.`
   const $categorySeparator: ViewStyle = {
     height: 1,
     backgroundColor: theme.colors.separator,
-    marginHorizontal: 32,
+    marginHorizontal: 16,
   }
 
   const $warningBannerContainer: ViewStyle = {

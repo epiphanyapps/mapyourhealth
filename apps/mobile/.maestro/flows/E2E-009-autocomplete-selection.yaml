@@ -46,6 +46,6 @@ onFlowStart:
 
 # Verify dashboard content loaded (safety categories visible)
 - assertVisible:
-    text: "Tap Water Quality"
+    text: "Tap Water Quality, status:"
     optional: true
     label: "Safety categories are displayed"

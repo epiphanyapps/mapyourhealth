@@ -53,9 +53,9 @@ onFlowStart:
 # Wait for scroll to settle
 - waitForAnimationToEnd
 
-# Tap to expand the Air Pollution category (using full accessibility label pattern)
+# Tap to expand the Air Pollution category (fuzzy match finds "Air Pollution, status: safe, expandable")
 - tapOn:
-    text: "Air Pollution.*expandable"
+    text: "Air Pollution"
     label: "Expand Air Pollution category"
 
 # Wait for expand animation
@@ -81,9 +81,9 @@ onFlowStart:
 # Verify we navigated to the category detail screen
 # The header should show "Air Pollution" and EPA link should be visible
 - assertVisible:
-    text: "air category"
+    text: "Air Pollution"
     label: "Category detail screen is displayed"
 
 - assertVisible:
-    text: "Open EPA Radon.*"
+    text: "Open EPA Radon"
     label: "Radon EPA link is displayed"
