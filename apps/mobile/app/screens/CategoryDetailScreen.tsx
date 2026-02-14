@@ -133,12 +133,16 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const shareMessage = `${categoryName} Risk Report for ${zipData.zipCode} (${locationName})
+    const deepLink = zipData.cityName && zipData.state
+      ? `mapyourhealth://location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
+      : `mapyourhealth://location/${encodeURIComponent(zipData.zipCode)}//US`
+
+    const shareMessage = `${categoryName} Risk Report for ${locationName}
 
 ${riskDetails || "No risks detected"}
 
 Check MapYourHealth for details.
-mapyourhealth://zip/${zipData.zipCode}`
+${deepLink}`
 
     try {
       await Share.share({

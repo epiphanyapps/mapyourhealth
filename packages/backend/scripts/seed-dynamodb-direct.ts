@@ -8,6 +8,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, PutCommand, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
 import { randomUUID } from "crypto";
 import seedData from "./seed-data.json";
+import locationData from "./seed-locations.json";
 
 const REGION = "ca-central-1";
 const TABLE_SUFFIX = "uusoeozunzdy5biliji7vxbjcy-NONE";
@@ -16,6 +17,7 @@ const TABLES = {
   Jurisdiction: `Jurisdiction-${TABLE_SUFFIX}`,
   Contaminant: `Contaminant-${TABLE_SUFFIX}`,
   ContaminantThreshold: `ContaminantThreshold-${TABLE_SUFFIX}`,
+  Location: `Location-${TABLE_SUFFIX}`,
 };
 
 const client = new DynamoDBClient({ region: REGION });
@@ -49,6 +51,16 @@ interface SeedThreshold {
   limitValue: number | null;
   warningRatio: number | null;
   status: string;
+}
+
+interface SeedLocation {
+  city: string;
+  county?: string | null;
+  state: string;
+  country: string;
+  jurisdictionCode: string;
+  latitude?: number | null;
+  longitude?: number | null;
 }
 
 async function seedJurisdictions(jurisdictions: SeedJurisdiction[]) {
@@ -165,6 +177,43 @@ async function seedThresholds(thresholds: SeedThreshold[]) {
   console.log(`\nThresholds: ${created} created, ${errors} errors`);
 }
 
+async function seedLocations(locations: SeedLocation[]) {
+  console.log(`\nSeeding ${locations.length} locations...`);
+  let created = 0;
+  let errors = 0;
+
+  for (const location of locations) {
+    try {
+      const now = new Date().toISOString();
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLES.Location,
+          Item: {
+            id: randomUUID(),
+            __typename: "Location",
+            city: location.city,
+            county: location.county ?? null,
+            state: location.state,
+            country: location.country,
+            jurisdictionCode: location.jurisdictionCode,
+            latitude: location.latitude ?? null,
+            longitude: location.longitude ?? null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        })
+      );
+      created++;
+      process.stdout.write(".");
+    } catch (error) {
+      errors++;
+      console.error(`\nError creating location ${location.city}, ${location.state}:`, error);
+    }
+  }
+
+  console.log(`\nLocations: ${created} created, ${errors} errors`);
+}
+
 async function clearTable(tableName: string) {
   console.log(`Clearing ${tableName}...`);
   let deleted = 0;
@@ -200,6 +249,7 @@ async function clearExistingData() {
   await clearTable(TABLES.ContaminantThreshold);
   await clearTable(TABLES.Contaminant);
   await clearTable(TABLES.Jurisdiction);
+  await clearTable(TABLES.Location);
 }
 
 async function main() {
@@ -208,6 +258,7 @@ async function main() {
   console.log(`  - ${seedData.jurisdictions.length} jurisdictions`);
   console.log(`  - ${seedData.contaminants.length} contaminants`);
   console.log(`  - ${seedData.thresholds.length} thresholds`);
+  console.log(`  - ${locationData.locations.length} locations`);
 
   const args = process.argv.slice(2);
   const shouldClear = args.includes("--clear");
@@ -219,6 +270,7 @@ async function main() {
   await seedJurisdictions(seedData.jurisdictions as SeedJurisdiction[]);
   await seedContaminants(seedData.contaminants as SeedContaminant[]);
   await seedThresholds(seedData.thresholds as SeedThreshold[]);
+  await seedLocations(locationData.locations as SeedLocation[]);
 
   console.log("\n=== Seeding complete ===");
 }

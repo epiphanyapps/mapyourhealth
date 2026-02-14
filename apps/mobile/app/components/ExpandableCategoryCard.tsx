@@ -1,16 +1,14 @@
-import { useState, useRef } from "react"
-import {
-  Animated,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  UIManager,
-  View,
-  ViewStyle,
-  TextStyle,
-  StyleProp,
-} from "react-native"
+import { useCallback, useState } from "react"
+import { LayoutChangeEvent, Pressable, View, ViewStyle, TextStyle, StyleProp } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Easing,
+  runOnJS,
+} from "react-native-reanimated"
 
 import { CATEGORY_CONFIG, SubCategory } from "@/data/categoryConfig"
 import type { StatCategory, StatStatus } from "@/data/types/safety"
@@ -20,10 +18,8 @@ import { CategoryIcon } from "./CategoryIcon"
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
 
-// Enable LayoutAnimation for Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true)
-}
+const ANIMATION_DURATION = 300
+const EASING = Easing.bezier(0.4, 0, 0.2, 1)
 
 export interface ExpandableCategoryCardProps {
   /**
@@ -49,11 +45,11 @@ export interface ExpandableCategoryCardProps {
 }
 
 /**
- * An expandable category card that shows sub-categories when expanded.
+ * An expandable category card with smooth Reanimated accordion animation.
  * Categories without sub-categories behave like a regular pressable card.
  *
  * For categories with sub-categories:
- * - Tapping the card expands/collapses to show sub-categories
+ * - Tapping the card expands/collapses to show sub-categories with animation
  * - Tapping a sub-category navigates to the category detail with that sub-category focused
  *
  * @example
@@ -73,23 +69,36 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const hasSubCategories = subCategories.length > 0
 
   const [expanded, setExpanded] = useState(false)
-  const rotateAnim = useRef(new Animated.Value(0)).current
+  const [measured, setMeasured] = useState(false)
+  const contentHeight = useSharedValue(0)
+  const progress = useSharedValue(0)
 
-  const toggleExpand = () => {
+  const handleMeasured = useCallback(() => {
+    setMeasured(true)
+  }, [])
+
+  const onContentLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const height = event.nativeEvent.layout.height
+      if (height > 0 && contentHeight.value === 0) {
+        contentHeight.value = height
+        runOnJS(handleMeasured)()
+      }
+    },
+    [contentHeight, handleMeasured],
+  )
+
+  const toggleExpand = useCallback(() => {
     const newExpanded = !expanded
 
-    // Animate chevron rotation
-    Animated.timing(rotateAnim, {
-      toValue: newExpanded ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start()
-
-    // Animate content expand/collapse
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    // Animate
+    progress.value = withTiming(newExpanded ? 1 : 0, {
+      duration: ANIMATION_DURATION,
+      easing: EASING,
+    })
 
     setExpanded(newExpanded)
-  }
+  }, [expanded, progress])
 
   const handlePress = () => {
     if (hasSubCategories) {
@@ -103,9 +112,33 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     onPress(subCategory.id)
   }
 
-  const chevronRotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
+  // Animated style for content container
+  const animatedContentStyle = useAnimatedStyle(() => {
+    // Before measurement, use auto height for initial render
+    if (contentHeight.value === 0) {
+      return {
+        height: "auto" as unknown as number,
+        opacity: 1,
+      }
+    }
+
+    const height = interpolate(progress.value, [0, 1], [0, contentHeight.value])
+
+    return {
+      height,
+      opacity: interpolate(progress.value, [0, 0.3, 1], [0, 0.8, 1]),
+    }
+  })
+
+  // Animated style for chevron rotation (right → down)
+  const animatedChevronStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${interpolate(progress.value, [0, 1], [0, 90])}deg`,
+        },
+      ],
+    }
   })
 
   const $container: ViewStyle = {
@@ -150,6 +183,10 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     marginLeft: 8,
   }
 
+  const $contentOuter: ViewStyle = {
+    overflow: "hidden",
+  }
+
   const $subCategoriesContainer: ViewStyle = {
     paddingBottom: 8,
   }
@@ -178,6 +215,36 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     marginHorizontal: 16,
   }
 
+  // For initial measurement
+  const $measureContainer: ViewStyle = {
+    position: "absolute",
+    opacity: 0,
+    pointerEvents: "none",
+  }
+
+  const renderSubCategories = () => (
+    <View style={$subCategoriesContainer}>
+      <View style={$divider} />
+      {subCategories.map((subCategory) => (
+        <Pressable
+          key={subCategory.id}
+          onPress={() => handleSubCategoryPress(subCategory)}
+          style={({ pressed }) => [
+            $subCategoryRow,
+            pressed && { backgroundColor: theme.colors.palette.neutral100 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel={`${subCategory.name} sub-category`}
+        >
+          <Text style={$subCategoryText}>{subCategory.name}</Text>
+          <View style={$subCategoryChevron}>
+            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
+          </View>
+        </Pressable>
+      ))}
+    </View>
+  )
+
   return (
     <View style={[$container, style]}>
       <Pressable
@@ -196,38 +263,31 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
         <View style={$statusContainer}>
           <StatusIndicator status={status} size="medium" />
         </View>
-        {hasSubCategories && (
-          <Animated.View style={[$chevronContainer, { transform: [{ rotate: chevronRotation }] }]}>
-            <MaterialCommunityIcons name="chevron-down" size={24} color={theme.colors.textDim} />
+        {hasSubCategories ? (
+          <Animated.View style={[$chevronContainer, animatedChevronStyle]}>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
           </Animated.View>
+        ) : (
+          <View style={$chevronContainer}>
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
+          </View>
         )}
       </Pressable>
 
-      {expanded && hasSubCategories && (
-        <View style={$subCategoriesContainer}>
-          <View style={$divider} />
-          {subCategories.map((subCategory) => (
-            <Pressable
-              key={subCategory.id}
-              onPress={() => handleSubCategoryPress(subCategory)}
-              style={({ pressed }) => [
-                $subCategoryRow,
-                pressed && { backgroundColor: theme.colors.palette.neutral100 },
-              ]}
-              accessibilityRole="button"
-              accessibilityLabel={`${subCategory.name} sub-category`}
-            >
-              <Text style={$subCategoryText}>{subCategory.name}</Text>
-              <View style={$subCategoryChevron}>
-                <MaterialCommunityIcons
-                  name="chevron-right"
-                  size={20}
-                  color={theme.colors.textDim}
-                />
-              </View>
-            </Pressable>
-          ))}
-        </View>
+      {hasSubCategories && (
+        <>
+          {/* Hidden measurement view - renders once to get height */}
+          {!measured && (
+            <View style={$measureContainer}>
+              <View onLayout={onContentLayout}>{renderSubCategories()}</View>
+            </View>
+          )}
+
+          {/* Animated content wrapper */}
+          <Animated.View style={[$contentOuter, animatedContentStyle]}>
+            {renderSubCategories()}
+          </Animated.View>
+        </>
       )}
     </View>
   )

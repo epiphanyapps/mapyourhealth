@@ -1,22 +1,16 @@
-import { useState, useRef, ReactNode } from "react"
-import {
-  Animated,
-  LayoutAnimation,
-  Platform,
-  Pressable,
-  StyleProp,
-  UIManager,
-  View,
-  ViewStyle,
-} from "react-native"
+import { ReactNode, useCallback, useState } from "react"
+import { LayoutChangeEvent, Pressable, StyleProp, View, ViewStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  interpolate,
+  Easing,
+  runOnJS,
+} from "react-native-reanimated"
 
 import { useAppTheme } from "@/theme/context"
-
-// Enable LayoutAnimation for Android
-if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true)
-}
 
 export interface ExpandableCardProps {
   /**
@@ -42,10 +36,13 @@ export interface ExpandableCardProps {
   style?: StyleProp<ViewStyle>
 }
 
+const ANIMATION_DURATION = 300
+const EASING = Easing.bezier(0.4, 0, 0.2, 1)
+
 /**
- * An expandable card component with animated expand/collapse.
- * The header is always visible, and the content toggles visibility.
- * Includes a chevron icon that rotates on expand/collapse.
+ * An expandable card component with smooth Reanimated accordion animation.
+ * The header is always visible, and the content toggles visibility with
+ * a height animation. Includes a chevron icon that rotates on expand/collapse.
  *
  * @example
  * <ExpandableCard
@@ -60,28 +57,65 @@ export function ExpandableCard(props: ExpandableCardProps) {
   const { theme } = useAppTheme()
 
   const [expanded, setExpanded] = useState(initiallyExpanded)
-  const rotateAnim = useRef(new Animated.Value(initiallyExpanded ? 1 : 0)).current
+  const [measured, setMeasured] = useState(false)
+  const contentHeight = useSharedValue(0)
+  const progress = useSharedValue(initiallyExpanded ? 1 : 0)
 
-  const toggleExpand = () => {
+  const handleMeasured = useCallback(() => {
+    setMeasured(true)
+  }, [])
+
+  const onContentLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const height = event.nativeEvent.layout.height
+      if (height > 0 && contentHeight.value === 0) {
+        contentHeight.value = height
+        runOnJS(handleMeasured)()
+      }
+    },
+    [contentHeight, handleMeasured],
+  )
+
+  const toggleExpand = useCallback(() => {
     const newExpanded = !expanded
 
-    // Animate chevron rotation
-    Animated.timing(rotateAnim, {
-      toValue: newExpanded ? 1 : 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start()
-
-    // Animate content expand/collapse
-    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    // Animate
+    progress.value = withTiming(newExpanded ? 1 : 0, {
+      duration: ANIMATION_DURATION,
+      easing: EASING,
+    })
 
     setExpanded(newExpanded)
     onToggle?.(newExpanded)
-  }
+  }, [expanded, progress, onToggle])
 
-  const chevronRotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "180deg"],
+  // Animated style for content container
+  const animatedContentStyle = useAnimatedStyle(() => {
+    // Before measurement, use auto height for initial render
+    if (contentHeight.value === 0) {
+      return {
+        height: "auto" as unknown as number,
+        opacity: 1,
+      }
+    }
+
+    const height = interpolate(progress.value, [0, 1], [0, contentHeight.value])
+
+    return {
+      height,
+      opacity: interpolate(progress.value, [0, 0.3, 1], [0, 0.8, 1]),
+    }
+  })
+
+  // Animated style for chevron rotation (right → down)
+  const animatedChevronStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${interpolate(progress.value, [0, 1], [0, 90])}deg`,
+        },
+      ],
+    }
   })
 
   const $container: ViewStyle = {
@@ -109,9 +143,20 @@ export function ExpandableCard(props: ExpandableCardProps) {
     flex: 1,
   }
 
-  const $content: ViewStyle = {
+  const $contentOuter: ViewStyle = {
+    overflow: "hidden",
+  }
+
+  const $contentInner: ViewStyle = {
     paddingHorizontal: 16,
     paddingBottom: 14,
+  }
+
+  // For initial measurement, we render content invisibly first
+  const $measureContainer: ViewStyle = {
+    position: "absolute",
+    opacity: 0,
+    pointerEvents: "none",
   }
 
   return (
@@ -124,12 +169,24 @@ export function ExpandableCard(props: ExpandableCardProps) {
         accessibilityLabel="Toggle card expansion"
       >
         <View style={$headerContent}>{header}</View>
-        <Animated.View style={{ transform: [{ rotate: chevronRotation }] }}>
-          <MaterialCommunityIcons name="chevron-down" size={24} color={theme.colors.textDim} />
+        <Animated.View style={animatedChevronStyle}>
+          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
         </Animated.View>
       </Pressable>
 
-      {expanded && <View style={$content}>{children}</View>}
+      {/* Hidden measurement view - renders once to get height */}
+      {!measured && (
+        <View style={$measureContainer}>
+          <View style={$contentInner} onLayout={onContentLayout}>
+            {children}
+          </View>
+        </View>
+      )}
+
+      {/* Animated content wrapper */}
+      <Animated.View style={[$contentOuter, animatedContentStyle]}>
+        <View style={$contentInner}>{children}</View>
+      </Animated.View>
     </View>
   )
 }

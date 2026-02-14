@@ -125,9 +125,11 @@ const linking: LinkingOptions<AppStackParamList> = {
         },
       },
       Dashboard: {
-        path: "zip/:zipCode",
+        path: "location/:city/:state/:country",
         parse: {
-          zipCode: (zipCode: string) => decodeURIComponent(zipCode),
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
         },
       },
       Login: "login",

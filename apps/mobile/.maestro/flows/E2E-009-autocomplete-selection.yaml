@@ -1,0 +1,51 @@
+appId: ${MAESTRO_APP_ID}
+name: E2E-009 - Autocomplete Selection
+tags:
+  - e2e
+  - search
+  - autocomplete
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# E2E-009: Test autocomplete search and selection
+# Verifies that typing in the search box shows suggestions
+# and tapping a suggestion navigates to that location
+
+# Wait for dashboard to load
+- waitForAnimationToEnd
+
+# Tap on the search input field (using placeholder text)
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search input field"
+
+# Type partial search query
+- inputText: "new y"
+
+# Wait for autocomplete suggestions to appear
+- waitForAnimationToEnd
+
+# Verify the suggestion appears (accessibility label is "Select New York, NY")
+- assertVisible:
+    text: "Select New York, NY"
+    label: "New York suggestion is visible"
+
+# Tap on the autocomplete suggestion
+- tapOn:
+    text: "Select New York, NY"
+    label: "Tap on New York suggestion"
+
+# Wait for navigation
+- waitForAnimationToEnd
+
+# Verify we navigated to New York dashboard
+- assertVisible:
+    text: "New York, NY"
+    label: "Navigated to New York dashboard"
+
+# Verify dashboard content loaded (safety categories visible)
+- assertVisible:
+    text: "Tap Water Quality, status:"
+    optional: true
+    label: "Safety categories are displayed"
