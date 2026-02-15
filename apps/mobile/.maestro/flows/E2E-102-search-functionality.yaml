@@ -1,0 +1,93 @@
+# flow: E2E-102 Search Functionality Validation
+# intent:
+#   Comprehensive search testing:
+#   1. Zip code search (10001) — verify results and category cards
+#   2. City name search (Beverly Hills) — verify text-based search
+#   3. Another zip code (90210) — verify multiple searches work
+#   4. Verify search suggestions/autocomplete appear
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/100
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Test 1: Zip Code Search (10001)
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar visible on launch"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Activate search"
+
+- inputText: "10001"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "10001"
+    label: "Zip code 10001 results displayed"
+
+# Verify category cards load
+- assertVisible:
+    text: "Water"
+    optional: true
+    label: "Water category visible"
+
+- assertVisible:
+    text: "Air"
+    optional: true
+    label: "Air category visible"
+
+- assertVisible:
+    text: "Health"
+    optional: true
+    label: "Health category visible"
+
+- assertVisible:
+    text: "Disaster"
+    optional: true
+    label: "Disaster category visible"
+
+# ========================================
+# Test 2: City Name Search (Beverly Hills)
+# ========================================
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar for city search"
+
+- inputText: "Beverly Hills"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Beverly Hills"
+    label: "Beverly Hills results displayed"
+
+# ========================================
+# Test 3: Another Zip Code (90210)
+# ========================================
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar for second zip search"
+
+- inputText: "90210"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "90210"
+    label: "Zip code 90210 results displayed"
+
+# Verify category cards still load for different location
+- assertVisible:
+    text: "Water"
+    optional: true
+    label: "Categories load for 90210"

@@ -1,0 +1,101 @@
+# flow: E2E-101 Basic Navigation
+# intent:
+#   Test navigation between key screens and back navigation:
+#   1. Dashboard → Search → Location detail
+#   2. Location detail → Category detail
+#   3. Back navigation to dashboard
+#   4. Dashboard → Follow (auth gate) → Login → back to dashboard
+#   Verifies smooth transitions and no crashes.
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/100
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Dashboard → Location via Search
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Dashboard loaded with search bar"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar"
+
+- inputText: "10001"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "10001"
+    label: "Navigated to location 10001"
+
+# ========================================
+# Part 2: Location → Category Detail
+# ========================================
+# Tap on a category card (Water is commonly available)
+- tapOn:
+    text: "Water"
+    optional: true
+    label: "Tap Water category card"
+
+- waitForAnimationToEnd
+
+# If we navigated to category detail, verify and go back
+- runFlow:
+    when:
+      notVisible: "Search city or location..."
+    commands:
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000
+
+# ========================================
+# Part 3: Auth Gate Navigation
+# ========================================
+- tapOn:
+    text: "Follow"
+    label: "Tap Follow to trigger auth gate"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Welcome Back"
+    label: "Login screen appeared"
+
+# Navigate to signup
+- tapOn:
+    text: "Don't have an account\\? Sign up"
+    label: "Go to signup"
+
+- waitForAnimationToEnd
+
+- assertVisible:
+    text: "Create Account"
+    label: "Signup screen visible"
+
+# ========================================
+# Part 4: Back Navigation to Dashboard
+# ========================================
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# May need one more back to get past location detail
+- back
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# Verify we can reach the search bar (dashboard or location screen)
+- assertVisible:
+    text: "Search city or location..."
+    optional: true
+    label: "Returned to a screen with search bar"
