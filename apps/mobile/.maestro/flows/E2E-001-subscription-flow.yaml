@@ -19,7 +19,7 @@ onFlowStart:
 # ========================================
 # Verify empty state is shown for guests
 - assertVisible:
-    text: "Find out how safe your city is"
+    text: "Find out how safe your location is"
     label: "Guest empty state title is visible"
 
 - assertVisible:
@@ -32,21 +32,30 @@ onFlowStart:
     label: "Search bar is visible"
 
 # ========================================
-# Part 2: Search for a Zip Code
+# Part 2: Search for a City (New York)
 # ========================================
 - tapOn:
     text: "Search city or location..."
     label: "Tap on search bar"
 
-- inputText: "90210"
-- pressKey: Enter
+- inputText: "New York"
+
+# Wait for autocomplete suggestions to appear
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Tap on the first suggestion (New York, NY)
+- tapOn:
+    text: "New York, NY"
+    label: "Select New York from autocomplete"
 
 # Wait for location data to load
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 5000
 
 # Verify we navigated to the location with data
 - assertVisible:
-    text: "90210"
+    text: "New York"
     label: "Location is visible"
 
 # Verify category cards are visible (any of: Water, Air, Health, Disaster)
@@ -55,21 +64,33 @@ onFlowStart:
     optional: true
 
 # ========================================
-# Part 3: Search for a Different Zip Code
+# Part 3: Search for a Different City (Los Angeles)
 # ========================================
 - tapOn:
     text: "Search city or location..."
     label: "Tap on search bar"
 
-- inputText: "10001"
-- pressKey: Enter
+# Clear the field by selecting all and typing new text
+- eraseText: 20
+
+- inputText: "Los Angeles"
+
+# Wait for autocomplete suggestions to appear
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Tap on the first suggestion
+- tapOn:
+    text: "Los Angeles, CA"
+    label: "Select Los Angeles from autocomplete"
 
 # Wait for location data to load
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 5000
 
 # Verify we navigated to the new location
 - assertVisible:
-    text: "10001"
+    text: "Los Angeles"
     label: "New location is visible"
 
 # ========================================
