@@ -1,5 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { testUrls, testZipCodes } from "../fixtures/test-data";
+import { testUrls, testCities } from "../fixtures/test-data";
 
 /**
  * E2E-001: Subscription Flow Tests
@@ -39,11 +39,11 @@ test.describe("E2E-001: Subscription Flow", () => {
 
     // Search for a city
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for city data to load - should see the city displayed
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 
@@ -72,20 +72,20 @@ test.describe("E2E-001: Subscription Flow", () => {
 
     // Search for first city
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for first city to load
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 
     // Search for a different city
-    await searchInput.fill(testZipCodes.search);
+    await searchInput.fill(testCities.search);
     await searchInput.press("Enter");
 
     // Verify new city is displayed
-    await expect(page.getByText(testZipCodes.search)).toBeVisible({
+    await expect(page.getByText(testCities.search)).toBeVisible({
       timeout: 15000,
     });
   });
@@ -97,11 +97,11 @@ test.describe("E2E-001: Subscription Flow", () => {
     });
 
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for dashboard to load with data
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 
@@ -123,11 +123,11 @@ test.describe("E2E-001: Subscription Flow", () => {
     });
 
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for dashboard to load
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 
@@ -153,11 +153,11 @@ test.describe("E2E-001: Subscription Flow", () => {
     });
 
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for dashboard to load
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 
@@ -173,11 +173,11 @@ test.describe("E2E-001: Subscription Flow", () => {
     });
 
     const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testZipCodes.default);
+    await searchInput.fill(testCities.default);
     await searchInput.press("Enter");
 
     // Wait for dashboard to load
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 15000,
     });
 

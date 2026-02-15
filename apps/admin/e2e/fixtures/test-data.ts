@@ -10,7 +10,7 @@ export const testUrls = {
   mobileWeb: "http://localhost:8081",
 };
 
-export const testZipCodes = {
+export const testCities = {
   default: "Beverly Hills",
   search: "New York",
 };

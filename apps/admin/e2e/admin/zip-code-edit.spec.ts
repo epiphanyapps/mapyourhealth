@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import {
   testUrls,
   adminCredentials,
-  testZipCodes,
+  testCities,
 } from "../fixtures/test-data";
 
 /**
@@ -54,11 +54,11 @@ test.describe("Admin: Location Management", () => {
   test("can view location detail page", async ({ page }) => {
     // Navigate directly to a location detail page
     await page.goto(
-      `${testUrls.admin}/zip-codes/${encodeURIComponent(testZipCodes.default)}`,
+      `${testUrls.admin}/zip-codes/${encodeURIComponent(testCities.default)}`,
     );
 
     // Verify the page shows the location name
-    await expect(page.getByText(testZipCodes.default)).toBeVisible({
+    await expect(page.getByText(testCities.default)).toBeVisible({
       timeout: 10000,
     });
 
@@ -69,7 +69,7 @@ test.describe("Admin: Location Management", () => {
   test("can open add measurement dialog", async ({ page }) => {
     // Navigate to location detail page
     await page.goto(
-      `${testUrls.admin}/zip-codes/${encodeURIComponent(testZipCodes.default)}`,
+      `${testUrls.admin}/zip-codes/${encodeURIComponent(testCities.default)}`,
     );
     await expect(page.getByText("Measurements")).toBeVisible({
       timeout: 10000,
@@ -92,7 +92,7 @@ test.describe("Admin: Location Management", () => {
   test("displays measurement table when data exists", async ({ page }) => {
     // Navigate to location detail page
     await page.goto(
-      `${testUrls.admin}/zip-codes/${encodeURIComponent(testZipCodes.default)}`,
+      `${testUrls.admin}/zip-codes/${encodeURIComponent(testCities.default)}`,
     );
 
     // Wait for loading to complete

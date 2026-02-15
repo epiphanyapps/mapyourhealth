@@ -5,7 +5,7 @@
 #   2. City search (Montreal) - verify location search works
 #
 # This flow ensures the search feature correctly handles both
-# numeric zip codes and text-based city names.
+# numeric postal codes and text-based city names.
 
 appId: ${MAESTRO_APP_ID}
 onFlowStart:
@@ -17,15 +17,15 @@ onFlowStart:
 # ========================================
 # Verify search bar is visible on app start
 - assertVisible:
-    text: "Search zip codes..."
+    text: "Search city or location..."
     label: "Search bar is visible"
 
 # Tap on search bar to activate it
 - tapOn:
-    text: "Search zip codes..."
+    text: "Search city or location..."
     label: "Tap on search bar"
 
-# Enter zip code 10001
+# Enter postal code 10001
 - inputText: "10001"
 
 # Submit the search
@@ -34,10 +34,10 @@ onFlowStart:
 # Wait for data to load
 - waitForAnimationToEnd
 
-# Assert the zip code is displayed
+# Assert the location is displayed
 - assertVisible:
     text: "10001"
-    label: "Zip code 10001 is displayed in results"
+    label: "Location 10001 is displayed in results"
 
 # Assert category cards appear (Water, Air, Health, or Disaster)
 # Using optional: true since exact cards may vary by location
@@ -66,7 +66,7 @@ onFlowStart:
 # ========================================
 # Tap on search bar again to search for a city
 - tapOn:
-    text: "Search zip codes..."
+    text: "Search city or location..."
     label: "Tap on search bar for city search"
 
 # Enter city name Montreal
