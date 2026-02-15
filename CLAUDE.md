@@ -35,6 +35,21 @@ This project enforces strict ESLint + Prettier. All code MUST pass CI linting.
 - Follow the project's Prettier config strictly. Do not introduce formatting that conflicts with it.
 - Keep JSX props on one line when they fit within the line length limit.
 
+## Amplify Outputs (REQUIRED for testing)
+
+The app requires `amplify_outputs.json` for AWS Amplify configuration. This file is **gitignored** and must be fetched before running the app or tests.
+
+```bash
+# From repo root — syncs outputs to root + apps/mobile/
+yarn sync:amplify
+```
+
+This copies from `packages/backend/amplify_outputs.json` → root and mobile. If the backend file doesn't exist, it falls back to the root copy.
+
+**When setting up worktrees or fresh clones, always run `yarn sync:amplify` before starting Metro or running tests.**
+
+If no outputs file exists anywhere, run `yarn backend:sandbox` to generate one from AWS.
+
 ## GitHub Issue Labels (MUST FOLLOW)
 
 When creating or processing GitHub issues, always apply the appropriate labels:
