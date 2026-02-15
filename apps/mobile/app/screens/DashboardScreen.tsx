@@ -292,7 +292,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
 ${categoryRisks || "No risks detected"}
 
-Check MapYourHealth for details.`
+Check MapYourHealth for details: https://app.mapyourhealth.info`
 
     try {
       await Share.share({
