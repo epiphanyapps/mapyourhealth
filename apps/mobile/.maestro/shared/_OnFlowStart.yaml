@@ -1,65 +1,71 @@
 # flow: Shared _OnFlowStart
-#intent:
-# launch the app with a completely clear state, wait for animations to settle,
-# and click through the expo dev screens if needed.
-# These conditionals slow the app launch down a little but are necessary because the expo
-# dev server and launch screen are only shown when the new architecture is turned off in expo 53.
-# So we check to see if we need to connect to the metro server... that loads the app and then we
-# check if the dev menu is showing and dismiss it if necessary.
-# Then the app is then launched and ready for the maestro tests to run.
+# intent:
+#   Launch the app and handle Expo dev client screens automatically.
+#   Works with both development builds (has dev client) and preview builds (no dev client).
 #
-# This flow should be included in every maestro test header as `onFlowStart` to ensure expo screens
-# are bypassed if necessary. Example:
+# Usage:
+#   appId: ${MAESTRO_APP_ID}
+#   onFlowStart:
+#     - runFlow: ../shared/_OnFlowStart.yaml
+#   ---
+#   [your maestro flow]
 #
-# appId: ${MAESTRO_APP_ID}
-# onFlowStart:
-#   - runFlow: ../shared/_OnFlowStart.yaml
-# ---
-# [your maestro flow]
+# For reliable E2E testing, use a preview build:
+#   eas build --profile e2e --platform ios --local
 #
 appId: ${MAESTRO_APP_ID}
 ---
-# launch the app with a clean slate
+
+# Launch app with clean state
 - launchApp:
     clearState: true
     clearKeychain: true
     stopApp: true
 
-- waitForAnimationToEnd
+# Initial wait for app to start
+- waitForAnimationToEnd:
+    timeout: 5000
 
-# conditionally run the dev client flow if the words "Development servers" is present.
-# this uses the default maestro timeout and moves on if it doesn't see the text.
+# Handle Expo dev client: Development servers picker
+# This appears when app needs to connect to Metro bundler
 - runFlow:
     when:
       visible: 'Development servers'
     commands:
-      # this regex allows for different hosts and ports
-      - tapOn: "http://.*:.*"
-      - waitForAnimationToEnd
+      - tapOn:
+          text: "http://.*:.*"
+          retryTapIfNoChange: false
+      # Wait for Metro to bundle and load the app (can take 10-30s)
+      - waitForAnimationToEnd:
+          timeout: 30000
 
-# dismiss bottom sheet if Close button is visible (may not appear in newer Expo versions)
+# Handle Expo dev client: Close button on bottom sheet
 - runFlow:
     when:
       visible: 'Close'
     commands:
       - tapOn: "Close"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 3000
 
-# dismiss developer menu tutorial if "Continue" button is visible
+# Handle Expo dev client: Developer menu tutorial ("Continue" button)
 - runFlow:
     when:
       visible: 'Continue'
     commands:
       - tapOn: "Continue"
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 3000
 
-# dismiss developer tools menu if "Go home" is visible (swipe down or tap outside)
+# Handle Expo dev client: Developer tools menu (dismiss with back)
 - runFlow:
     when:
       visible: 'Go home'
     commands:
       - back
-      - waitForAnimationToEnd
+      - waitForAnimationToEnd:
+          timeout: 3000
 
-# final wait to ensure app is fully loaded
-- waitForAnimationToEnd
+# Final wait to ensure app is fully loaded and stable
+- waitForAnimationToEnd:
+    timeout: 5000
