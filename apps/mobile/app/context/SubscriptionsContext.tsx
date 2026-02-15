@@ -71,7 +71,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
   const isLoading = authLoading || (isAuthenticated && queryLoading)
   const error = queryError ? "Failed to load subscriptions" : null
 
-  // Add subscription mutation
+  // Add subscription mutation with optimistic update
   const addMutation = useMutation({
     mutationFn: async ({
       city,
@@ -89,16 +89,43 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       }
       return createZipCodeSubscription(city, state, country, options)
     },
-    onSuccess: (newSub) => {
-      // Optimistically update cache
+    onMutate: async ({ city, state, country }) => {
+      await queryClientInstance.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
+      const previous = queryClientInstance.getQueryData<ZipCodeSubscription[]>(
+        queryKeys.subscriptions.list(),
+      )
+
+      // Optimistically add a temporary subscription
+      const tempSub: ZipCodeSubscription = {
+        id: `temp-${Date.now()}`,
+        city,
+        state,
+        country,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
       queryClientInstance.setQueryData<ZipCodeSubscription[]>(
         queryKeys.subscriptions.list(),
-        (old) => (old ? [...old, newSub] : [newSub]),
+        (old) => (old ? [...old, tempSub] : [tempSub]),
       )
+      return { previous }
+    },
+    onSuccess: (newSub) => {
+      // Replace temp subscription with real one
+      queryClientInstance.setQueryData<ZipCodeSubscription[]>(
+        queryKeys.subscriptions.list(),
+        (old) => (old ? old.map((s) => (s.id.startsWith("temp-") ? newSub : s)) : [newSub]),
+      )
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClientInstance.setQueryData(queryKeys.subscriptions.list(), context.previous)
+      }
     },
   })
 
-  // Remove subscription mutation
+  // Remove subscription mutation with optimistic update
   const removeMutation = useMutation({
     mutationFn: async (id: string) => {
       if (!isAuthenticated) {
@@ -107,12 +134,22 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       await deleteZipCodeSubscription(id)
       return id
     },
-    onSuccess: (id) => {
-      // Optimistically update cache
+    onMutate: async (id) => {
+      await queryClientInstance.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
+      const previous = queryClientInstance.getQueryData<ZipCodeSubscription[]>(
+        queryKeys.subscriptions.list(),
+      )
       queryClientInstance.setQueryData<ZipCodeSubscription[]>(
         queryKeys.subscriptions.list(),
         (old) => (old ? old.filter((s) => s.id !== id) : []),
       )
+      return { previous }
+    },
+    onError: (_err, _id, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        queryClientInstance.setQueryData(queryKeys.subscriptions.list(), context.previous)
+      }
     },
   })
 

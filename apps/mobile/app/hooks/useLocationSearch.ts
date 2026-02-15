@@ -5,7 +5,7 @@
  * Uses React Query to fetch all locations once on mount, then performs client-side filtering.
  */
 
-import { useState, useCallback, useRef, useMemo } from "react"
+import { useState, useCallback, useRef, useMemo, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 
 import { SearchSuggestion } from "@/data/types/safety"
@@ -233,6 +233,15 @@ export function useLocationSearch(): UseLocationSearchResult {
     setIsSearching(false)
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
+    }
+  }, [])
+
+  // Cleanup timeout on unmount to prevent memory leak
+  useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current)
+      }
     }
   }, [])
 

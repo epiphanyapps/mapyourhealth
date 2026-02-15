@@ -29,8 +29,8 @@ if (__DEV__) {
 
 Amplify.configure(outputs)
 
-import { QueryClientProvider } from "@tanstack/react-query"
 import { useEffect, useState } from "react"
+import { QueryClientProvider } from "@tanstack/react-query"
 import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"

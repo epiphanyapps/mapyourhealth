@@ -55,10 +55,11 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
 
   // Update email if prefill changes (e.g., navigating back with new email)
   useEffect(() => {
-    if (prefillEmail && prefillEmail !== email) {
+    if (prefillEmail) {
       setEmail(prefillEmail)
     }
-  }, [prefillEmail, email])
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Only react to prefillEmail changes, not user input
+  }, [prefillEmail])
 
   function validateEmail(value: string): boolean {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/

@@ -35,10 +35,35 @@ export function useCreateSubscription() {
     }) => {
       return createZipCodeSubscription(city, state, country, options)
     },
-    onSuccess: (newSub) => {
+    onMutate: async ({ city, state, country }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
+      const previous = qc.getQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list())
+
+      // Optimistically add a temporary subscription
+      const tempSub: ZipCodeSubscription = {
+        id: `temp-${Date.now()}`,
+        city,
+        state,
+        country,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }
       qc.setQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list(), (old) =>
-        old ? [...old, newSub] : [newSub],
+        old ? [...old, tempSub] : [tempSub],
       )
+      return { previous }
+    },
+    onSuccess: (newSub) => {
+      // Replace temp subscription with real one
+      qc.setQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list(), (old) =>
+        old ? old.map((s) => (s.id.startsWith("temp-") ? newSub : s)) : [newSub],
+      )
+    },
+    onError: (_err, _vars, context) => {
+      // Rollback on error
+      if (context?.previous) {
+        qc.setQueryData(queryKeys.subscriptions.list(), context.previous)
+      }
     },
   })
 }
