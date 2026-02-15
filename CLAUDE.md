@@ -35,6 +35,17 @@ This project enforces strict ESLint + Prettier. All code MUST pass CI linting.
 - Follow the project's Prettier config strictly. Do not introduce formatting that conflicts with it.
 - Keep JSX props on one line when they fit within the line length limit.
 
+## GitHub Issue Labels (MUST FOLLOW)
+
+When creating or processing GitHub issues, always apply the appropriate labels:
+
+- **`e2e`** — Any issue involving end-to-end testing, Maestro flows, or device testing
+- **`test`** — Any issue related to testing (unit, integration, E2E)
+- **`bug`** — Bug reports and fixes
+- **`enhancement`** — New features or improvements
+
+Multiple labels can apply (e.g. an E2E testing issue gets both `e2e` and `test`).
+
 ### Before Committing
 - Run `npx eslint apps/mobile/app --ext .ts,.tsx` to check for lint errors
 - Run `npx prettier --check "apps/mobile/app/**/*.{ts,tsx}"` to check formatting
