@@ -138,8 +138,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
     const deepLink =
       zipData.cityName && zipData.state
-        ? `mapyourhealth://location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
-        : `mapyourhealth://location/${encodeURIComponent(zipData.zipCode)}//US`
+        ? `https://app.mapyourhealth.info/location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
+        : `https://app.mapyourhealth.info/location/${encodeURIComponent(zipData.zipCode)}//US`
 
     const shareMessage = `${categoryName} Risk Report for ${locationName}
 
