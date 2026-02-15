@@ -2,12 +2,14 @@
  * useLocationSearch Hook
  *
  * Provides city/state/county search with autocomplete suggestions.
- * Fetches all locations once on mount and performs client-side filtering.
+ * Uses React Query to fetch all locations once on mount, then performs client-side filtering.
  */
 
-import { useState, useEffect, useCallback, useRef, useMemo } from "react"
+import { useState, useCallback, useRef, useMemo, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 
 import { SearchSuggestion } from "@/data/types/safety"
+import { queryKeys } from "@/lib/queryKeys"
 import { getAllLocations, AmplifyLocation } from "@/services/amplify/data"
 
 /** Debounce delay for search in milliseconds */
@@ -56,44 +58,24 @@ interface UseLocationSearchResult {
  * clearSuggestions()
  */
 export function useLocationSearch(): UseLocationSearchResult {
-  const [locations, setLocations] = useState<AmplifyLocation[]>([])
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
-  const [isLoading, setIsLoading] = useState(true)
   const [isSearching, setIsSearching] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  // Load all locations on mount
-  useEffect(() => {
-    let mounted = true
+  // Fetch all locations with React Query (cached globally)
+  const {
+    data: locations = [],
+    isLoading,
+    error: queryError,
+  } = useQuery<AmplifyLocation[], Error>({
+    queryKey: queryKeys.locations.list(),
+    queryFn: getAllLocations,
+    staleTime: 60 * 60 * 1000, // 1 hour - locations rarely change
+    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24h
+  })
 
-    async function loadLocations() {
-      try {
-        setIsLoading(true)
-        setError(null)
-        const allLocations = await getAllLocations()
-        if (mounted) {
-          setLocations(allLocations)
-        }
-      } catch (err) {
-        console.error("Failed to load locations for search:", err)
-        if (mounted) {
-          setError("Failed to load search data")
-        }
-      } finally {
-        if (mounted) {
-          setIsLoading(false)
-        }
-      }
-    }
-
-    loadLocations()
-
-    return () => {
-      mounted = false
-    }
-  }, [])
+  const error = queryError ? "Failed to load search data" : null
 
   // Group locations by city and state for efficient lookup
   const groupedByCityState = useMemo(() => {
@@ -254,7 +236,7 @@ export function useLocationSearch(): UseLocationSearchResult {
     }
   }, [])
 
-  // Cleanup timeout on unmount
+  // Cleanup timeout on unmount to prevent memory leak
   useEffect(() => {
     return () => {
       if (searchTimeoutRef.current) {

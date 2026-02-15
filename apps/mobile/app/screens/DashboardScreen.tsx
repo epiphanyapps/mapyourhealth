@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
-import { FC, useCallback, useEffect, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useState } from "react"
 import {
   View,
   ViewStyle,
@@ -145,18 +145,19 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }, [refresh])
 
   // Get the worst status for each category
-  const getStatusForCategory = (category: StatCategory) => {
-    if (!zipData) return "safe" as const
-    return getWorstStatusForCategory(zipData, category, statDefinitions)
-  }
+  const getStatusForCategory = useCallback(
+    (category: StatCategory) => {
+      if (!zipData) return "safe" as const
+      return getWorstStatusForCategory(zipData, category, statDefinitions)
+    },
+    [zipData, statDefinitions],
+  )
 
   // All four categories to display
-  const categories = [
-    StatCategory.water,
-    StatCategory.air,
-    StatCategory.health,
-    StatCategory.disaster,
-  ]
+  const categories = useMemo(
+    () => [StatCategory.water, StatCategory.air, StatCategory.health, StatCategory.disaster],
+    [],
+  )
 
   // Handle location selection from PlacesSearchBar
   const handleLocationSelect = useCallback((city: string, state: string, country: string) => {
@@ -291,7 +292,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
 ${categoryRisks || "No risks detected"}
 
-Check MapYourHealth for details.`
+Check MapYourHealth for details: https://app.mapyourhealth.info`
 
     try {
       await Share.share({
@@ -302,7 +303,7 @@ Check MapYourHealth for details.`
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, categories, getStatusForCategory])
+  }, [zipData, categories, getStatusForCategory, currentLocation])
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,

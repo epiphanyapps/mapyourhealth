@@ -177,7 +177,7 @@ export const AuthProvider: FC<PropsWithChildren<AuthProviderProps>> = ({ childre
         notificationListenerRef.current.remove()
       }
     }
-  }, [user])
+  }, [user, setupPushNotifications])
 
   // Process initial notification after auth state is determined and navigation is ready
   useEffect(() => {

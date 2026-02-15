@@ -4,7 +4,8 @@
 #   1. City search (New York) - verify data and category cards appear
 #   2. Different city search (Montreal) - verify location search works
 #
-# This flow ensures the search feature correctly handles city-based searches.
+# This flow ensures the search feature correctly handles both
+# numeric postal codes and text-based city names.
 
 appId: ${MAESTRO_APP_ID}
 onFlowStart:
@@ -15,14 +16,17 @@ onFlowStart:
 # Test 1: City Search (New York)
 # ========================================
 - assertVisible:
-    text: "Search city or.*"
+    text: "Search city or location..."
     label: "Search bar is visible"
 
 - tapOn:
-    text: "Search city or.*"
+    text: "Search city or location..."
     label: "Tap on search bar"
 
-- inputText: "New York"
+# Enter postal code 10001
+- inputText: "10001"
+
+# Submit the search
 - pressKey: Enter
 
 - waitForAnimationToEnd
@@ -30,7 +34,13 @@ onFlowStart:
     visible: "New York"
     timeout: 10000
 
-# Assert category cards appear
+# Assert the location is displayed
+- assertVisible:
+    text: "10001"
+    label: "Location 10001 is displayed in results"
+
+# Assert category cards appear (Water, Air, Health, or Disaster)
+# Using optional: true since exact cards may vary by location
 - assertVisible:
     text: "Tap Water.*"
     optional: true
@@ -55,7 +65,7 @@ onFlowStart:
 # Test 2: City Search (Montreal)
 # ========================================
 - tapOn:
-    text: "Search city or.*"
+    text: "Search city or location..."
     label: "Tap on search bar for city search"
 
 - inputText: "Montreal"

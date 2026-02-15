@@ -44,3 +44,22 @@ appId: ${MAESTRO_APP_ID}
     commands:
       - tapOn: "Close"
       - waitForAnimationToEnd
+
+# dismiss developer menu tutorial if "Continue" button is visible
+- runFlow:
+    when:
+      visible: 'Continue'
+    commands:
+      - tapOn: "Continue"
+      - waitForAnimationToEnd
+
+# dismiss developer tools menu if "Go home" is visible (swipe down or tap outside)
+- runFlow:
+    when:
+      visible: 'Go home'
+    commands:
+      - back
+      - waitForAnimationToEnd
+
+# final wait to ensure app is fully loaded
+- waitForAnimationToEnd

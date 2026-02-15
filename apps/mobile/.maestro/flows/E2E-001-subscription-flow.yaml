@@ -18,7 +18,7 @@ onFlowStart:
 # Part 1: Guest Empty State
 # ========================================
 - assertVisible:
-    text: "Find out how safe your location is"
+    text: "Find out how safe your city is"
     label: "Guest empty state title is visible"
 
 - assertVisible:
@@ -39,30 +39,39 @@ onFlowStart:
 - inputText: "Beverly Hills"
 - pressKey: Enter
 
+# Wait for location data to load
 - waitForAnimationToEnd
 - extendedWaitUntil:
     visible: "Beverly Hills"
     timeout: 10000
 
-# Verify category cards are visible
+# Verify we navigated to the location with data
 - assertVisible:
-    text: "Tap Water.*"
+    text: "90210"
+    label: "Location is visible"
+
+# Verify category cards are visible (any of: Water, Air, Health, Disaster)
+- assertVisible:
+    text: "Water.*"
     optional: true
 
 # ========================================
 # Part 3: Search for a Different City
 # ========================================
 - tapOn:
-    text: "Search city or.*"
+    text: "Search city or location..."
     label: "Tap on search bar"
 
 - inputText: "New York"
 - pressKey: Enter
 
+# Wait for location data to load
 - waitForAnimationToEnd
-- extendedWaitUntil:
-    visible: "New York"
-    timeout: 10000
+
+# Verify we navigated to the new location
+- assertVisible:
+    text: "10001"
+    label: "New location is visible"
 
 # ========================================
 # Part 4: Follow Button Triggers Auth Gate
@@ -104,3 +113,12 @@ onFlowStart:
 - tapOn:
     id: "back"
     optional: true
+
+# Verify we can get back to dashboard
+- runFlow:
+    when:
+      visible: "Search city or location..."
+    commands:
+      - assertVisible:
+          text: "10001"
+          optional: true

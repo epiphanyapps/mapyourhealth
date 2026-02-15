@@ -28,6 +28,15 @@
       "ios": { "simulator": true },
       "android": { "buildType": "apk" }
     },
+    "e2e": {
+      "extends": "production",
+      "distribution": "internal",
+      "env": {
+        "E2E_TEST": "true"
+      },
+      "ios": { "simulator": true },
+      "android": { "buildType": "apk" }
+    },
     "preview:device": {
       "extends": "preview",
       "ios": { "simulator": false }
