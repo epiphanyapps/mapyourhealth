@@ -84,8 +84,10 @@ onFlowStart:
     timeout: 3000
 
 # Select from autocomplete (city-level suggestion)
+# Use index: 1 to skip the search field text and tap the dropdown
 - tapOn:
     text: ".*Montreal.*"
+    index: 1
     label: "Select Montreal from autocomplete"
 
 - waitForAnimationToEnd

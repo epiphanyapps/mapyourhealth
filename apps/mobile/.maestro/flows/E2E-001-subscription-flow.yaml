@@ -45,8 +45,10 @@ onFlowStart:
     timeout: 3000
 
 # Tap on the first suggestion (New York, NY)
+# Use index: 1 to skip the search field text and tap the dropdown
 - tapOn:
     text: ".*New York.*"
+    index: 1
     label: "Select New York from autocomplete"
 
 # Wait for location data to load
@@ -80,8 +82,10 @@ onFlowStart:
     timeout: 3000
 
 # Tap on the first suggestion
+# Use index: 1 to skip the search field text and tap the dropdown
 - tapOn:
     text: ".*Los Angeles.*"
+    index: 1
     label: "Select Los Angeles from autocomplete"
 
 # Wait for location data to load
