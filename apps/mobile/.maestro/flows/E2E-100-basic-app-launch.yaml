@@ -17,7 +17,7 @@ onFlowStart:
 # The app's initial route is Dashboard — verify core elements
 
 - assertVisible:
-    text: "Find out how safe your city is"
+    text: "Find out how safe your location is"
     label: "Dashboard empty state title is visible"
 
 - assertVisible:
@@ -35,3 +35,8 @@ onFlowStart:
 - assertVisible:
     text: "Search city or location..."
     label: "App still stable after idle wait"
+
+# Verify no dev menu or error overlays
+- assertNotVisible:
+    text: "Development servers"
+    label: "No dev client UI showing"

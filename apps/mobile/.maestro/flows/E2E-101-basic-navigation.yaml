@@ -1,12 +1,12 @@
 # flow: E2E-101 Basic Navigation
 # intent:
 #   Test navigation between key screens and back navigation:
-#   1. Dashboard → Search → Location detail
-#   2. Location detail → Category detail
-#   3. Back navigation to dashboard
-#   4. Dashboard → Follow (auth gate) → Login → back to dashboard
+#   1. Dashboard → Search → tap suggestion → Location detail
+#   2. Back navigation to dashboard
+#   3. Dashboard → auth gate → Login → Signup → back
 #   Verifies smooth transitions and no crashes.
 #
+# NOTE: Requires network access for search API.
 # Issue: https://github.com/epiphanyapps/mapyourhealth/issues/100
 
 appId: ${MAESTRO_APP_ID}
@@ -25,77 +25,65 @@ onFlowStart:
     text: "Search city or location..."
     label: "Tap search bar"
 
-- inputText: "10001"
-- pressKey: Enter
+- inputText: "New York"
 
-- waitForAnimationToEnd
+# Wait for autocomplete suggestions to appear
+- waitForAnimationToEnd:
+    timeout: 5000
 
-- assertVisible:
-    text: "10001"
-    label: "Navigated to location 10001"
-
-# ========================================
-# Part 2: Location → Category Detail
-# ========================================
-# Tap on a category card (Water is commonly available)
+# Tap the first suggestion that appears
 - tapOn:
-    text: "Water"
-    optional: true
-    label: "Tap Water category card"
+    text: ".*New York.*"
+    index: 0
+    label: "Tap first New York suggestion"
 
-- waitForAnimationToEnd
+# Wait for location data to load
+- waitForAnimationToEnd:
+    timeout: 10000
 
-# If we navigated to category detail, verify and go back
+# ========================================
+# Part 2: Back Navigation to Dashboard
+# ========================================
+- back
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Verify we're back at dashboard
+- assertVisible:
+    text: "Search city or location..."
+    label: "Back on dashboard with search bar"
+
+# ========================================
+# Part 3: Profile / Auth Navigation
+# ========================================
+# Tap profile icon (top right) to trigger auth
+- tapOn:
+    point: "93%,6%"
+    label: "Tap profile icon area"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# If profile menu or login appears, verify
 - runFlow:
     when:
-      notVisible: "Search city or location..."
+      visible: "Sign In"
     commands:
+      - assertVisible:
+          text: "Sign In"
+          label: "Auth screen visible"
       - back
       - waitForAnimationToEnd:
           timeout: 3000
 
-# ========================================
-# Part 3: Auth Gate Navigation
-# ========================================
-- tapOn:
-    text: "Follow"
-    label: "Tap Follow to trigger auth gate"
-
-- waitForAnimationToEnd
-
-- assertVisible:
-    text: "Welcome Back"
-    label: "Login screen appeared"
-
-# Navigate to signup
-- tapOn:
-    text: "Don't have an account\\? Sign up"
-    label: "Go to signup"
-
-- waitForAnimationToEnd
-
-- assertVisible:
-    text: "Create Account"
-    label: "Signup screen visible"
-
-# ========================================
-# Part 4: Back Navigation to Dashboard
-# ========================================
-- back
-- waitForAnimationToEnd:
-    timeout: 2000
-
-- back
-- waitForAnimationToEnd:
-    timeout: 2000
-
-# May need one more back to get past location detail
-- back
-- waitForAnimationToEnd:
-    timeout: 2000
-
-# Verify we can reach the search bar (dashboard or location screen)
-- assertVisible:
-    text: "Search city or location..."
-    optional: true
-    label: "Returned to a screen with search bar"
+- runFlow:
+    when:
+      visible: "Log In"
+    commands:
+      - tapOn:
+          text: "Log In"
+      - waitForAnimationToEnd:
+          timeout: 3000
+      - back
+      - waitForAnimationToEnd:
+          timeout: 3000

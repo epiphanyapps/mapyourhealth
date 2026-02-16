@@ -19,7 +19,7 @@ onFlowStart:
 # ========================================
 # Verify empty state is shown for guests
 - assertVisible:
-    text: "Find out how safe your city is"
+    text: "Find out how safe your location is"
     label: "Guest empty state title is visible"
 
 - assertVisible:
