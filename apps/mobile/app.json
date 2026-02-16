@@ -1,6 +1,7 @@
 {
   "name": "MapYourHealth",
   "slug": "MapYourHealth",
+  "owner": "epiphanyapps",
   "scheme": "mapyourhealth",
   "version": "1.0.0",
   "orientation": "portrait",
@@ -11,7 +12,9 @@
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
-  "assetBundlePatterns": ["**/*"],
+  "assetBundlePatterns": [
+    "**/*"
+  ],
   "android": {
     "icon": "./assets/images/app-icon-android-legacy.png",
     "package": "com.epiphanyapps.mapyourhealth",
@@ -68,6 +71,10 @@
   "extra": {
     "ignite": {
       "version": "11.4.0"
+    },
+    "googlePlacesApiKey": "",
+    "eas": {
+      "projectId": "2d5329f5-5724-4814-a718-86011c93c9e3"
     }
   }
 }

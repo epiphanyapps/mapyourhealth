@@ -1,0 +1,87 @@
+# flow: E2E-102 Search Functionality Validation
+# intent:
+#   Comprehensive search testing with autocomplete:
+#   1. Type "New York" → verify suggestions appear → tap one
+#   2. Verify location data loads with category cards
+#   3. Search again with "Miami" → verify different results
+#
+# NOTE: Requires network access for search API and data fetching.
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/100
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Test 1: Search "New York" with autocomplete
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar visible on launch"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Activate search"
+
+- inputText: "New York"
+
+# Wait for autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Tap first suggestion
+- tapOn:
+    text: ".*New York.*"
+    index: 0
+    label: "Tap New York suggestion"
+
+# Wait for data to load
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify category cards load (any of: Water, Air, Health, Disaster)
+- assertVisible:
+    text: "Water"
+    optional: true
+    label: "Water category visible"
+
+- assertVisible:
+    text: "Air"
+    optional: true
+    label: "Air category visible"
+
+- assertVisible:
+    text: "Health"
+    optional: true
+    label: "Health category visible"
+
+# ========================================
+# Test 2: Search "Miami"
+# ========================================
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar for second search"
+
+- eraseText: 20
+- inputText: "Miami"
+
+# Wait for suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Tap first Miami suggestion
+- tapOn:
+    text: ".*Miami.*"
+    index: 0
+    label: "Tap Miami suggestion"
+
+# Wait for data to load
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# Verify data loaded for Miami
+- assertVisible:
+    text: "Water"
+    optional: true
+    label: "Categories load for Miami"

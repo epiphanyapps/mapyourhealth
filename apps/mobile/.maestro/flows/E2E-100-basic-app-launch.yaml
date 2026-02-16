@@ -1,0 +1,42 @@
+# flow: E2E-100 Basic App Launch & Dashboard Validation
+# intent:
+#   Validate that the app launches successfully and the main dashboard
+#   renders with all expected core UI elements visible.
+#   This is the baseline "smoke test" for device testing.
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/100
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Verify Dashboard Loads
+# ========================================
+# The app's initial route is Dashboard — verify core elements
+
+- assertVisible:
+    text: "Find out how safe your location is"
+    label: "Dashboard empty state title is visible"
+
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is present on dashboard"
+
+# ========================================
+# Part 2: Verify App Doesn't Crash on Idle
+# ========================================
+# Wait a few seconds to confirm no crash or error overlay appears
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- assertVisible:
+    text: "Search city or location..."
+    label: "App still stable after idle wait"
+
+# Verify no dev menu or error overlays
+- assertNotVisible:
+    text: "Development servers"
+    label: "No dev client UI showing"
