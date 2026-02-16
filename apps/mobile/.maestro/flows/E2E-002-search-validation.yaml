@@ -1,11 +1,12 @@
 # flow: E2E-002 Search Validation
 # intent:
 #   Validate search functionality for different input types:
-#   1. City search (New York) - verify data and category cards appear
-#   2. Different city search (Montreal) - verify location search works
+#   1. Direct postal code entry (10001) - bypasses autocomplete, queries by zip
+#   2. City autocomplete search (Montreal) - uses autocomplete suggestions
 #
-# This flow ensures the search feature correctly handles both
-# numeric postal codes and text-based city names.
+# NOTE: The app uses city-level autocomplete suggestions, but postal codes
+# can still be entered directly (type + Enter) to query data. This test
+# validates both input methods work correctly.
 
 appId: ${MAESTRO_APP_ID}
 onFlowStart:
@@ -13,8 +14,11 @@ onFlowStart:
 ---
 
 # ========================================
-# Test 1: City Search (New York)
+# Test 1: Direct Postal Code Entry (10001 → New York)
 # ========================================
+# Tests that users can still enter postal codes directly and press Enter
+# to query data, bypassing the city-level autocomplete suggestions.
+
 - assertVisible:
     text: "Search city or location..."
     label: "Search bar is visible"
@@ -23,10 +27,10 @@ onFlowStart:
     text: "Search city or location..."
     label: "Tap on search bar"
 
-# Enter postal code 10001
+# Enter postal code directly (bypasses autocomplete)
 - inputText: "10001"
 
-# Submit the search
+# Submit directly with Enter (no autocomplete selection)
 - pressKey: Enter
 
 - waitForAnimationToEnd
@@ -62,14 +66,27 @@ onFlowStart:
     label: "Disaster Risk category card visible"
 
 # ========================================
-# Test 2: City Search (Montreal)
+# Test 2: City Autocomplete Search (Montreal)
 # ========================================
+# Tests the city-level autocomplete flow - user types city name,
+# selects from suggestions, and data loads for that city.
+
 - tapOn:
     text: "Search city or location..."
     label: "Tap on search bar for city search"
 
+- eraseText: 10
+
 - inputText: "Montreal"
-- pressKey: Enter
+
+# Wait for autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 3000
+
+# Select from autocomplete (city-level suggestion)
+- tapOn:
+    text: "Montreal, QC"
+    label: "Select Montreal from autocomplete"
 
 - waitForAnimationToEnd
 - extendedWaitUntil:
