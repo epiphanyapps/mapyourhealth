@@ -46,7 +46,7 @@ onFlowStart:
 
 # Tap on the first suggestion (New York, NY)
 - tapOn:
-    text: "New York, NY"
+    text: ".*New York.*"
     label: "Select New York from autocomplete"
 
 # Wait for location data to load
@@ -81,7 +81,7 @@ onFlowStart:
 
 # Tap on the first suggestion
 - tapOn:
-    text: "Los Angeles, CA"
+    text: ".*Los Angeles.*"
     label: "Select Los Angeles from autocomplete"
 
 # Wait for location data to load

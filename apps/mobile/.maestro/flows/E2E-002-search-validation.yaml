@@ -85,7 +85,7 @@ onFlowStart:
 
 # Select from autocomplete (city-level suggestion)
 - tapOn:
-    text: "Montreal, QC"
+    text: ".*Montreal.*"
     label: "Select Montreal from autocomplete"
 
 - waitForAnimationToEnd
