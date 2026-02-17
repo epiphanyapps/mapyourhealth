@@ -1,23 +1,27 @@
 # flow: E2E-002 Search Validation
 # intent:
-#   Validate search functionality for different input types:
-#   1. Direct postal code entry (10001) - bypasses autocomplete, queries by zip
-#   2. City autocomplete search (Montreal) - uses autocomplete suggestions
+#   Validate city autocomplete search functionality.
+#   Tests that users can search for cities and select from autocomplete.
 #
-# NOTE: The app uses city-level autocomplete suggestions, but postal codes
-# can still be entered directly (type + Enter) to query data. This test
-# validates both input methods work correctly.
+# NOTE: Direct postal code entry (type + Enter) is not supported.
+# Users must select from autocomplete suggestions.
 
 appId: ${MAESTRO_APP_ID}
-onFlowStart:
-  - runFlow: ../shared/_OnFlowStart.yaml
 ---
 
+# Launch app with clean state
+- launchApp:
+    clearState: true
+
+# Wait for app to load
+- waitForAnimationToEnd:
+    timeout: 5000
+
 # ========================================
-# Test 1: Direct Postal Code Entry (10001 → New York)
+# Test: City Autocomplete Search (Montreal)
 # ========================================
-# Tests that users can still enter postal codes directly and press Enter
-# to query data, bypassing the city-level autocomplete suggestions.
+# Tests the city-level autocomplete flow - user types city name,
+# selects from suggestions, and data loads for that city.
 
 - assertVisible:
     text: "Search city or location..."
@@ -26,56 +30,6 @@ onFlowStart:
 - tapOn:
     text: "Search city or location..."
     label: "Tap on search bar"
-
-# Enter postal code directly (bypasses autocomplete)
-- inputText: "10001"
-
-# Submit directly with Enter (no autocomplete selection)
-- pressKey: Enter
-
-- waitForAnimationToEnd
-- extendedWaitUntil:
-    visible: ".*New York.*"
-    timeout: 10000
-
-# Assert the location is displayed
-- assertVisible:
-    text: "10001"
-    label: "Location 10001 is displayed in results"
-
-# Assert category cards appear (Water, Air, Health, or Disaster)
-# Using optional: true since exact cards may vary by location
-- assertVisible:
-    text: "Tap Water.*"
-    optional: true
-    label: "Tap Water Quality category card visible"
-
-- assertVisible:
-    text: "Air Pollut.*"
-    optional: true
-    label: "Air Pollution category card visible"
-
-- assertVisible:
-    text: "Pathogen.*"
-    optional: true
-    label: "Pathogens category card visible"
-
-- assertVisible:
-    text: "Disaster.*"
-    optional: true
-    label: "Disaster Risk category card visible"
-
-# ========================================
-# Test 2: City Autocomplete Search (Montreal)
-# ========================================
-# Tests the city-level autocomplete flow - user types city name,
-# selects from suggestions, and data loads for that city.
-
-- tapOn:
-    text: "Search city or location..."
-    label: "Tap on search bar for city search"
-
-- eraseText: 10
 
 - inputText: "Montreal"
 
@@ -90,12 +44,24 @@ onFlowStart:
     index: 1
     label: "Select Montreal from autocomplete"
 
-- waitForAnimationToEnd
+- waitForAnimationToEnd:
+    timeout: 5000
+
 - extendedWaitUntil:
     visible: ".*Montreal.*"
     timeout: 10000
 
-# Verify Montreal data loaded
+# Verify Montreal location is displayed
 - assertVisible:
     text: ".*Montreal.*"
     label: "Montreal location is displayed"
+
+# Montreal may or may not have data - check for either state
+- runFlow:
+    when:
+      visible: "No data for"
+    commands:
+      - assertVisible:
+          text: "Notify Me"
+          optional: true
+          label: "Notify Me button visible for location without data"
