@@ -35,7 +35,7 @@ onFlowStart:
 
 - waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: "New York"
+    visible: ".*New York.*"
     timeout: 10000
 
 # Assert the location is displayed
@@ -92,5 +92,10 @@ onFlowStart:
 
 - waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: "Montreal"
+    visible: ".*Montreal.*"
     timeout: 10000
+
+# Verify Montreal data loaded
+- assertVisible:
+    text: ".*Montreal.*"
+    label: "Montreal location is displayed"
