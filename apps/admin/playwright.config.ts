@@ -27,7 +27,7 @@ export default defineConfig({
     {
       name: "admin-chromium",
       use: { ...devices["Desktop Chrome"] },
-      testMatch: /admin\/.*.spec.ts/,
+      testMatch: /e2e\/admin\/.*.spec.ts/,
     },
 
     // Mobile Web Tests - Desktop Chrome
@@ -46,6 +46,7 @@ export default defineConfig({
   ],
 
   // Web servers to start before tests
+  // In CI with admin-only tests, skip the Expo mobile web server
   webServer: [
     {
       command: "npm run dev",
@@ -54,12 +55,16 @@ export default defineConfig({
       cwd: ".",
       timeout: 120000,
     },
-    {
-      command: "npm run web",
-      url: "http://localhost:8081",
-      reuseExistingServer: !process.env.CI,
-      cwd: "../mobile",
-      timeout: 120000,
-    },
+    ...(process.env.SKIP_MOBILE_SERVER
+      ? []
+      : [
+          {
+            command: "npm run web",
+            url: "http://localhost:8081",
+            reuseExistingServer: !process.env.CI,
+            cwd: "../mobile",
+            timeout: 120000,
+          },
+        ]),
   ],
 });

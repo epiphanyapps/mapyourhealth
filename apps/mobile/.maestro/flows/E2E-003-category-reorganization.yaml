@@ -26,11 +26,11 @@ onFlowStart:
     text: "Search city or.*"
     label: "Tap on search bar"
 
-- inputText: "10001"
+- inputText: "New York"
 - pressKey: Enter
 - waitForAnimationToEnd
 - extendedWaitUntil:
-    visible: "10001"
+    visible: "New York"
     timeout: 10000
 
 # ========================================

@@ -1,85 +1,67 @@
 # flow: E2E-002 Search Validation
 # intent:
-#   Validate search functionality for different input types:
-#   1. Zip code search (10001) - verify data and category cards appear
-#   2. City search (Montreal) - verify location search works
+#   Validate city autocomplete search functionality.
+#   Tests that users can search for cities and select from autocomplete.
 #
-# This flow ensures the search feature correctly handles both
-# numeric postal codes and text-based city names.
+# NOTE: Direct postal code entry (type + Enter) is not supported.
+# Users must select from autocomplete suggestions.
 
 appId: ${MAESTRO_APP_ID}
-onFlowStart:
-  - runFlow: ../shared/_OnFlowStart.yaml
 ---
 
+# Launch app with clean state
+- launchApp:
+    clearState: true
+
+# Wait for app to load
+- waitForAnimationToEnd:
+    timeout: 5000
+
 # ========================================
-# Test 1: Zip Code Search (10001)
+# Test: City Autocomplete Search (Montreal)
 # ========================================
-# Verify search bar is visible on app start
+# Tests the city-level autocomplete flow - user types city name,
+# selects from suggestions, and data loads for that city.
+
 - assertVisible:
     text: "Search city or location..."
     label: "Search bar is visible"
 
-# Tap on search bar to activate it
 - tapOn:
     text: "Search city or location..."
     label: "Tap on search bar"
 
-# Enter postal code 10001
-- inputText: "10001"
-
-# Submit the search
-- pressKey: Enter
-
-# Wait for data to load
-- waitForAnimationToEnd
-
-# Assert the location is displayed
-- assertVisible:
-    text: "10001"
-    label: "Location 10001 is displayed in results"
-
-# Assert category cards appear (Water, Air, Health, or Disaster)
-# Using optional: true since exact cards may vary by location
-- assertVisible:
-    text: "Water"
-    optional: true
-    label: "Water category card visible"
-
-- assertVisible:
-    text: "Air"
-    optional: true
-    label: "Air category card visible"
-
-- assertVisible:
-    text: "Health"
-    optional: true
-    label: "Health category card visible"
-
-- assertVisible:
-    text: "Disaster"
-    optional: true
-    label: "Disaster category card visible"
-
-# ========================================
-# Test 2: City Search (Montreal)
-# ========================================
-# Tap on search bar again to search for a city
-- tapOn:
-    text: "Search city or location..."
-    label: "Tap on search bar for city search"
-
-# Enter city name Montreal
 - inputText: "Montreal"
 
-# Submit the search
-- pressKey: Enter
+# Wait for autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 3000
 
-# Wait for data to load
-- waitForAnimationToEnd
+# Select from autocomplete (city-level suggestion)
+# Use index: 1 to skip the search field text and tap the dropdown
+- tapOn:
+    text: ".*Montreal.*"
+    index: 1
+    label: "Select Montreal from autocomplete"
 
-# Assert results appear for Montreal
-# The city name or related location info should be visible
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible: ".*Montreal.*"
+    timeout: 10000
+
+# Verify Montreal location is displayed
 - assertVisible:
-    text: "Montreal"
-    label: "Montreal search results are displayed"
+    text: ".*Montreal.*"
+    label: "Montreal location is displayed"
+
+# Montreal may or may not have data - check for either state
+- runFlow:
+    when:
+      visible: "No data for"
+    commands:
+      - assertVisible:
+          text: "Notify Me"
+          optional: true
+          label: "Notify Me button visible for location without data"

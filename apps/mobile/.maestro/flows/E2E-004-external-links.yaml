@@ -1,7 +1,7 @@
 # flow: E2E-004 External Links in Category Descriptions
 # intent:
 #   Test that inline hyperlinks in category descriptions are visible and tappable:
-#   1. Search for a zip code
+#   1. Search for a city
 #   2. Navigate to Water category detail
 #   3. Verify description with inline link is visible
 #   4. Tap on the inline link (WHO standards)
@@ -26,15 +26,15 @@ onFlowStart:
     text: "Search city or.*"
     label: "Tap on search bar"
 
-- inputText: "90210"
+- inputText: "Beverly Hills"
 - pressKey: Enter
 
-# Wait for zip code data to load
+# Wait for location data to load
 - waitForAnimationToEnd
 
-# Verify we navigated to the zip code with data
+# Verify we navigated to the city with data
 - assertVisible:
-    text: "90210"
+    text: "Beverly Hills"
     label: "Zip code is visible"
 
 # ========================================

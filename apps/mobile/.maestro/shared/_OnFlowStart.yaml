@@ -13,6 +13,7 @@
 # For reliable E2E testing, use a preview build:
 #   eas build --profile e2e --platform ios --local
 #
+# Uses MAESTRO_APP_ID from environment
 appId: ${MAESTRO_APP_ID}
 ---
 

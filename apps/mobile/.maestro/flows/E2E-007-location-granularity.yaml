@@ -1,0 +1,77 @@
+# flow: E2E-007 Location Granularity (#62)
+# intent:
+#   Verify city-level location display (no zip code UI):
+#   1. Search by city name
+#   2. Verify city, state display format
+#   3. Verify no zip code elements in UI
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Verify Search Placeholder Uses City Language
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search placeholder uses city language, not zip code"
+
+- assertNotVisible:
+    text: ".*zip.*"
+    label: "No zip code references in UI"
+    optional: true
+
+# ========================================
+# Part 2: Search by City Name
+# ========================================
+- tapOn:
+    text: "Search city or.*"
+    label: "Tap on search bar"
+
+- inputText: "Beverly Hills"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Beverly Hills"
+    timeout: 10000
+
+# ========================================
+# Part 3: Verify City/State Display Format
+# ========================================
+# Location header should show "City, State" format
+- assertVisible:
+    text: "Beverly Hills.*CA"
+    label: "Location displays in city, state format"
+
+# Verify country context is shown
+- assertVisible:
+    text: "United States"
+    optional: true
+    label: "Country context is displayed"
+
+# ========================================
+# Part 4: Search for Canadian City
+# ========================================
+- tapOn:
+    text: "Search city or.*"
+    label: "Tap search bar again"
+
+- inputText: "Montreal"
+- pressKey: Enter
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Montreal"
+    timeout: 10000
+
+# Verify Canadian location format
+- assertVisible:
+    text: "Montreal.*QC"
+    label: "Canadian city displays in city, province format"
+
+- assertVisible:
+    text: "Canada"
+    optional: true
+    label: "Canada country context is displayed"

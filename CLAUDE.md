@@ -65,3 +65,39 @@ Multiple labels can apply (e.g. an E2E testing issue gets both `e2e` and `test`)
 - Run `npx eslint apps/mobile/app --ext .ts,.tsx` to check for lint errors
 - Run `npx prettier --check "apps/mobile/app/**/*.{ts,tsx}"` to check formatting
 - Fix ALL errors before committing
+
+## Maestro E2E Testing
+
+**IMPORTANT: Maestro tests require non-dev builds (preview/e2e profile).**
+
+Development builds show the Expo dev client UI and wait for Metro bundler - they will NOT work with Maestro automation.
+
+### Build for E2E Testing
+
+```bash
+cd apps/mobile
+
+# iOS simulator (recommended for local testing)
+npm run build:ios:preview
+
+# Android emulator
+npm run build:android:preview
+```
+
+### Install & Run Tests
+
+```bash
+# iOS: Install the .app from the build output
+xcrun simctl install booted /path/to/MapYourHealth.app
+
+# Run all E2E tests
+npm run test:maestro
+
+# Run specific test
+npm run test:maestro:e2e
+```
+
+### Key Points
+- Preview/E2E builds are **standalone** - no Metro bundler needed
+- Dev builds (`expo run:ios`) include dev client UI - **don't use for Maestro**
+- The `e2e` EAS profile sets `E2E_TEST=true` env var if needed for test-specific behavior
