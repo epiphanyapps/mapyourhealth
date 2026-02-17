@@ -98,7 +98,7 @@ appId: ${MAESTRO_APP_ID}
 # Part 4: Navigate to Signup
 # ========================================
 - tapOn:
-    text: "Don't have an account\\? Sign up"
+    text: ".*Sign up"
     label: "Navigate to signup screen"
 
 - assertVisible:
