@@ -102,4 +102,11 @@ module.exports = {
     ],
     "import/newline-after-import": 1,
   },
+  settings: {
+    "import/resolver": {
+      typescript: {
+        project: "./tsconfig.json",
+      },
+    },
+  },
 }
