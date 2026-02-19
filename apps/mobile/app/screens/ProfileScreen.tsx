@@ -19,6 +19,7 @@ import {
   Linking,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { Dialog, Portal, Button as PaperButton } from "react-native-paper"
 
 import { generateClient } from "aws-amplify/data"
 // @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
@@ -52,6 +53,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const { themed, theme } = useAppTheme()
   const [isRetrying, setIsRetrying] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
+  
+  // Dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Subscriptions and loading state
   const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
@@ -185,39 +190,34 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   }, [logout])
 
   /**
-   * Handle delete account - cleans up user data then deletes Cognito account
+   * Handle delete account button press - show confirmation dialog
    */
   const handleDeleteAccount = useCallback(() => {
-    Alert.alert(
-      "Delete Account",
-      "This will permanently delete your account and all associated data. This action cannot be undone.",
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: async () => {
-            try {
-              setIsDeleting(true)
-              // Single server-side call: cleans all DynamoDB data + deletes Cognito user
-              const client = generateClient<Schema>()
-              const result = await client.mutations.deleteAccountData({})
-              if (!result.data?.success) {
-                throw new Error("Failed to delete account")
-              }
-              // Cognito user is already deleted server-side, just sign out locally
-              await logout()
-              // Navigation will happen automatically via auth state change
-            } catch (error) {
-              console.error("Failed to delete account:", error)
-              Alert.alert("Error", "Failed to delete account. Please try again.")
-              setIsDeleting(false)
-            }
-          },
-        },
-      ],
-    )
+    setShowDeleteDialog(true)
   }, [])
+
+  /**
+   * Execute account deletion after confirmation
+   */
+  const executeDeleteAccount = useCallback(async () => {
+    try {
+      setIsDeleting(true)
+      setShowDeleteDialog(false)
+      // Single server-side call: cleans all DynamoDB data + deletes Cognito user
+      const client = generateClient<Schema>()
+      const result = await client.mutations.deleteAccountData({})
+      if (!result.data?.success) {
+        throw new Error("Failed to delete account")
+      }
+      // Cognito user is already deleted server-side, just sign out locally
+      await logout()
+      // Navigation will happen automatically via auth state change
+    } catch (error) {
+      console.error("Failed to delete account:", error)
+      Alert.alert("Error", "Failed to delete account. Please try again.")
+      setIsDeleting(false)
+    }
+  }, [logout])
 
   /**
    * Navigate to subscriptions settings
@@ -467,6 +467,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           preset="default"
           style={themed($logoutButton)}
           onPress={handleLogout}
+          testID="logout-button"
           LeftAccessory={() => (
             <MaterialCommunityIcons
               name="logout"
@@ -488,6 +489,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           ]}
           accessibilityRole="button"
           accessibilityLabel="Delete account"
+          testID="delete-account-button"
         >
           {isDeleting ? (
             <ActivityIndicator size="small" color={theme.colors.error} />
@@ -505,6 +507,38 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
       <View style={$versionContainer}>
         <Text text={getVersionString()} style={$versionText} />
       </View>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Portal>
+        <Dialog 
+          visible={showDeleteDialog} 
+          onDismiss={() => setShowDeleteDialog(false)}
+          testID="delete-account-dialog"
+        >
+          <Dialog.Title testID="delete-account-dialog-title">Delete Account</Dialog.Title>
+          <Dialog.Content>
+            <Text testID="delete-account-dialog-message">
+              This will permanently delete your account and all associated data. This action cannot be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <PaperButton 
+              onPress={() => setShowDeleteDialog(false)}
+              testID="delete-account-dialog-cancel"
+            >
+              Cancel
+            </PaperButton>
+            <PaperButton 
+              mode="contained"
+              buttonColor="#dc2626"
+              onPress={executeDeleteAccount}
+              testID="delete-account-dialog-confirm"
+            >
+              Delete
+            </PaperButton>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   )
 }

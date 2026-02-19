@@ -35,6 +35,7 @@ import { useFonts } from "expo-font"
 import * as Linking from "expo-linking"
 import { KeyboardProvider } from "react-native-keyboard-controller"
 import { initialWindowMetrics, SafeAreaProvider } from "react-native-safe-area-context"
+import { PaperProvider } from "react-native-paper"
 
 import { queryClient } from "./lib/queryClient"
 
@@ -131,13 +132,15 @@ export function App() {
               <SubscriptionsProvider>
                 <PendingActionProvider>
                   <StatDefinitionsProvider>
-                    <ThemeProvider>
-                      <AppNavigator
-                        linking={linking}
-                        initialState={initialNavigationState}
-                        onStateChange={onNavigationStateChange}
-                      />
-                    </ThemeProvider>
+                    <PaperProvider>
+                      <ThemeProvider>
+                        <AppNavigator
+                          linking={linking}
+                          initialState={initialNavigationState}
+                          onStateChange={onNavigationStateChange}
+                        />
+                      </ThemeProvider>
+                    </PaperProvider>
                   </StatDefinitionsProvider>
                 </PendingActionProvider>
               </SubscriptionsProvider>

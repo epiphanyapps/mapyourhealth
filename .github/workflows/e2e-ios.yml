@@ -1,0 +1,95 @@
+name: iOS E2E Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-ios.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
+
+jobs:
+  ios-e2e:
+    name: iOS E2E Tests
+    runs-on: macos-14
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Java (for Maestro)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            node_modules
+            apps/mobile/node_modules
+            apps/mobile/ios/Pods
+            ~/Library/Caches/CocoaPods
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/yarn.lock', '**/Podfile.lock') }}
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Build iOS Simulator App
+        working-directory: apps/mobile
+        run: eas build --profile e2e --platform ios --local --non-interactive --output ./build/MapYourHealth.app
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Boot iOS Simulator
+        run: |
+          xcrun simctl shutdown all 2>/dev/null || true
+          DEVICE_ID=$(xcrun simctl list devices available --json | \
+            jq -r '.devices | to_entries[] | select(.key | contains("iOS-17")) | .value[] | select(.name == "iPhone 15 Pro") | .udid' | head -1)
+          xcrun simctl boot "$DEVICE_ID"
+          xcrun simctl bootstatus "$DEVICE_ID" -b
+          echo "SIMULATOR_UDID=$DEVICE_ID" >> $GITHUB_ENV
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Install app on simulator
+        working-directory: apps/mobile
+        run: xcrun simctl install booted ./build/MapYourHealth.app
+
+      - name: Run E2E tests
+        working-directory: apps/mobile
+        run: |
+          $HOME/.maestro/bin/maestro test .maestro/flows \
+            --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-e2e-results
+          path: ~/.maestro/tests
+          retention-days: 7
+          if-no-files-found: ignore

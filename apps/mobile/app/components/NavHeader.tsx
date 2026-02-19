@@ -74,6 +74,7 @@ export function NavHeader(props: NavHeaderProps) {
         style={({ pressed }) => [$profileButton, pressed && { opacity: 0.7 }]}
         accessibilityLabel="Open profile menu"
         accessibilityRole="button"
+        testID="profile-menu-button"
       >
         <MaterialCommunityIcons
           name={isAuthenticated ? "account-circle" : "account-circle-outline"}

@@ -62,6 +62,7 @@ function MenuItem({ icon, label, onPress, color }: MenuItemProps) {
       style={({ pressed }) => [$menuItem, pressed && { opacity: 0.7 }]}
       accessibilityRole="button"
       accessibilityLabel={label}
+      testID={`menu-item-${label.toLowerCase().replace(/\s+/g, "-")}`}
     >
       <MaterialCommunityIcons name={icon} size={24} color={textColor} />
       <Text style={$menuItemText}>{label}</Text>
@@ -167,7 +168,7 @@ export function ProfileMenu(props: ProfileMenuProps) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={$modalOverlay} onPress={onClose}>
-        <Pressable style={$modalContent} onPress={(e) => e.stopPropagation()}>
+        <Pressable style={$modalContent} onPress={(e) => e.stopPropagation()} testID="profile-menu-sheet">
           {/* Handle bar for visual affordance */}
           <View style={$handleBar} />
 
@@ -219,6 +220,7 @@ export function ProfileMenu(props: ProfileMenuProps) {
                 style={({ pressed }) => [$signOutItem, pressed && { opacity: 0.7 }]}
                 accessibilityRole="button"
                 accessibilityLabel="Sign out"
+                testID="menu-item-sign-out"
               >
                 <MaterialCommunityIcons name="logout" size={24} color={theme.colors.error} />
                 <Text style={$signOutText}>Sign Out</Text>
