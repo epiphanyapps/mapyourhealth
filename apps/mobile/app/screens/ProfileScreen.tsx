@@ -20,7 +20,6 @@ import {
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
-import { deleteUser } from "aws-amplify/auth"
 import { generateClient } from "aws-amplify/data"
 // @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
@@ -200,14 +199,14 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           onPress: async () => {
             try {
               setIsDeleting(true)
-              // 1. Delete user data from DynamoDB via Lambda
+              // Single server-side call: cleans all DynamoDB data + deletes Cognito user
               const client = generateClient<Schema>()
               const result = await client.mutations.deleteAccountData({})
               if (!result.data?.success) {
-                throw new Error("Failed to delete account data")
+                throw new Error("Failed to delete account")
               }
-              // 2. Delete Cognito account (auto signs out)
-              await deleteUser()
+              // Cognito user is already deleted server-side, just sign out locally
+              await logout()
               // Navigation will happen automatically via auth state change
             } catch (error) {
               console.error("Failed to delete account:", error)

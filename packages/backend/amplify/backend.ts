@@ -398,6 +398,19 @@ deleteAccountLambda.addEnvironment('HEALTH_RECORD_TABLE_NAME', healthRecordTable
 deleteAccountLambda.addEnvironment('USER_SUBSCRIPTION_TABLE_NAME', subscriptionsTable.tableName);
 deleteAccountLambda.addEnvironment('NOTIFICATION_LOG_TABLE_NAME', notificationLogTable.tableName);
 deleteAccountLambda.addEnvironment('HAZARD_REPORT_TABLE_NAME', hazardReportTable.tableName);
+deleteAccountLambda.addEnvironment('USER_POOL_ID', userPoolId);
+
+// Grant deleteAccount function permissions to delete Cognito user
+const deleteAccountCognitoPolicy = new Policy(deleteAccountStack, 'DeleteAccountCognitoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['cognito-idp:AdminDeleteUser'],
+      resources: [backend.auth.resources.userPool.userPoolArn],
+    }),
+  ],
+});
+backend.deleteAccount.resources.lambda.role?.attachInlinePolicy(deleteAccountCognitoPolicy);
 
 // Grant deleteAccount function permissions to query and delete from all user-data tables
 const deleteAccountDynamoPolicy = new Policy(deleteAccountStack, 'DeleteAccountDynamoPolicy', {

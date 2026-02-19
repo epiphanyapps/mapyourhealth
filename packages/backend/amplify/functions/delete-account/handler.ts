@@ -1,13 +1,12 @@
 /**
  * Delete Account Lambda Handler
  *
- * Cleans up all user-owned data from DynamoDB tables:
- * - HealthRecord
- * - UserSubscription
- * - NotificationLog
- * - HazardReport
+ * Performs FULL account deletion atomically on the server side:
+ * 1. Cleans up all user-owned data from DynamoDB tables
+ * 2. Deletes the Cognito user account
  *
- * The Cognito user deletion is handled client-side via `deleteUser()` from aws-amplify/auth.
+ * Data is deleted first, then the Cognito user. If Cognito deletion fails,
+ * the user can still log in and retry. The client handles local sign-out after success.
  */
 
 import type { AppSyncResolverHandler } from 'aws-lambda';
@@ -16,15 +15,21 @@ import {
   QueryCommand,
   BatchWriteItemCommand,
 } from '@aws-sdk/client-dynamodb';
+import {
+  CognitoIdentityProviderClient,
+  AdminDeleteUserCommand,
+} from '@aws-sdk/client-cognito-identity-provider';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 
 const dynamoClient = new DynamoDBClient({});
+const cognitoClient = new CognitoIdentityProviderClient({});
 
 // Table names set via environment variables in backend.ts
 const HEALTH_RECORD_TABLE = process.env.HEALTH_RECORD_TABLE_NAME!;
 const USER_SUBSCRIPTION_TABLE = process.env.USER_SUBSCRIPTION_TABLE_NAME!;
 const NOTIFICATION_LOG_TABLE = process.env.NOTIFICATION_LOG_TABLE_NAME!;
 const HAZARD_REPORT_TABLE = process.env.HAZARD_REPORT_TABLE_NAME!;
+const USER_POOL_ID = process.env.USER_POOL_ID!;
 
 interface DeleteAccountResponse {
   success: boolean;
@@ -161,12 +166,26 @@ export const handler: AppSyncResolverHandler<Record<string, never>, DeleteAccoun
 
     console.log('Account data deletion complete:', deletedCounts);
 
+    // 5. Delete Cognito user account (server-side, atomic with data cleanup)
+    if (!username) {
+      throw new Error('Cannot delete Cognito user: username not found in identity');
+    }
+
+    console.log(`Deleting Cognito user: ${username}`);
+    await cognitoClient.send(
+      new AdminDeleteUserCommand({
+        UserPoolId: USER_POOL_ID,
+        Username: username,
+      })
+    );
+    console.log('Cognito user deleted successfully');
+
     return {
       success: true,
       deletedCounts,
     };
   } catch (error) {
-    console.error('Error deleting account data:', error);
-    throw new Error(`Failed to delete account data: ${(error as Error).message}`);
+    console.error('Error deleting account:', error);
+    throw new Error(`Failed to delete account: ${(error as Error).message}`);
   }
 };
