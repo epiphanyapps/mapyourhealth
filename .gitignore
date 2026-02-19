@@ -118,3 +118,9 @@ test-results/
 
 # Test output
 output/
+
+# Build artifacts
+*.app/
+build-*.tar.gz
+*.png
+!apps/mobile/assets/**/*.png
