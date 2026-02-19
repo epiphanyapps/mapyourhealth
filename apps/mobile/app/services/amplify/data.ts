@@ -526,3 +526,101 @@ export async function deleteZipCodeSubscription(id: string): Promise<void> {
 export async function getUserZipCodeSubscriptions(): Promise<AmplifyUserSubscription[]> {
   return getUserSubscriptions()
 }
+
+// =============================================================================
+// Places Autocomplete (Backend Proxy)
+// =============================================================================
+
+/**
+ * Prediction from Google Places Autocomplete
+ */
+export interface PlacesPrediction {
+  place_id: string
+  description: string
+  main_text?: string
+  secondary_text?: string
+}
+
+/**
+ * Response from Places Autocomplete query
+ */
+export interface PlacesAutocompleteResponse {
+  status: string
+  predictions?: PlacesPrediction[]
+  lat?: number
+  lng?: number
+  cached?: boolean
+  error?: string
+}
+
+/**
+ * Fetch autocomplete suggestions via backend proxy (keeps API key server-side)
+ */
+export async function getPlacesAutocomplete(
+  query: string,
+  sessionToken?: string,
+): Promise<PlacesAutocompleteResponse> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.queries.placesAutocomplete({
+    query,
+    sessionToken,
+  })
+
+  if (errors) {
+    console.error("Error fetching places autocomplete:", errors)
+    return {
+      status: "ERROR",
+      error: errors.map((e: { message: string }) => e.message).join(", "),
+    }
+  }
+
+  if (!data) {
+    return {
+      status: "ERROR",
+      error: "No data returned",
+    }
+  }
+
+  // Parse predictions from JSON if needed
+  const response = data as PlacesAutocompleteResponse
+  if (response.predictions && typeof response.predictions === "string") {
+    try {
+      response.predictions = JSON.parse(response.predictions)
+    } catch {
+      // Already an object
+    }
+  }
+
+  return response
+}
+
+/**
+ * Fetch place details (coordinates) via backend proxy
+ * Uses the same query with "details:" prefix
+ */
+export async function getPlaceDetails(
+  placeId: string,
+  sessionToken?: string,
+): Promise<{ lat: number; lng: number } | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.queries.placesAutocomplete({
+    query: `details:${placeId}`,
+    sessionToken,
+  })
+
+  if (errors) {
+    console.error("Error fetching place details:", errors)
+    return null
+  }
+
+  if (!data) {
+    return null
+  }
+
+  const response = data as PlacesAutocompleteResponse
+  if (response.status === "OK" && response.lat != null && response.lng != null) {
+    return { lat: response.lat, lng: response.lng }
+  }
+
+  return null
+}

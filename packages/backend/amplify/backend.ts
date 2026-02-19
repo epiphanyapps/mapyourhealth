@@ -16,6 +16,7 @@ import { sendEmailAlert } from './functions/send-email-alert/resource';
 import { processNotifications } from './functions/process-notifications/resource';
 // import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
+import { placesAutocomplete } from './functions/places-autocomplete/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -31,6 +32,7 @@ const backend = defineBackend({
   processNotifications,
   // onZipCodeStatUpdate, // Disabled: tables removed in schema redesign
   requestMagicLink,
+  placesAutocomplete,
   // storage,
 });
 
@@ -341,3 +343,38 @@ new CfnOutput(processNotificationsStack, 'ProcessNotificationsFunctionName', {
   description: 'Lambda function name for processing notifications',
   exportName: `${processNotificationsStack.stackName}-ProcessNotificationsFunctionName`,
 });
+
+// ============================================
+// Places Autocomplete Lambda Setup
+// ============================================
+
+// Get the placesAutocomplete Lambda function and its stack
+const placesAutocompleteLambda = backend.placesAutocomplete.resources.lambda as LambdaFunction;
+const placesAutocompleteStack = Stack.of(placesAutocompleteLambda);
+
+// Create DynamoDB table for caching Places API results
+const placesCacheTable = new Table(placesAutocompleteStack, 'PlacesCacheTable', {
+  tableName: `PlacesCache-${placesAutocompleteStack.stackName}`,
+  partitionKey: { name: 'pk', type: AttributeType.STRING },
+  billingMode: BillingMode.PAY_PER_REQUEST,
+  timeToLiveAttribute: 'ttl',
+  removalPolicy: RemovalPolicy.DESTROY, // For development - change to RETAIN for production
+});
+
+// Set environment variable for cache table name
+placesAutocompleteLambda.addEnvironment('CACHE_TABLE_NAME', placesCacheTable.tableName);
+
+// Grant placesAutocomplete function permissions for DynamoDB cache table
+const placesCachePolicy = new Policy(placesAutocompleteStack, 'PlacesCacheDynamoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:GetItem',
+        'dynamodb:PutItem',
+      ],
+      resources: [placesCacheTable.tableArn],
+    }),
+  ],
+});
+backend.placesAutocomplete.resources.lambda.role?.attachInlinePolicy(placesCachePolicy);

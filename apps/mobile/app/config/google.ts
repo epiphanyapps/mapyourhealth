@@ -1,41 +1,36 @@
 /**
  * Google API Configuration
  *
- * Configuration for Google Places API used for location autocomplete.
- * The API key should be set via environment variable for security.
+ * DEPRECATED: Google Places API is now proxied through the backend for security.
+ * The API key is stored server-side and never exposed to the client.
+ *
+ * This file is kept for backward compatibility during the migration period.
+ * @see packages/backend/amplify/functions/places-autocomplete
  */
-import Constants from "expo-constants"
 
 /**
- * Get the Google Places API key from environment/config
- * The key should be set via EXPO_PUBLIC_GOOGLE_PLACES_API_KEY environment variable
- * Falls back to empty string if not configured (autocomplete will be disabled)
+ * @deprecated Google Places API is now handled by the backend.
+ * Use the `getPlacesAutocomplete` function from `@/services/amplify/data` instead.
  */
 export const getGooglePlacesApiKey = (): string => {
-  // Try to get from Expo constants (set in app.config.ts from env var)
-  // Use type assertion since expo-constants types don't include extra
-  const expoConfig = Constants.expoConfig as { extra?: { googlePlacesApiKey?: string } } | null
-  const manifest = Constants.manifest as { extra?: { googlePlacesApiKey?: string } } | null
-
-  const apiKey =
-    expoConfig?.extra?.googlePlacesApiKey ||
-    manifest?.extra?.googlePlacesApiKey ||
-    process.env.EXPO_PUBLIC_GOOGLE_PLACES_API_KEY ||
-    ""
-
-  return apiKey
+  console.warn(
+    "[DEPRECATED] getGooglePlacesApiKey is deprecated. " +
+      "Google Places API is now proxied through the backend.",
+  )
+  return ""
 }
 
 /**
- * Check if Google Places API is configured and available
+ * @deprecated Google Places API is now handled by the backend.
+ * The backend-based autocomplete is always available (no client-side API key needed).
  */
 export const isGooglePlacesEnabled = (): boolean => {
-  const apiKey = getGooglePlacesApiKey()
-  return apiKey.length > 0
+  // Always return true since the backend handles Places API
+  return true
 }
 
 /**
- * Google Places API configuration
+ * Google Places API configuration (used by backend)
  */
 export const GooglePlacesConfig = {
   /**
