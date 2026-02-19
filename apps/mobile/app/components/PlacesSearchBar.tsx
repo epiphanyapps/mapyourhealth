@@ -77,7 +77,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const [inputValue, setInputValue] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const { suggestions, isSearching, search, clearSuggestions } = useLocationSearch()
+  const { suggestions, isSearching, search, clearSuggestions, resolveAddressToNearestCity } =
+    useLocationSearch()
 
   /**
    * Handle text input changes
@@ -100,10 +101,19 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
    * Handle suggestion selection
    */
   const handleSuggestionSelect = useCallback(
-    (suggestion: SearchSuggestion) => {
+    async (suggestion: SearchSuggestion) => {
       setShowSuggestions(false)
       clearSuggestions()
       setInputValue("")
+
+      if (suggestion.type === "address" && suggestion.city) {
+        // suggestion.city holds the placeId for address suggestions
+        const nearest = await resolveAddressToNearestCity(suggestion.city)
+        if (nearest) {
+          onLocationSelect(nearest.city, nearest.state, nearest.country)
+        }
+        return
+      }
 
       if (suggestion.city && suggestion.state && suggestion.country) {
         onLocationSelect(suggestion.city, suggestion.state, suggestion.country)
@@ -112,7 +122,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         onLocationSelect("", suggestion.state, suggestion.country)
       }
     },
-    [onLocationSelect, clearSuggestions],
+    [onLocationSelect, clearSuggestions, resolveAddressToNearestCity],
   )
 
   /**

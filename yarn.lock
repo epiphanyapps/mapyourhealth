@@ -10056,6 +10056,7 @@ __metadata:
     react-native-edge-to-edge: "npm:~1.6.1"
     react-native-gesture-handler: "npm:~2.28.0"
     react-native-get-random-values: "npm:~1.11.0"
+    react-native-google-places-autocomplete: "npm:^2.6.4"
     react-native-keyboard-controller: "npm:1.18.5"
     react-native-mmkv: "npm:3.3.3"
     react-native-reanimated: "npm:~4.1.1"
@@ -24490,6 +24491,19 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-native-google-places-autocomplete@npm:^2.6.4":
+  version: 2.6.4
+  resolution: "react-native-google-places-autocomplete@npm:2.6.4"
+  dependencies:
+    lodash.debounce: "npm:^4.0.8"
+    qs: "npm:^6.14.1"
+    react-native-uuid: "npm:^2.0.3"
+  peerDependencies:
+    react-native: ">= 0.59"
+  checksum: 10c0/25a210d06b6c7552cb581aa33de5f86f0da5e9647eee02e1285b99cda464b1e81402330e5e4ce9de56be006237e3062c686fbda9666ccd6ee68dc214ba3cabcb
+  languageName: node
+  linkType: hard
+
 "react-native-is-edge-to-edge@npm:^1.2.1":
   version: 1.2.1
   resolution: "react-native-is-edge-to-edge@npm:1.2.1"
@@ -24584,6 +24598,13 @@ __metadata:
   peerDependencies:
     react-native: "*"
   checksum: 10c0/a1e539c2a28dc48125ada8bf29f3536ee2c149e4a5e3d205858755783afafe7f871ce1de8b66cb1c4cc05e15e212c74c49e93ddde856cda63fcf660cf943522a
+  languageName: node
+  linkType: hard
+
+"react-native-uuid@npm:^2.0.3":
+  version: 2.0.3
+  resolution: "react-native-uuid@npm:2.0.3"
+  checksum: 10c0/d94bccc28936c2dea081ab404f90b0c968092013af4d428b8e74bf407d6098ad5410914f77a903ad1296cce364fc85d27d8dfd70d22ec48d8cf1b7edc8803a8d
   languageName: node
   linkType: hard
 

@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { placesAutocomplete } from "../functions/places-autocomplete/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -7,6 +8,50 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
  */
 
 const schema = a.schema({
+  // =========================================================================
+  // Custom Types for Places Autocomplete
+  // =========================================================================
+
+  /**
+   * PlacesPrediction - Google Places autocomplete prediction
+   */
+  PlacesPrediction: a.customType({
+    place_id: a.string().required(),
+    description: a.string().required(),
+    main_text: a.string(),
+    secondary_text: a.string(),
+  }),
+
+  /**
+   * PlacesAutocompleteResponse - Response from Places Autocomplete query
+   */
+  PlacesAutocompleteResponse: a.customType({
+    status: a.string().required(),
+    predictions: a.json(), // Array of PlacesPrediction
+    lat: a.float(), // For place details response
+    lng: a.float(), // For place details response
+    cached: a.boolean(),
+    error: a.string(),
+  }),
+
+  // =========================================================================
+  // Custom Queries
+  // =========================================================================
+
+  /**
+   * placesAutocomplete - Secure proxy for Google Places API
+   * Keeps API key server-side with caching
+   */
+  placesAutocomplete: a
+    .query()
+    .arguments({
+      query: a.string().required(),
+      sessionToken: a.string(),
+    })
+    .returns(a.ref("PlacesAutocompleteResponse"))
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(placesAutocomplete)),
+
   // Existing health tracking model
   HealthRecord: a
     .model({

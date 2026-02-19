@@ -365,7 +365,7 @@ export type TrendDirection = "improving" | "worsening" | "stable"
  */
 export interface SearchSuggestion {
   /** Type of search result */
-  type: "city" | "county" | "state" | "country"
+  type: "city" | "county" | "state" | "country" | "address"
   /** Primary display text (e.g., "Montreal, QC") */
   displayText: string
   /** Secondary text (e.g., "Quebec, Canada") */
