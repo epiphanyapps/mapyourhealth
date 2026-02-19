@@ -19,11 +19,10 @@ import {
   Linking,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
 import { generateClient } from "aws-amplify/data"
 import { Dialog, Portal, Button as PaperButton } from "react-native-paper"
-
-// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"

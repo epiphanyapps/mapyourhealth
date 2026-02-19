@@ -168,7 +168,11 @@ export function ProfileMenu(props: ProfileMenuProps) {
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <Pressable style={$modalOverlay} onPress={onClose}>
-        <Pressable style={$modalContent} onPress={(e) => e.stopPropagation()} testID="profile-menu-sheet">
+        <Pressable
+          style={$modalContent}
+          onPress={(e) => e.stopPropagation()}
+          testID="profile-menu-sheet"
+        >
           {/* Handle bar for visual affordance */}
           <View style={$handleBar} />
 

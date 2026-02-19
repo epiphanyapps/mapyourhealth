@@ -276,88 +276,86 @@ export function useLocationSearch(): UseLocationSearchResult {
       setSearchError(null)
 
       try {
+        const results: SearchSuggestion[] = []
+        const queryLower = trimmedQuery.toLowerCase()
 
-      const results: SearchSuggestion[] = []
-      const queryLower = trimmedQuery.toLowerCase()
-
-      // Search cities (partial match at start of city name)
-      const matchingCities = groupedByCityState.filter((group) =>
-        group.city.toLowerCase().startsWith(queryLower),
-      )
-
-      // Sort by relevance (exact matches first, then alphabetically)
-      matchingCities.sort((a, b) => {
-        const aExact = a.city.toLowerCase() === queryLower
-        const bExact = b.city.toLowerCase() === queryLower
-        if (aExact && !bExact) return -1
-        if (!aExact && bExact) return 1
-        return a.city.localeCompare(b.city)
-      })
-
-      for (const city of matchingCities.slice(0, MAX_SUGGESTIONS)) {
-        results.push({
-          type: "city",
-          displayText: `${city.city}, ${city.state}`,
-          secondaryText: city.county
-            ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
-            : city.country === "CA"
-              ? "Canada"
-              : "United States",
-          city: city.city,
-          state: city.state,
-          country: city.country,
-          county: city.county,
-        })
-      }
-
-      // Search states (if we have room for more suggestions)
-      if (results.length < MAX_SUGGESTIONS) {
-        const matchingStates = groupedByState.filter(
-          (group) =>
-            group.state.toLowerCase().startsWith(queryLower) ||
-            group.state.toLowerCase() === queryLower,
+        // Search cities (partial match at start of city name)
+        const matchingCities = groupedByCityState.filter((group) =>
+          group.city.toLowerCase().startsWith(queryLower),
         )
 
-        matchingStates.sort((a, b) => {
-          const aExact = a.state.toLowerCase() === queryLower
-          const bExact = b.state.toLowerCase() === queryLower
+        // Sort by relevance (exact matches first, then alphabetically)
+        matchingCities.sort((a, b) => {
+          const aExact = a.city.toLowerCase() === queryLower
+          const bExact = b.city.toLowerCase() === queryLower
           if (aExact && !bExact) return -1
           if (!aExact && bExact) return 1
-          return a.state.localeCompare(b.state)
+          return a.city.localeCompare(b.city)
         })
 
-        for (const state of matchingStates.slice(0, MAX_SUGGESTIONS - results.length)) {
-          const alreadyHasStateCity = results.some(
-            (r) => r.type === "city" && r.state === state.state,
-          )
-          if (alreadyHasStateCity) continue
-
+        for (const city of matchingCities.slice(0, MAX_SUGGESTIONS)) {
           results.push({
-            type: "state",
-            displayText: state.state,
-            secondaryText: state.country === "CA" ? "Canada" : "United States",
-            state: state.state,
-            country: state.country,
+            type: "city",
+            displayText: `${city.city}, ${city.state}`,
+            secondaryText: city.county
+              ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
+              : city.country === "CA"
+                ? "Canada"
+                : "United States",
+            city: city.city,
+            state: city.state,
+            country: city.country,
+            county: city.county,
           })
         }
-      }
 
-      // If few local results and query looks like an address, try Google Places
-      console.log(
-        "[Search] results:",
-        results.length,
-        "looksLikeAddress:",
-        looksLikeAddress(trimmedQuery),
-      )
-      if (results.length < 3 && looksLikeAddress(trimmedQuery)) {
-        console.log("[Search] Triggering Google Places search for:", trimmedQuery)
-        const placesResults = await fetchPlacesSuggestions(trimmedQuery)
-        const remaining = MAX_SUGGESTIONS - results.length
-        results.push(...placesResults.slice(0, remaining))
-      }
+        // Search states (if we have room for more suggestions)
+        if (results.length < MAX_SUGGESTIONS) {
+          const matchingStates = groupedByState.filter(
+            (group) =>
+              group.state.toLowerCase().startsWith(queryLower) ||
+              group.state.toLowerCase() === queryLower,
+          )
 
-      setSuggestions(results.slice(0, MAX_SUGGESTIONS))
+          matchingStates.sort((a, b) => {
+            const aExact = a.state.toLowerCase() === queryLower
+            const bExact = b.state.toLowerCase() === queryLower
+            if (aExact && !bExact) return -1
+            if (!aExact && bExact) return 1
+            return a.state.localeCompare(b.state)
+          })
 
+          for (const state of matchingStates.slice(0, MAX_SUGGESTIONS - results.length)) {
+            const alreadyHasStateCity = results.some(
+              (r) => r.type === "city" && r.state === state.state,
+            )
+            if (alreadyHasStateCity) continue
+
+            results.push({
+              type: "state",
+              displayText: state.state,
+              secondaryText: state.country === "CA" ? "Canada" : "United States",
+              state: state.state,
+              country: state.country,
+            })
+          }
+        }
+
+        // If few local results and query looks like an address, try Google Places
+        console.log(
+          "[Search] results:",
+          results.length,
+          "looksLikeAddress:",
+          looksLikeAddress(trimmedQuery),
+        )
+        if (results.length < 3 && looksLikeAddress(trimmedQuery)) {
+          console.log("[Search] Triggering Google Places search for:", trimmedQuery)
+          const placesResults = await fetchPlacesSuggestions(trimmedQuery)
+          const remaining = MAX_SUGGESTIONS - results.length
+          results.push(...placesResults.slice(0, remaining))
+        }
+
+        setSuggestions(results.slice(0, MAX_SUGGESTIONS))
       } finally {
         setIsSearching(false)
       }
