@@ -27,6 +27,9 @@ const MIN_QUERY_LENGTH = 2
 /** Maximum number of suggestions to show */
 const MAX_SUGGESTIONS = 10
 
+/** Timeout for network requests in milliseconds */
+const FETCH_TIMEOUT_MS = 10000
+
 /** Haversine distance in km between two lat/lng points */
 function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371
@@ -101,6 +104,7 @@ interface UseLocationSearchResult {
 export function useLocationSearch(): UseLocationSearchResult {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
   const [isSearching, setIsSearching] = useState(false)
+  const [searchError, setSearchError] = useState<string | null>(null)
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sessionTokenRef = useRef<string>(generateSessionToken())
@@ -117,7 +121,7 @@ export function useLocationSearch(): UseLocationSearchResult {
     gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24h
   })
 
-  const error = queryError ? "Failed to load search data" : null
+  const error = searchError ?? (queryError ? "Failed to load search data" : null)
 
   // Group locations by city and state for efficient lookup
   const groupedByCityState = useMemo(() => {
@@ -200,7 +204,12 @@ export function useLocationSearch(): UseLocationSearchResult {
     console.log("[Places] Fetching via backend proxy")
 
     try {
-      const data = await getPlacesAutocomplete(query, sessionTokenRef.current)
+      const data = await Promise.race([
+        getPlacesAutocomplete(query, sessionTokenRef.current),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error("timeout")), FETCH_TIMEOUT_MS),
+        ),
+      ])
       console.log(
         "[Places] Response status:",
         data.status,
@@ -218,8 +227,11 @@ export function useLocationSearch(): UseLocationSearchResult {
         secondaryText: prediction.secondary_text || "Google Places result",
         placeId: prediction.place_id,
       }))
-    } catch (error) {
-      console.error("[Places] Error:", error)
+    } catch (err) {
+      console.error("[Places] Error:", err)
+      if (err instanceof Error && err.message === "timeout") {
+        setSearchError("Search is taking too long. Please try again.")
+      }
       return []
     }
   }, [])
@@ -261,6 +273,10 @@ export function useLocationSearch(): UseLocationSearchResult {
       }
 
       setIsSearching(true)
+      setSearchError(null)
+
+      try {
+
       const results: SearchSuggestion[] = []
       const queryLower = trimmedQuery.toLowerCase()
 
@@ -341,7 +357,10 @@ export function useLocationSearch(): UseLocationSearchResult {
       }
 
       setSuggestions(results.slice(0, MAX_SUGGESTIONS))
-      setIsSearching(false)
+
+      } finally {
+        setIsSearching(false)
+      }
     },
     [groupedByCityState, groupedByState, fetchPlacesSuggestions],
   )
@@ -375,6 +394,7 @@ export function useLocationSearch(): UseLocationSearchResult {
   const clearSuggestions = useCallback(() => {
     setSuggestions([])
     setIsSearching(false)
+    setSearchError(null)
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current)
     }
