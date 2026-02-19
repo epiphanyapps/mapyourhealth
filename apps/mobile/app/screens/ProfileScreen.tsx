@@ -20,6 +20,11 @@ import {
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
+import { deleteUser } from "aws-amplify/auth"
+import { generateClient } from "aws-amplify/data"
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
+import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
+
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
@@ -47,6 +52,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   } = useAuth()
   const { themed, theme } = useAppTheme()
   const [isRetrying, setIsRetrying] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   // Subscriptions and loading state
   const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
@@ -180,16 +186,35 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   }, [logout])
 
   /**
-   * Handle delete account press - shows info about contacting support
+   * Handle delete account - cleans up user data then deletes Cognito account
    */
   const handleDeleteAccount = useCallback(() => {
     Alert.alert(
       "Delete Account",
-      `To delete your account and all associated data, please contact our support team at ${SUPPORT_EMAIL}.\n\nThis action is irreversible and will remove all your subscriptions and data.`,
+      "This will permanently delete your account and all associated data. This action cannot be undone.",
       [
+        { text: "Cancel", style: "cancel" },
         {
-          text: "OK",
-          style: "default",
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              setIsDeleting(true)
+              // 1. Delete user data from DynamoDB via Lambda
+              const client = generateClient<Schema>()
+              const result = await client.mutations.deleteAccountData({})
+              if (!result.data?.success) {
+                throw new Error("Failed to delete account data")
+              }
+              // 2. Delete Cognito account (auto signs out)
+              await deleteUser()
+              // Navigation will happen automatically via auth state change
+            } catch (error) {
+              console.error("Failed to delete account:", error)
+              Alert.alert("Error", "Failed to delete account. Please try again.")
+              setIsDeleting(false)
+            }
+          },
         },
       ],
     )
@@ -456,12 +481,24 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         {/* Delete Account Link */}
         <Pressable
           onPress={handleDeleteAccount}
-          style={({ pressed }) => [themed($deleteAccountLink), pressed && { opacity: 0.7 }]}
+          disabled={isDeleting}
+          style={({ pressed }) => [
+            themed($deleteAccountLink),
+            pressed && { opacity: 0.7 },
+            isDeleting && { opacity: 0.5 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Delete account"
         >
-          <MaterialCommunityIcons name="delete-outline" size={20} color={theme.colors.error} />
-          <Text text="Delete Account" style={[$deleteAccountText, { color: theme.colors.error }]} />
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={theme.colors.error} />
+          ) : (
+            <MaterialCommunityIcons name="delete-outline" size={20} color={theme.colors.error} />
+          )}
+          <Text
+            text={isDeleting ? "Deleting Account..." : "Delete Account"}
+            style={[$deleteAccountText, { color: theme.colors.error }]}
+          />
         </Pressable>
       </View>
 

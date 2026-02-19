@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { placesAutocomplete } from "../functions/places-autocomplete/resource";
+import { deleteAccount } from "../functions/delete-account/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -51,6 +52,22 @@ const schema = a.schema({
     .returns(a.ref("PlacesAutocompleteResponse"))
     .authorization((allow) => [allow.guest(), allow.authenticated()])
     .handler(a.handler.function(placesAutocomplete)),
+
+  /**
+   * deleteAccountData - Deletes all user-owned data from DynamoDB
+   * Called before client-side Cognito user deletion
+   */
+  deleteAccountData: a
+    .mutation()
+    .arguments({})
+    .returns(
+      a.customType({
+        success: a.boolean().required(),
+        deletedCounts: a.json(),
+      }),
+    )
+    .authorization((allow) => [allow.authenticated()])
+    .handler(a.handler.function(deleteAccount)),
 
   // Existing health tracking model
   HealthRecord: a

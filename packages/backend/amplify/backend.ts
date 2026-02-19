@@ -17,6 +17,7 @@ import { processNotifications } from './functions/process-notifications/resource
 // import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
 import { placesAutocomplete } from './functions/places-autocomplete/resource';
+import { deleteAccount } from './functions/delete-account/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -33,6 +34,7 @@ const backend = defineBackend({
   // onZipCodeStatUpdate, // Disabled: tables removed in schema redesign
   requestMagicLink,
   placesAutocomplete,
+  deleteAccount,
   // storage,
 });
 
@@ -378,3 +380,46 @@ const placesCachePolicy = new Policy(placesAutocompleteStack, 'PlacesCacheDynamo
   ],
 });
 backend.placesAutocomplete.resources.lambda.role?.attachInlinePolicy(placesCachePolicy);
+
+// ============================================
+// Delete Account Lambda Setup
+// ============================================
+
+// Get DynamoDB tables for user data cleanup
+const healthRecordTable = backend.data.resources.tables['HealthRecord'];
+const hazardReportTable = backend.data.resources.tables['HazardReport'];
+
+// Get the deleteAccount Lambda function and its stack
+const deleteAccountLambda = backend.deleteAccount.resources.lambda as LambdaFunction;
+const deleteAccountStack = Stack.of(deleteAccountLambda);
+
+// Set environment variables for table names
+deleteAccountLambda.addEnvironment('HEALTH_RECORD_TABLE_NAME', healthRecordTable.tableName);
+deleteAccountLambda.addEnvironment('USER_SUBSCRIPTION_TABLE_NAME', subscriptionsTable.tableName);
+deleteAccountLambda.addEnvironment('NOTIFICATION_LOG_TABLE_NAME', notificationLogTable.tableName);
+deleteAccountLambda.addEnvironment('HAZARD_REPORT_TABLE_NAME', hazardReportTable.tableName);
+
+// Grant deleteAccount function permissions to query and delete from all user-data tables
+const deleteAccountDynamoPolicy = new Policy(deleteAccountStack, 'DeleteAccountDynamoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:Query',
+        'dynamodb:BatchWriteItem',
+        'dynamodb:DeleteItem',
+      ],
+      resources: [
+        healthRecordTable.tableArn,
+        `${healthRecordTable.tableArn}/index/*`,
+        subscriptionsTable.tableArn,
+        `${subscriptionsTable.tableArn}/index/*`,
+        notificationLogTable.tableArn,
+        `${notificationLogTable.tableArn}/index/*`,
+        hazardReportTable.tableArn,
+        `${hazardReportTable.tableArn}/index/*`,
+      ],
+    }),
+  ],
+});
+backend.deleteAccount.resources.lambda.role?.attachInlinePolicy(deleteAccountDynamoPolicy);
