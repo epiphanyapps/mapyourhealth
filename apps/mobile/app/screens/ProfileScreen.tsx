@@ -19,16 +19,16 @@ import {
   Linking,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
+import { generateClient } from "aws-amplify/data"
 import { Dialog, Portal, Button as PaperButton } from "react-native-paper"
 
-import { generateClient } from "aws-amplify/data"
 // @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
-import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { SUPPORT_EMAIL, getVersionString, STATUS_COLORS } from "@/config/appConstants"
+import { getVersionString, STATUS_COLORS } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import {
@@ -53,10 +53,9 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   const { themed, theme } = useAppTheme()
   const [isRetrying, setIsRetrying] = useState(false)
   const [isDeleting, setIsDeleting] = useState(false)
-  
+
   // Dialog state
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
 
   // Subscriptions and loading state
   const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
@@ -510,25 +509,26 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
 
       {/* Delete Account Confirmation Dialog */}
       <Portal>
-        <Dialog 
-          visible={showDeleteDialog} 
+        <Dialog
+          visible={showDeleteDialog}
           onDismiss={() => setShowDeleteDialog(false)}
           testID="delete-account-dialog"
         >
           <Dialog.Title testID="delete-account-dialog-title">Delete Account</Dialog.Title>
           <Dialog.Content>
             <Text testID="delete-account-dialog-message">
-              This will permanently delete your account and all associated data. This action cannot be undone.
+              This will permanently delete your account and all associated data. This action cannot
+              be undone.
             </Text>
           </Dialog.Content>
           <Dialog.Actions>
-            <PaperButton 
+            <PaperButton
               onPress={() => setShowDeleteDialog(false)}
               testID="delete-account-dialog-cancel"
             >
               Cancel
             </PaperButton>
-            <PaperButton 
+            <PaperButton
               mode="contained"
               buttonColor="#dc2626"
               onPress={executeDeleteAccount}
