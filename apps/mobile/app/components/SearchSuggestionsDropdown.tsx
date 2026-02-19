@@ -5,8 +5,9 @@
  * Shows city, state, and postal code suggestions with icons.
  */
 
-import { useCallback } from "react"
+import { useCallback, useEffect, useRef } from "react"
 import {
+  Animated,
   View,
   FlatList,
   ScrollView,
@@ -31,6 +32,74 @@ interface SearchSuggestionsDropdownProps {
   onSelect: (suggestion: SearchSuggestion) => void
   /** Callback when the dropdown should be dismissed (unused, kept for API compatibility) */
   onDismiss?: () => void
+  /** Whether search is in progress — shows skeleton loaders */
+  isLoading?: boolean
+  /** Error message to display */
+  error?: string | null
+}
+
+/**
+ * Skeleton loader row with animated pulse
+ */
+function SkeletonRow({ theme, opacity }: { theme: ReturnType<typeof useAppTheme>["theme"]; opacity: Animated.Value }) {
+  const $row: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  }
+  const $circle: ViewStyle = {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: theme.colors.palette.neutral200,
+    marginRight: 12,
+  }
+  const $lineShort: ViewStyle = {
+    height: 14,
+    width: "60%" as unknown as number,
+    borderRadius: 4,
+    backgroundColor: theme.colors.palette.neutral200,
+    marginBottom: 6,
+  }
+  const $lineLong: ViewStyle = {
+    height: 10,
+    width: "40%" as unknown as number,
+    borderRadius: 4,
+    backgroundColor: theme.colors.palette.neutral200,
+  }
+
+  return (
+    <Animated.View style={[$row, { opacity }]} accessibilityElementsHidden>
+      <View style={$circle} />
+      <View style={{ flex: 1 }}>
+        <View style={$lineShort} />
+        <View style={$lineLong} />
+      </View>
+    </Animated.View>
+  )
+}
+
+/**
+ * Animated pulse value for skeleton loaders
+ */
+function usePulseAnimation() {
+  const opacity = useRef(new Animated.Value(0.4)).current
+
+  useEffect(() => {
+    const animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.4, duration: 800, useNativeDriver: true }),
+      ]),
+    )
+    animation.start()
+    return () => animation.stop()
+  }, [opacity])
+
+  return opacity
 }
 
 /**
@@ -144,8 +213,9 @@ function WebSuggestionItem({
  * />
  */
 export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps) {
-  const { suggestions, visible, onSelect } = props
+  const { suggestions, visible, onSelect, isLoading = false, error = null } = props
   const { theme } = useAppTheme()
+  const pulseOpacity = usePulseAnimation()
 
   const renderItem = useCallback(
     ({ item }: { item: SearchSuggestion }) => {
@@ -218,7 +288,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     [],
   )
 
-  if (!visible || suggestions.length === 0) {
+  if (!visible && !isLoading && !error) {
     return null
   }
 
@@ -252,13 +322,58 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     textAlign: "center",
   }
 
+  const $errorContainer: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+  }
+
+  const $errorText: TextStyle = {
+    fontSize: 14,
+    color: theme.colors.error,
+    marginLeft: 8,
+    flex: 1,
+  }
+
+  const renderLoadingSkeletons = () => (
+    <>
+      {[0, 1, 2].map((i) => (
+        <SkeletonRow key={`skeleton-${i}`} theme={theme} opacity={pulseOpacity} />
+      ))}
+    </>
+  )
+
+  const renderError = () => (
+    <View style={$errorContainer}>
+      <MaterialCommunityIcons name="alert-circle-outline" size={20} color={theme.colors.error} />
+      <Text style={$errorText}>{error}</Text>
+    </View>
+  )
+
+  const renderContent = () => {
+    if (error) return renderError()
+    if (isLoading && suggestions.length === 0) return renderLoadingSkeletons()
+    if (suggestions.length === 0) {
+      return (
+        <View style={$emptyContainer}>
+          <Text style={$emptyText}>No locations found</Text>
+        </View>
+      )
+    }
+    return null
+  }
+
   // Web: Use native HTML button elements to avoid Pressable's wrapper div issue
   // Native: Use FlatList for virtualization benefits
   if (Platform.OS === "web") {
     return (
-      <View style={$dropdownContainer}>
+      <View style={$dropdownContainer} accessibilityLiveRegion="polite">
         <ScrollView keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
-          {suggestions.length === 0 ? (
+          {error ? (
+            renderError()
+          ) : isLoading && suggestions.length === 0 ? (
+            renderLoadingSkeletons()
+          ) : suggestions.length === 0 ? (
             <View style={$emptyContainer}>
               <Text style={$emptyText}>No locations found</Text>
             </View>
@@ -278,19 +393,25 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
   }
 
   return (
-    <View style={$dropdownContainer}>
-      <FlatList
-        data={suggestions}
-        renderItem={renderItem}
-        keyExtractor={keyExtractor}
-        keyboardShouldPersistTaps="always"
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View style={$emptyContainer}>
-            <Text style={$emptyText}>No locations found</Text>
-          </View>
-        }
-      />
+    <View style={$dropdownContainer} accessibilityLiveRegion="polite">
+      {error ? (
+        renderError()
+      ) : isLoading && suggestions.length === 0 ? (
+        renderLoadingSkeletons()
+      ) : (
+        <FlatList
+          data={suggestions}
+          renderItem={renderItem}
+          keyExtractor={keyExtractor}
+          keyboardShouldPersistTaps="always"
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={
+            <View style={$emptyContainer}>
+              <Text style={$emptyText}>No locations found</Text>
+            </View>
+          }
+        />
+      )}
     </View>
   )
 }

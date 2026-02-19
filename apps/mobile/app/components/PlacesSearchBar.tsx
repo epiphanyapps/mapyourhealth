@@ -77,7 +77,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const [inputValue, setInputValue] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
 
-  const { suggestions, isSearching, search, clearSuggestions, resolveAddressToNearestCity } =
+  const { suggestions, isSearching, search, clearSuggestions, resolveAddressToNearestCity, error } =
     useLocationSearch()
 
   /**
@@ -240,9 +240,11 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       </View>
       <SearchSuggestionsDropdown
         suggestions={suggestions}
-        visible={showSuggestions && suggestions.length > 0}
+        visible={showSuggestions}
         onSelect={handleSuggestionSelect}
         onDismiss={handleDismiss}
+        isLoading={isSearching}
+        error={error}
       />
     </View>
   )
