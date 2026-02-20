@@ -1,0 +1,136 @@
+# flow: E2E-121 Account Deletion Flow (Automated - Part 2 Only)
+# intent:
+#   This is the second part of the automated account deletion test.
+#   Expects that signup has already been completed and user has been
+#   confirmed via Cognito admin command. This flow signs in and deletes the account.
+#
+#   Use with the orchestrator script that handles:
+#   1. Part 1: Run signup flow  
+#   2. Admin confirm user in Cognito
+#   3. Part 2: Run this flow (signin + delete)
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/121
+
+appId: ${MAESTRO_APP_ID}
+env:
+  TEST_EMAIL: ${TEST_EMAIL}
+  TEST_PASSWORD: ${TEST_PASSWORD}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Navigate to Sign In
+# ========================================
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open profile menu"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+
+- tapOn:
+    id: "menu-item-sign-in"
+    label: "Navigate to login"
+
+# ========================================
+# Part 2: Sign In with Confirmed User
+# ========================================
+
+- extendedWaitUntil:
+    visible: "Email, Enter your email"
+    timeout: 10000
+    label: "Login screen loaded"
+
+- tapOn: "Email, Enter your email"
+- inputText: "${TEST_EMAIL}"
+
+- tapOn: "Password, Enter your password"
+- inputText: "${TEST_PASSWORD}"
+
+- hideKeyboard
+
+- tapOn:
+    id: "login-submit-button"
+    label: "Submit login"
+
+# Wait for authenticated state
+- extendedWaitUntil:
+    visible: "Search cities and locations|Select Your Locations|Open profile menu"
+    timeout: 20000
+    label: "Login successful"
+
+# ========================================
+# Part 3: Handle Location Onboarding
+# ========================================
+
+- runFlow:
+    when:
+      visible: "Select Your Locations"
+    commands:
+      # Skip location onboarding - simplified approach
+      - extendedWaitUntil:
+          visible: "Search cities and locations|Open profile menu"
+          timeout: 30000
+
+# ========================================  
+# Part 4: Navigate to Account Deletion
+# ========================================
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open authenticated profile menu"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+
+- tapOn:
+    id: "menu-item-settings"
+    label: "Navigate to settings"
+
+- extendedWaitUntil:
+    visible:
+      id: "delete-account-button"
+    timeout: 10000
+
+# ========================================
+# Part 5: Delete Account via Paper Dialog
+# ========================================
+
+- tapOn:
+    id: "delete-account-button"
+    label: "Initiate account deletion"
+
+- extendedWaitUntil:
+    visible:
+      id: "delete-account-dialog-confirm"
+    timeout: 5000
+    label: "Paper Dialog appeared"
+
+- tapOn:
+    id: "delete-account-dialog-confirm"
+    label: "Confirm deletion"
+
+# ========================================
+# Part 6: Verify Deletion Success  
+# ========================================
+
+- extendedWaitUntil:
+    visible: "Sign In|Create Account|Welcome|Open profile menu"
+    timeout: 15000
+    label: "Returned to guest state"
+
+# Final verification - check profile menu shows guest options
+- tapOn:
+    id: "profile-menu-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-create-account"
+    timeout: 5000
+    label: "Account deletion successful"

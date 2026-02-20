@@ -1,0 +1,87 @@
+# flow: E2E-121 Signup Only (Part 1 of Account Deletion Test)
+# intent:
+#   Creates a new account and reaches the email verification screen.
+#   This is the first part of the automated account deletion test.
+#   Expects TEST_EMAIL and TEST_PASSWORD environment variables.
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/121
+
+appId: ${MAESTRO_APP_ID}
+env:
+  TEST_EMAIL: ${TEST_EMAIL}
+  TEST_PASSWORD: ${TEST_PASSWORD}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Navigate to Signup
+# ========================================
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open profile menu"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+
+# Sign out if already logged in
+- runFlow:
+    when:
+      visible:
+        id: "menu-item-sign-out"
+    commands:
+      - tapOn:
+          id: "menu-item-sign-out"
+      - extendedWaitUntil:
+          visible:
+            id: "profile-menu-button"
+          timeout: 10000
+      # Reopen menu
+      - tapOn:
+          id: "profile-menu-button"
+      - extendedWaitUntil:
+          visible:
+            id: "profile-menu-sheet"
+          timeout: 8000
+
+- tapOn:
+    id: "menu-item-create-account"
+    label: "Navigate to signup"
+
+# ========================================
+# Part 2: Create Account
+# ========================================
+
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 10000
+    label: "Signup screen loaded"
+
+# Fill form using iOS accessibility labels
+- tapOn: "Email, Enter your email"
+- inputText: "${TEST_EMAIL}"
+
+- tapOn: "Password, Create a strong password"
+- inputText: "${TEST_PASSWORD}"
+
+- hideKeyboard
+
+- tapOn:
+    id: "signup-submit-button"
+    label: "Submit signup"
+
+# ========================================
+# Part 3: Verify Email Verification Screen
+# ========================================
+
+- extendedWaitUntil:
+    visible: "Verify Email"
+    timeout: 15000
+    label: "Signup successful - verification required"
+
+- assertVisible:
+    text: "${TEST_EMAIL}"
+    label: "Email shown in verification message"

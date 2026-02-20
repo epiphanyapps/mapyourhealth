@@ -1,0 +1,240 @@
+# flow: E2E-121 Account Deletion Flow (Signup → Verify → Delete)
+# intent:
+#   Test the complete account lifecycle: user signs up, gets verified via
+#   Cognito admin command, signs in, and deletes their account using the  
+#   Paper Dialog implementation. Validates both frontend UX and backend cleanup.
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/121
+#
+# Prerequisites:
+#   - AWS CLI configured with Cognito admin permissions
+#   - TEST_EMAIL and TEST_PASSWORD environment variables set
+#   - Paper Dialog integration (PR #120) deployed
+
+appId: ${MAESTRO_APP_ID}
+env:
+  TEST_EMAIL: ${TEST_EMAIL}
+  TEST_PASSWORD: ${TEST_PASSWORD}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Navigate to Signup
+# ========================================
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open profile menu"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+    label: "Wait for profile menu sheet"
+
+# Sign out first if already logged in
+- runFlow:
+    when:
+      visible:
+        id: "menu-item-sign-out"
+    commands:
+      - tapOn:
+          id: "menu-item-sign-out"
+          label: "Sign out existing user"
+      - extendedWaitUntil:
+          visible:
+            id: "profile-menu-button"
+          timeout: 10000
+      # Reopen menu
+      - tapOn:
+          id: "profile-menu-button"
+      - extendedWaitUntil:
+          visible:
+            id: "profile-menu-sheet"
+          timeout: 8000
+
+- tapOn:
+    id: "menu-item-create-account"
+    label: "Navigate to signup"
+
+# ========================================
+# Part 2: Create Account
+# ========================================
+
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 10000
+    label: "Wait for signup screen"
+
+# Fill signup form using accessibility labels (iOS TextInput behavior)
+- tapOn: "Email, Enter your email"
+- inputText: "${TEST_EMAIL}"
+
+- tapOn: "Password, Create a strong password"  
+- inputText: "${TEST_PASSWORD}"
+
+- hideKeyboard
+
+- tapOn:
+    id: "signup-submit-button"
+    label: "Submit signup form"
+
+# Wait for email verification screen
+- extendedWaitUntil:
+    visible: "Verify Email"
+    timeout: 15000
+    label: "Signup successful - verification required"
+
+# ========================================
+# Part 3: Manual Verification Step
+# ========================================
+# NOTE: This test requires manual Cognito admin-confirm-sign-up
+# between Part 2 and Part 4. In automated CI, this would be:
+#
+# aws cognito-idp admin-confirm-sign-up \
+#   --user-pool-id ca-central-1_YJw20H7Xt \
+#   --username $TEST_EMAIL \
+#   --profile rayane --region ca-central-1
+
+# Copy email to clipboard for convenience
+- copyTextFrom:
+    text: "${TEST_EMAIL}"
+
+# Wait 30 seconds for manual confirmation
+- waitForAnimationToEnd:
+    timeout: 30000
+
+# ========================================
+# Part 4: Sign In with Confirmed User
+# ========================================
+
+# Navigate back and sign in  
+- tapOn:
+    id: "profile-menu-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"  
+    timeout: 8000
+
+- tapOn:
+    id: "menu-item-sign-in"
+    label: "Navigate to login"
+
+- extendedWaitUntil:
+    visible: "Email, Enter your email"
+    timeout: 10000
+    label: "Wait for login screen"
+
+# Fill login form
+- tapOn: "Email, Enter your email"
+- inputText: "${TEST_EMAIL}"
+
+- tapOn: "Password, Enter your password"
+- inputText: "${TEST_PASSWORD}"
+
+- hideKeyboard
+
+- tapOn:
+    id: "login-submit-button"
+    label: "Submit login form"
+
+# Wait for dashboard (may include onboarding)
+- extendedWaitUntil:
+    visible: "Search cities and locations|Select Your Locations|Open profile menu"
+    timeout: 20000
+    label: "Login successful"
+
+# ========================================
+# Part 5: Handle Location Onboarding (if shown)  
+# ========================================
+
+- runFlow:
+    when:
+      visible: "Select Your Locations"
+    commands:
+      # Skip location onboarding - just wait for main screen
+      - extendedWaitUntil:
+          visible: "Search cities and locations|Open profile menu"
+          timeout: 30000
+          label: "Onboarding completed or skipped"
+
+# ========================================
+# Part 6: Navigate to Account Settings
+# ========================================
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open profile menu as authenticated user"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+
+- tapOn:
+    id: "menu-item-settings"
+    label: "Navigate to profile settings"
+
+- extendedWaitUntil:
+    visible:
+      id: "delete-account-button"
+    timeout: 10000
+    label: "Profile screen loaded with delete button"
+
+# ========================================  
+# Part 7: Delete Account (Paper Dialog Test)
+# ========================================
+
+- tapOn:
+    id: "delete-account-button"
+    label: "Trigger account deletion"
+
+# Wait for Paper Dialog to appear
+- extendedWaitUntil:
+    visible:
+      id: "delete-account-dialog-confirm"
+    timeout: 5000
+    label: "Paper Dialog deletion confirmation shown"
+
+- assertVisible:
+    text: "Delete Account"
+    label: "Dialog title is correct"
+
+- assertVisible:
+    text: "Are you sure you want to delete your account?"
+    label: "Dialog content is correct"
+
+- tapOn:
+    id: "delete-account-dialog-confirm"
+    label: "Confirm account deletion"
+
+# ========================================
+# Part 8: Verify Deletion Success
+# ========================================
+
+# App should sign out user and return to guest state
+- extendedWaitUntil:
+    visible: "Sign In|Create Account|Welcome|Open profile menu"
+    timeout: 15000  
+    label: "User signed out after account deletion"
+
+# Verify we're back to guest state by checking profile menu
+- tapOn:
+    id: "profile-menu-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "menu-item-create-account"
+    timeout: 5000
+    label: "Account deletion successful - back to guest state"
+
+# ========================================
+# Part 9: Final Validation
+# ========================================
+
+# Test completed successfully if we reach here
+- assertVisible:
+    id: "menu-item-create-account"
+    label: "E2E-121 PASSED: Account deletion flow completed"

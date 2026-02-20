@@ -1,0 +1,96 @@
+# flow: E2E-121 TestID Validation (Account Deletion Infrastructure)
+# intent:
+#   Quick validation test to ensure all testIDs added in PR #120 are working
+#   correctly and can be found by Maestro. This validates the foundation
+#   for the account deletion E2E tests.
+#
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/121
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Basic App Launch & Profile Menu
+# ========================================
+
+- assertVisible:
+    id: "profile-menu-button"
+    label: "Profile menu button testID is working"
+
+- tapOn:
+    id: "profile-menu-button"
+    label: "Open profile menu"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+    label: "Profile menu sheet testID is working"
+
+# ========================================  
+# Part 2: Validate Menu Items
+# ========================================
+
+- assertVisible:
+    id: "menu-item-create-account"
+    label: "Create Account menu item testID is working"
+
+- assertVisible:
+    id: "menu-item-sign-in"
+    label: "Sign In menu item testID is working"
+
+# ========================================
+# Part 3: Test Navigation to Signup
+# ========================================
+
+- tapOn:
+    id: "menu-item-create-account"
+    label: "Navigate to signup screen"
+
+- extendedWaitUntil:
+    visible: "Create Account"
+    timeout: 10000
+    label: "Signup screen loaded"
+
+- assertVisible:
+    id: "signup-submit-button"
+    label: "Signup submit button testID is working"
+
+# ========================================
+# Part 4: Test Navigation to Login
+# ========================================
+
+- back
+
+- tapOn:
+    id: "profile-menu-button"
+
+- extendedWaitUntil:
+    visible:
+      id: "profile-menu-sheet"
+    timeout: 8000
+
+- tapOn:
+    id: "menu-item-sign-in"
+    label: "Navigate to login screen"
+
+- extendedWaitUntil:
+    visible: "Welcome Back"
+    timeout: 10000
+    label: "Login screen loaded"
+
+- assertVisible:
+    id: "login-submit-button"
+    label: "Login submit button testID is working"
+
+# ========================================
+# Success!
+# ========================================
+
+- back
+
+- assertVisible:
+    id: "profile-menu-button"
+    label: "✅ All testIDs validated successfully!"
