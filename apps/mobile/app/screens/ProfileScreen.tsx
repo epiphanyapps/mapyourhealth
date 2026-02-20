@@ -19,11 +19,15 @@ import {
   Linking,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+// @ts-expect-error - Monorepo workspace resolution works at runtime via Metro bundler
+import type { Schema } from "@mapyourhealth/backend/amplify/data/resource"
+import { generateClient } from "aws-amplify/data"
+import { Dialog, Portal, Button as PaperButton } from "react-native-paper"
 
 import { Button } from "@/components/Button"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
-import { SUPPORT_EMAIL, getVersionString, STATUS_COLORS } from "@/config/appConstants"
+import { getVersionString, STATUS_COLORS } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import {
@@ -47,6 +51,10 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   } = useAuth()
   const { themed, theme } = useAppTheme()
   const [isRetrying, setIsRetrying] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+
+  // Dialog state
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false)
 
   // Subscriptions and loading state
   const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
@@ -180,20 +188,34 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
   }, [logout])
 
   /**
-   * Handle delete account press - shows info about contacting support
+   * Handle delete account button press - show confirmation dialog
    */
   const handleDeleteAccount = useCallback(() => {
-    Alert.alert(
-      "Delete Account",
-      `To delete your account and all associated data, please contact our support team at ${SUPPORT_EMAIL}.\n\nThis action is irreversible and will remove all your subscriptions and data.`,
-      [
-        {
-          text: "OK",
-          style: "default",
-        },
-      ],
-    )
+    setShowDeleteDialog(true)
   }, [])
+
+  /**
+   * Execute account deletion after confirmation
+   */
+  const executeDeleteAccount = useCallback(async () => {
+    try {
+      setIsDeleting(true)
+      setShowDeleteDialog(false)
+      // Single server-side call: cleans all DynamoDB data + deletes Cognito user
+      const client = generateClient<Schema>()
+      const result = await client.mutations.deleteAccountData({})
+      if (!result.data?.success) {
+        throw new Error("Failed to delete account")
+      }
+      // Cognito user is already deleted server-side, just sign out locally
+      await logout()
+      // Navigation will happen automatically via auth state change
+    } catch (error) {
+      console.error("Failed to delete account:", error)
+      Alert.alert("Error", "Failed to delete account. Please try again.")
+      setIsDeleting(false)
+    }
+  }, [logout])
 
   /**
    * Navigate to subscriptions settings
@@ -443,6 +465,7 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
           preset="default"
           style={themed($logoutButton)}
           onPress={handleLogout}
+          testID="logout-button"
           LeftAccessory={() => (
             <MaterialCommunityIcons
               name="logout"
@@ -456,12 +479,25 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
         {/* Delete Account Link */}
         <Pressable
           onPress={handleDeleteAccount}
-          style={({ pressed }) => [themed($deleteAccountLink), pressed && { opacity: 0.7 }]}
+          disabled={isDeleting}
+          style={({ pressed }) => [
+            themed($deleteAccountLink),
+            pressed && { opacity: 0.7 },
+            isDeleting && { opacity: 0.5 },
+          ]}
           accessibilityRole="button"
           accessibilityLabel="Delete account"
+          testID="delete-account-button"
         >
-          <MaterialCommunityIcons name="delete-outline" size={20} color={theme.colors.error} />
-          <Text text="Delete Account" style={[$deleteAccountText, { color: theme.colors.error }]} />
+          {isDeleting ? (
+            <ActivityIndicator size="small" color={theme.colors.error} />
+          ) : (
+            <MaterialCommunityIcons name="delete-outline" size={20} color={theme.colors.error} />
+          )}
+          <Text
+            text={isDeleting ? "Deleting Account..." : "Delete Account"}
+            style={[$deleteAccountText, { color: theme.colors.error }]}
+          />
         </Pressable>
       </View>
 
@@ -469,6 +505,39 @@ export const ProfileScreen: FC<ProfileScreenProps> = ({ navigation }) => {
       <View style={$versionContainer}>
         <Text text={getVersionString()} style={$versionText} />
       </View>
+
+      {/* Delete Account Confirmation Dialog */}
+      <Portal>
+        <Dialog
+          visible={showDeleteDialog}
+          onDismiss={() => setShowDeleteDialog(false)}
+          testID="delete-account-dialog"
+        >
+          <Dialog.Title testID="delete-account-dialog-title">Delete Account</Dialog.Title>
+          <Dialog.Content>
+            <Text testID="delete-account-dialog-message">
+              This will permanently delete your account and all associated data. This action cannot
+              be undone.
+            </Text>
+          </Dialog.Content>
+          <Dialog.Actions>
+            <PaperButton
+              onPress={() => setShowDeleteDialog(false)}
+              testID="delete-account-dialog-cancel"
+            >
+              Cancel
+            </PaperButton>
+            <PaperButton
+              mode="contained"
+              buttonColor="#dc2626"
+              onPress={executeDeleteAccount}
+              testID="delete-account-dialog-confirm"
+            >
+              Delete
+            </PaperButton>
+          </Dialog.Actions>
+        </Dialog>
+      </Portal>
     </Screen>
   )
 }

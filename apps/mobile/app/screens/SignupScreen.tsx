@@ -195,6 +195,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         helper={emailError}
         status={emailError ? "error" : undefined}
         onSubmitEditing={() => passwordInput.current?.focus()}
+        testID="signup-email-input"
       />
 
       <TextField
@@ -217,6 +218,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         onFocus={() => setIsPasswordFocused(true)}
         onBlur={() => setIsPasswordFocused(false)}
         RightAccessory={PasswordRightAccessory}
+        testID="signup-password-input"
       />
 
       <PasswordRequirements
@@ -230,6 +232,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         preset="reversed"
         onPress={handleSignup}
         disabled={isSubmitting}
+        testID="signup-submit-button"
       />
 
       <Button

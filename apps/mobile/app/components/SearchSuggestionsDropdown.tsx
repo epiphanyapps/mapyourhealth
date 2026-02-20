@@ -41,7 +41,13 @@ interface SearchSuggestionsDropdownProps {
 /**
  * Skeleton loader row with animated pulse
  */
-function SkeletonRow({ theme, opacity }: { theme: ReturnType<typeof useAppTheme>["theme"]; opacity: Animated.Value }) {
+function SkeletonRow({
+  theme,
+  opacity,
+}: {
+  theme: ReturnType<typeof useAppTheme>["theme"]
+  opacity: Animated.Value
+}) {
   const $row: ViewStyle = {
     flexDirection: "row",
     alignItems: "center",
@@ -70,11 +76,14 @@ function SkeletonRow({ theme, opacity }: { theme: ReturnType<typeof useAppTheme>
     borderRadius: 4,
     backgroundColor: theme.colors.palette.neutral200,
   }
+  const $textContainer: ViewStyle = {
+    flex: 1,
+  }
 
   return (
     <Animated.View style={[$row, { opacity }]} accessibilityElementsHidden>
       <View style={$circle} />
-      <View style={{ flex: 1 }}>
+      <View style={$textContainer}>
         <View style={$lineShort} />
         <View style={$lineLong} />
       </View>
@@ -350,18 +359,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     </View>
   )
 
-  const renderContent = () => {
-    if (error) return renderError()
-    if (isLoading && suggestions.length === 0) return renderLoadingSkeletons()
-    if (suggestions.length === 0) {
-      return (
-        <View style={$emptyContainer}>
-          <Text style={$emptyText}>No locations found</Text>
-        </View>
-      )
-    }
-    return null
-  }
+  // renderContent function removed - was unused
 
   // Web: Use native HTML button elements to avoid Pressable's wrapper div issue
   // Native: Use FlatList for virtualization benefits

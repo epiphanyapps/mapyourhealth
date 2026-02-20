@@ -189,6 +189,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
         helper={emailError}
         status={emailError ? "error" : undefined}
         onSubmitEditing={() => passwordInput.current?.focus()}
+        testID="login-email-input"
       />
 
       <TextField
@@ -209,6 +210,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
         status={passwordError ? "error" : undefined}
         onSubmitEditing={handleLogin}
         RightAccessory={PasswordRightAccessory}
+        testID="login-password-input"
       />
 
       {/* Forgot Password Link */}
@@ -226,6 +228,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
         preset="reversed"
         onPress={handleLogin}
         disabled={isSubmitting}
+        testID="login-submit-button"
       />
 
       {/* Divider */}

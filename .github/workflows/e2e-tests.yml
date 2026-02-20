@@ -1,11 +1,11 @@
 name: E2E Tests
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-tests.yml'
+  # pull_request: # Disabled for now - too slow for PR feedback loop
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - '.github/workflows/e2e-tests.yml'
   push:
     branches: [main]
     paths:
@@ -19,9 +19,9 @@ permissions:
 
 jobs:
   e2e-tests:
-    name: Run E2E Tests (iOS Simulator)
+    name: Run E2E Tests (iOS Simulator) 
     runs-on: [self-hosted, macOS]
-    timeout-minutes: 45
+    timeout-minutes: 30  # Reduced from 45 - fail faster if hanging
     env:
       MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
       JAVA_HOME: /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
@@ -145,23 +145,21 @@ jobs:
           retention-days: 7
           if-no-files-found: ignore
 
-      - name: Comment on PR with results
-        if: github.event_name == 'pull_request' && always()
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const status = '${{ job.status }}' === 'success' ? ':white_check_mark:' : ':x:';
-            const body = `## E2E Test Results ${status}
-
-            **Platform:** iOS (Simulator)
-            **Status:** ${{ job.status }}
-            **Commit:** ${{ github.sha }}
-
-            Download test artifacts for detailed results.`;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            });
+      # PR comments disabled - E2E no longer runs on PRs for performance
+      # - name: Comment on PR with results
+      #   if: github.event_name == 'pull_request' && always()
+      #   uses: actions/github-script@v7
+      #   with:
+      #     script: |
+      #       const status = '${{ job.status }}' === 'success' ? ':white_check_mark:' : ':x:';
+      #       const body = `## E2E Test Results ${status}
+      #       **Platform:** iOS (Simulator)
+      #       **Status:** ${{ job.status }}
+      #       **Commit:** ${{ github.sha }}
+      #       Download test artifacts for detailed results.`;
+      #       github.rest.issues.createComment({
+      #         issue_number: context.issue.number,
+      #         owner: context.repo.owner,
+      #         repo: context.repo.repo,
+      #         body: body
+      #       });
