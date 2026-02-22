@@ -23,13 +23,83 @@ export type ContaminantCategory =
 
 /**
  * Legacy categories (for backward compatibility during migration)
- * @deprecated Use ContaminantCategory instead
+ * @deprecated Use Category interface instead
  */
 export enum StatCategory {
   water = "water",
   air = "air",
   health = "health",
   disaster = "disaster",
+}
+
+// =============================================================================
+// Dynamic Categories (backend-driven)
+// =============================================================================
+
+/**
+ * Link to external resource
+ */
+export interface CategoryLink {
+  label: string
+  url: string
+}
+
+/**
+ * Top-level category (water, air, health, disaster)
+ * Replaces hardcoded StatCategory enum
+ */
+export interface Category {
+  /** Unique identifier (e.g., "water", "air") */
+  categoryId: string
+  /** Display name in English */
+  name: string
+  /** Display name in French */
+  nameFr?: string
+  /** Description (supports markdown) */
+  description?: string
+  /** Description in French */
+  descriptionFr?: string
+  /** MaterialCommunityIcons name */
+  icon: string
+  /** Hex color code (e.g., "#3B82F6") */
+  color: string
+  /** Sort order for display */
+  sortOrder: number
+  /** Whether this category is active */
+  isActive: boolean
+  /** External resource links */
+  links?: CategoryLink[]
+  /** Whether to show standards comparison table */
+  showStandardsTable?: boolean
+}
+
+/**
+ * Sub-category under a main category
+ * Maps to ContaminantCategory values (fertilizer, pesticide, etc.)
+ */
+export interface SubCategory {
+  /** Unique identifier (e.g., "fertilizer", "radon") */
+  subCategoryId: string
+  /** Parent category ID */
+  categoryId: string
+  /** Display name in English */
+  name: string
+  /** Display name in French */
+  nameFr?: string
+  /** Description (supports markdown) */
+  description?: string
+  /** Description in French */
+  descriptionFr?: string
+  /** Icon name (optional, inherits from parent) */
+  icon?: string
+  /** Color (optional, inherits from parent) */
+  color?: string
+  /** Sort order for display */
+  sortOrder: number
+  /** Whether this sub-category is active */
+  isActive: boolean
+  /** External resource links */
+  links?: CategoryLink[]
 }
 
 // =============================================================================

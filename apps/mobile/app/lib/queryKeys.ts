@@ -6,6 +6,14 @@
  */
 
 export const queryKeys = {
+  // ── Categories ──
+  categories: {
+    all: ["categories"] as const,
+    list: () => [...queryKeys.categories.all, "list"] as const,
+    subCategories: () => [...queryKeys.categories.all, "subCategories"] as const,
+    byId: (categoryId: string) => [...queryKeys.categories.all, "byId", categoryId] as const,
+  },
+
   // ── Contaminants / Thresholds / Jurisdictions ──
   contaminants: {
     all: ["contaminants"] as const,

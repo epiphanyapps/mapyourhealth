@@ -17,6 +17,7 @@ import { Header } from "@/components/Header"
 import { Screen } from "@/components/Screen"
 import { StatusIndicator } from "@/components/StatusIndicator"
 import { Text } from "@/components/Text"
+import { useCategories } from "@/context/CategoriesContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { getZipCodeMetadata } from "@/data/helpers"
 import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
@@ -103,6 +104,7 @@ function getLocationName(zipCode: string, zipData: ZipCodeData | null): string {
 export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ navigation }) {
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
+  const { getCategoryName } = useCategories()
 
   // State for zip code inputs
   const [zipCode1, setZipCode1] = useState("")
@@ -506,7 +508,9 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
                   {renderStatusCell(zipData1, category, saferZip, true)}
                   <View style={$categoryCenter}>
                     <CategoryIcon category={category} size={24} color={CATEGORY_COLORS[category]} />
-                    <Text style={$categoryName}>{CATEGORY_DISPLAY_NAMES[category]}</Text>
+                    <Text style={$categoryName}>
+                      {getCategoryName(String(category)) || CATEGORY_DISPLAY_NAMES[category]}
+                    </Text>
                   </View>
                   {renderStatusCell(zipData2, category, saferZip, false)}
                 </View>

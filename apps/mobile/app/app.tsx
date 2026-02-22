@@ -40,6 +40,7 @@ import { PaperProvider } from "react-native-paper"
 import { queryClient } from "./lib/queryClient"
 
 import { AuthProvider } from "./context/AuthContext"
+import { CategoriesProvider } from "./context/CategoriesContext"
 import { NotificationProvider } from "./context/NotificationContext"
 import { PendingActionProvider } from "./context/PendingActionContext"
 import { StatDefinitionsProvider } from "./context/StatDefinitionsContext"
@@ -132,15 +133,17 @@ export function App() {
               <SubscriptionsProvider>
                 <PendingActionProvider>
                   <StatDefinitionsProvider>
-                    <PaperProvider>
-                      <ThemeProvider>
-                        <AppNavigator
-                          linking={linking}
-                          initialState={initialNavigationState}
-                          onStateChange={onNavigationStateChange}
-                        />
-                      </ThemeProvider>
-                    </PaperProvider>
+                    <CategoriesProvider>
+                      <PaperProvider>
+                        <ThemeProvider>
+                          <AppNavigator
+                            linking={linking}
+                            initialState={initialNavigationState}
+                            onStateChange={onNavigationStateChange}
+                          />
+                        </ThemeProvider>
+                      </PaperProvider>
+                    </CategoriesProvider>
                   </StatDefinitionsProvider>
                 </PendingActionProvider>
               </SubscriptionsProvider>

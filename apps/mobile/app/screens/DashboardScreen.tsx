@@ -24,6 +24,7 @@ import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
 import { WarningBanner } from "@/components/WarningBanner"
 import { useAuth } from "@/context/AuthContext"
+import { useCategories } from "@/context/CategoriesContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
@@ -78,6 +79,20 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { statDefinitions } = useStatDefinitions()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
+  const { getCategoryName } = useCategories()
+
+  // Helper to get display name from dynamic categories with fallback
+  const getCategoryDisplayName = useCallback(
+    (categoryId: string) => {
+      const dynamicName = getCategoryName(categoryId)
+      // If dynamic name is the same as categoryId (not found), use fallback
+      if (dynamicName === categoryId) {
+        return CATEGORY_DISPLAY_NAMES[categoryId] ?? categoryId
+      }
+      return dynamicName
+    },
+    [getCategoryName],
+  )
 
   // Determine the default location:
   // 1. Route param takes priority (for navigation from other screens)
@@ -279,7 +294,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         const status = getStatusForCategory(category)
         if (status === "safe") return null // Skip safe categories
         const statusEmoji = status === "danger" ? "🔴" : "🟡"
-        return `${statusEmoji} ${CATEGORY_DISPLAY_NAMES[category]}: ${status.charAt(0).toUpperCase() + status.slice(1)}`
+        return `${statusEmoji} ${getCategoryDisplayName(category)}: ${status.charAt(0).toUpperCase() + status.slice(1)}`
       })
       .filter(Boolean)
       .join("\n")
@@ -303,7 +318,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, categories, getStatusForCategory, currentLocation])
+  }, [zipData, categories, getStatusForCategory, getCategoryDisplayName, currentLocation])
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -731,7 +746,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             {index > 0 && <View style={$categorySeparator} />}
             <ExpandableCategoryCard
               category={category}
-              categoryName={CATEGORY_DISPLAY_NAMES[category]}
+              categoryName={getCategoryDisplayName(category)}
               status={getStatusForCategory(category)}
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {

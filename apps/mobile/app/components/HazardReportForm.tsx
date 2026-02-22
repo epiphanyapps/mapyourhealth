@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import {
   Pressable,
   StyleProp,
@@ -9,13 +9,15 @@ import {
   ViewStyle,
 } from "react-native"
 
+import { useCategories } from "@/context/CategoriesContext"
 import { StatCategory } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
 import { Text } from "./Text"
 
 export interface HazardReportFormData {
-  category: StatCategory | null
+  /** Category ID as string (e.g., "water", "air") */
+  category: string | null
   description: string
   location: string
 }
@@ -41,7 +43,8 @@ interface FormErrors {
   location?: string
 }
 
-const CATEGORY_OPTIONS: { value: StatCategory; label: string }[] = [
+/** Fallback category options if dynamic categories are not available */
+const FALLBACK_CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: StatCategory.water, label: "Water Quality" },
   { value: StatCategory.air, label: "Air Quality" },
   { value: StatCategory.health, label: "Health" },
@@ -51,6 +54,7 @@ const CATEGORY_OPTIONS: { value: StatCategory; label: string }[] = [
 /**
  * A form component for submitting hazard reports.
  * Includes category picker, description, and location fields with validation.
+ * Uses dynamic categories from backend with fallback to hardcoded options.
  *
  * @example
  * <HazardReportForm
@@ -61,6 +65,18 @@ const CATEGORY_OPTIONS: { value: StatCategory; label: string }[] = [
 export function HazardReportForm(props: HazardReportFormProps) {
   const { onSubmit, isSubmitting = false, style } = props
   const { theme } = useAppTheme()
+  const { categories } = useCategories()
+
+  // Build category options from dynamic categories or use fallback
+  const categoryOptions = useMemo(() => {
+    if (categories.length > 0) {
+      return categories.map((cat) => ({
+        value: cat.categoryId,
+        label: cat.name,
+      }))
+    }
+    return FALLBACK_CATEGORY_OPTIONS
+  }, [categories])
 
   const [formData, setFormData] = useState<HazardReportFormData>({
     category: null,
@@ -188,7 +204,7 @@ export function HazardReportForm(props: HazardReportFormProps) {
       <View style={$fieldContainer}>
         <Text style={$label}>Hazard Category</Text>
         <View style={$categoryPicker}>
-          {CATEGORY_OPTIONS.map((option) => (
+          {categoryOptions.map((option) => (
             <Pressable
               key={option.value}
               onPress={() => {

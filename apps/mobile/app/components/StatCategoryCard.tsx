@@ -1,5 +1,6 @@
 import { Pressable, StyleProp, TextStyle, View, ViewStyle } from "react-native"
 
+import { useCategories } from "@/context/CategoriesContext"
 import type { StatCategory, StatStatus } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
@@ -9,9 +10,9 @@ import { Text } from "./Text"
 
 export interface StatCategoryCardProps {
   /**
-   * The safety category to display
+   * The safety category to display (supports both StatCategory enum and string)
    */
-  category: StatCategory
+  category: StatCategory | string
   /**
    * The display name for the category
    */
@@ -31,13 +32,27 @@ export interface StatCategoryCardProps {
 }
 
 /**
- * A category names mapping for display
+ * Fallback category names mapping for display when dynamic categories are not available
  */
-export const CATEGORY_DISPLAY_NAMES: Record<StatCategory, string> = {
+export const CATEGORY_DISPLAY_NAMES: Record<string, string> = {
   water: "Tap Water Quality",
   air: "Air Pollution",
   health: "Pathogens",
   disaster: "Disaster Risk",
+}
+
+/**
+ * Hook to get category display name from dynamic categories or fallback
+ */
+export function useCategoryDisplayName(categoryId: string): string {
+  const { getCategoryName } = useCategories()
+  const dynamicName = getCategoryName(categoryId)
+
+  // If dynamic name is just the categoryId (not found), use fallback
+  if (dynamicName === categoryId) {
+    return CATEGORY_DISPLAY_NAMES[categoryId] ?? categoryId
+  }
+  return dynamicName
 }
 
 /**

@@ -9,6 +9,18 @@
  */
 
 // =============================================================================
+// Categories (Dynamic)
+// =============================================================================
+
+export {
+  mockCategories,
+  mockSubCategories,
+  getMockCategoryById,
+  getMockSubCategoriesByCategoryId,
+  getMockSubCategoryById,
+} from "./categories"
+
+// =============================================================================
 // New Contaminant-based Mock Data
 // =============================================================================
 

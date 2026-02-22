@@ -1,0 +1,184 @@
+{
+  "categories": [
+    {
+      "categoryId": "water",
+      "name": "Water Quality",
+      "nameFr": "Qualit\u00e9 de l'eau",
+      "description": "There are {count} contaminants which filtration concentrations do not meet the [World Health Organization's tap water quality standards](https://www.who.int/publications/i/item/9789241549950).",
+      "descriptionFr": "Il y a {count} contaminants dont les concentrations de filtration ne respectent pas les [normes de qualit\u00e9 de l'eau potable de l'Organisation mondiale de la sant\u00e9](https://www.who.int/publications/i/item/9789241549950).",
+      "icon": "water",
+      "color": "#3B82F6",
+      "sortOrder": 0,
+      "isActive": true,
+      "links": [
+        {
+          "label": "WHO Drinking Water Guidelines",
+          "url": "https://www.who.int/publications/i/item/9789241549950"
+        },
+        {
+          "label": "Local Standards",
+          "url": "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations"
+        }
+      ],
+      "showStandardsTable": true
+    },
+    {
+      "categoryId": "air",
+      "name": "Air Quality",
+      "nameFr": "Qualit\u00e9 de l'air",
+      "description": "Air pollution data for your area, including [radon levels](https://www.epa.gov/radon) and other airborne contaminants.",
+      "descriptionFr": "Donn\u00e9es sur la pollution de l'air pour votre r\u00e9gion, y compris les [niveaux de radon](https://www.epa.gov/radon) et autres contaminants atmosph\u00e9riques.",
+      "icon": "weather-cloudy",
+      "color": "#8B5CF6",
+      "sortOrder": 1,
+      "isActive": true,
+      "links": [
+        {
+          "label": "EPA Radon Information",
+          "url": "https://www.epa.gov/radon"
+        }
+      ],
+      "showStandardsTable": false
+    },
+    {
+      "categoryId": "health",
+      "name": "Health",
+      "nameFr": "Sant\u00e9",
+      "description": "Pathogen and disease risk information for your area. See [CDC Disease Information](https://www.cdc.gov/) for more details.",
+      "descriptionFr": "Informations sur les risques de pathog\u00e8nes et de maladies pour votre r\u00e9gion. Consultez les [informations sur les maladies du CDC](https://www.cdc.gov/) pour plus de d\u00e9tails.",
+      "icon": "heart",
+      "color": "#EF4444",
+      "sortOrder": 2,
+      "isActive": true,
+      "links": [
+        {
+          "label": "CDC Disease Information",
+          "url": "https://www.cdc.gov/"
+        }
+      ],
+      "showStandardsTable": false
+    },
+    {
+      "categoryId": "disaster",
+      "name": "Disaster Risk",
+      "nameFr": "Risques de catastrophes",
+      "description": "Natural disaster risk assessment for your area. Visit [FEMA](https://www.fema.gov/) for emergency preparedness resources.",
+      "descriptionFr": "\u00c9valuation des risques de catastrophes naturelles pour votre r\u00e9gion. Visitez [FEMA](https://www.fema.gov/) pour les ressources de pr\u00e9paration aux urgences.",
+      "icon": "fire",
+      "color": "#F97316",
+      "sortOrder": 3,
+      "isActive": true,
+      "links": [
+        {
+          "label": "FEMA Disaster Information",
+          "url": "https://www.fema.gov/"
+        }
+      ],
+      "showStandardsTable": false
+    }
+  ],
+  "subCategories": [
+    {
+      "subCategoryId": "fertilizer",
+      "categoryId": "water",
+      "name": "Fertilizers",
+      "nameFr": "Engrais",
+      "description": "Nitrates and phosphates from agricultural runoff that can contaminate water supplies.",
+      "descriptionFr": "Nitrates et phosphates provenant du ruissellement agricole qui peuvent contaminer les approvisionnements en eau.",
+      "sortOrder": 0,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "pesticide",
+      "categoryId": "water",
+      "name": "Pesticides",
+      "nameFr": "Pesticides",
+      "description": "Chemical pesticides including herbicides, insecticides, and fungicides that may contaminate water sources.",
+      "descriptionFr": "Pesticides chimiques, y compris les herbicides, insecticides et fongicides qui peuvent contaminer les sources d'eau.",
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "radioactive",
+      "categoryId": "water",
+      "name": "Radioactive",
+      "nameFr": "Radioactifs",
+      "description": "Radioactive elements such as uranium, radium, and radon that can occur naturally or from industrial sources.",
+      "descriptionFr": "\u00c9l\u00e9ments radioactifs tels que l'uranium, le radium et le radon qui peuvent provenir de sources naturelles ou industrielles.",
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "disinfectant",
+      "categoryId": "water",
+      "name": "Disinfection Byproducts",
+      "nameFr": "Sous-produits de d\u00e9sinfection",
+      "description": "Chemical byproducts formed when disinfectants like chlorine react with organic matter in water.",
+      "descriptionFr": "Sous-produits chimiques form\u00e9s lorsque les d\u00e9sinfectants comme le chlore r\u00e9agissent avec la mati\u00e8re organique dans l'eau.",
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "inorganic",
+      "categoryId": "water",
+      "name": "Heavy Metals & Inorganics",
+      "nameFr": "M\u00e9taux lourds et inorganiques",
+      "description": "Heavy metals like lead, arsenic, and mercury, as well as other inorganic compounds.",
+      "descriptionFr": "M\u00e9taux lourds comme le plomb, l'arsenic et le mercure, ainsi que d'autres compos\u00e9s inorganiques.",
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "organic",
+      "categoryId": "water",
+      "name": "Organic Compounds",
+      "nameFr": "Compos\u00e9s organiques",
+      "description": "Volatile organic compounds (VOCs) and other organic chemicals that can contaminate water.",
+      "descriptionFr": "Compos\u00e9s organiques volatils (COV) et autres produits chimiques organiques qui peuvent contaminer l'eau.",
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "microbiological",
+      "categoryId": "water",
+      "name": "Microbiological",
+      "nameFr": "Microbiologiques",
+      "description": "Bacteria, viruses, and other microorganisms that can contaminate water supplies.",
+      "descriptionFr": "Bact\u00e9ries, virus et autres micro-organismes qui peuvent contaminer les approvisionnements en eau.",
+      "sortOrder": 6,
+      "isActive": true
+    },
+    {
+      "subCategoryId": "radon",
+      "categoryId": "air",
+      "name": "Radon",
+      "nameFr": "Radon",
+      "description": "Radon is a naturally occurring radioactive air pollutant responsible for approximately [21,000 lung cancer deaths per year](https://www.epa.gov/radon/health-risk-radon) in the United States.",
+      "descriptionFr": "Le radon est un polluant atmosph\u00e9rique radioactif naturel responsable d'environ [21 000 d\u00e9c\u00e8s par cancer du poumon par an](https://www.epa.gov/radon/health-risk-radon) aux \u00c9tats-Unis.",
+      "sortOrder": 0,
+      "isActive": true,
+      "links": [
+        {
+          "label": "EPA Radon Guide",
+          "url": "https://www.epa.gov/radon/health-risk-radon"
+        }
+      ]
+    },
+    {
+      "subCategoryId": "lyme",
+      "categoryId": "health",
+      "name": "Lyme Disease",
+      "nameFr": "Maladie de Lyme",
+      "description": "[Lyme disease](https://www.cdc.gov/lyme/) is caused by the bacterium Borrelia burgdorferi and is transmitted to humans through the bite of infected blacklegged ticks.",
+      "descriptionFr": "La [maladie de Lyme](https://www.cdc.gov/lyme/) est caus\u00e9e par la bact\u00e9rie Borrelia burgdorferi et est transmise aux humains par la piq\u00fbre de tiques \u00e0 pattes noires infect\u00e9es.",
+      "sortOrder": 0,
+      "isActive": true,
+      "links": [
+        {
+          "label": "CDC Lyme Disease",
+          "url": "https://www.cdc.gov/lyme/"
+        }
+      ]
+    }
+  ]
+}

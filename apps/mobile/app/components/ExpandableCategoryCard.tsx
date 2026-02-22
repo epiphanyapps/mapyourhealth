@@ -10,8 +10,9 @@ import Animated, {
   runOnJS,
 } from "react-native-reanimated"
 
-import { CATEGORY_CONFIG, SubCategory } from "@/data/categoryConfig"
-import type { StatCategory, StatStatus } from "@/data/types/safety"
+import { useCategories } from "@/context/CategoriesContext"
+import { CATEGORY_CONFIG, SubCategory as LegacySubCategory } from "@/data/categoryConfig"
+import type { StatCategory, StatStatus, SubCategory } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
 import { CategoryIcon } from "./CategoryIcon"
@@ -63,9 +64,19 @@ export interface ExpandableCategoryCardProps {
 export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const { category, categoryName, status, onPress, style } = props
   const { theme } = useAppTheme()
+  const { getSubCategoriesByCategoryId } = useCategories()
 
-  const categoryConfig = CATEGORY_CONFIG[category]
-  const subCategories = categoryConfig.subCategories || []
+  // Get category ID as string (handles both enum and string)
+  const categoryId = String(category)
+
+  // Try dynamic sub-categories first, fallback to legacy config
+  const dynamicSubCategories = getSubCategoriesByCategoryId(categoryId)
+  const legacyConfig = CATEGORY_CONFIG[category as StatCategory]
+  const legacySubCategories: LegacySubCategory[] = legacyConfig?.subCategories || []
+
+  // Use dynamic if available, otherwise fallback to legacy
+  const subCategories: Array<SubCategory | LegacySubCategory> =
+    dynamicSubCategories.length > 0 ? dynamicSubCategories : legacySubCategories
   const hasSubCategories = subCategories.length > 0
 
   const [expanded, setExpanded] = useState(false)
@@ -108,8 +119,11 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     }
   }
 
-  const handleSubCategoryPress = (subCategory: SubCategory) => {
-    onPress(subCategory.id)
+  const handleSubCategoryPress = (subCategory: SubCategory | LegacySubCategory) => {
+    // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
+    const subCategoryId =
+      "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
+    onPress(subCategoryId)
   }
 
   // Animated style for content container
@@ -225,23 +239,27 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const renderSubCategories = () => (
     <View style={$subCategoriesContainer}>
       <View style={$divider} />
-      {subCategories.map((subCategory) => (
-        <Pressable
-          key={subCategory.id}
-          onPress={() => handleSubCategoryPress(subCategory)}
-          style={({ pressed }) => [
-            $subCategoryRow,
-            pressed && { backgroundColor: theme.colors.palette.neutral100 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel={`${subCategory.name} sub-category`}
-        >
-          <Text style={$subCategoryText}>{subCategory.name}</Text>
-          <View style={$subCategoryChevron}>
-            <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
-          </View>
-        </Pressable>
-      ))}
+      {subCategories.map((subCategory) => {
+        // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
+        const key = "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
+        return (
+          <Pressable
+            key={key}
+            onPress={() => handleSubCategoryPress(subCategory)}
+            style={({ pressed }) => [
+              $subCategoryRow,
+              pressed && { backgroundColor: theme.colors.palette.neutral100 },
+            ]}
+            accessibilityRole="button"
+            accessibilityLabel={`${subCategory.name} sub-category`}
+          >
+            <Text style={$subCategoryText}>{subCategory.name}</Text>
+            <View style={$subCategoryChevron}>
+              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
+            </View>
+          </Pressable>
+        )
+      })}
     </View>
   )
 

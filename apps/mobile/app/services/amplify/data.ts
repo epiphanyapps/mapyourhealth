@@ -54,6 +54,8 @@ function getPrivateClient() {
 // New Model Types
 // =============================================================================
 
+export type AmplifyCategory = Schema["Category"]["type"]
+export type AmplifySubCategory = Schema["SubCategory"]["type"]
 export type AmplifyContaminant = Schema["Contaminant"]["type"]
 export type AmplifyContaminantThreshold = Schema["ContaminantThreshold"]["type"]
 export type AmplifyJurisdiction = Schema["Jurisdiction"]["type"]
@@ -61,6 +63,89 @@ export type AmplifyLocation = Schema["Location"]["type"]
 export type AmplifyLocationMeasurement = Schema["LocationMeasurement"]["type"]
 export type AmplifyUserSubscription = Schema["UserSubscription"]["type"]
 export type AmplifyHazardReport = Schema["HazardReport"]["type"]
+
+// =============================================================================
+// Categories (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all categories (public read - uses userPool when authenticated, IAM for guests)
+ */
+export async function getCategories(): Promise<AmplifyCategory[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Category.list({
+    limit: 100,
+  })
+  if (errors) {
+    console.error("Error fetching categories:", errors)
+    throw new Error("Failed to fetch categories")
+  }
+  return data
+}
+
+/**
+ * Fetch a specific category by categoryId
+ */
+export async function getCategoryById(categoryId: string): Promise<AmplifyCategory | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.Category.listCategoryByCategoryId({
+    categoryId,
+  })
+  if (errors) {
+    console.error("Error fetching category:", errors)
+    throw new Error("Failed to fetch category")
+  }
+  return data.length > 0 ? data[0] : null
+}
+
+/**
+ * Fetch all sub-categories (public read)
+ */
+export async function getSubCategories(): Promise<AmplifySubCategory[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.SubCategory.list({
+    limit: 500,
+  })
+  if (errors) {
+    console.error("Error fetching sub-categories:", errors)
+    throw new Error("Failed to fetch sub-categories")
+  }
+  return data
+}
+
+/**
+ * Fetch sub-categories for a specific category
+ */
+export async function getSubCategoriesByCategoryId(
+  categoryId: string,
+): Promise<AmplifySubCategory[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.SubCategory.listSubCategoryByCategoryId({
+    categoryId,
+  })
+  if (errors) {
+    console.error("Error fetching sub-categories for category:", errors)
+    throw new Error("Failed to fetch sub-categories for category")
+  }
+  return data
+}
+
+/**
+ * Fetch a specific sub-category by subCategoryId
+ */
+export async function getSubCategoryById(
+  subCategoryId: string,
+): Promise<AmplifySubCategory | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.SubCategory.listSubCategoryBySubCategoryId({
+    subCategoryId,
+  })
+  if (errors) {
+    console.error("Error fetching sub-category:", errors)
+    throw new Error("Failed to fetch sub-category")
+  }
+  return data.length > 0 ? data[0] : null
+}
 
 // =============================================================================
 // Contaminants (Public Read)
@@ -444,7 +529,7 @@ export async function getUserSubscriptions(): Promise<AmplifyUserSubscription[]>
  * Create a new hazard report
  */
 export async function createHazardReport(reportData: {
-  category: "water" | "air" | "health" | "disaster"
+  category: string
   description: string
   location: string
   city?: string

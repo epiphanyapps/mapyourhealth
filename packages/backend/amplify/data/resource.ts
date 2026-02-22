@@ -89,6 +89,62 @@ const schema = a.schema({
     .authorization((allow) => [allow.owner()]),
 
   // =========================================================================
+  // Dynamic Categories (replaces hardcoded enums)
+  // =========================================================================
+
+  /**
+   * Category - top-level categories (water, air, health, disaster)
+   * Replaces StatCategory enum for dynamic management
+   * Public read, admin write
+   */
+  Category: a
+    .model({
+      categoryId: a.string().required(), // "water", "air", etc.
+      name: a.string().required(), // "Water Quality"
+      nameFr: a.string(), // "Qualité de l'eau"
+      description: a.string(), // Markdown-supported description
+      descriptionFr: a.string(), // French description
+      icon: a.string().required(), // MaterialCommunityIcons name
+      color: a.string().required(), // "#3B82F6"
+      sortOrder: a.integer().default(0), // For ordering in UI
+      isActive: a.boolean().default(true), // Soft delete flag
+      links: a.json(), // [{label, url}] for external resources
+      showStandardsTable: a.boolean().default(false), // Show standards comparison
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("categoryId")]),
+
+  /**
+   * SubCategory - child categories under main categories
+   * Maps to ContaminantCategory values (fertilizer, pesticide, etc.)
+   * Public read, admin write
+   */
+  SubCategory: a
+    .model({
+      subCategoryId: a.string().required(), // "fertilizer", "radon", etc.
+      categoryId: a.string().required(), // Parent category reference
+      name: a.string().required(), // "Fertilizers"
+      nameFr: a.string(), // "Engrais"
+      description: a.string(), // Markdown-supported description
+      descriptionFr: a.string(), // French description
+      icon: a.string(), // Optional, inherits from parent
+      color: a.string(), // Optional, inherits from parent
+      sortOrder: a.integer().default(0), // For ordering in UI
+      isActive: a.boolean().default(true), // Soft delete flag
+      links: a.json(), // [{label, url}] for external resources
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("subCategoryId"), index("categoryId")]),
+
+  // =========================================================================
   // Contaminants and Safety Data (Jurisdiction-Aware)
   // =========================================================================
 

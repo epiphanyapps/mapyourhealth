@@ -29,6 +29,8 @@ import {
   Droplets,
   Scale,
   Globe,
+  FolderTree,
+  Layers,
 } from "lucide-react";
 
 const menuItems = [
@@ -51,6 +53,16 @@ const menuItems = [
     title: "Jurisdictions",
     url: "/jurisdictions",
     icon: Globe,
+  },
+  {
+    title: "Categories",
+    url: "/categories",
+    icon: FolderTree,
+  },
+  {
+    title: "Sub-Categories",
+    url: "/subcategories",
+    icon: Layers,
   },
   {
     title: "Location Stats",

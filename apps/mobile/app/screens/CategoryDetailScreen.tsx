@@ -23,6 +23,7 @@ import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { StatItem } from "@/components/StatItem"
 import { Text } from "@/components/Text"
+import { useCategories } from "@/context/CategoriesContext"
 import { useContaminants } from "@/context/ContaminantsContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
@@ -47,6 +48,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
+  const { getCategoryName, getCategoryColor } = useCategories()
 
   // Fetch data for the passed city from Amplify (with caching and offline support)
   const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
@@ -74,8 +76,12 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     [zipData, category, statDefinitions],
   )
 
-  const categoryName = CATEGORY_DISPLAY_NAMES[category]
-  const categoryColor = CATEGORY_COLORS[category]
+  // Get category display info - try dynamic first, then fallback to hardcoded
+  const categoryId = String(category)
+  const dynamicName = getCategoryName(categoryId)
+  const categoryName =
+    dynamicName !== categoryId ? dynamicName : (CATEGORY_DISPLAY_NAMES[category] ?? categoryId)
+  const categoryColor = getCategoryColor(categoryId) ?? CATEGORY_COLORS[category] ?? "#6B7280"
 
   // Get jurisdiction name for display
   const localJurisdictionCode = zipData?.state ? `US-${zipData.state}` : "US"
