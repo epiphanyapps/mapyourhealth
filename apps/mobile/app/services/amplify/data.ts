@@ -648,10 +648,9 @@ export async function getPropertyThresholdsForProperty(
   propertyId: string,
 ): Promise<AmplifyPropertyThreshold[]> {
   const client = await getPublicClient()
-  const { data, errors } =
-    await client.models.PropertyThreshold.listPropertyThresholdByPropertyId({
-      propertyId,
-    })
+  const { data, errors } = await client.models.PropertyThreshold.listPropertyThresholdByPropertyId({
+    propertyId,
+  })
   if (errors) {
     console.error("Error fetching property thresholds:", errors)
     throw new Error("Failed to fetch property thresholds")
@@ -738,10 +737,11 @@ export async function getLocationObservationsByCountry(
   country: string,
 ): Promise<AmplifyLocationObservation[]> {
   const client = await getPublicClient()
-  const { data, errors } =
-    await client.models.LocationObservation.listLocationObservationByCountry({
+  const { data, errors } = await client.models.LocationObservation.listLocationObservationByCountry(
+    {
       country,
-    })
+    },
+  )
   if (errors) {
     console.error("Error fetching location observations by country:", errors)
     throw new Error("Failed to fetch location observations by country")

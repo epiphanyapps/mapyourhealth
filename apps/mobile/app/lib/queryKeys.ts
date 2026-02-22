@@ -56,4 +56,27 @@ export const queryKeys = {
     all: ["episodes"] as const,
     list: () => [...queryKeys.episodes.all, "list"] as const,
   },
+
+  // ── O&M Observations ──
+  observations: {
+    all: ["observations"] as const,
+    byCity: (city: string) => [...queryKeys.observations.all, "city", city] as const,
+    byState: (state: string) => [...queryKeys.observations.all, "state", state] as const,
+    byCountry: (country: string) => [...queryKeys.observations.all, "country", country] as const,
+  },
+
+  // ── Observed Properties ──
+  observedProperties: {
+    all: ["observedProperties"] as const,
+    list: () => [...queryKeys.observedProperties.all, "list"] as const,
+    byId: (id: string) => [...queryKeys.observedProperties.all, "id", id] as const,
+  },
+
+  // ── Property Thresholds (O&M) ──
+  propertyThresholds: {
+    all: ["propertyThresholds"] as const,
+    list: () => [...queryKeys.propertyThresholds.all, "list"] as const,
+    byJurisdiction: (code: string) =>
+      [...queryKeys.propertyThresholds.all, "jurisdiction", code] as const,
+  },
 } as const

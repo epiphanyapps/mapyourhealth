@@ -13,6 +13,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { formatDistanceToNow } from "date-fns"
 
+import { Card } from "@/components/Card"
 import { ExpandableCategoryCard } from "@/components/ExpandableCategoryCard"
 import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
@@ -33,6 +34,7 @@ import { useLocation } from "@/hooks/useLocation"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { getJurisdictionForState } from "@/utils/jurisdiction"
 // postalCode utilities removed - using city-level granularity
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
@@ -761,6 +763,34 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
         ))}
       </View>
 
+      {/* Environmental Observations Card */}
+      <View style={$observationsCardContainer}>
+        <Card
+          heading="Environmental Health"
+          content="View radon zones, disease endemic status, and other environmental health observations for this area."
+          onPress={() => {
+            const jurisdictionCode = getJurisdictionForState(
+              currentLocation?.state || "",
+              currentLocation?.country || "US",
+            )
+            navigation.navigate("LocationObservations", {
+              city: currentLocation?.city || "",
+              state: currentLocation?.state || "",
+              country: currentLocation?.country || "US",
+              jurisdictionCode,
+            })
+          }}
+          RightComponent={
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
+          }
+          LeftComponent={
+            <View style={$observationsIconContainer}>
+              <MaterialCommunityIcons name="leaf" size={24} color={theme.colors.tint} />
+            </View>
+          }
+        />
+      </View>
+
       {/* Recommendations Section */}
       {zipData && <RecommendationsSection zipData={zipData} />}
 
@@ -847,4 +877,18 @@ const $notifyButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: "#FFFFFF",
+}
+
+const $observationsCardContainer: ViewStyle = {
+  marginHorizontal: 16,
+  marginTop: 16,
+}
+
+const $observationsIconContainer: ViewStyle = {
+  width: 44,
+  height: 44,
+  borderRadius: 22,
+  backgroundColor: "#E0F2FE",
+  alignItems: "center",
+  justifyContent: "center",
 }
