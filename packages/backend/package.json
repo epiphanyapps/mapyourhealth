@@ -15,6 +15,7 @@
     "esbuild": "esbuild",
     "seed": "tsx scripts/seed-contaminants.ts",
     "seed:clear": "tsx scripts/seed-contaminants.ts --clear",
+    "seed:om": "tsx scripts/seed-om-data.ts",
     "parse:excel": "tsx scripts/parse-risks-excel.ts"
   },
   "dependencies": {

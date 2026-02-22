@@ -29,6 +29,9 @@ import {
   Droplets,
   Scale,
   Globe,
+  Activity,
+  Gauge,
+  Eye,
 } from "lucide-react";
 
 const menuItems = [
@@ -74,6 +77,24 @@ const menuItems = [
   },
 ];
 
+const omMenuItems = [
+  {
+    title: "Properties",
+    url: "/properties",
+    icon: Activity,
+  },
+  {
+    title: "Property Thresholds",
+    url: "/property-thresholds",
+    icon: Gauge,
+  },
+  {
+    title: "Observations",
+    url: "/observations",
+    icon: Eye,
+  },
+];
+
 export function AdminSidebar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
@@ -94,6 +115,24 @@ export function AdminSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild isActive={pathname === item.url}>
+                    <Link href={item.url}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        <SidebarGroup>
+          <SidebarGroupLabel>Observations & Measurements</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {omMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={pathname === item.url}>
                     <Link href={item.url}>

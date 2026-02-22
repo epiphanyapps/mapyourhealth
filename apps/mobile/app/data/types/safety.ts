@@ -459,3 +459,285 @@ export function getCategoryDisplayNameFr(category: ContaminantCategory): string 
   }
   return names[category] || category
 }
+
+// =============================================================================
+// O&M (Observations & Measurements) Types
+// =============================================================================
+
+/**
+ * Categories for observed properties
+ */
+export type ObservedPropertyCategory =
+  | "water_quality"
+  | "air_quality"
+  | "disease"
+  | "radiation"
+  | "soil"
+  | "noise"
+  | "climate"
+  | "infrastructure"
+
+/**
+ * Types of observations
+ */
+export type ObservationType = "numeric" | "zone" | "endemic" | "incidence" | "binary"
+
+/**
+ * Property threshold status
+ */
+export type PropertyThresholdStatus = "active" | "historical" | "not_applicable"
+
+/**
+ * Definition of an observed property (what can be measured/observed)
+ */
+export interface ObservedProperty {
+  /** Unique identifier (e.g., "air_quality_index", "lyme_disease") */
+  id: string
+  /** Display name */
+  name: string
+  /** French name */
+  nameFr?: string
+  /** Category */
+  category: ObservedPropertyCategory
+  /** How this property is observed/measured */
+  observationType: ObservationType
+  /** Unit of measurement (for numeric types) */
+  unit?: string
+  /** Description (English) */
+  description?: string
+  /** Description (French) */
+  descriptionFr?: string
+  /** Whether higher values are worse */
+  higherIsBad: boolean
+}
+
+/**
+ * Jurisdiction-specific threshold for an observed property
+ */
+export interface PropertyThreshold {
+  /** Property ID this threshold applies to */
+  propertyId: string
+  /** Jurisdiction code */
+  jurisdictionCode: string
+  /** Limit/danger value for numeric observations */
+  limitValue?: number
+  /** Warning value for numeric observations */
+  warningValue?: number
+  /** Zone mapping for zone-based observations */
+  zoneMapping?: Record<string, SafetyStatus>
+  /** Whether endemic presence is danger (vs warning) */
+  endemicIsDanger?: boolean
+  /** Warning threshold for incidence rate */
+  incidenceWarningThreshold?: number
+  /** Danger threshold for incidence rate */
+  incidenceDangerThreshold?: number
+  /** Threshold status */
+  status: PropertyThresholdStatus
+}
+
+/**
+ * A single observation at a location
+ */
+export interface LocationObservation {
+  /** City name */
+  city: string
+  /** State/province code */
+  state: string
+  /** Country code */
+  country: string
+  /** County/region */
+  county?: string
+  /** Property ID being observed */
+  propertyId: string
+  /** Numeric value (for numeric observation type) */
+  numericValue?: number
+  /** Zone value (for zone observation type) */
+  zoneValue?: string
+  /** Endemic value (for endemic observation type) */
+  endemicValue?: boolean
+  /** Incidence value (for incidence observation type) */
+  incidenceValue?: number
+  /** Binary value (for binary observation type) */
+  binaryValue?: boolean
+  /** When the observation was made */
+  observedAt: string
+  /** When this observation expires */
+  validUntil?: string
+  /** Data source */
+  source?: string
+  /** Link to source */
+  sourceUrl?: string
+  /** Additional notes */
+  notes?: string
+}
+
+/**
+ * Observation with computed status
+ */
+export interface ObservationWithStatus extends LocationObservation {
+  /** Computed safety status */
+  status: SafetyStatus
+  /** The property definition */
+  property?: ObservedProperty
+  /** The threshold used for status calculation */
+  threshold?: PropertyThreshold
+}
+
+/**
+ * Calculate safety status for an observation based on property type and threshold
+ */
+export function calculateObservationStatus(
+  observation: LocationObservation,
+  property: ObservedProperty,
+  threshold: PropertyThreshold | undefined,
+): SafetyStatus {
+  // If no threshold or not applicable, we can't determine status
+  if (!threshold || threshold.status === "not_applicable") {
+    return "safe" // Default to safe when we can't evaluate
+  }
+
+  switch (property.observationType) {
+    case "numeric": {
+      const value = observation.numericValue
+      if (value == null) return "safe"
+
+      const limit = threshold.limitValue
+      const warning = threshold.warningValue
+
+      if (limit == null) return "safe" // Can't evaluate without a limit
+
+      if (property.higherIsBad) {
+        if (value >= limit) return "danger"
+        if (warning != null && value >= warning) return "warning"
+        return "safe"
+      } else {
+        if (value <= limit) return "danger"
+        if (warning != null && value <= warning) return "warning"
+        return "safe"
+      }
+    }
+
+    case "zone": {
+      const zoneValue = observation.zoneValue
+      if (!zoneValue || !threshold.zoneMapping) return "safe"
+
+      const mappedStatus = threshold.zoneMapping[zoneValue]
+      return mappedStatus || "safe"
+    }
+
+    case "endemic": {
+      const isEndemic = observation.endemicValue
+      if (!isEndemic) return "safe"
+
+      // Endemic presence - check if it's danger or warning level
+      return threshold.endemicIsDanger ? "danger" : "warning"
+    }
+
+    case "incidence": {
+      const rate = observation.incidenceValue
+      if (rate == null) return "safe"
+
+      const dangerThreshold = threshold.incidenceDangerThreshold
+      const warningThreshold = threshold.incidenceWarningThreshold
+
+      if (dangerThreshold != null && rate >= dangerThreshold) return "danger"
+      if (warningThreshold != null && rate >= warningThreshold) return "warning"
+      return "safe"
+    }
+
+    case "binary": {
+      const isActive = observation.binaryValue
+      if (!isActive) return "safe"
+
+      // Active binary (e.g., boil water advisory) is typically danger
+      return property.higherIsBad ? "danger" : "safe"
+    }
+
+    default:
+      return "safe"
+  }
+}
+
+/**
+ * Get display name for observed property category
+ */
+export function getObservedPropertyCategoryDisplayName(
+  category: ObservedPropertyCategory,
+): string {
+  const names: Record<ObservedPropertyCategory, string> = {
+    water_quality: "Water Quality",
+    air_quality: "Air Quality",
+    disease: "Disease & Health",
+    radiation: "Radiation",
+    soil: "Soil Quality",
+    noise: "Noise Pollution",
+    climate: "Climate & Weather",
+    infrastructure: "Infrastructure",
+  }
+  return names[category] || category
+}
+
+/**
+ * Get display name for observed property category in French
+ */
+export function getObservedPropertyCategoryDisplayNameFr(
+  category: ObservedPropertyCategory,
+): string {
+  const names: Record<ObservedPropertyCategory, string> = {
+    water_quality: "Qualité de l'eau",
+    air_quality: "Qualité de l'air",
+    disease: "Maladies et santé",
+    radiation: "Radiation",
+    soil: "Qualité du sol",
+    noise: "Pollution sonore",
+    climate: "Climat et météo",
+    infrastructure: "Infrastructure",
+  }
+  return names[category] || category
+}
+
+/**
+ * Get display name for observation type
+ */
+export function getObservationTypeDisplayName(type: ObservationType): string {
+  const names: Record<ObservationType, string> = {
+    numeric: "Numeric Value",
+    zone: "Zone/Category",
+    endemic: "Endemic Status",
+    incidence: "Incidence Rate",
+    binary: "Yes/No",
+  }
+  return names[type] || type
+}
+
+/**
+ * Format observation value for display
+ */
+export function formatObservationValue(
+  observation: LocationObservation,
+  property: ObservedProperty,
+): string {
+  switch (property.observationType) {
+    case "numeric":
+      if (observation.numericValue == null) return "—"
+      return property.unit
+        ? `${observation.numericValue} ${property.unit}`
+        : observation.numericValue.toString()
+
+    case "zone":
+      return observation.zoneValue || "—"
+
+    case "endemic":
+      return observation.endemicValue ? "Endemic" : "Not Endemic"
+
+    case "incidence":
+      if (observation.incidenceValue == null) return "—"
+      return `${observation.incidenceValue} per 100k`
+
+    case "binary":
+      return observation.binaryValue ? "Yes" : "No"
+
+    default:
+      return "—"
+  }
+}

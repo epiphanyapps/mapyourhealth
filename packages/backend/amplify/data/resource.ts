@@ -308,6 +308,129 @@ const schema = a.schema({
       allow.owner().to(["create", "read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ]),
+
+  // =========================================================================
+  // Observations & Measurements (O&M) Data Model
+  // Flexible system for tracking various environmental/health properties
+  // =========================================================================
+
+  /**
+   * ObservedProperty - Master catalog of what can be measured/observed
+   * Supports multiple observation types: numeric values, zones, endemic status, incidence rates
+   * Public read, admin write
+   */
+  ObservedProperty: a
+    .model({
+      propertyId: a.string().required(), // Unique ID: "air_quality_index", "lyme_disease", "water_hardness"
+      name: a.string().required(), // English display name
+      nameFr: a.string(), // French display name
+      category: a.enum([
+        "water_quality", // Water-specific measurements
+        "air_quality", // Air quality indicators
+        "disease", // Endemic diseases, outbreaks
+        "radiation", // Radiation levels
+        "soil", // Soil contamination
+        "noise", // Noise pollution
+        "climate", // Climate/weather related
+        "infrastructure", // Infrastructure safety
+      ]),
+      observationType: a.enum([
+        "numeric", // Continuous numeric value (e.g., AQI 0-500)
+        "zone", // Categorical zones (good/moderate/unhealthy)
+        "endemic", // Boolean presence (endemic disease present/absent)
+        "incidence", // Rate per population (cases per 100,000)
+        "binary", // Yes/no (e.g., boil water advisory active)
+      ]),
+      unit: a.string(), // Measurement unit (may be null for zone/endemic/binary)
+      description: a.string(), // English description
+      descriptionFr: a.string(), // French description
+      higherIsBad: a.boolean().default(true), // For numeric: higher = worse? For endemic: presence = bad?
+      metadata: a.json(), // Additional property-specific config (e.g., scale ranges for zones)
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("propertyId"), index("category")]),
+
+  /**
+   * PropertyThreshold - Jurisdiction-specific thresholds/interpretations
+   * Maps property values to safety levels per jurisdiction
+   * Public read, admin write
+   */
+  PropertyThreshold: a
+    .model({
+      propertyId: a.string().required(), // References ObservedProperty.propertyId
+      jurisdictionCode: a.string().required(), // References Jurisdiction.code
+      // For numeric observations
+      limitValue: a.float(), // Danger threshold (null if not applicable)
+      warningValue: a.float(), // Warning threshold (null if not applicable)
+      // For zone-based observations - maps source zones to our safety levels
+      // Example: { "Good": "safe", "Moderate": "warning", "Unhealthy": "danger" }
+      zoneMapping: a.json(),
+      // For endemic observations
+      endemicIsDanger: a.boolean(), // If endemic=true, is it danger or warning level?
+      // For incidence observations
+      incidenceWarningThreshold: a.float(), // Incidence rate for warning
+      incidenceDangerThreshold: a.float(), // Incidence rate for danger
+      // General
+      status: a.enum([
+        "active", // Currently enforced/tracked
+        "historical", // No longer tracked but data exists
+        "not_applicable", // Property not relevant to this jurisdiction
+      ]),
+      notes: a.string(), // Admin notes about this threshold
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [
+      index("propertyId"),
+      index("jurisdictionCode"),
+    ]),
+
+  /**
+   * LocationObservation - Actual observations at locations
+   * Flexible value storage supporting all observation types
+   * Public read, admin write
+   */
+  LocationObservation: a
+    .model({
+      // Location identification (matches Location model pattern)
+      city: a.string().required(),
+      state: a.string().required(),
+      country: a.string().required(),
+      county: a.string(),
+      // What's being observed
+      propertyId: a.string().required(), // References ObservedProperty.propertyId
+      // Flexible value storage - only one should be populated based on observationType
+      numericValue: a.float(), // For observationType="numeric"
+      zoneValue: a.string(), // For observationType="zone" (e.g., "Good", "Moderate", "Unhealthy")
+      endemicValue: a.boolean(), // For observationType="endemic" (present/absent)
+      incidenceValue: a.float(), // For observationType="incidence" (rate per population)
+      binaryValue: a.boolean(), // For observationType="binary" (yes/no)
+      // Metadata
+      observedAt: a.datetime().required(), // When the observation was made/reported
+      validUntil: a.datetime(), // When this observation expires (for time-limited data like forecasts)
+      source: a.string(), // Data source: "EPA", "CDC", "MELCC", etc.
+      sourceUrl: a.string(), // Link to source data
+      notes: a.string(), // Additional context
+      rawData: a.json(), // Original data from source for audit/debugging
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [
+      index("propertyId"),
+      index("city"),
+      index("state"),
+      index("country"),
+    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
