@@ -123,6 +123,111 @@ export const statStatusColors: Record<StatStatus, string> = {
 };
 
 // =============================================================================
+// O&M (Observations & Measurements) Constants
+// =============================================================================
+
+/** Categories for observed properties */
+export const OBSERVED_PROPERTY_CATEGORIES = [
+  "water_quality",
+  "air_quality",
+  "disease",
+  "radiation",
+  "soil",
+  "noise",
+  "climate",
+  "infrastructure",
+] as const;
+export type ObservedPropertyCategory =
+  (typeof OBSERVED_PROPERTY_CATEGORIES)[number];
+
+/** Display names for observed property categories */
+export const observedPropertyCategoryNames: Record<
+  ObservedPropertyCategory,
+  string
+> = {
+  water_quality: "Water Quality",
+  air_quality: "Air Quality",
+  disease: "Disease & Health",
+  radiation: "Radiation",
+  soil: "Soil Quality",
+  noise: "Noise Pollution",
+  climate: "Climate & Weather",
+  infrastructure: "Infrastructure",
+};
+
+/** Color mappings for observed property categories */
+export const observedPropertyCategoryColors: Record<
+  ObservedPropertyCategory,
+  string
+> = {
+  water_quality: "bg-blue-100 text-blue-800",
+  air_quality: "bg-purple-100 text-purple-800",
+  disease: "bg-red-100 text-red-800",
+  radiation: "bg-yellow-100 text-yellow-800",
+  soil: "bg-amber-100 text-amber-800",
+  noise: "bg-orange-100 text-orange-800",
+  climate: "bg-cyan-100 text-cyan-800",
+  infrastructure: "bg-gray-100 text-gray-800",
+};
+
+/** Observation types */
+export const OBSERVATION_TYPES = [
+  "numeric",
+  "zone",
+  "endemic",
+  "incidence",
+  "binary",
+] as const;
+export type ObservationType = (typeof OBSERVATION_TYPES)[number];
+
+/** Display names for observation types */
+export const observationTypeNames: Record<ObservationType, string> = {
+  numeric: "Numeric Value",
+  zone: "Zone/Category",
+  endemic: "Endemic (Present/Absent)",
+  incidence: "Incidence Rate",
+  binary: "Yes/No",
+};
+
+/** Descriptions for observation types */
+export const observationTypeDescriptions: Record<ObservationType, string> = {
+  numeric: "Continuous numeric value (e.g., AQI 0-500, concentration in μg/L)",
+  zone: "Categorical classification (e.g., Good, Moderate, Unhealthy)",
+  endemic: "Boolean presence indicator (e.g., disease is endemic to the area)",
+  incidence: "Rate per population (e.g., cases per 100,000)",
+  binary: "Simple yes/no indicator (e.g., boil water advisory active)",
+};
+
+/** Property threshold statuses */
+export const PROPERTY_THRESHOLD_STATUS_OPTIONS = [
+  "active",
+  "historical",
+  "not_applicable",
+] as const;
+export type PropertyThresholdStatus =
+  (typeof PROPERTY_THRESHOLD_STATUS_OPTIONS)[number];
+
+/** Display names for property threshold statuses */
+export const propertyThresholdStatusNames: Record<
+  PropertyThresholdStatus,
+  string
+> = {
+  active: "Active",
+  historical: "Historical",
+  not_applicable: "Not Applicable",
+};
+
+/** Color mappings for property threshold statuses */
+export const propertyThresholdStatusColors: Record<
+  PropertyThresholdStatus,
+  string
+> = {
+  active: "bg-green-100 text-green-800",
+  historical: "bg-gray-100 text-gray-800",
+  not_applicable: "bg-slate-100 text-slate-800",
+};
+
+// =============================================================================
 // Misc
 // =============================================================================
 

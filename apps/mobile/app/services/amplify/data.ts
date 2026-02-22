@@ -62,6 +62,11 @@ export type AmplifyLocationMeasurement = Schema["LocationMeasurement"]["type"]
 export type AmplifyUserSubscription = Schema["UserSubscription"]["type"]
 export type AmplifyHazardReport = Schema["HazardReport"]["type"]
 
+// O&M (Observations & Measurements) Types
+export type AmplifyObservedProperty = Schema["ObservedProperty"]["type"]
+export type AmplifyPropertyThreshold = Schema["PropertyThreshold"]["type"]
+export type AmplifyLocationObservation = Schema["LocationObservation"]["type"]
+
 // =============================================================================
 // Contaminants (Public Read)
 // =============================================================================
@@ -475,6 +480,186 @@ export async function getUserHazardReports(): Promise<AmplifyHazardReport[]> {
   if (errors) {
     console.error("Error fetching hazard reports:", errors)
     throw new Error("Failed to fetch hazard reports")
+  }
+  return data
+}
+
+// =============================================================================
+// O&M: Observed Properties (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all observed properties
+ */
+export async function getObservedProperties(): Promise<AmplifyObservedProperty[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ObservedProperty.list({
+    limit: 1000,
+  })
+  if (errors) {
+    console.error("Error fetching observed properties:", errors)
+    throw new Error("Failed to fetch observed properties")
+  }
+  return data
+}
+
+/**
+ * Fetch observed property by ID
+ */
+export async function getObservedPropertyById(
+  propertyId: string,
+): Promise<AmplifyObservedProperty | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ObservedProperty.listObservedPropertyByPropertyId({
+    propertyId,
+  })
+  if (errors) {
+    console.error("Error fetching observed property:", errors)
+    throw new Error("Failed to fetch observed property")
+  }
+  return data.length > 0 ? data[0] : null
+}
+
+/**
+ * Fetch observed properties by category
+ */
+export async function getObservedPropertiesByCategory(
+  category: string,
+): Promise<AmplifyObservedProperty[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ObservedProperty.listObservedPropertyByCategory({
+    category,
+  })
+  if (errors) {
+    console.error("Error fetching observed properties by category:", errors)
+    throw new Error("Failed to fetch observed properties by category")
+  }
+  return data
+}
+
+// =============================================================================
+// O&M: Property Thresholds (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all property thresholds
+ */
+export async function getPropertyThresholds(): Promise<AmplifyPropertyThreshold[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.PropertyThreshold.list({
+    limit: 1000,
+  })
+  if (errors) {
+    console.error("Error fetching property thresholds:", errors)
+    throw new Error("Failed to fetch property thresholds")
+  }
+  return data
+}
+
+/**
+ * Fetch thresholds for a specific property
+ */
+export async function getPropertyThresholdsForProperty(
+  propertyId: string,
+): Promise<AmplifyPropertyThreshold[]> {
+  const client = await getPublicClient()
+  const { data, errors } =
+    await client.models.PropertyThreshold.listPropertyThresholdByPropertyId({
+      propertyId,
+    })
+  if (errors) {
+    console.error("Error fetching property thresholds:", errors)
+    throw new Error("Failed to fetch property thresholds")
+  }
+  return data
+}
+
+/**
+ * Fetch thresholds for a specific jurisdiction (O&M properties)
+ */
+export async function getPropertyThresholdsForJurisdiction(
+  jurisdictionCode: string,
+): Promise<AmplifyPropertyThreshold[]> {
+  const client = await getPublicClient()
+  const { data, errors } =
+    await client.models.PropertyThreshold.listPropertyThresholdByJurisdictionCode({
+      jurisdictionCode,
+    })
+  if (errors) {
+    console.error("Error fetching property thresholds for jurisdiction:", errors)
+    throw new Error("Failed to fetch property thresholds for jurisdiction")
+  }
+  return data
+}
+
+// =============================================================================
+// O&M: Location Observations (Public Read)
+// =============================================================================
+
+/**
+ * Fetch observations for a specific city
+ */
+export async function getLocationObservations(city: string): Promise<AmplifyLocationObservation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.LocationObservation.listLocationObservationByCity({
+    city,
+  })
+  if (errors) {
+    console.error("Error fetching location observations:", errors)
+    throw new Error("Failed to fetch location observations")
+  }
+  return data
+}
+
+/**
+ * Fetch observations for a specific state/province
+ */
+export async function getLocationObservationsByState(
+  state: string,
+): Promise<AmplifyLocationObservation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.LocationObservation.listLocationObservationByState({
+    state,
+  })
+  if (errors) {
+    console.error("Error fetching location observations by state:", errors)
+    throw new Error("Failed to fetch location observations by state")
+  }
+  return data
+}
+
+/**
+ * Fetch observations for a specific property across all locations
+ */
+export async function getObservationsByProperty(
+  propertyId: string,
+): Promise<AmplifyLocationObservation[]> {
+  const client = await getPublicClient()
+  const { data, errors } =
+    await client.models.LocationObservation.listLocationObservationByPropertyId({
+      propertyId,
+    })
+  if (errors) {
+    console.error("Error fetching observations by property:", errors)
+    throw new Error("Failed to fetch observations by property")
+  }
+  return data
+}
+
+/**
+ * Fetch observations for a specific country
+ */
+export async function getLocationObservationsByCountry(
+  country: string,
+): Promise<AmplifyLocationObservation[]> {
+  const client = await getPublicClient()
+  const { data, errors } =
+    await client.models.LocationObservation.listLocationObservationByCountry({
+      country,
+    })
+  if (errors) {
+    console.error("Error fetching location observations by country:", errors)
+    throw new Error("Failed to fetch location observations by country")
   }
   return data
 }
