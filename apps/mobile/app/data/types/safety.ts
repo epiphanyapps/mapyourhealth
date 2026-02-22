@@ -731,9 +731,7 @@ export function calculateObservationStatus(
 /**
  * Get display name for observed property category
  */
-export function getObservedPropertyCategoryDisplayName(
-  category: ObservedPropertyCategory,
-): string {
+export function getObservedPropertyCategoryDisplayName(category: ObservedPropertyCategory): string {
   const names: Record<ObservedPropertyCategory, string> = {
     water_quality: "Water Quality",
     air_quality: "Air Quality",
