@@ -17,6 +17,7 @@ import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
 import { ForgotPasswordScreen } from "@/screens/ForgotPasswordScreen"
+import { LocationObservationsScreen } from "@/screens/LocationObservationsScreen"
 import { LoginScreen } from "@/screens/LoginScreen"
 import { MagicLinkScreen } from "@/screens/MagicLinkScreen"
 import { MagicLinkSentScreen } from "@/screens/MagicLinkSentScreen"
@@ -73,6 +74,7 @@ const AppStack = () => {
       {/* Screens available to all users (guests and authenticated) */}
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+      <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
       <Stack.Screen name="Compare" component={CompareScreen} />
 

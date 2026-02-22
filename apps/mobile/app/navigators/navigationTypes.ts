@@ -47,6 +47,12 @@ export type AppStackParamList = {
     state: string
   }
   Compare: undefined
+  LocationObservations: {
+    city: string
+    state: string
+    country: string
+    jurisdictionCode: string
+  }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
