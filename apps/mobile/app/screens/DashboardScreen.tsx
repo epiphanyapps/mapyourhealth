@@ -886,8 +886,6 @@ const $observationsCardContainer: ViewStyle = {
   marginTop: 16,
 }
 
-// Note: We need to use inline style for this since it's a static StyleSheet
-// and theme colors are dynamic. The color is defined in theme palette.
 const $observationsIconContainer: ViewStyle = {
   width: 44,
   height: 44,

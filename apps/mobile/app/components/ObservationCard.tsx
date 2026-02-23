@@ -15,7 +15,7 @@ import {
   getObservedPropertyCategoryDisplayName,
 } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
-import { getCategoryIcon, formatObservationDate, getStatusColorKey } from "@/utils/observations"
+import { formatObservationDate, getCategoryIcon, getStatusColorKey } from "@/utils/observations"
 
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
