@@ -784,7 +784,9 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
           }
           LeftComponent={
-            <View style={$observationsIconContainer}>
+            <View
+              style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
+            >
               <MaterialCommunityIcons name="leaf" size={24} color={theme.colors.tint} />
             </View>
           }
@@ -884,11 +886,12 @@ const $observationsCardContainer: ViewStyle = {
   marginTop: 16,
 }
 
+// Note: We need to use inline style for this since it's a static StyleSheet
+// and theme colors are dynamic. The color is defined in theme palette.
 const $observationsIconContainer: ViewStyle = {
   width: 44,
   height: 44,
   borderRadius: 22,
-  backgroundColor: "#E0F2FE",
   alignItems: "center",
   justifyContent: "center",
 }

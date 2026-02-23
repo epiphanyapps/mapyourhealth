@@ -14,6 +14,7 @@ import {
   getObservedPropertyCategoryDisplayName,
 } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
+import { getCategoryIcon, formatObservationDate, getStatusColorKey } from "@/utils/observations"
 
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
@@ -31,59 +32,6 @@ export interface ObservationCardProps {
    * Callback when the card is pressed
    */
   onPress?: () => void
-}
-
-/**
- * Get icon name for observation category
- */
-function getCategoryIcon(
-  category: string,
-):
-  | "water"
-  | "air-filter"
-  | "virus"
-  | "radioactive"
-  | "leaf"
-  | "volume-high"
-  | "weather-cloudy"
-  | "home-city" {
-  const icons: Record<
-    string,
-    | "water"
-    | "air-filter"
-    | "virus"
-    | "radioactive"
-    | "leaf"
-    | "volume-high"
-    | "weather-cloudy"
-    | "home-city"
-  > = {
-    water_quality: "water",
-    air_quality: "air-filter",
-    disease: "virus",
-    radiation: "radioactive",
-    soil: "leaf",
-    noise: "volume-high",
-    climate: "weather-cloudy",
-    infrastructure: "home-city",
-  }
-  return icons[category] || "alert-circle"
-}
-
-/**
- * Format date for display
- */
-function formatDate(dateString: string): string {
-  try {
-    const date = new Date(dateString)
-    return date.toLocaleDateString(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    })
-  } catch {
-    return dateString
-  }
 }
 
 /**
@@ -113,6 +61,8 @@ export function ObservationCard(props: ObservationCardProps) {
     }
   }
 
+  const statusColorKey = getStatusColorKey(observation.status)
+
   const $container: ViewStyle = {
     backgroundColor: theme.colors.background,
     borderRadius: 12,
@@ -123,12 +73,7 @@ export function ObservationCard(props: ObservationCardProps) {
     shadowRadius: 2,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor:
-      observation.status === "danger"
-        ? "#DC2626"
-        : observation.status === "warning"
-          ? "#F59E0B"
-          : "#10B981",
+    borderLeftColor: theme.colors[statusColorKey],
   }
 
   const $header: ViewStyle = {
@@ -180,12 +125,7 @@ export function ObservationCard(props: ObservationCardProps) {
     fontSize: 12,
     fontWeight: "600",
     textTransform: "capitalize",
-    color:
-      observation.status === "danger"
-        ? "#DC2626"
-        : observation.status === "warning"
-          ? "#F59E0B"
-          : "#10B981",
+    color: theme.colors[statusColorKey],
     marginLeft: 6,
   }
 
@@ -280,7 +220,7 @@ export function ObservationCard(props: ObservationCardProps) {
         ) : (
           <View />
         )}
-        <Text style={$dateText}>Updated: {formatDate(observation.observedAt)}</Text>
+        <Text style={$dateText}>Updated: {formatObservationDate(observation.observedAt)}</Text>
       </View>
     </Wrapper>
   )

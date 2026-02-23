@@ -31,6 +31,23 @@ const palette = {
   angry100: "#F2D6CD",
   angry500: "#C03403",
 
+  // Status colors for safety indicators
+  statusDanger: "#DC2626",
+  statusWarning: "#F59E0B",
+  statusSafe: "#10B981",
+
+  // Status background colors
+  statusDangerBg: "#FEE2E2",
+  statusWarningBg: "#FEF3C7",
+  statusSafeBg: "#D1FAE5",
+
+  // Offline/info colors
+  offlineBg: "#FEF3C7",
+  offlineText: "#92400E",
+
+  // Accent backgrounds
+  accentBlueBg: "#E0F2FE",
+
   overlay20: "rgba(25, 16, 21, 0.2)",
   overlay50: "rgba(25, 16, 21, 0.5)",
 } as const
@@ -82,4 +99,22 @@ export const colors = {
    * Error Background.
    */
   errorBackground: palette.angry100,
+  /**
+   * Status colors for safety indicators (danger/warning/safe)
+   */
+  statusDanger: palette.statusDanger,
+  statusWarning: palette.statusWarning,
+  statusSafe: palette.statusSafe,
+  statusDangerBg: palette.statusDangerBg,
+  statusWarningBg: palette.statusWarningBg,
+  statusSafeBg: palette.statusSafeBg,
+  /**
+   * Offline banner colors
+   */
+  offlineBg: palette.offlineBg,
+  offlineText: palette.offlineText,
+  /**
+   * Accent backgrounds
+   */
+  accentBlueBg: palette.accentBlueBg,
 } as const

@@ -31,45 +31,9 @@ import {
 import { useLocationObservations } from "@/hooks/useLocationObservations"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { getCategoryIcon, getStatusColorKey } from "@/utils/observations"
 
 interface LocationObservationsScreenProps extends AppStackScreenProps<"LocationObservations"> {}
-
-/**
- * Get category icon name
- */
-function getCategoryIcon(
-  category: ObservedPropertyCategory,
-):
-  | "water"
-  | "air-filter"
-  | "virus"
-  | "radioactive"
-  | "leaf"
-  | "volume-high"
-  | "weather-cloudy"
-  | "home-city" {
-  const icons: Record<
-    ObservedPropertyCategory,
-    | "water"
-    | "air-filter"
-    | "virus"
-    | "radioactive"
-    | "leaf"
-    | "volume-high"
-    | "weather-cloudy"
-    | "home-city"
-  > = {
-    water_quality: "water",
-    air_quality: "air-filter",
-    disease: "virus",
-    radiation: "radioactive",
-    soil: "leaf",
-    noise: "volume-high",
-    climate: "weather-cloudy",
-    infrastructure: "home-city",
-  }
-  return icons[category]
-}
 
 /**
  * Group observations by category
@@ -162,6 +126,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     )
 
     const locationName = city && state ? `${city}, ${state}` : city || state || "Unknown Location"
+    const worstStatusColorKey = getStatusColorKey(worstStatus)
 
     const $contentContainer: ViewStyle = {
       flexGrow: 1,
@@ -184,8 +149,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       shadowRadius: 2,
       elevation: 2,
       borderLeftWidth: 4,
-      borderLeftColor:
-        worstStatus === "danger" ? "#DC2626" : worstStatus === "warning" ? "#F59E0B" : "#10B981",
+      borderLeftColor: theme.colors[worstStatusColorKey],
     }
 
     const $summaryLeft: ViewStyle = {
@@ -211,8 +175,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     const $alertCount: TextStyle = {
       fontSize: 24,
       fontWeight: "700",
-      color:
-        worstStatus === "danger" ? "#DC2626" : worstStatus === "warning" ? "#F59E0B" : "#10B981",
+      color: theme.colors[worstStatusColorKey],
     }
 
     const $alertLabel: TextStyle = {
@@ -302,7 +265,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     }
 
     const $retryButtonText: TextStyle = {
-      color: "#FFFFFF",
+      color: theme.colors.palette.neutral100,
       fontSize: 16,
       fontWeight: "600",
     }
@@ -311,7 +274,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       flexDirection: "row",
       alignItems: "center",
       justifyContent: "center",
-      backgroundColor: "#FEF3C7",
+      backgroundColor: theme.colors.offlineBg,
       paddingVertical: 8,
       paddingHorizontal: 16,
       marginHorizontal: 16,
@@ -322,7 +285,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
 
     const $offlineBannerText: TextStyle = {
       fontSize: 12,
-      color: "#92400E",
+      color: theme.colors.offlineText,
       textAlign: "center",
       flex: 1,
     }
@@ -430,7 +393,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
           {/* Offline Banner */}
           {isOffline && (
             <View style={$offlineBanner}>
-              <MaterialCommunityIcons name="wifi-off" size={16} color="#92400E" />
+              <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.offlineText} />
               <Text style={$offlineBannerText}>
                 You are offline. Showing cached data if available.
               </Text>
