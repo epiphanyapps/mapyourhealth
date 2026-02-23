@@ -14,6 +14,7 @@ import {
   DynamoDBClient,
   QueryCommand,
   BatchWriteItemCommand,
+  ListTablesCommand,
 } from '@aws-sdk/client-dynamodb';
 import {
   CognitoIdentityProviderClient,
@@ -24,11 +25,26 @@ import { unmarshall } from '@aws-sdk/util-dynamodb';
 const dynamoClient = new DynamoDBClient({});
 const cognitoClient = new CognitoIdentityProviderClient({});
 
-// Table names set via environment variables in backend.ts
-const HEALTH_RECORD_TABLE = process.env.HEALTH_RECORD_TABLE_NAME!;
-const USER_SUBSCRIPTION_TABLE = process.env.USER_SUBSCRIPTION_TABLE_NAME!;
-const NOTIFICATION_LOG_TABLE = process.env.NOTIFICATION_LOG_TABLE_NAME!;
-const HAZARD_REPORT_TABLE = process.env.HAZARD_REPORT_TABLE_NAME!;
+// Dynamically discover table names to avoid circular dependencies
+let tableNamesCache: Record<string, string> | null = null;
+
+async function getTableNames(): Promise<Record<string, string>> {
+  if (tableNamesCache) return tableNamesCache;
+  
+  const { TableNames } = await dynamoClient.send(new ListTablesCommand({}));
+  const tables: Record<string, string> = {};
+  
+  // Find tables by pattern matching (tables are prefixed with app/branch info)
+  for (const tableName of TableNames || []) {
+    if (tableName.includes('HealthRecord')) tables.healthRecord = tableName;
+    if (tableName.includes('UserSubscription')) tables.userSubscription = tableName;  
+    if (tableName.includes('NotificationLog')) tables.notificationLog = tableName;
+    if (tableName.includes('HazardReport')) tables.hazardReport = tableName;
+  }
+  
+  tableNamesCache = tables;
+  return tables;
+}
 const USER_POOL_ID = process.env.USER_POOL_ID!;
 
 interface DeleteAccountResponse {
@@ -145,24 +161,35 @@ export const handler: AppSyncResolverHandler<Record<string, never>, DeleteAccoun
 
   console.log(`Deleting account data for user: ${userId}`);
 
+  // Get table names dynamically to avoid circular dependencies
+  const tables = await getTableNames();
+
   const deletedCounts: Record<string, number> = {};
 
   try {
     // 1. Delete HealthRecords (owner-based)
-    const healthRecords = await queryItemsByOwner(HEALTH_RECORD_TABLE, ownerValue);
-    deletedCounts.healthRecords = await batchDeleteItems(HEALTH_RECORD_TABLE, healthRecords);
+    if (tables.healthRecord) {
+      const healthRecords = await queryItemsByOwner(tables.healthRecord, ownerValue);
+      deletedCounts.healthRecords = await batchDeleteItems(tables.healthRecord, healthRecords);
+    }
 
     // 2. Delete UserSubscriptions (owner-based)
-    const subscriptions = await queryItemsByOwner(USER_SUBSCRIPTION_TABLE, ownerValue);
-    deletedCounts.userSubscriptions = await batchDeleteItems(USER_SUBSCRIPTION_TABLE, subscriptions);
+    if (tables.userSubscription) {
+      const subscriptions = await queryItemsByOwner(tables.userSubscription, ownerValue);
+      deletedCounts.userSubscriptions = await batchDeleteItems(tables.userSubscription, subscriptions);
+    }
 
     // 3. Delete NotificationLogs (query by userId GSI)
-    const notifications = await queryNotificationLogsByUserId(NOTIFICATION_LOG_TABLE, userId);
-    deletedCounts.notificationLogs = await batchDeleteItems(NOTIFICATION_LOG_TABLE, notifications);
+    if (tables.notificationLog) {
+      const notifications = await queryNotificationLogsByUserId(tables.notificationLog, userId);
+      deletedCounts.notificationLogs = await batchDeleteItems(tables.notificationLog, notifications);
+    }
 
     // 4. Delete HazardReports (owner-based)
-    const hazardReports = await queryItemsByOwner(HAZARD_REPORT_TABLE, ownerValue);
-    deletedCounts.hazardReports = await batchDeleteItems(HAZARD_REPORT_TABLE, hazardReports);
+    if (tables.hazardReport) {
+      const hazardReports = await queryItemsByOwner(tables.hazardReport, ownerValue);
+      deletedCounts.hazardReports = await batchDeleteItems(tables.hazardReport, hazardReports);
+    }
 
     console.log('Account data deletion complete:', deletedCounts);
 
