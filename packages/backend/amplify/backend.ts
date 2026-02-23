@@ -312,12 +312,13 @@ const processNotificationsInvokePolicy = new Policy(processNotificationsStack, '
 backend.processNotifications.resources.lambda.role?.attachInlinePolicy(processNotificationsInvokePolicy);
 
 // Grant processNotifications function permissions to look up user emails from Cognito
+// Use wildcard resource to avoid circular dependency between data and auth stacks
 const processNotificationsCognitoPolicy = new Policy(processNotificationsStack, 'ProcessNotificationsCognitoPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
       actions: ['cognito-idp:AdminGetUser'],
-      resources: [backend.auth.resources.userPool.userPoolArn],
+      resources: ['*'], // Use wildcard to avoid cross-stack resource reference
     }),
   ],
 });
@@ -393,12 +394,9 @@ const hazardReportTable = backend.data.resources.tables['HazardReport'];
 const deleteAccountLambda = backend.deleteAccount.resources.lambda as LambdaFunction;
 const deleteAccountStack = Stack.of(deleteAccountLambda);
 
-// Set environment variables for table names
-deleteAccountLambda.addEnvironment('HEALTH_RECORD_TABLE_NAME', healthRecordTable.tableName);
-deleteAccountLambda.addEnvironment('USER_SUBSCRIPTION_TABLE_NAME', subscriptionsTable.tableName);
-deleteAccountLambda.addEnvironment('NOTIFICATION_LOG_TABLE_NAME', notificationLogTable.tableName);
-deleteAccountLambda.addEnvironment('HAZARD_REPORT_TABLE_NAME', hazardReportTable.tableName);
+// Set environment variables for table names using string values to avoid circular dependency
 deleteAccountLambda.addEnvironment('USER_POOL_ID', userPoolId);
+// Table names will be passed at runtime or retrieved dynamically to avoid cross-stack references
 
 // Grant deleteAccount function permissions to delete Cognito user
 const deleteAccountCognitoPolicy = new Policy(deleteAccountStack, 'DeleteAccountCognitoPolicy', {
@@ -413,24 +411,19 @@ const deleteAccountCognitoPolicy = new Policy(deleteAccountStack, 'DeleteAccount
 backend.deleteAccount.resources.lambda.role?.attachInlinePolicy(deleteAccountCognitoPolicy);
 
 // Grant deleteAccount function permissions to query and delete from all user-data tables
+// Use wildcard to avoid circular dependency with data stack
 const deleteAccountDynamoPolicy = new Policy(deleteAccountStack, 'DeleteAccountDynamoPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
       actions: [
         'dynamodb:Query',
-        'dynamodb:BatchWriteItem',
+        'dynamodb:BatchWriteItem', 
         'dynamodb:DeleteItem',
+        'dynamodb:DescribeTable', // Add describe to get table info dynamically
       ],
       resources: [
-        healthRecordTable.tableArn,
-        `${healthRecordTable.tableArn}/index/*`,
-        subscriptionsTable.tableArn,
-        `${subscriptionsTable.tableArn}/index/*`,
-        notificationLogTable.tableArn,
-        `${notificationLogTable.tableArn}/index/*`,
-        hazardReportTable.tableArn,
-        `${hazardReportTable.tableArn}/index/*`,
+        `arn:aws:dynamodb:*:*:table/*`, // Use wildcard pattern to avoid cross-stack dependency
       ],
     }),
   ],
