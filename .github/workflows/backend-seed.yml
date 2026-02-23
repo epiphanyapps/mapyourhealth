@@ -38,7 +38,7 @@ jobs:
           AMPLIFY_APP_ID: ${{ secrets.AMPLIFY_BACKEND_APP_ID }}
         run: |
           echo "Waiting for backend deployment to complete..."
-          for i in {1..30}; do
+          for i in {1..60}; do
             JOB=$(aws amplify list-jobs --app-id $AMPLIFY_APP_ID --branch-name main --max-results 1 --query 'jobSummaries[0]' --output json)
             STATUS=$(echo $JOB | jq -r '.status')
             echo "Attempt $i: Status = $STATUS"
@@ -48,9 +48,23 @@ jobs:
             elif [ "$STATUS" = "FAILED" ]; then
               echo "Backend deployment failed"
               exit 1
+            elif [ "$STATUS" = "CANCELLED" ] || [ "$STATUS" = "CANCELLING" ]; then
+              echo "Backend deployment cancelled"
+              exit 1
             fi
-            sleep 20
+            echo "Waiting 30 seconds before next check..."
+            sleep 30
           done
+          
+          echo "Deployment still running after 30 minutes - checking final status..."
+          FINAL_JOB=$(aws amplify list-jobs --app-id $AMPLIFY_APP_ID --branch-name main --max-results 1 --query 'jobSummaries[0]' --output json)
+          FINAL_STATUS=$(echo $FINAL_JOB | jq -r '.status')
+          echo "Final status: $FINAL_STATUS"
+          
+          if [ "$FINAL_STATUS" != "SUCCEED" ]; then
+            echo "Deployment did not complete successfully within 30 minutes"
+            exit 1
+          fi
 
       - name: Generate Amplify outputs
         run: |
