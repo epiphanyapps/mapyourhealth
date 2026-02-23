@@ -253,16 +253,17 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     return observations.filter((obs) => obs.status === "danger" || obs.status === "warning").length
   }, [observations])
 
-  // Refresh function
+  // Refresh function - invalidate both city and state queries since we may have fallen back to state data
   const refresh = useCallback(async () => {
     await Promise.all([
       qc.invalidateQueries({ queryKey: queryKeys.observations.byCity(city) }),
+      qc.invalidateQueries({ queryKey: queryKeys.observations.byState(state) }),
       qc.invalidateQueries({ queryKey: queryKeys.observedProperties.list() }),
       qc.invalidateQueries({
         queryKey: queryKeys.propertyThresholds.byJurisdiction(jurisdictionCode),
       }),
     ])
-  }, [qc, city, jurisdictionCode])
+  }, [qc, city, state, jurisdictionCode])
 
   // Combine loading states
   const isLoading =

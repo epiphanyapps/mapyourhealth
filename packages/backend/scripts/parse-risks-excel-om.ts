@@ -21,12 +21,29 @@ const __dirname = path.dirname(__filename)
 // Types
 // =============================================================================
 
+// Valid category values from schema
+type ObservedPropertyCategory =
+  | "water_quality"
+  | "air_quality"
+  | "disease"
+  | "radiation"
+  | "soil"
+  | "noise"
+  | "climate"
+  | "infrastructure"
+
+// Valid observation types from schema
+type ObservationType = "numeric" | "zone" | "endemic" | "incidence" | "binary"
+
+// Valid threshold status values from schema
+type ThresholdStatus = "active" | "historical" | "not_applicable"
+
 interface SeedObservedProperty {
   propertyId: string
   name: string
   nameFr?: string | null
-  category: string
-  observationType: string
+  category: ObservedPropertyCategory
+  observationType: ObservationType
   unit?: string | null
   description?: string | null
   descriptionFr?: string | null
@@ -43,7 +60,7 @@ interface SeedPropertyThreshold {
   endemicIsDanger?: boolean | null
   incidenceWarningThreshold?: number | null
   incidenceDangerThreshold?: number | null
-  status: string
+  status: ThresholdStatus
   notes?: string | null
 }
 

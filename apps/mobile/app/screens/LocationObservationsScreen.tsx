@@ -13,6 +13,8 @@ import {
   ScrollView,
   ActivityIndicator,
   RefreshControl,
+  StyleSheet,
+  Pressable,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
@@ -128,181 +130,21 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     const locationName = city && state ? `${city}, ${state}` : city || state || "Unknown Location"
     const worstStatusColorKey = getStatusColorKey(worstStatus)
 
-    const $contentContainer: ViewStyle = {
-      flexGrow: 1,
-      paddingBottom: 24,
-    }
-
-    const $summaryCard: ViewStyle = {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "space-between",
-      backgroundColor: theme.colors.background,
-      marginHorizontal: 16,
-      marginTop: 16,
-      marginBottom: 8,
-      padding: 16,
-      borderRadius: 12,
-      shadowColor: theme.colors.palette.neutral800,
-      shadowOffset: { width: 0, height: 1 },
-      shadowOpacity: 0.1,
-      shadowRadius: 2,
-      elevation: 2,
-      borderLeftWidth: 4,
-      borderLeftColor: theme.colors[worstStatusColorKey],
-    }
-
-    const $summaryLeft: ViewStyle = {
-      flex: 1,
-    }
-
-    const $summaryTitle: TextStyle = {
-      fontSize: 18,
-      fontWeight: "700",
-      color: theme.colors.text,
-      marginBottom: 4,
-    }
-
-    const $summarySubtitle: TextStyle = {
-      fontSize: 14,
-      color: theme.colors.textDim,
-    }
-
-    const $summaryRight: ViewStyle = {
-      alignItems: "center",
-    }
-
-    const $alertCount: TextStyle = {
-      fontSize: 24,
-      fontWeight: "700",
-      color: theme.colors[worstStatusColorKey],
-    }
-
-    const $alertLabel: TextStyle = {
-      fontSize: 12,
-      color: theme.colors.textDim,
-      marginTop: 2,
-    }
-
-    const $categoriesContainer: ViewStyle = {
-      paddingTop: 8,
-      gap: 8,
-    }
-
-    const $categoryHeader: ViewStyle = {
-      flexDirection: "row",
-      alignItems: "center",
-      flex: 1,
-    }
-
-    const $categoryIcon: ViewStyle = {
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: theme.colors.palette.neutral200,
-      alignItems: "center",
-      justifyContent: "center",
-      marginRight: 12,
-    }
-
-    const $categoryHeaderText: ViewStyle = {
-      flex: 1,
-    }
-
-    const $categoryName: TextStyle = {
-      fontSize: 16,
-      fontWeight: "600",
-      color: theme.colors.text,
-    }
-
-    const $categoryCount: TextStyle = {
-      fontSize: 12,
-      color: theme.colors.textDim,
-      marginTop: 2,
-    }
-
-    const $categoryStatus: ViewStyle = {
-      marginRight: 8,
-    }
-
-    const $observationsList: ViewStyle = {
-      gap: 12,
-    }
-
-    const $loadingContainer: ViewStyle = {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingVertical: 40,
-    }
-
-    const $loadingText: TextStyle = {
-      marginTop: 12,
-      color: theme.colors.textDim,
-    }
-
-    const $errorContainer: ViewStyle = {
-      flex: 1,
-      justifyContent: "center",
-      alignItems: "center",
-      paddingVertical: 40,
-      paddingHorizontal: 24,
-    }
-
-    const $errorText: TextStyle = {
-      fontSize: 16,
-      color: theme.colors.textDim,
-      textAlign: "center",
-      marginTop: 12,
-      marginBottom: 16,
-    }
-
-    const $retryButton: ViewStyle = {
-      paddingHorizontal: 24,
-      paddingVertical: 12,
-      backgroundColor: theme.colors.tint,
-      borderRadius: 8,
-    }
-
-    const $retryButtonText: TextStyle = {
-      color: theme.colors.palette.neutral100,
-      fontSize: 16,
-      fontWeight: "600",
-    }
-
-    const $offlineBanner: ViewStyle = {
-      flexDirection: "row",
-      alignItems: "center",
-      justifyContent: "center",
-      backgroundColor: theme.colors.offlineBg,
-      paddingVertical: 8,
-      paddingHorizontal: 16,
-      marginHorizontal: 16,
-      marginTop: 8,
-      borderRadius: 6,
-      gap: 8,
-    }
-
-    const $offlineBannerText: TextStyle = {
-      fontSize: 12,
-      color: theme.colors.offlineText,
-      textAlign: "center",
-      flex: 1,
-    }
-
     // Loading state
     if (isLoading) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-loading">
           <Header
             title="Health Observations"
             leftIcon="back"
             onLeftPress={() => navigation.goBack()}
             safeAreaEdges={[]}
           />
-          <View style={$loadingContainer}>
-            <ActivityIndicator size="large" color={theme.colors.tint} />
-            <Text style={$loadingText}>Loading observations...</Text>
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={theme.colors.tint} testID="loading-indicator" />
+            <Text style={[styles.loadingText, { color: theme.colors.textDim }]}>
+              Loading observations...
+            </Text>
           </View>
         </Screen>
       )
@@ -311,25 +153,29 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Error state
     if (error && observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-error">
           <Header
             title="Health Observations"
             leftIcon="back"
             onLeftPress={() => navigation.goBack()}
             safeAreaEdges={[]}
           />
-          <View style={$errorContainer}>
+          <View style={styles.errorContainer}>
             <MaterialCommunityIcons
               name="alert-circle-outline"
               size={48}
               color={theme.colors.textDim}
             />
-            <Text style={$errorText}>{error}</Text>
-            <View style={$retryButton}>
-              <Text style={$retryButtonText} onPress={refresh}>
+            <Text style={[styles.errorText, { color: theme.colors.textDim }]}>{error}</Text>
+            <Pressable
+              style={[styles.retryButton, { backgroundColor: theme.colors.tint }]}
+              onPress={refresh}
+              testID="retry-button"
+            >
+              <Text style={[styles.retryButtonText, { color: theme.colors.palette.neutral100 }]}>
                 Retry
               </Text>
-            </View>
+            </Pressable>
           </View>
         </Screen>
       )
@@ -338,7 +184,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Empty state
     if (observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-empty">
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -359,7 +205,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     }
 
     return (
-      <Screen preset="fixed" safeAreaEdges={["top"]}>
+      <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen">
         <Header
           title="Health Observations"
           leftIcon="back"
@@ -368,7 +214,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
         />
 
         <ScrollView
-          contentContainerStyle={$contentContainer}
+          contentContainerStyle={styles.contentContainer}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
@@ -377,31 +223,56 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
               colors={[theme.colors.tint]}
             />
           }
+          testID="observations-scroll-view"
         >
           {/* Summary Card */}
-          <View style={$summaryCard}>
-            <View style={$summaryLeft}>
-              <Text style={$summaryTitle}>{locationName}</Text>
-              <Text style={$summarySubtitle}>{country}</Text>
+          <View
+            style={[
+              styles.summaryCard,
+              {
+                backgroundColor: theme.colors.background,
+                borderLeftColor: theme.colors[worstStatusColorKey],
+                shadowColor: theme.colors.palette.neutral800,
+              },
+            ]}
+            testID="summary-card"
+          >
+            <View style={styles.summaryLeft}>
+              <Text style={[styles.summaryTitle, { color: theme.colors.text }]}>
+                {locationName}
+              </Text>
+              <Text style={[styles.summarySubtitle, { color: theme.colors.textDim }]}>
+                {country}
+              </Text>
             </View>
-            <View style={$summaryRight}>
-              <Text style={$alertCount}>{alertCount}</Text>
-              <Text style={$alertLabel}>{alertCount === 1 ? "Alert" : "Alerts"}</Text>
+            <View style={styles.summaryRight}>
+              <Text
+                style={[styles.alertCount, { color: theme.colors[worstStatusColorKey] }]}
+                testID="alert-count"
+              >
+                {alertCount}
+              </Text>
+              <Text style={[styles.alertLabel, { color: theme.colors.textDim }]}>
+                {alertCount === 1 ? "Alert" : "Alerts"}
+              </Text>
             </View>
           </View>
 
           {/* Offline Banner */}
           {isOffline && (
-            <View style={$offlineBanner}>
+            <View
+              style={[styles.offlineBanner, { backgroundColor: theme.colors.offlineBg }]}
+              testID="offline-banner"
+            >
               <MaterialCommunityIcons name="wifi-off" size={16} color={theme.colors.offlineText} />
-              <Text style={$offlineBannerText}>
+              <Text style={[styles.offlineBannerText, { color: theme.colors.offlineText }]}>
                 You are offline. Showing cached data if available.
               </Text>
             </View>
           )}
 
           {/* Categories with observations */}
-          <View style={$categoriesContainer}>
+          <View style={styles.categoriesContainer}>
             {activeCategories.map((category) => {
               const categoryObs = groupedObservations[category]
               const categoryStatus = getGroupWorstStatus(categoryObs)
@@ -413,29 +284,40 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
                   key={category}
                   initiallyExpanded={categoryStatus !== "safe"}
                   header={
-                    <View style={$categoryHeader}>
-                      <View style={$categoryIcon}>
+                    <View style={styles.categoryHeader}>
+                      <View
+                        style={[
+                          styles.categoryIcon,
+                          { backgroundColor: theme.colors.palette.neutral200 },
+                        ]}
+                      >
                         <MaterialCommunityIcons
                           name={iconName}
                           size={18}
                           color={theme.colors.tint}
                         />
                       </View>
-                      <View style={$categoryHeaderText}>
-                        <Text style={$categoryName}>{categoryName}</Text>
-                        <Text style={$categoryCount}>
+                      <View style={styles.categoryHeaderText}>
+                        <Text style={[styles.categoryName, { color: theme.colors.text }]}>
+                          {categoryName}
+                        </Text>
+                        <Text style={[styles.categoryCount, { color: theme.colors.textDim }]}>
                           {categoryObs.length} observation{categoryObs.length !== 1 ? "s" : ""}
                         </Text>
                       </View>
-                      <View style={$categoryStatus}>
+                      <View style={styles.categoryStatus}>
                         <StatusIndicator status={categoryStatus} size="medium" />
                       </View>
                     </View>
                   }
                 >
-                  <View style={$observationsList}>
+                  <View style={styles.observationsList}>
                     {categoryObs.map((obs, index) => (
-                      <ObservationCard key={`${obs.propertyId}-${index}`} observation={obs} />
+                      <ObservationCard
+                        key={`${obs.propertyId}-${index}`}
+                        observation={obs}
+                        testID={`observation-card-${category}-${index}`}
+                      />
                     ))}
                   </View>
                 </ExpandableCard>
@@ -446,3 +328,128 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       </Screen>
     )
   }
+
+const styles = StyleSheet.create({
+  alertCount: {
+    fontSize: 24,
+    fontWeight: "700",
+  } as TextStyle,
+  alertLabel: {
+    fontSize: 12,
+    marginTop: 2,
+  } as TextStyle,
+  categoriesContainer: {
+    gap: 8,
+    paddingTop: 8,
+  } as ViewStyle,
+  categoryCount: {
+    fontSize: 12,
+    marginTop: 2,
+  } as TextStyle,
+  categoryHeader: {
+    alignItems: "center",
+    flex: 1,
+    flexDirection: "row",
+  } as ViewStyle,
+  categoryHeaderText: {
+    flex: 1,
+  } as ViewStyle,
+  categoryIcon: {
+    alignItems: "center",
+    borderRadius: 16,
+    height: 32,
+    justifyContent: "center",
+    marginRight: 12,
+    width: 32,
+  } as ViewStyle,
+  categoryName: {
+    fontSize: 16,
+    fontWeight: "600",
+  } as TextStyle,
+  categoryStatus: {
+    marginRight: 8,
+  } as ViewStyle,
+  contentContainer: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  } as ViewStyle,
+  errorContainer: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingHorizontal: 24,
+    paddingVertical: 40,
+  } as ViewStyle,
+  errorText: {
+    fontSize: 16,
+    marginBottom: 16,
+    marginTop: 12,
+    textAlign: "center",
+  } as TextStyle,
+  loadingContainer: {
+    alignItems: "center",
+    flex: 1,
+    justifyContent: "center",
+    paddingVertical: 40,
+  } as ViewStyle,
+  loadingText: {
+    marginTop: 12,
+  } as TextStyle,
+  observationsList: {
+    gap: 12,
+  } as ViewStyle,
+  offlineBanner: {
+    alignItems: "center",
+    borderRadius: 6,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  } as ViewStyle,
+  offlineBannerText: {
+    flex: 1,
+    fontSize: 12,
+    textAlign: "center",
+  } as TextStyle,
+  retryButton: {
+    borderRadius: 8,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+  } as ViewStyle,
+  retryButtonText: {
+    fontSize: 16,
+    fontWeight: "600",
+  } as TextStyle,
+  summaryCard: {
+    alignItems: "center",
+    borderLeftWidth: 4,
+    borderRadius: 12,
+    elevation: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 16,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  } as ViewStyle,
+  summaryLeft: {
+    flex: 1,
+  } as ViewStyle,
+  summaryRight: {
+    alignItems: "center",
+  } as ViewStyle,
+  summarySubtitle: {
+    fontSize: 14,
+  } as TextStyle,
+  summaryTitle: {
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 4,
+  } as TextStyle,
+})

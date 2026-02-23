@@ -30,12 +30,29 @@ const client = generateClient<Schema>({
 // Types
 // =============================================================================
 
+// Valid category values from schema
+type ObservedPropertyCategory =
+  | "water_quality"
+  | "air_quality"
+  | "disease"
+  | "radiation"
+  | "soil"
+  | "noise"
+  | "climate"
+  | "infrastructure"
+
+// Valid observation types from schema
+type ObservationType = "numeric" | "zone" | "endemic" | "incidence" | "binary"
+
+// Valid threshold status values from schema
+type ThresholdStatus = "active" | "historical" | "not_applicable"
+
 interface SeedObservedProperty {
   propertyId: string
   name: string
   nameFr?: string | null
-  category: string
-  observationType: string
+  category: ObservedPropertyCategory
+  observationType: ObservationType
   unit?: string | null
   description?: string | null
   descriptionFr?: string | null
@@ -52,7 +69,7 @@ interface SeedPropertyThreshold {
   endemicIsDanger?: boolean | null
   incidenceWarningThreshold?: number | null
   incidenceDangerThreshold?: number | null
-  status: string
+  status: ThresholdStatus
   notes?: string | null
 }
 
@@ -126,8 +143,8 @@ async function seedObservedProperties(properties: SeedObservedProperty[], dryRun
         propertyId: property.propertyId,
         name: property.name,
         nameFr: property.nameFr,
-        category: property.category as any,
-        observationType: property.observationType as any,
+        category: property.category,
+        observationType: property.observationType,
         unit: property.unit,
         description: property.description,
         descriptionFr: property.descriptionFr,
@@ -169,7 +186,7 @@ async function seedPropertyThresholds(thresholds: SeedPropertyThreshold[], dryRu
         endemicIsDanger: threshold.endemicIsDanger,
         incidenceWarningThreshold: threshold.incidenceWarningThreshold,
         incidenceDangerThreshold: threshold.incidenceDangerThreshold,
-        status: threshold.status as any,
+        status: threshold.status,
         notes: threshold.notes,
       })
       created++
