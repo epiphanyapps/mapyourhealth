@@ -124,3 +124,7 @@ output/
 build-*.tar.gz
 *.png
 !apps/mobile/assets/**/*.png
+
+# Generated seed data
+packages/backend/scripts/seed-data.json
+packages/backend/scripts/seed-om-data.json
