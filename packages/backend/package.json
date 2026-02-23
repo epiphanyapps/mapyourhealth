@@ -15,8 +15,9 @@
     "esbuild": "esbuild",
     "seed": "tsx scripts/seed-contaminants.ts",
     "seed:clear": "tsx scripts/seed-contaminants.ts --clear",
-    "seed:om": "tsx scripts/seed-om-data.ts",
-    "parse:excel": "tsx scripts/parse-risks-excel.ts"
+    "seed:om": "tsx scripts/seed-om-data.ts --json scripts/seed-om-data.json",
+    "parse:excel": "tsx scripts/parse-risks-excel.ts",
+    "parse:om": "tsx scripts/parse-risks-excel-om.ts"
   },
   "dependencies": {
     "@aws-amplify/backend": "^1.14.1",
