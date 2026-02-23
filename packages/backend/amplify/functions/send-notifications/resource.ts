@@ -11,4 +11,5 @@ export const sendNotifications = defineFunction({
   entry: './handler.ts',
   timeoutSeconds: 30,
   memoryMB: 256,
+  resourceGroupName: 'data', // Assign to data stack (handles data-driven notifications)
 })

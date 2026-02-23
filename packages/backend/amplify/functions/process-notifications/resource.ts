@@ -12,4 +12,5 @@ export const processNotifications = defineFunction({
   entry: './handler.ts',
   timeoutSeconds: 60, // Allow time for multiple Lambda invocations
   memoryMB: 256,
+  resourceGroupName: 'data', // Assign to data stack (processes subscription data)
 })
