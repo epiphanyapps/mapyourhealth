@@ -32,7 +32,6 @@ import {
   Bell,
   Droplets,
   Wind,
-  Bug,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
@@ -47,8 +46,8 @@ const NOTIFICATIONS_LAMBDA_FUNCTION =
 
 type Contaminant = Schema["Contaminant"]["type"];
 
-// Category types for filtering contaminants
-type ImportCategory = "water" | "air" | "pathogens";
+// Category types for filtering contaminants (health/pathogens removed per issue #126)
+type ImportCategory = "water" | "air";
 
 // Contaminant categories that belong to each import category
 const CATEGORY_CONTAMINANT_TYPES: Record<ImportCategory, string[]> = {
@@ -62,7 +61,6 @@ const CATEGORY_CONTAMINANT_TYPES: Record<ImportCategory, string[]> = {
     "microbiological",
   ],
   air: ["air"], // radon and other air pollutants
-  pathogens: ["pathogen", "disease"], // lyme disease, etc.
 };
 
 // Category display information
@@ -81,12 +79,6 @@ const CATEGORY_INFO: Record<
     description:
       "Import air quality data including radon levels and other airborne contaminants",
     icon: Wind,
-  },
-  pathogens: {
-    title: "Pathogens",
-    description:
-      "Import disease incidence data such as Lyme disease rates and other pathogen risks",
-    icon: Bug,
   },
 };
 
@@ -120,20 +112,6 @@ Montreal,QC,CA,radon,3.8,Health Canada`,
       "country",
       "contaminantId (e.g., radon)",
       "value (pCi/L)",
-      "source (optional)",
-    ],
-  },
-  pathogens: {
-    example: `city,state,country,contaminantId,value,source
-New York,NY,US,lyme_disease,15.2,CDC
-Hartford,CT,US,lyme_disease,8.5,State Health Dept
-Montreal,QC,CA,lyme_disease,3.2,PHAC`,
-    fields: [
-      "city",
-      "state",
-      "country",
-      "contaminantId (e.g., lyme_disease)",
-      "value (incidence per 100k)",
       "source (optional)",
     ],
   },
@@ -618,7 +596,7 @@ export default function ImportPage() {
       </div>
 
       <Tabs value={activeCategory} onValueChange={handleCategoryChange}>
-        <TabsList className="grid w-full grid-cols-3">
+        <TabsList className="grid w-full grid-cols-2">
           <TabsTrigger value="water" className="flex items-center gap-2">
             <Droplets className="h-4 w-4" />
             Water Quality
@@ -627,13 +605,9 @@ export default function ImportPage() {
             <Wind className="h-4 w-4" />
             Air Pollution
           </TabsTrigger>
-          <TabsTrigger value="pathogens" className="flex items-center gap-2">
-            <Bug className="h-4 w-4" />
-            Pathogens
-          </TabsTrigger>
         </TabsList>
 
-        {(["water", "air", "pathogens"] as ImportCategory[]).map((category) => (
+        {(["water", "air"] as ImportCategory[]).map((category) => (
           <TabsContent key={category} value={category} className="space-y-6">
             {/* Category Description */}
             <Card>
@@ -641,7 +615,6 @@ export default function ImportPage() {
                 <CardTitle className="flex items-center gap-2">
                   {category === "water" && <Droplets className="h-5 w-5" />}
                   {category === "air" && <Wind className="h-5 w-5" />}
-                  {category === "pathogens" && <Bug className="h-5 w-5" />}
                   {CATEGORY_INFO[category].title}
                 </CardTitle>
                 <CardDescription>

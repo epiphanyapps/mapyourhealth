@@ -47,8 +47,6 @@ interface FormErrors {
 const FALLBACK_CATEGORY_OPTIONS: { value: string; label: string }[] = [
   { value: StatCategory.water, label: "Water Quality" },
   { value: StatCategory.air, label: "Air Quality" },
-  { value: StatCategory.health, label: "Health" },
-  { value: StatCategory.disaster, label: "Disaster Risk" },
 ]
 
 /**

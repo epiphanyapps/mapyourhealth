@@ -170,11 +170,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [zipData, statDefinitions],
   )
 
-  // All four categories to display
-  const categories = useMemo(
-    () => [StatCategory.water, StatCategory.air, StatCategory.health, StatCategory.disaster],
-    [],
-  )
+  // Categories to display (water and air only - health and disaster removed per issue #126)
+  const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
 
   // Handle location selection from PlacesSearchBar
   const handleLocationSelect = useCallback((city: string, state: string, country: string) => {
@@ -451,8 +448,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
           <MaterialCommunityIcons name="shield-search" size={64} color={theme.colors.tint} />
           <Text style={$emptyStateTitle}>Find out how safe your location is</Text>
           <Text style={$emptyStateSubtitle}>
-            Search above to get safety insights on water quality, air pollution, health risks, and
-            natural disasters in any area
+            Search above to get safety insights on water quality and air pollution in any area
           </Text>
         </View>
         <ProfileMenu

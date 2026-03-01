@@ -75,39 +75,15 @@ export const CATEGORY_CONFIG: Record<StatCategory, CategoryConfig> = {
       },
     ],
   },
+  // Note: health and disaster categories removed per issue #126
+  // Keeping minimal config for backward compatibility with any existing data
   health: {
-    description:
-      "Pathogen and disease risk information for your area. See [CDC Disease Information](https://www.cdc.gov/) for more details.",
-    links: [
-      {
-        label: "CDC Disease Information",
-        url: "https://www.cdc.gov/",
-      },
-    ],
-    subCategories: [
-      {
-        id: "lyme",
-        name: "Lyme Disease",
-        description:
-          "[Lyme disease](https://www.cdc.gov/lyme/) is caused by the bacterium Borrelia burgdorferi and is transmitted to humans through the bite of infected blacklegged ticks.",
-        links: [
-          {
-            label: "CDC Lyme Disease",
-            url: "https://www.cdc.gov/lyme/",
-          },
-        ],
-      },
-    ],
+    description: "",
+    links: [],
   },
   disaster: {
-    description:
-      "Natural disaster risk assessment for your area. Visit [FEMA](https://www.fema.gov/) for emergency preparedness resources.",
-    links: [
-      {
-        label: "FEMA Disaster Information",
-        url: "https://www.fema.gov/",
-      },
-    ],
+    description: "",
+    links: [],
   },
 }
 

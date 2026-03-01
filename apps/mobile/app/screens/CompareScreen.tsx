@@ -39,14 +39,9 @@ const CATEGORY_DISPLAY_NAMES: Record<StatCategory, string> = {
 }
 
 /**
- * All four categories to compare
+ * Categories to compare (health and disaster removed per issue #126)
  */
-const ALL_CATEGORIES = [
-  StatCategory.water,
-  StatCategory.air,
-  StatCategory.health,
-  StatCategory.disaster,
-]
+const ALL_CATEGORIES = [StatCategory.water, StatCategory.air]
 
 /**
  * Calculate overall safety score based on all categories
