@@ -1,0 +1,179 @@
+# MapYourHealth E2E Test Suite Configuration
+# Defines test categories, execution order, and dependencies
+# Version: 1.0.0
+
+# Global Configuration
+app_id: com.epiphanyapps.mapyourhealth
+timeout_default: 300
+retry_default: 2
+platforms:
+  - ios
+  - android
+
+# Test Categories Configuration
+categories:
+  smoke:
+    name: "Smoke Tests"
+    description: "Basic functionality validation - quick tests for CI"
+    priority: 1
+    max_duration_minutes: 10
+    parallel_execution: true
+    tests:
+      - E2E-100-basic-app-launch.yaml
+      - E2E-101-basic-navigation.yaml
+      - E2E-102-search-functionality.yaml
+    
+  core:
+    name: "Core Features"
+    description: "Essential application functionality"
+    priority: 2
+    max_duration_minutes: 20
+    parallel_execution: false
+    dependencies: ["smoke"]
+    tests:
+      - E2E-001-subscription-flow.yaml
+      - E2E-002-search-validation.yaml
+      - E2E-005-dashboard-accordion.yaml
+    
+  features:
+    name: "Extended Features"
+    description: "Additional feature testing"
+    priority: 3
+    max_duration_minutes: 25
+    parallel_execution: true
+    dependencies: ["core"]
+    tests:
+      - E2E-003-category-reorganization.yaml
+      - E2E-004-external-links.yaml
+      - E2E-006-risk-factors-display.yaml
+      - E2E-007-location-granularity.yaml
+    
+  advanced:
+    name: "Advanced Interactions"
+    description: "Complex user interactions and workflows"
+    priority: 4
+    max_duration_minutes: 15
+    parallel_execution: false
+    dependencies: ["features"]
+    tests:
+      - E2E-009-autocomplete-selection.yaml
+      - E2E-010-accordion-subitem-selection.yaml
+    
+  account:
+    name: "Account Management"
+    description: "User account creation, management, and deletion"
+    priority: 5
+    max_duration_minutes: 20
+    parallel_execution: false
+    dependencies: ["core"]
+    tests:
+      - E2E-121-signup-only.yaml
+      - E2E-121-account-deletion-automated.yaml
+      - E2E-121-testid-validation.yaml
+    
+  full:
+    name: "Full Test Suite"
+    description: "Complete end-to-end validation"
+    priority: 10
+    max_duration_minutes: 60
+    parallel_execution: false
+    dependencies: []
+    include_all_categories: true
+
+# Test Environment Configuration
+environments:
+  ci:
+    name: "Continuous Integration"
+    backend_mode: "stub"
+    retry_attempts: 3
+    timeout_multiplier: 1.5
+    cleanup_after_run: true
+    
+  development:
+    name: "Development Environment"
+    backend_mode: "real"
+    retry_attempts: 2
+    timeout_multiplier: 1.0
+    cleanup_after_run: false
+    
+  staging:
+    name: "Staging Environment"
+    backend_mode: "real"
+    retry_attempts: 2
+    timeout_multiplier: 1.2
+    cleanup_after_run: true
+    
+  production_validation:
+    name: "Production Validation"
+    backend_mode: "real"
+    retry_attempts: 1
+    timeout_multiplier: 0.8
+    cleanup_after_run: true
+
+# Platform-specific Configuration
+platform_config:
+  ios:
+    preferred_devices:
+      - "iPhone 16 Pro"
+      - "iPhone 16"
+      - "iPhone 15 Pro"
+    build_configuration: "Release"
+    simulator_timeout: 60
+    
+  android:
+    preferred_devices:
+      - "ZL73232GKP"  # Moto E13 test device
+    build_configuration: "release"
+    install_timeout: 30
+
+# Failure Analysis Configuration
+failure_analysis:
+  retry_on_patterns:
+    - "TimeoutException"
+    - "NetworkException" 
+    - "DeviceDisconnectedException"
+  
+  skip_on_patterns:
+    - "AppCrashException"
+    - "AssertionError"
+    
+  screenshot_on_failure: true
+  log_capture_lines: 100
+
+# Reporting Configuration
+reporting:
+  formats:
+    - json
+    - markdown
+    - html
+  
+  include_screenshots: true
+  include_logs: true
+  include_performance_metrics: true
+  
+  ai_queue_integration:
+    enabled: true
+    endpoint: "http://192.168.1.227:3001"
+    notifications:
+      - test_started
+      - test_completed
+      - test_failed
+  
+  telegram_integration:
+    enabled: false
+    # chat_id: "TELEGRAM_CHAT_ID"
+    # bot_token: "TELEGRAM_BOT_TOKEN"
+
+# Monitoring Configuration
+monitoring:
+  real_time: true
+  interval_seconds: 30
+  capture_metrics:
+    - cpu_usage
+    - memory_usage
+    - network_activity
+  
+  alerts:
+    high_cpu_threshold: 80
+    high_memory_threshold: 1000000  # KB
+    long_running_threshold: 600     # seconds

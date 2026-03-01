@@ -1,0 +1,472 @@
+name: E2E Orchestrated Testing
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-orchestrated.yml'
+      - 'apps/mobile/.maestro/**'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-orchestrated.yml'
+      - 'apps/mobile/.maestro/**'
+  workflow_dispatch:
+    inputs:
+      test_category:
+        description: 'Test category to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - core
+          - features
+          - advanced
+          - account
+          - full
+      platform:
+        description: 'Platform to test'
+        required: true
+        default: 'ios'
+        type: choice
+        options:
+          - ios
+          - android
+      retry_attempts:
+        description: 'Number of retry attempts per test'
+        required: false
+        default: '2'
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+concurrency:
+  group: e2e-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
+  JAVA_HOME: /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 120000
+  AWS_PROFILE: rayane
+
+jobs:
+  # Matrix strategy for comprehensive testing
+  test-matrix:
+    name: E2E Tests (${{ matrix.platform }}, ${{ matrix.category }})
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 45
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Default: smoke tests on both platforms for PRs
+          - platform: ios
+            category: smoke
+            runner: [self-hosted, macOS]
+            artifact_name: ios-smoke
+          - platform: android  
+            category: smoke
+            runner: [self-hosted, macOS]
+            artifact_name: android-smoke
+          # Full test suite on main branch pushes
+          - platform: ios
+            category: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'full' || 'smoke' }}
+            runner: [self-hosted, macOS]
+            artifact_name: ios-full
+          # Manual dispatch with user choice
+          - platform: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.platform || 'ios' }}
+            category: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.test_category || 'smoke' }}
+            runner: [self-hosted, macOS]
+            artifact_name: manual-test
+
+    steps:
+      - name: 🏁 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: ☕ Set up Java in PATH  
+        run: echo "/usr/local/opt/openjdk@17/bin" >> $GITHUB_PATH
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: 📦 Enable Corepack
+        run: corepack enable
+
+      - name: 🗂️ Cache Dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            node_modules
+            apps/mobile/node_modules
+            apps/mobile/ios/Pods
+            ~/Library/Caches/CocoaPods
+            ~/.maestro/cache
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/yarn.lock', '**/Podfile.lock') }}-v2
+          restore-keys: |
+            ${{ runner.os }}-deps-v2
+
+      - name: 🧰 Install Dependencies
+        run: yarn install --immutable
+
+      - name: 🔗 Create Amplify Outputs for CI
+        run: |
+          mkdir -p apps/mobile
+          cat > apps/mobile/amplify_outputs.json << 'EOF'
+          {
+            "version": "1",
+            "auth": {
+              "aws_region": "ca-central-1",
+              "user_pool_id": "ca-central-1_ci_test",
+              "user_pool_client_id": "ci_test_client",
+              "identity_pool_id": "ca-central-1:ci-test-identity"
+            },
+            "data": {
+              "url": "https://ci-test.appsync-api.ca-central-1.amazonaws.com/graphql",
+              "aws_region": "ca-central-1",
+              "default_authorization_type": "API_KEY", 
+              "api_key": "da2-ci-test-key"
+            }
+          }
+          EOF
+
+      - name: 🏗️ Setup iOS Environment (iOS only)
+        if: matrix.platform == 'ios'
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+          xcrun simctl list runtimes
+
+      - name: 🤖 Setup Android Environment (Android only)  
+        if: matrix.platform == 'android'
+        run: |
+          # Ensure Android device is connected and ready
+          adb devices -l
+          # Check if we have the test device available
+          if ! adb devices | grep -q "ZL73232GKP"; then
+            echo "❌ Android test device ZL73232GKP not found"
+            echo "Available devices:"
+            adb devices -l
+            exit 1
+          fi
+          echo "✅ Android test device ready"
+
+      - name: 🎭 Install Maestro
+        run: |
+          if ! command -v maestro &>/dev/null && [ ! -f "$HOME/.maestro/bin/maestro" ]; then
+            curl -Ls "https://get.maestro.mobile.dev" | bash
+          fi
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+          $HOME/.maestro/bin/maestro --version
+
+      - name: 🧪 Run E2E Test Orchestrator
+        id: e2e_tests
+        run: |
+          cd apps/mobile
+          
+          # Set additional environment variables for the test run
+          export RETRY_ATTEMPTS="${{ github.event.inputs.retry_attempts || '2' }}"
+          export DEVICE_ID="${{ matrix.platform == 'android' && 'ZL73232GKP' || '' }}"
+          
+          # Run the orchestrated test suite
+          .maestro/scripts/test-orchestrator.sh run ${{ matrix.category }} \
+            --platform ${{ matrix.platform }} \
+            --retry-attempts "$RETRY_ATTEMPTS" \
+            ${DEVICE_ID:+--device-id "$DEVICE_ID"}
+        continue-on-error: true
+
+      - name: 📊 Process Test Results
+        id: results
+        run: |
+          # Find the most recent results directory
+          RESULTS_DIR=$(find apps/mobile/.maestro/results -type d -name "20*" | sort | tail -1)
+          
+          if [ -z "$RESULTS_DIR" ]; then
+            echo "❌ No test results found"
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "summary=No test results generated" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "results_dir=$RESULTS_DIR" >> $GITHUB_OUTPUT
+          
+          # Extract summary from JSON report if available
+          if [ -f "$RESULTS_DIR/test_report.json" ]; then
+            PASSED=$(jq -r '.summary.passed' "$RESULTS_DIR/test_report.json")
+            FAILED=$(jq -r '.summary.failed' "$RESULTS_DIR/test_report.json")
+            SKIPPED=$(jq -r '.summary.skipped' "$RESULTS_DIR/test_report.json")
+            TOTAL=$(jq -r '.summary.total' "$RESULTS_DIR/test_report.json")
+            SUCCESS_RATE=$(jq -r '.summary.success_rate' "$RESULTS_DIR/test_report.json")
+            
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "skipped=$SKIPPED" >> $GITHUB_OUTPUT
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            echo "success=$([ "$FAILED" -eq 0 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+            
+            # Create summary for PR comment
+            SUMMARY="**Platform:** ${{ matrix.platform }} | **Category:** ${{ matrix.category }}
+            **Results:** $PASSED passed, $FAILED failed, $SKIPPED skipped out of $TOTAL total
+            **Success Rate:** $SUCCESS_RATE%"
+            
+            echo "summary=$SUMMARY" >> $GITHUB_OUTPUT
+          else
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "summary=Test execution failed - no results generated" >> $GITHUB_OUTPUT
+          fi
+
+      - name: 🎨 Generate Test Badge
+        if: always()
+        run: |
+          RESULTS_DIR="${{ steps.results.outputs.results_dir }}"
+          if [ -n "$RESULTS_DIR" ] && [ -d "$RESULTS_DIR" ]; then
+            # Create a simple badge SVG
+            SUCCESS="${{ steps.results.outputs.success }}"
+            SUCCESS_RATE="${{ steps.results.outputs.success_rate || '0' }}"
+            
+            if [ "$SUCCESS" = "true" ]; then
+              COLOR="brightgreen"
+              STATUS="passing"
+            else
+              COLOR="red" 
+              STATUS="failing"
+            fi
+            
+            mkdir -p "$RESULTS_DIR/badges"
+            cat > "$RESULTS_DIR/badges/test-badge.svg" << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="104" height="20">
+            <linearGradient id="b" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="a">
+              <rect width="104" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#a)">
+              <path fill="#555" d="M0 0h63v20H0z"/>
+              <path fill="$COLOR" d="M63 0h41v20H63z"/>
+              <path fill="url(#b)" d="M0 0h104v20H0z"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="31.5" y="15" fill="#010101" fill-opacity=".3">tests</text>
+              <text x="31.5" y="14">tests</text>
+              <text x="82.5" y="15" fill="#010101" fill-opacity=".3">$STATUS</text>
+              <text x="82.5" y="14">$STATUS</text>
+            </g>
+          </svg>
+          EOF
+          fi
+
+      - name: 📱 Upload Screenshots (on failure)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: screenshots-${{ matrix.artifact_name }}-${{ github.run_number }}
+          path: ~/.maestro/tests/**/screenshot*.png
+          retention-days: 7
+          if-no-files-found: ignore
+
+      - name: 📋 Upload Test Results  
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results-${{ matrix.artifact_name }}-${{ github.run_number }}
+          path: |
+            ${{ steps.results.outputs.results_dir }}/**
+            ~/.maestro/tests/**
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: 📝 Upload Test Logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-${{ matrix.artifact_name }}-${{ github.run_number }}
+          path: |
+            ${{ steps.results.outputs.results_dir }}/**/*.log
+            ~/.maestro/**/*.log
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Aggregate results and post summary
+  test-summary:
+    name: 📊 Test Summary
+    runs-on: ubuntu-latest
+    needs: test-matrix
+    if: always()
+    
+    steps:
+      - name: 📥 Download All Results
+        uses: actions/download-artifact@v4
+        with:
+          pattern: test-results-*
+          merge-multiple: true
+          path: ./all-results
+
+      - name: 🔄 Aggregate Results
+        id: aggregate
+        run: |
+          # Find all test report JSON files
+          REPORTS=$(find ./all-results -name "test_report.json" -type f)
+          
+          if [ -z "$REPORTS" ]; then
+            echo "❌ No test reports found"
+            echo "success=false" >> $GITHUB_OUTPUT
+            echo "summary=No test results to aggregate" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          # Aggregate totals
+          TOTAL_PASSED=0
+          TOTAL_FAILED=0
+          TOTAL_SKIPPED=0
+          TOTAL_TESTS=0
+          
+          while IFS= read -r report; do
+            if [ -f "$report" ]; then
+              PASSED=$(jq -r '.summary.passed' "$report")
+              FAILED=$(jq -r '.summary.failed' "$report") 
+              SKIPPED=$(jq -r '.summary.skipped' "$report")
+              
+              TOTAL_PASSED=$((TOTAL_PASSED + PASSED))
+              TOTAL_FAILED=$((TOTAL_FAILED + FAILED))
+              TOTAL_SKIPPED=$((TOTAL_SKIPPED + SKIPPED))
+            fi
+          done <<< "$REPORTS"
+          
+          TOTAL_TESTS=$((TOTAL_PASSED + TOTAL_FAILED + TOTAL_SKIPPED))
+          
+          if [ $TOTAL_TESTS -gt 0 ]; then
+            SUCCESS_RATE=$(awk "BEGIN {printf \"%.1f\", $TOTAL_PASSED * 100.0 / $TOTAL_TESTS}")
+          else
+            SUCCESS_RATE="0.0"
+          fi
+          
+          echo "total_passed=$TOTAL_PASSED" >> $GITHUB_OUTPUT
+          echo "total_failed=$TOTAL_FAILED" >> $GITHUB_OUTPUT
+          echo "total_skipped=$TOTAL_SKIPPED" >> $GITHUB_OUTPUT
+          echo "total_tests=$TOTAL_TESTS" >> $GITHUB_OUTPUT
+          echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+          echo "success=$([ "$TOTAL_FAILED" -eq 0 ] && echo 'true' || echo 'false')" >> $GITHUB_OUTPUT
+
+      - name: 💬 Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const success = '${{ steps.aggregate.outputs.success }}' === 'true';
+            const totalPassed = '${{ steps.aggregate.outputs.total_passed }}';
+            const totalFailed = '${{ steps.aggregate.outputs.total_failed }}';
+            const totalSkipped = '${{ steps.aggregate.outputs.total_skipped }}';
+            const totalTests = '${{ steps.aggregate.outputs.total_tests }}';
+            const successRate = '${{ steps.aggregate.outputs.success_rate }}';
+            
+            const statusIcon = success ? '✅' : '❌';
+            const statusText = success ? 'PASSED' : 'FAILED';
+            
+            const body = `## ${statusIcon} E2E Test Results - ${statusText}
+            
+            **📊 Overall Summary:**
+            - **Total Tests:** ${totalTests}
+            - **Passed:** ${totalPassed} 
+            - **Failed:** ${totalFailed}
+            - **Skipped:** ${totalSkipped}
+            - **Success Rate:** ${successRate}%
+            
+            **🔗 Commit:** \`${context.sha.substring(0, 8)}\`
+            **⏱️ Workflow:** [${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            
+            ${totalFailed > 0 ? '⚠️ **Some tests failed.** Check the workflow logs and downloaded artifacts for details.' : '🎉 **All tests passed!** Great work!'}
+            
+            ---
+            <details>
+            <summary>📋 View Detailed Results</summary>
+            
+            Download the test artifacts from the workflow run to see:
+            - Detailed test reports (JSON & Markdown)
+            - Screenshots from failed tests  
+            - Complete test execution logs
+            - Test category breakdowns
+            
+            </details>`;
+            
+            // Try to update existing comment first
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const existingComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('E2E Test Results')
+            );
+            
+            if (existingComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body
+              });
+            }
+
+      - name: ❌ Fail if tests failed
+        if: steps.aggregate.outputs.success != 'true'
+        run: |
+          echo "❌ E2E tests failed: ${{ steps.aggregate.outputs.total_failed }} out of ${{ steps.aggregate.outputs.total_tests }} tests"
+          exit 1
+
+  # AI Queue Integration (if enabled)
+  notify-ai-queue:
+    name: 🤖 Notify AI Queue
+    runs-on: ubuntu-latest
+    needs: [test-summary]
+    if: always() && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: 🔔 Send AI Queue Notification
+        run: |
+          # Check if AI queue endpoint is available
+          if curl -f -s http://192.168.1.227:3001/health >/dev/null 2>&1; then
+            SUCCESS="${{ needs.test-summary.outputs.success }}"
+            COMMIT_SHA="${{ github.sha }}"
+            
+            PAYLOAD=$(cat << EOF
+          {
+            "type": "e2e_test_result",
+            "success": $SUCCESS,
+            "commit": "${COMMIT_SHA:0:8}",
+            "total_tests": "${{ needs.test-summary.outputs.total_tests }}",
+            "failed_tests": "${{ needs.test-summary.outputs.total_failed }}",
+            "success_rate": "${{ needs.test-summary.outputs.success_rate }}%",
+            "workflow_url": "${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}",
+            "timestamp": "$(date -u +%Y-%m-%dT%H:%M:%S.%3NZ)"
+          }
+          EOF
+          )
+            
+            curl -X POST http://192.168.1.227:3001/api/notifications \
+              -H "Content-Type: application/json" \
+              -d "$PAYLOAD" || echo "Failed to notify AI queue (non-critical)"
+          else
+            echo "AI queue not available - skipping notification"
+          fi

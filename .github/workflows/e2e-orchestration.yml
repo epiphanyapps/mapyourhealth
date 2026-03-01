@@ -1,0 +1,446 @@
+name: E2E Test Orchestration v1.0
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'scripts/e2e-test-runner.sh'
+      - '.github/workflows/e2e-orchestration.yml'
+      - '.maestro/**'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - 'scripts/e2e-test-runner.sh'
+      - '.github/workflows/e2e-orchestration.yml'
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: true
+        default: 'smoke'
+        type: choice
+        options:
+          - smoke
+          - full
+          - regression
+      platform:
+        description: 'Platform to test'
+        required: true
+        default: 'ios'
+        type: choice
+        options:
+          - ios
+          - android
+      retry_failed:
+        description: 'Retry failed tests'
+        required: false
+        default: true
+        type: boolean
+
+permissions:
+  contents: read
+  pull-requests: write
+  actions: write
+
+env:
+  MAESTRO_APP_ID: com.epiphanyapps.mapyourhealth
+  AWS_PROFILE: rayane
+  AWS_REGION: ca-central-1
+  JAVA_HOME: /usr/local/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home
+
+jobs:
+  # Job 1: Determine test strategy based on trigger
+  test-strategy:
+    name: Determine Test Strategy
+    runs-on: ubuntu-latest
+    outputs:
+      test_suite: ${{ steps.strategy.outputs.test_suite }}
+      run_ios: ${{ steps.strategy.outputs.run_ios }}
+      run_android: ${{ steps.strategy.outputs.run_android }}
+      retry_failed: ${{ steps.strategy.outputs.retry_failed }}
+    steps:
+      - name: Determine test strategy
+        id: strategy
+        run: |
+          # Default values
+          TEST_SUITE="smoke"
+          RUN_IOS="true"
+          RUN_ANDROID="false"
+          RETRY_FAILED="false"
+          
+          # Override based on trigger type
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            TEST_SUITE="${{ github.event.inputs.test_suite }}"
+            RUN_IOS="${{ github.event.inputs.platform == 'ios' || github.event.inputs.platform == 'both' }}"
+            RUN_ANDROID="${{ github.event.inputs.platform == 'android' || github.event.inputs.platform == 'both' }}"
+            RETRY_FAILED="${{ github.event.inputs.retry_failed }}"
+          elif [[ "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "refs/heads/main" ]]; then
+            # Full suite on main branch pushes
+            TEST_SUITE="full"
+            RETRY_FAILED="true"
+          elif [[ "${{ github.event_name }}" == "pull_request" ]]; then
+            # Smoke tests on PRs for fast feedback
+            TEST_SUITE="smoke"
+          fi
+          
+          echo "test_suite=$TEST_SUITE" >> $GITHUB_OUTPUT
+          echo "run_ios=$RUN_IOS" >> $GITHUB_OUTPUT
+          echo "run_android=$RUN_ANDROID" >> $GITHUB_OUTPUT
+          echo "retry_failed=$RETRY_FAILED" >> $GITHUB_OUTPUT
+          
+          echo "Selected strategy:"
+          echo "- Test Suite: $TEST_SUITE"
+          echo "- iOS: $RUN_IOS"
+          echo "- Android: $RUN_ANDROID"
+          echo "- Retry Failed: $RETRY_FAILED"
+
+  # Job 2: iOS E2E Tests
+  e2e-ios:
+    name: E2E Tests (iOS)
+    needs: test-strategy
+    if: needs.test-strategy.outputs.run_ios == 'true'
+    runs-on: [self-hosted, macOS]
+    timeout-minutes: 60
+    outputs:
+      test_results: ${{ steps.test.outputs.results }}
+      success_rate: ${{ steps.test.outputs.success_rate }}
+      artifacts_path: ${{ steps.test.outputs.artifacts_path }}
+    steps:
+      - name: Setup Java in PATH
+        run: echo "/usr/local/opt/openjdk@17/bin" >> $GITHUB_PATH
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Maestro
+        run: |
+          if ! command -v maestro &>/dev/null && [ ! -f "$HOME/.maestro/bin/maestro" ]; then
+            curl -Ls "https://get.maestro.mobile.dev" | bash
+          fi
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Run E2E Tests
+        id: test
+        run: |
+          # Create unique output directory for this run
+          OUTPUT_DIR="./test-results/ios-$(date +%s)"
+          mkdir -p "$OUTPUT_DIR"
+          
+          # Prepare retry flag
+          RETRY_FLAG=""
+          if [[ "${{ needs.test-strategy.outputs.retry_failed }}" == "true" ]]; then
+            RETRY_FLAG="--retry-failed"
+          fi
+          
+          # Run tests with orchestration script
+          if ./scripts/e2e-test-runner.sh \
+            --suite "${{ needs.test-strategy.outputs.test_suite }}" \
+            --platform ios \
+            --device simulator \
+            --output-dir "$OUTPUT_DIR" \
+            --report-format json \
+            $RETRY_FLAG; then
+            echo "test_result=success" >> $GITHUB_OUTPUT
+          else
+            echo "test_result=failure" >> $GITHUB_OUTPUT
+          fi
+          
+          # Extract results for reporting
+          if [[ -f "$OUTPUT_DIR/test_report.json" ]]; then
+            SUCCESS_RATE=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.success_rate')
+            TOTAL_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.total_tests')
+            PASSED_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.passed_tests')
+            FAILED_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.failed_tests')
+            
+            echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            echo "results=Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS" >> $GITHUB_OUTPUT
+          fi
+          
+          echo "artifacts_path=$OUTPUT_DIR" >> $GITHUB_OUTPUT
+
+      - name: Upload test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-ios-results-${{ github.run_number }}
+          path: |
+            test-results/
+            ~/.maestro/tests/
+          retention-days: 30
+          if-no-files-found: warn
+
+      - name: Upload failure screenshots
+        if: failure() && steps.test.outputs.test_result == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-ios-failures-${{ github.run_number }}
+          path: test-results/failures/
+          retention-days: 7
+          if-no-files-found: ignore
+
+  # Job 3: Android E2E Tests (conditional)
+  e2e-android:
+    name: E2E Tests (Android)
+    needs: test-strategy
+    if: needs.test-strategy.outputs.run_android == 'true'
+    runs-on: [self-hosted, macOS]  # Assuming same runner has Android setup
+    timeout-minutes: 45
+    outputs:
+      test_results: ${{ steps.test.outputs.results }}
+      success_rate: ${{ steps.test.outputs.success_rate }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install Maestro
+        run: |
+          if ! command -v maestro &>/dev/null && [ ! -f "$HOME/.maestro/bin/maestro" ]; then
+            curl -Ls "https://get.maestro.mobile.dev" | bash
+          fi
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      - name: Check Android Device
+        run: |
+          if ! adb devices | grep -q "device$"; then
+            echo "❌ No Android devices connected"
+            echo "Available devices:"
+            adb devices
+            exit 1
+          fi
+          echo "✅ Android device found"
+
+      - name: Run Android E2E Tests
+        id: test
+        run: |
+          OUTPUT_DIR="./test-results/android-$(date +%s)"
+          mkdir -p "$OUTPUT_DIR"
+          
+          RETRY_FLAG=""
+          if [[ "${{ needs.test-strategy.outputs.retry_failed }}" == "true" ]]; then
+            RETRY_FLAG="--retry-failed"
+          fi
+          
+          if ./scripts/e2e-test-runner.sh \
+            --suite "${{ needs.test-strategy.outputs.test_suite }}" \
+            --platform android \
+            --output-dir "$OUTPUT_DIR" \
+            --report-format json \
+            $RETRY_FLAG; then
+            echo "test_result=success" >> $GITHUB_OUTPUT
+          else
+            echo "test_result=failure" >> $GITHUB_OUTPUT
+          fi
+          
+          # Extract results
+          if [[ -f "$OUTPUT_DIR/test_report.json" ]]; then
+            SUCCESS_RATE=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.success_rate')
+            TOTAL_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.total_tests')
+            PASSED_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.passed_tests')
+            FAILED_TESTS=$(cat "$OUTPUT_DIR/test_report.json" | jq -r '.summary.failed_tests')
+            
+            echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+            echo "results=Total: $TOTAL_TESTS, Passed: $PASSED_TESTS, Failed: $FAILED_TESTS" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Upload Android test artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-android-results-${{ github.run_number }}
+          path: test-results/
+          retention-days: 30
+
+  # Job 4: Test Result Analysis & Notification
+  test-analysis:
+    name: Test Analysis & Notification
+    needs: [test-strategy, e2e-ios, e2e-android]
+    if: always() && (needs.e2e-ios.result != 'skipped' || needs.e2e-android.result != 'skipped')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Analyze test results
+        id: analysis
+        run: |
+          # Collect results from completed jobs
+          IOS_RESULT="${{ needs.e2e-ios.result }}"
+          ANDROID_RESULT="${{ needs.e2e-android.result }}"
+          IOS_SUCCESS_RATE="${{ needs.e2e-ios.outputs.success_rate }}"
+          ANDROID_SUCCESS_RATE="${{ needs.e2e-android.outputs.success_rate }}"
+          
+          OVERALL_STATUS="success"
+          PLATFORMS_TESTED=""
+          
+          if [[ "$IOS_RESULT" != "skipped" ]]; then
+            PLATFORMS_TESTED="iOS"
+            if [[ "$IOS_RESULT" != "success" ]]; then
+              OVERALL_STATUS="failure"
+            fi
+          fi
+          
+          if [[ "$ANDROID_RESULT" != "skipped" ]]; then
+            if [[ -n "$PLATFORMS_TESTED" ]]; then
+              PLATFORMS_TESTED="$PLATFORMS_TESTED, Android"
+            else
+              PLATFORMS_TESTED="Android"
+            fi
+            if [[ "$ANDROID_RESULT" != "success" ]]; then
+              OVERALL_STATUS="failure"
+            fi
+          fi
+          
+          echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+          echo "platforms_tested=$PLATFORMS_TESTED" >> $GITHUB_OUTPUT
+          
+          # Create summary
+          SUMMARY="## 🧪 E2E Test Results - ${{ needs.test-strategy.outputs.test_suite }} suite\n\n"
+          SUMMARY+="**Trigger:** ${{ github.event_name }}\n"
+          SUMMARY+="**Platforms:** $PLATFORMS_TESTED\n"
+          SUMMARY+="**Commit:** [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n\n"
+          
+          if [[ "$IOS_RESULT" != "skipped" ]]; then
+            if [[ "$IOS_RESULT" == "success" ]]; then
+              SUMMARY+="✅ **iOS:** Passed (${IOS_SUCCESS_RATE}% success rate)\n"
+            else
+              SUMMARY+="❌ **iOS:** Failed (${IOS_SUCCESS_RATE}% success rate)\n"
+            fi
+            SUMMARY+="   - ${{ needs.e2e-ios.outputs.test_results }}\n\n"
+          fi
+          
+          if [[ "$ANDROID_RESULT" != "skipped" ]]; then
+            if [[ "$ANDROID_RESULT" == "success" ]]; then
+              SUMMARY+="✅ **Android:** Passed (${ANDROID_SUCCESS_RATE}% success rate)\n"
+            else
+              SUMMARY+="❌ **Android:** Failed (${ANDROID_SUCCESS_RATE}% success rate)\n"
+            fi
+            SUMMARY+="   - ${{ needs.e2e-android.outputs.test_results }}\n\n"
+          fi
+          
+          if [[ "$OVERALL_STATUS" == "failure" ]]; then
+            SUMMARY+="🔍 **Check test artifacts for detailed failure analysis**\n"
+          fi
+          
+          echo -e "$SUMMARY" > test_summary.md
+          echo "summary<<EOF" >> $GITHUB_OUTPUT
+          cat test_summary.md >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const summary = `${{ steps.analysis.outputs.summary }}`;
+            
+            // Find existing comment
+            const comments = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+            });
+            
+            const botComment = comments.data.find(comment => 
+              comment.user.type === 'Bot' && comment.body.includes('E2E Test Results')
+            );
+            
+            const commentBody = summary + `\n\n_Updated at ${new Date().toISOString()}_`;
+            
+            if (botComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                comment_id: botComment.id,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: commentBody
+              });
+            }
+
+      - name: Notify AI Queue System
+        if: github.ref == 'refs/heads/main' && steps.analysis.outputs.overall_status == 'failure'
+        run: |
+          # Send notification to AI Queue system about test failures
+          # This integrates with the existing AI queue dashboard
+          
+          MESSAGE="🧪 MapYourHealth E2E Test Failure Alert
+          
+          **Suite:** ${{ needs.test-strategy.outputs.test_suite }}
+          **Platforms:** ${{ steps.analysis.outputs.platforms_tested }}
+          **Commit:** ${{ github.sha }}
+          **Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          
+          Please review test failures and investigate root cause."
+          
+          # Using curl to post to local AI queue notification endpoint
+          # This assumes the AI queue system is running on the same network
+          curl -X POST "http://localhost:3001/api/notifications" \
+            -H "Content-Type: application/json" \
+            -d "{\"message\": \"$MESSAGE\", \"type\": \"e2e_failure\", \"priority\": \"high\"}" \
+            || echo "Failed to notify AI queue system (may be offline)"
+
+      - name: Set job status
+        run: |
+          if [[ "${{ steps.analysis.outputs.overall_status }}" == "failure" ]]; then
+            echo "❌ E2E tests failed"
+            exit 1
+          else
+            echo "✅ All E2E tests passed"
+          fi
+
+# Additional workflow for nightly regression runs
+  nightly-regression:
+    name: Nightly Regression Tests
+    if: github.event_name == 'schedule'
+    runs-on: [self-hosted, macOS]
+    strategy:
+      matrix:
+        platform: [ios, android]
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Run nightly regression
+        run: |
+          ./scripts/e2e-test-runner.sh \
+            --suite regression \
+            --platform ${{ matrix.platform }} \
+            --retry-failed \
+            --output-dir "./test-results/nightly-${{ matrix.platform }}-$(date +%Y%m%d)"
+            
+      - name: Upload nightly results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nightly-regression-${{ matrix.platform }}-${{ github.run_number }}
+          path: test-results/
+          retention-days: 60
+
+# Schedule for nightly runs (disabled by default - uncomment to enable)
+# on:
+#   schedule:
+#     - cron: '0 2 * * *'  # 2 AM UTC daily

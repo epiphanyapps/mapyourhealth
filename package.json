@@ -23,7 +23,14 @@
     "seed:data": "npx tsx apps/admin/scripts/seed-data.ts",
     "test:e2e:mobile": "yarn workspace @mapyourhealth/mobile test:maestro",
     "test:e2e:web": "yarn workspace admin test:e2e",
-    "test:e2e": "yarn test:e2e:mobile && yarn test:e2e:web"
+    "test:e2e": "yarn test:e2e:mobile && yarn test:e2e:web",
+    "test:orchestration:setup": "bash scripts/setup-test-environment.sh",
+    "test:orchestration:validate": "bash scripts/setup-test-environment.sh validate",
+    "test:orchestration:smoke": "bash scripts/e2e-test-runner.sh --suite smoke --platform ios",
+    "test:orchestration:full": "bash scripts/e2e-test-runner.sh --suite full --platform ios --retry-failed",
+    "test:orchestration:regression": "bash scripts/e2e-test-runner.sh --suite regression --platform ios --retry-failed",
+    "test:orchestration:monitor": "node scripts/test-monitor.js status",
+    "test:orchestration:demo": "bash scripts/demo-orchestration.sh"
   },
   "devDependencies": {
     "esbuild": "^0.24.2",
