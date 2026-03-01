@@ -180,7 +180,7 @@ export const handler: Handler<EmailAlertEvent, EmailAlertResult> = async (event)
   let sentCount = 0
   let failedCount = 0
 
-  const senderEmail = process.env.SES_SENDER_EMAIL || 'alerts@mapyourhealth.com'
+  const senderEmail = process.env.SES_SENDER_EMAIL || 'alerts@mapyourhealth.info'
 
   console.log(
     `Sending email alerts for stat ${statId} (${statName}) in zip ${zipCode} ` +

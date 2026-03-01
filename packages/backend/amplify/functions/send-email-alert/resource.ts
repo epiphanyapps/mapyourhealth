@@ -14,6 +14,6 @@ export const sendEmailAlert = defineFunction({
   resourceGroupName: 'data',
   environment: {
     // SES sender email - must be verified in SES
-    SES_SENDER_EMAIL: 'alerts@mapyourhealth.com',
+    SES_SENDER_EMAIL: 'alerts@mapyourhealth.info',
   },
 })

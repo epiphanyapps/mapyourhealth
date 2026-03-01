@@ -23,7 +23,7 @@ const cognitoClient = new CognitoIdentityProviderClient({});
 const sesClient = new SESClient({});
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
-const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mapyourhealth.com';
+const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mapyourhealth.info';
 const APP_URL = process.env.APP_URL || 'mapyourhealth://';
 const TOKEN_EXPIRY_MINUTES = 15;
 

@@ -15,7 +15,7 @@ export const requestMagicLink = defineFunction({
   environment: {
     // These will be set dynamically in backend.ts
     USER_POOL_ID: '',
-    FROM_EMAIL: 'noreply@mapyourhealth.com',
+    FROM_EMAIL: 'noreply@mapyourhealth.info',
     APP_URL: 'mapyourhealth://',
     RATE_LIMIT_TABLE_NAME: '',
   },
