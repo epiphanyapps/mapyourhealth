@@ -25,6 +25,7 @@ import {
   Upload,
   FileJson,
   FileSpreadsheet,
+  Table2,
   Loader2,
   CheckCircle,
   XCircle,
@@ -38,6 +39,7 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 import { fetchAuthSession } from "aws-amplify/auth";
+import * as XLSX from "xlsx";
 
 // Lambda function name for notifications - should match the deployed function
 const NOTIFICATIONS_LAMBDA_FUNCTION =
@@ -331,6 +333,59 @@ export default function ImportPage() {
     }));
   };
 
+  const parseExcel = (
+    buffer: ArrayBuffer,
+  ): { rows: Partial<ImportRow>[]; error?: string } => {
+    const workbook = XLSX.read(buffer, { type: "array" });
+
+    // Use the first sheet
+    const sheetName = workbook.SheetNames[0];
+    if (!sheetName) {
+      return { rows: [], error: "Excel file has no sheets" };
+    }
+
+    const worksheet = workbook.Sheets[sheetName];
+    const jsonData = XLSX.utils.sheet_to_json<Record<string, unknown>>(
+      worksheet,
+      { defval: "" },
+    );
+
+    if (jsonData.length === 0) {
+      return { rows: [], error: "Excel sheet is empty" };
+    }
+
+    // Normalize header names (handle case insensitivity)
+    const normalizeKey = (key: string): string => key.toLowerCase().trim();
+
+    const rows = jsonData.map((row) => {
+      // Create a case-insensitive lookup
+      const normalizedRow: Record<string, unknown> = {};
+      for (const [key, value] of Object.entries(row)) {
+        normalizedRow[normalizeKey(key)] = value;
+      }
+
+      const contaminantId =
+        normalizedRow["contaminantid"] ||
+        normalizedRow["contaminant_id"] ||
+        normalizedRow["statid"] ||
+        normalizedRow["stat_id"] ||
+        "";
+
+      return {
+        city: String(normalizedRow["city"] || ""),
+        state: String(normalizedRow["state"] || ""),
+        country: String(normalizedRow["country"] || ""),
+        contaminantId: String(contaminantId),
+        value: Number(normalizedRow["value"]) || 0,
+        source: normalizedRow["source"]
+          ? String(normalizedRow["source"])
+          : undefined,
+      };
+    });
+
+    return { rows };
+  };
+
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
@@ -365,8 +420,17 @@ export default function ImportPage() {
           return;
         }
         rows = result.rows;
+      } else if (file.name.endsWith(".xlsx") || file.name.endsWith(".xls")) {
+        const arrayBuffer = await file.arrayBuffer();
+        const result = parseExcel(arrayBuffer);
+        if (result.error) {
+          toast.error(result.error);
+          setIsProcessingFile(false);
+          return;
+        }
+        rows = result.rows;
       } else {
-        toast.error("Unsupported file format. Use CSV or JSON.");
+        toast.error("Unsupported file format. Use CSV, JSON, or Excel (.xlsx).");
         setIsProcessingFile(false);
         return;
       }
@@ -587,7 +651,7 @@ export default function ImportPage() {
             </Card>
 
             {/* Format Examples */}
-            <div className="grid gap-6 md:grid-cols-2">
+            <div className="grid gap-6 md:grid-cols-3">
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -602,6 +666,31 @@ export default function ImportPage() {
                   <pre className="bg-muted p-3 rounded-md text-sm overflow-x-auto">
                     {CSV_TEMPLATES[category].example}
                   </pre>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Table2 className="h-5 w-5" />
+                    Excel Format (.xlsx)
+                  </CardTitle>
+                  <CardDescription>
+                    Same columns as CSV, first sheet used
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="bg-muted p-3 rounded-md text-sm">
+                    <div className="font-medium mb-2">Column headers:</div>
+                    <ul className="list-disc list-inside text-muted-foreground">
+                      <li>city</li>
+                      <li>state</li>
+                      <li>country</li>
+                      <li>contaminantId</li>
+                      <li>value</li>
+                      <li>source (optional)</li>
+                    </ul>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -644,7 +733,7 @@ export default function ImportPage() {
             Upload {CATEGORY_INFO[activeCategory].title} Data
           </CardTitle>
           <CardDescription>
-            Select a CSV or JSON file to preview and import into{" "}
+            Select a CSV, JSON, or Excel file to preview and import into{" "}
             {CATEGORY_INFO[activeCategory].title}
           </CardDescription>
         </CardHeader>
@@ -652,7 +741,7 @@ export default function ImportPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv,.json"
+            accept=".csv,.json,.xlsx,.xls"
             onChange={handleFileSelect}
             className="hidden"
             disabled={isProcessingFile}
@@ -672,7 +761,7 @@ export default function ImportPage() {
             ) : (
               <div className="flex flex-col items-center gap-2">
                 <Upload className="h-8 w-8 text-muted-foreground" />
-                <span>Click to upload CSV or JSON file</span>
+                <span>Click to upload CSV, JSON, or Excel file</span>
                 <span className="text-xs text-muted-foreground">
                   Validating against {CATEGORY_INFO[activeCategory].title}{" "}
                   contaminants

@@ -14554,6 +14554,7 @@ __metadata:
     tailwindcss: "npm:^4"
     tw-animate-css: "npm:^1.4.0"
     typescript: "npm:^5"
+    xlsx: "npm:^0.18.5"
     zod: "npm:^4.3.5"
   languageName: unknown
   linkType: soft
