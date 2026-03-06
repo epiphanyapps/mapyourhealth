@@ -296,6 +296,25 @@ cd apps/mobile
 npm run test:web       # Run mobile web Playwright tests
 ```
 
+### E2E Email Testing (SES)
+
+For testing email notifications (magic links, alerts), we use a dedicated subdomain with AWS SES receiving:
+
+```bash
+# One-time setup (creates S3 bucket, SES rules, MX record)
+cd packages/backend
+AWS_PROFILE=rayane yarn setup:e2e-email
+
+# Teardown when no longer needed
+AWS_PROFILE=rayane yarn teardown:e2e-email
+```
+
+**Architecture:**
+- Test emails: `*@e2e.mapyourhealth.info` → SES → S3
+- Business emails: `*@mapyourhealth.info` → Google (unchanged)
+
+**Full documentation:** See [docs/E2E_EMAIL_TESTING.md](docs/E2E_EMAIL_TESTING.md)
+
 ## CI/CD Workflows
 
 GitHub Actions workflows in `.github/workflows/`:
