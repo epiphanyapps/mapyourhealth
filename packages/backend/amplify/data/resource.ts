@@ -332,7 +332,7 @@ const schema = a.schema({
       deliveredAt: a.datetime(),
       error: a.string(),
       // Context for what triggered the notification
-      triggerType: a.enum(["data_update", "data_available", "status_change"]),
+      triggerType: a.enum(["data_update", "data_available", "status_change", "manual_alert"]),
       contaminantId: a.string(), // If notification was about specific contaminant
     })
     .authorization((allow) => [

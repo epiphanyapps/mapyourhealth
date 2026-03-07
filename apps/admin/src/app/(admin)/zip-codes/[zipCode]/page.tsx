@@ -38,7 +38,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Plus, Pencil, Trash2, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Plus, Pencil, Trash2, Loader2, MapPin, Bell, Users } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
+import { fetchAuthSession } from "aws-amplify/auth";
 import { toast } from "sonner";
 import {
   statStatusColors,
@@ -51,6 +54,13 @@ import {
 type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type Contaminant = Schema["Contaminant"]["type"];
 type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
+type UserSubscription = Schema["UserSubscription"]["type"];
+
+// Lambda function name for notifications
+const NOTIFICATIONS_LAMBDA_FUNCTION =
+  process.env.NEXT_PUBLIC_NOTIFICATIONS_LAMBDA || "process-notifications";
+
+type AlertLevel = "info" | "warning" | "danger";
 
 /**
  * Calculate status based on measurement value and threshold
@@ -106,6 +116,14 @@ export default function LocationDetailPage({
     sourceUrl: "",
     notes: "",
   });
+
+  // Alert dialog state
+  const [isAlertDialogOpen, setIsAlertDialogOpen] = useState(false);
+  const [alertLevel, setAlertLevel] = useState<AlertLevel>("warning");
+  const [customMessage, setCustomMessage] = useState("");
+  const [isSendingAlert, setIsSendingAlert] = useState(false);
+  const [subscribers, setSubscribers] = useState<UserSubscription[]>([]);
+  const [isLoadingSubscribers, setIsLoadingSubscribers] = useState(false);
 
   const fetchData = useCallback(async () => {
     try {
@@ -255,26 +273,235 @@ export default function LocationDetailPage({
         (c) => !measurements.some((m) => m.contaminantId === c.contaminantId),
       );
 
+  const fetchSubscribers = useCallback(async () => {
+    setIsLoadingSubscribers(true);
+    try {
+      const client = generateClient<Schema>();
+      const result = await client.models.UserSubscription.listUserSubscriptionByCity({
+        city: cityName,
+      });
+      setSubscribers(result.data || []);
+    } catch (error) {
+      console.error("Error fetching subscribers:", error);
+      toast.error("Failed to fetch subscribers");
+    } finally {
+      setIsLoadingSubscribers(false);
+    }
+  }, [cityName]);
+
+  const openAlertDialog = async () => {
+    setAlertLevel("warning");
+    setCustomMessage("");
+    setIsAlertDialogOpen(true);
+    await fetchSubscribers();
+  };
+
+  const sendManualAlert = async () => {
+    if (subscribers.length === 0) {
+      toast.error("No subscribers to notify");
+      return;
+    }
+
+    setIsSendingAlert(true);
+    try {
+      const session = await fetchAuthSession();
+      const credentials = session.credentials;
+
+      if (!credentials) {
+        toast.error("Not authenticated");
+        return;
+      }
+
+      const lambdaClient = new LambdaClient({
+        region: "ca-central-1",
+        credentials: {
+          accessKeyId: credentials.accessKeyId,
+          secretAccessKey: credentials.secretAccessKey,
+          sessionToken: credentials.sessionToken,
+        },
+      });
+
+      const command = new InvokeCommand({
+        FunctionName: NOTIFICATIONS_LAMBDA_FUNCTION,
+        InvocationType: "RequestResponse",
+        Payload: Buffer.from(
+          JSON.stringify({
+            city: cityName,
+            triggerType: "manual_alert",
+            adminTriggered: true,
+            alertLevel,
+            customMessage: customMessage || undefined,
+          }),
+        ),
+      });
+
+      const response = await lambdaClient.send(command);
+
+      if (response.Payload) {
+        const result = JSON.parse(Buffer.from(response.Payload).toString());
+        if (result.success) {
+          toast.success(
+            `Alert sent to ${result.subscribersNotified} subscriber(s)`,
+          );
+          setIsAlertDialogOpen(false);
+        } else {
+          toast.error(result.errors?.[0] || "Failed to send alert");
+        }
+      }
+    } catch (error) {
+      console.error("Error sending alert:", error);
+      toast.error("Failed to send alert");
+    } finally {
+      setIsSendingAlert(false);
+    }
+  };
+
+  // Count subscribers by notification type
+  const subscriberStats = {
+    total: subscribers.length,
+    email: subscribers.filter((s) => s.enableEmail).length,
+    push: subscribers.filter((s) => s.enablePush).length,
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center gap-4">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/zip-codes")}
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Button>
-        <div>
-          <div className="flex items-center gap-2">
-            <MapPin className="h-5 w-5 text-muted-foreground" />
-            <h1 className="text-3xl font-bold tracking-tight">{cityName}</h1>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/zip-codes")}
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </Button>
+          <div>
+            <div className="flex items-center gap-2">
+              <MapPin className="h-5 w-5 text-muted-foreground" />
+              <h1 className="text-3xl font-bold tracking-tight">{cityName}</h1>
+            </div>
+            <p className="text-muted-foreground">
+              Manage contaminant measurements for this location
+            </p>
           </div>
-          <p className="text-muted-foreground">
-            Manage contaminant measurements for this location
-          </p>
         </div>
+        <Button onClick={openAlertDialog} variant="outline">
+          <Bell className="mr-2 h-4 w-4" />
+          Send Alert
+        </Button>
       </div>
+
+      {/* Send Alert Dialog */}
+      <Dialog open={isAlertDialogOpen} onOpenChange={setIsAlertDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Send Manual Alert</DialogTitle>
+            <DialogDescription>
+              Send a notification to all subscribers of {cityName}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Alert Level</Label>
+              <Select
+                value={alertLevel}
+                onValueChange={(value: AlertLevel) => setAlertLevel(value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="danger">
+                    <span className="flex items-center gap-2">
+                      <Badge variant="destructive">Danger</Badge>
+                      <span className="text-muted-foreground">- Critical issue requiring immediate attention</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="warning">
+                    <span className="flex items-center gap-2">
+                      <Badge className="bg-yellow-500">Warning</Badge>
+                      <span className="text-muted-foreground">- Caution advised</span>
+                    </span>
+                  </SelectItem>
+                  <SelectItem value="info">
+                    <span className="flex items-center gap-2">
+                      <Badge variant="secondary">Info</Badge>
+                      <span className="text-muted-foreground">- General notice</span>
+                    </span>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customMessage">Custom Message (optional)</Label>
+              <Textarea
+                id="customMessage"
+                placeholder="Enter a custom message for the alert..."
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                If left empty, a default message will be used.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Subscribers Preview</Label>
+              <Card>
+                <CardContent className="pt-4">
+                  {isLoadingSubscribers ? (
+                    <div className="flex items-center justify-center py-4">
+                      <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+                    </div>
+                  ) : subscribers.length === 0 ? (
+                    <p className="text-sm text-muted-foreground text-center py-2">
+                      No subscribers for this location
+                    </p>
+                  ) : (
+                    <div className="flex items-center gap-6">
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{subscriberStats.total}</span>
+                        <span className="text-muted-foreground">total</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Badge variant="outline">{subscriberStats.push} push</Badge>
+                        <Badge variant="outline">{subscriberStats.email} email</Badge>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsAlertDialogOpen(false)}
+              disabled={isSendingAlert}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={sendManualAlert}
+              disabled={isSendingAlert || subscribers.length === 0}
+            >
+              {isSendingAlert ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Bell className="mr-2 h-4 w-4" />
+                  Send Alert
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">

@@ -33,17 +33,23 @@ const SEND_EMAIL_FUNCTION_NAME = process.env.SEND_EMAIL_FUNCTION_NAME!
 const SEND_PUSH_FUNCTION_NAME = process.env.SEND_PUSH_FUNCTION_NAME!
 const USER_POOL_ID = process.env.USER_POOL_ID!
 
-type TriggerType = 'data_update' | 'data_available' | 'status_change'
+type TriggerType = 'data_update' | 'data_available' | 'status_change' | 'manual_alert'
 type NotificationStatus = 'danger' | 'warning' | 'safe'
 
 interface ProcessNotificationsEvent {
-  /** Postal code that was updated */
-  postalCode: string
+  /** Postal code that was updated (legacy, prefer city/state/country) */
+  postalCode?: string
+  /** City name */
+  city?: string
+  /** State/province */
+  state?: string
+  /** Country code */
+  country?: string
   /** What triggered this notification */
   triggerType: TriggerType
   /** Whether this was manually triggered by admin */
   adminTriggered?: boolean
-  /** City name for display */
+  /** City name for display (legacy, now uses city field) */
   cityName?: string
   /** Contaminant that changed (if applicable) */
   contaminantId?: string
@@ -53,6 +59,10 @@ interface ProcessNotificationsEvent {
   newStatus?: NotificationStatus
   currentValue?: number
   unit?: string
+  /** Alert severity for manual alerts */
+  alertLevel?: 'info' | 'warning' | 'danger'
+  /** Custom message for manual alerts */
+  customMessage?: string
 }
 
 interface ProcessNotificationsResult {
@@ -79,20 +89,29 @@ interface Subscription {
 }
 
 /**
- * Query subscriptions by postal code using GSI
+ * Query subscriptions by city using GSI
  */
-async function getSubscriptionsByPostalCode(postalCode: string): Promise<Subscription[]> {
+async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
   const command = new QueryCommand({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
-    IndexName: 'byPostalCode',
-    KeyConditionExpression: 'postalCode = :pc',
+    IndexName: 'byCity',
+    KeyConditionExpression: 'city = :city',
     ExpressionAttributeValues: {
-      ':pc': { S: postalCode },
+      ':city': { S: city },
     },
   })
 
   const result = await dynamoClient.send(command)
   return (result.Items || []).map((item) => unmarshall(item) as Subscription)
+}
+
+/**
+ * Query subscriptions by postal code using GSI (legacy support)
+ */
+async function getSubscriptionsByPostalCode(postalCode: string): Promise<Subscription[]> {
+  // For legacy compatibility, try to use city-based query
+  // The postalCode field may actually contain city names
+  return getSubscriptionsByCity(postalCode)
 }
 
 /**
@@ -122,7 +141,28 @@ function shouldNotify(
   subscription: Subscription,
   event: ProcessNotificationsEvent
 ): boolean {
-  const { triggerType, newStatus, contaminantId } = event
+  const { triggerType, newStatus, contaminantId, alertLevel } = event
+
+  // For manual admin alerts, always notify based on alert level preferences
+  if (triggerType === 'manual_alert') {
+    // Map alertLevel to newStatus for preference checking
+    const effectiveStatus = alertLevel === 'info' ? 'safe' : alertLevel || 'warning'
+
+    // For danger level, notify if they want danger alerts
+    if (effectiveStatus === 'danger' && subscription.alertOnDanger !== false) {
+      return true
+    }
+    // For warning level, notify if they want warning alerts
+    if (effectiveStatus === 'warning' && (subscription.alertOnWarning || subscription.alertOnAnyChange)) {
+      return true
+    }
+    // For info level, only notify if they want any change alerts
+    if (effectiveStatus === 'safe' && subscription.alertOnAnyChange) {
+      return true
+    }
+    // Default: notify on danger-level manual alerts
+    return effectiveStatus === 'danger'
+  }
 
   // For "data_available" trigger, only notify if they opted in
   if (triggerType === 'data_available') {
@@ -168,8 +208,21 @@ function buildNotificationContent(event: ProcessNotificationsEvent): {
   title: string
   body: string
 } {
-  const { triggerType, postalCode, cityName, contaminantName, newStatus } = event
-  const location = cityName || postalCode
+  const { triggerType, postalCode, city, cityName, contaminantName, newStatus, alertLevel, customMessage } = event
+  const location = city || cityName || postalCode || 'your area'
+
+  if (triggerType === 'manual_alert') {
+    const alertLabels = {
+      danger: '⚠️ ALERT',
+      warning: '⚡ Warning',
+      info: 'ℹ️ Notice',
+    }
+    const level = alertLevel || 'info'
+    return {
+      title: `${alertLabels[level]}: ${location}`,
+      body: customMessage || `Important water quality notice for ${location}. Tap for details.`,
+    }
+  }
 
   if (triggerType === 'data_available') {
     return {
@@ -325,15 +378,28 @@ async function sendPushNotifications(
 export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsResult> = async (
   event
 ) => {
-  const { postalCode, triggerType } = event
+  const { city, postalCode, triggerType } = event
   const errors: string[] = []
   let emailsSent = 0
   let pushSent = 0
 
-  console.log(`Processing notifications for ${postalCode} (trigger: ${triggerType})`)
+  // Use city if provided, otherwise fall back to postalCode
+  const locationKey = city || postalCode
+  if (!locationKey) {
+    console.error('No city or postalCode provided in event')
+    return {
+      success: false,
+      subscribersNotified: 0,
+      emailsSent: 0,
+      pushSent: 0,
+      errors: ['No city or postalCode provided'],
+    }
+  }
 
-  // Get all subscribers for this postal code
-  const subscriptions = await getSubscriptionsByPostalCode(postalCode)
+  console.log(`Processing notifications for ${locationKey} (trigger: ${triggerType})`)
+
+  // Get all subscribers for this city
+  const subscriptions = await getSubscriptionsByCity(locationKey)
   console.log(`Found ${subscriptions.length} subscribers`)
 
   if (subscriptions.length === 0) {
@@ -399,7 +465,7 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
       await logNotification(
         subscription.id,
         subscription.owner,
-        postalCode,
+        locationKey,
         'email',
         emailResult.success ? 'sent' : 'failed',
         title,
@@ -423,7 +489,7 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
       await logNotification(
         subscription.id,
         subscription.owner,
-        postalCode,
+        locationKey,
         'push',
         failed ? 'failed' : 'sent',
         title,
