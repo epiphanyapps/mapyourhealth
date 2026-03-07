@@ -55,10 +55,13 @@ jobs:
         env:
           CI: true
           SKIP_MOBILE_SERVER: "true"
-          # Note: Admin tests requiring auth are auto-skipped without credentials.
-          # Mobile-web tests are excluded — they need Expo web server infrastructure.
-          # ADMIN_TEST_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
-          # ADMIN_TEST_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
+          # AWS credentials for E2E email testing (S3 bucket access)
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_E2E_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_E2E_SECRET_ACCESS_KEY }}
+          AWS_REGION: us-east-1
+          # Admin credentials for authenticated tests
+          ADMIN_EMAIL: ${{ secrets.ADMIN_TEST_EMAIL }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_TEST_PASSWORD }}
 
       - name: Upload test results
         if: always()
