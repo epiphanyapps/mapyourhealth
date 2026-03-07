@@ -20,7 +20,7 @@ mapyourhealth-monorepo/
 │           │   ├── create-auth-challenge/
 │           │   ├── define-auth-challenge/
 │           │   ├── delete-account/
-│           │   ├── on-zipcode-stat-update/
+│           │   ├── on-location-measurement-update/
 │           │   ├── places-autocomplete/
 │           │   ├── process-notifications/
 │           │   ├── request-magic-link/
@@ -168,6 +168,7 @@ npm run test:e2e     # Run Playwright tests
 | `send-notifications` | Push notifications (Expo) |
 | `send-email-alert` | Email notifications (SES) |
 | `process-notifications` | Notification orchestration |
+| `on-location-measurement-update` | DynamoDB Stream trigger for auto-notifications |
 
 **Scripts:**
 ```bash
@@ -177,6 +178,35 @@ yarn deploy          # Deploy to AWS
 yarn seed            # Seed contaminant data
 yarn fetch:outputs   # Fetch amplify_outputs.json from AWS
 ```
+
+## Automatic Notifications
+
+The system automatically sends push/email notifications when water quality data changes.
+
+### How It Works
+1. `LocationMeasurement` table has a DynamoDB Stream enabled
+2. When records are created or modified, `on-location-measurement-update` Lambda is triggered
+3. Lambda invokes `process-notifications` which evaluates subscriber preferences
+4. Notifications sent via `send-notifications` (push) and `send-email-alert` (email)
+5. All notifications are logged to `NotificationLog` table
+
+### Silent Import
+When importing data via Admin Portal, check "Silent import" to suppress automatic notifications.
+
+Use this for:
+- Bulk data corrections
+- Initial data seeding
+- Test imports
+
+The `silentImport` field on `LocationMeasurement` records controls this behavior.
+
+### Notification Preferences
+Users control notifications via their subscription settings:
+- `alertOnDanger` - Notify when contaminant exceeds danger threshold
+- `alertOnWarning` - Notify when contaminant exceeds warning threshold
+- `alertOnAnyChange` - Notify on any data update
+- `watchContaminants` - Filter to specific contaminants (null = all)
+- `notifyWhenDataAvailable` - Notify when new data becomes available
 
 ## Linting Rules (MUST FOLLOW)
 

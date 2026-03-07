@@ -36,13 +36,7 @@ import {
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
-import { fetchAuthSession } from "aws-amplify/auth";
 import * as XLSX from "xlsx";
-
-// Lambda function name for notifications - should match the deployed function
-const NOTIFICATIONS_LAMBDA_FUNCTION =
-  process.env.NEXT_PUBLIC_NOTIFICATIONS_LAMBDA || "process-notifications";
 
 type Contaminant = Schema["Contaminant"]["type"];
 
@@ -142,8 +136,7 @@ export default function ImportPage() {
   const [isImporting, setIsImporting] = useState(false);
   const [isProcessingFile, setIsProcessingFile] = useState(false);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
-  const [notifySubscribers, setNotifySubscribers] = useState(false);
-  const [isNotifying, setIsNotifying] = useState(false);
+  const [silentImport, setSilentImport] = useState(false);
 
   const fetchContaminants = async (category: ImportCategory) => {
     const client = generateClient<Schema>();
@@ -460,6 +453,7 @@ export default function ImportPage() {
             value: row.value,
             measuredAt: new Date().toISOString(),
             source: row.source || null,
+            silentImport, // Pass silentImport flag - when true, suppresses automatic notifications
           });
 
           result.success++;
@@ -475,101 +469,20 @@ export default function ImportPage() {
 
       if (result.failed === 0) {
         toast.success(`Successfully imported ${result.success} rows`);
+        if (!silentImport && result.success > 0) {
+          toast.info("Subscribers will be notified automatically");
+        }
         setPreviewData([]);
       } else {
         toast.warning(
           `Imported ${result.success} rows, ${result.failed} failed`,
         );
       }
-
-      // Send notifications if enabled and we had successful imports
-      if (notifySubscribers && result.success > 0) {
-        await sendNotifications(validRows);
-      }
     } catch (error) {
       console.error("Error importing data:", error);
       toast.error("Import failed");
     } finally {
       setIsImporting(false);
-    }
-  };
-
-  const sendNotifications = async (importedRows: ImportRow[]) => {
-    // Get unique cities from imported data
-    const cities = [
-      ...new Set(importedRows.map((r) => `${r.city}|${r.state}|${r.country}`)),
-    ];
-
-    if (cities.length === 0) return;
-
-    setIsNotifying(true);
-    let notifiedCount = 0;
-
-    try {
-      // Get AWS credentials from Amplify Auth
-      const session = await fetchAuthSession();
-      const credentials = session.credentials;
-
-      if (!credentials) {
-        toast.error("Not authenticated");
-        return;
-      }
-
-      const lambdaClient = new LambdaClient({
-        region: "ca-central-1",
-        credentials: {
-          accessKeyId: credentials.accessKeyId,
-          secretAccessKey: credentials.secretAccessKey,
-          sessionToken: credentials.sessionToken,
-        },
-      });
-
-      // Send notification for each city
-      for (const cityKey of cities) {
-        const [city, state, country] = cityKey.split("|");
-        try {
-          const command = new InvokeCommand({
-            FunctionName: NOTIFICATIONS_LAMBDA_FUNCTION,
-            InvocationType: "RequestResponse",
-            Payload: Buffer.from(
-              JSON.stringify({
-                city,
-                state,
-                country,
-                triggerType: "data_update",
-                adminTriggered: true,
-              }),
-            ),
-          });
-
-          const response = await lambdaClient.send(command);
-
-          if (response.Payload) {
-            const result = JSON.parse(Buffer.from(response.Payload).toString());
-            if (result.subscribersNotified > 0) {
-              notifiedCount += result.subscribersNotified;
-            }
-          }
-        } catch (error) {
-          console.error(
-            `Failed to send notifications for ${city}, ${state}:`,
-            error,
-          );
-        }
-      }
-
-      if (notifiedCount > 0) {
-        toast.success(
-          `Notified ${notifiedCount} subscriber(s) about the update`,
-        );
-      } else {
-        toast.info("No subscribers to notify for these locations");
-      }
-    } catch (error) {
-      console.error("Error sending notifications:", error);
-      toast.error("Failed to send some notifications");
-    } finally {
-      setIsNotifying(false);
     }
   };
 
@@ -757,31 +670,27 @@ export default function ImportPage() {
             <div className="flex items-center gap-6">
               <div className="flex items-center gap-2">
                 <Switch
-                  id="notify-subscribers"
-                  checked={notifySubscribers}
-                  onCheckedChange={setNotifySubscribers}
+                  id="silent-import"
+                  checked={silentImport}
+                  onCheckedChange={setSilentImport}
                 />
                 <Label
-                  htmlFor="notify-subscribers"
+                  htmlFor="silent-import"
                   className="flex items-center gap-1.5 cursor-pointer"
+                  title="When enabled, subscribers will NOT be notified about these measurements"
                 >
                   <Bell className="h-4 w-4" />
-                  Notify subscribers
+                  Silent import
                 </Label>
               </div>
               <Button
                 onClick={handleImport}
-                disabled={isImporting || isNotifying || validCount === 0}
+                disabled={isImporting || validCount === 0}
               >
                 {isImporting ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Importing...
-                  </>
-                ) : isNotifying ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Notifying...
                   </>
                 ) : (
                   <>

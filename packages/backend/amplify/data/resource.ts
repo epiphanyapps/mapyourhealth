@@ -275,6 +275,7 @@ const schema = a.schema({
       source: a.string(), // Data source: "EPA", "MELCC", etc.
       sourceUrl: a.string(), // Link to source data
       notes: a.string(),
+      silentImport: a.boolean().default(false), // Suppress automatic notifications for bulk imports
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),

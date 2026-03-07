@@ -1,18 +1,15 @@
 import { defineFunction } from '@aws-amplify/backend'
 
 /**
- * On ZipCodeStat Update Lambda Function
+ * On LocationMeasurement Update Lambda Function
  *
- * Triggered by DynamoDB Streams when ZipCodeStat records are modified.
- * Sends email alerts to subscribers when safety conditions change to danger or warning.
+ * Triggered by DynamoDB Streams when LocationMeasurement records are created or modified.
+ * Invokes the process-notifications Lambda to send alerts to subscribers.
  */
-export const onZipCodeStatUpdate = defineFunction({
-  name: 'on-zipcode-stat-update',
+export const onLocationMeasurementUpdate = defineFunction({
+  name: 'on-location-measurement-update',
   entry: './handler.ts',
   timeoutSeconds: 60,
   memoryMB: 256,
   resourceGroupName: 'data',
-  environment: {
-    SEND_EMAIL_ALERT_FUNCTION_NAME: 'send-email-alert',
-  },
 })

@@ -2,8 +2,8 @@ import { defineBackend } from '@aws-amplify/backend';
 import { Stack, CfnOutput, RemovalPolicy } from 'aws-cdk-lib';
 import { Policy, PolicyStatement, Effect } from 'aws-cdk-lib/aws-iam';
 import {
-  // StartingPosition,
-  // EventSourceMapping,
+  StartingPosition,
+  EventSourceMapping,
   Function as LambdaFunction,
   FunctionUrlAuthType,
   HttpMethod,
@@ -14,7 +14,7 @@ import { data } from './data/resource';
 import { sendNotifications } from './functions/send-notifications/resource';
 import { sendEmailAlert } from './functions/send-email-alert/resource';
 import { processNotifications } from './functions/process-notifications/resource';
-// import { onZipCodeStatUpdate } from './functions/on-zipcode-stat-update/resource';
+import { onLocationMeasurementUpdate } from './functions/on-location-measurement-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
 import { placesAutocomplete } from './functions/places-autocomplete/resource';
 import { deleteAccount } from './functions/delete-account/resource';
@@ -31,7 +31,7 @@ const backend = defineBackend({
   sendNotifications,
   sendEmailAlert,
   processNotifications,
-  // onZipCodeStatUpdate, // Disabled: tables removed in schema redesign
+  onLocationMeasurementUpdate,
   requestMagicLink,
   placesAutocomplete,
   deleteAccount,
@@ -39,22 +39,26 @@ const backend = defineBackend({
 });
 
 // ============================================
-// OLD DATA MODEL - DISABLED PENDING REFACTOR
+// LocationMeasurement Stream -> Automatic Notifications
 // ============================================
-// The following code references old tables (ZipCodeStat, ZipCodeSubscription, StatDefinition)
-// that were removed in the schema redesign (commit a3f1eec).
-// This will be refactored to work with the new jurisdiction-aware data model.
 
-/*
-// Get DynamoDB tables from the data resources
-const zipCodeStatTable = backend.data.resources.tables['ZipCodeStat'];
-const subscriptionsTable = backend.data.resources.tables['ZipCodeSubscription'];
-const statDefinitionsTable = backend.data.resources.tables['StatDefinition'];
+// Get LocationMeasurement table for stream trigger
+const locationMeasurementTable = backend.data.resources.tables['LocationMeasurement'];
 
-// Grant the onZipCodeStatUpdate function permissions to read from DynamoDB streams
-const streamPolicy = new Policy(
-  Stack.of(zipCodeStatTable),
-  'OnZipCodeStatUpdateStreamPolicy',
+// Get the onLocationMeasurementUpdate Lambda function and its stack
+const onLocationMeasurementLambda = backend.onLocationMeasurementUpdate.resources.lambda as LambdaFunction;
+const onLocationMeasurementStack = Stack.of(onLocationMeasurementLambda);
+
+// Set environment variable for process-notifications function name
+onLocationMeasurementLambda.addEnvironment(
+  'PROCESS_NOTIFICATIONS_FUNCTION_NAME',
+  backend.processNotifications.resources.lambda.functionName
+);
+
+// Grant the onLocationMeasurementUpdate function permissions to read from DynamoDB streams
+const onLocationMeasurementStreamPolicy = new Policy(
+  onLocationMeasurementStack,
+  'OnLocationMeasurementStreamPolicy',
   {
     statements: [
       new PolicyStatement({
@@ -65,96 +69,36 @@ const streamPolicy = new Policy(
           'dynamodb:GetShardIterator',
           'dynamodb:ListStreams',
         ],
-        resources: ['*'],
+        resources: [locationMeasurementTable.tableStreamArn!],
       }),
     ],
   }
 );
+backend.onLocationMeasurementUpdate.resources.lambda.role?.attachInlinePolicy(onLocationMeasurementStreamPolicy);
 
-backend.onZipCodeStatUpdate.resources.lambda.role?.attachInlinePolicy(streamPolicy);
-
-// Grant the onZipCodeStatUpdate function permissions to query subscriptions and stat definitions
-const queryPolicy = new Policy(
-  Stack.of(zipCodeStatTable),
-  'OnZipCodeStatUpdateQueryPolicy',
-  {
-    statements: [
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: [
-          'dynamodb:Query',
-          'dynamodb:GetItem',
-        ],
-        resources: [
-          subscriptionsTable.tableArn,
-          `${subscriptionsTable.tableArn}/index/*`,
-          statDefinitionsTable.tableArn,
-          `${statDefinitionsTable.tableArn}/index/*`,
-        ],
-      }),
-    ],
-  }
-);
-
-backend.onZipCodeStatUpdate.resources.lambda.role?.attachInlinePolicy(queryPolicy);
-
-// Grant the onZipCodeStatUpdate function permissions to invoke sendEmailAlert
-const invokeLambdaPolicy = new Policy(
-  Stack.of(zipCodeStatTable),
-  'OnZipCodeStatUpdateInvokeLambdaPolicy',
+// Grant the onLocationMeasurementUpdate function permissions to invoke processNotifications
+const onLocationMeasurementInvokePolicy = new Policy(
+  onLocationMeasurementStack,
+  'OnLocationMeasurementInvokePolicy',
   {
     statements: [
       new PolicyStatement({
         effect: Effect.ALLOW,
         actions: ['lambda:InvokeFunction'],
-        resources: [backend.sendEmailAlert.resources.lambda.functionArn],
+        resources: [backend.processNotifications.resources.lambda.functionArn],
       }),
     ],
   }
 );
+backend.onLocationMeasurementUpdate.resources.lambda.role?.attachInlinePolicy(onLocationMeasurementInvokePolicy);
 
-backend.onZipCodeStatUpdate.resources.lambda.role?.attachInlinePolicy(invokeLambdaPolicy);
-
-// Grant the sendEmailAlert function permissions to use SES
-const sesPolicy = new Policy(
-  Stack.of(zipCodeStatTable),
-  'SendEmailAlertSESPolicy',
+// Create DynamoDB Stream event source mapping for LocationMeasurement table
+const locationMeasurementStreamMapping = new EventSourceMapping(
+  onLocationMeasurementStack,
+  'LocationMeasurementStreamMapping',
   {
-    statements: [
-      new PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ['ses:SendEmail', 'ses:SendRawEmail'],
-        resources: ['*'],
-      }),
-    ],
-  }
-);
-
-backend.sendEmailAlert.resources.lambda.role?.attachInlinePolicy(sesPolicy);
-
-// Set environment variables for the onZipCodeStatUpdate function
-// Cast to LambdaFunction to access addEnvironment method
-const onZipCodeStatUpdateLambda = backend.onZipCodeStatUpdate.resources.lambda as LambdaFunction;
-onZipCodeStatUpdateLambda.addEnvironment(
-  'SUBSCRIPTIONS_TABLE_NAME',
-  subscriptionsTable.tableName
-);
-onZipCodeStatUpdateLambda.addEnvironment(
-  'STAT_DEFINITIONS_TABLE_NAME',
-  statDefinitionsTable.tableName
-);
-onZipCodeStatUpdateLambda.addEnvironment(
-  'SEND_EMAIL_ALERT_FUNCTION_NAME',
-  backend.sendEmailAlert.resources.lambda.functionName
-);
-
-// Create DynamoDB Stream event source mapping for ZipCodeStat table
-const eventSourceMapping = new EventSourceMapping(
-  Stack.of(zipCodeStatTable),
-  'ZipCodeStatStreamMapping',
-  {
-    target: backend.onZipCodeStatUpdate.resources.lambda,
-    eventSourceArn: zipCodeStatTable.tableStreamArn,
+    target: backend.onLocationMeasurementUpdate.resources.lambda,
+    eventSourceArn: locationMeasurementTable.tableStreamArn!,
     startingPosition: StartingPosition.LATEST,
     batchSize: 10,
     bisectBatchOnError: true,
@@ -163,8 +107,7 @@ const eventSourceMapping = new EventSourceMapping(
 );
 
 // Ensure the mapping depends on the stream policy
-eventSourceMapping.node.addDependency(streamPolicy);
-*/
+locationMeasurementStreamMapping.node.addDependency(onLocationMeasurementStreamPolicy);
 
 // ============================================
 // Magic Link Authentication Setup
