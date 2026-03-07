@@ -442,6 +442,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
+            selectedLocation={currentLocation}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -478,6 +479,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
+            selectedLocation={currentLocation}
           />
         </View>
         <View style={$loadingContainer}>
@@ -511,6 +513,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
+            selectedLocation={currentLocation}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -558,6 +561,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
             showLocationButton
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
+            selectedLocation={currentLocation}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -633,6 +637,7 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
           showLocationButton
           onLocationPress={handleLocationPress}
           isLocating={isLocating}
+          selectedLocation={currentLocation}
         />
       </View>
 

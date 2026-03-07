@@ -58,6 +58,11 @@ export interface PlacesSearchBarProps {
    * @default false
    */
   isLocating?: boolean
+  /**
+   * Currently selected location to display in the input
+   * Shows as the input value when not actively searching
+   */
+  selectedLocation?: { city: string; state: string } | null
 }
 
 /**
@@ -71,11 +76,21 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     showLocationButton = false,
     onLocationPress,
     isLocating = false,
+    selectedLocation,
   } = props
 
   const { theme } = useAppTheme()
   const [inputValue, setInputValue] = useState("")
   const [showSuggestions, setShowSuggestions] = useState(false)
+  // Track whether user is actively editing (to hide selected location display)
+  const [isEditing, setIsEditing] = useState(false)
+
+  // Display value: show input when editing, otherwise show selected location
+  const displayValue = isEditing
+    ? inputValue
+    : selectedLocation?.city
+      ? `${selectedLocation.city}, ${selectedLocation.state}`
+      : ""
 
   const { suggestions, isSearching, search, clearSuggestions, resolveAddressToNearestCity, error } =
     useLocationSearch()
@@ -85,6 +100,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
    */
   const handleChangeText = useCallback(
     (text: string) => {
+      setIsEditing(true)
       setInputValue(text)
       if (text.trim().length >= 2) {
         setShowSuggestions(true)
@@ -104,6 +120,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     async (suggestion: SearchSuggestion) => {
       setShowSuggestions(false)
       clearSuggestions()
+      // Exit editing mode - the selected location will be shown via displayValue
+      setIsEditing(false)
       setInputValue("")
 
       if (suggestion.type === "address" && suggestion.city) {
@@ -198,7 +216,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         <View style={$inputContainer}>
           <MaterialCommunityIcons name="magnify" size={20} color={theme.colors.textDim} />
           <TextInput
-            value={inputValue}
+            value={displayValue}
             onChangeText={handleChangeText}
             onSubmitEditing={handleSubmit}
             placeholder={placeholder}
@@ -209,6 +227,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
             autoCapitalize="characters"
             accessibilityLabel="Search cities and locations"
             accessibilityHint="Enter a city or location name to search"
+            onFocus={() => setIsEditing(true)}
           />
           {isSearching && (
             <ActivityIndicator
