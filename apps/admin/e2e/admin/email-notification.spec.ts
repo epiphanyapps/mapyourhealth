@@ -18,7 +18,7 @@ import {
   waitForEmail,
   verifyEmailContent,
   deleteAllEmails,
-} from "./helpers/email";
+} from "../helpers/email";
 
 // Test configuration
 const TEST_LOCATION = {
