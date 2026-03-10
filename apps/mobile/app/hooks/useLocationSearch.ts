@@ -248,21 +248,12 @@ export function useLocationSearch(): UseLocationSearchResult {
   const resolveAddressToNearestCity = useCallback(
     async (placeId: string): Promise<NearestCityResult | null> => {
       try {
-        console.log("[Places] Fetching place details via backend proxy for placeId:", placeId)
         const location = await getPlaceDetails(placeId, sessionTokenRef.current)
 
-        console.log("[Places] Place details response:", location)
-        if (!location) {
-          console.log("[Places] No location returned from place details")
-          return null
-        }
+        if (!location) return null
 
         const { lat, lng } = location
-        console.log("[Places] Coordinates:", { lat, lng })
-        console.log("[Places] Finding nearest city from", groupedByCityState.length, "cities")
-
         const nearest = findNearestCity(lat, lng)
-        console.log("[Places] Nearest city result:", nearest)
 
         // Regenerate session token after completing a search session
         sessionTokenRef.current = generateSessionToken()
@@ -273,7 +264,7 @@ export function useLocationSearch(): UseLocationSearchResult {
         return null
       }
     },
-    [findNearestCity, groupedByCityState.length],
+    [findNearestCity],
   )
 
   // Perform the actual search (local + optional Google Places fallback)
