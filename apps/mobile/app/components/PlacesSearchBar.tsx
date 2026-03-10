@@ -33,8 +33,9 @@ export interface PlacesSearchBarProps {
    * @param city The city name
    * @param state The state/province code
    * @param country The country code
+   * @param searchedAddress Optional - the original address searched (for address suggestions)
    */
-  onLocationSelect: (city: string, state: string, country: string) => void
+  onLocationSelect: (city: string, state: string, country: string, searchedAddress?: string) => void
   /**
    * Placeholder text
    * @default "Search city or location..."
@@ -128,7 +129,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         // Use placeId to resolve address to nearest city in our database
         const nearest = await resolveAddressToNearestCity(suggestion.placeId)
         if (nearest) {
-          onLocationSelect(nearest.city, nearest.state, nearest.country)
+          // Pass the original searched address for display
+          onLocationSelect(nearest.city, nearest.state, nearest.country, suggestion.displayText)
         }
         return
       }

@@ -96,11 +96,19 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [getCategoryName],
   )
 
+  // Location type with optional searched address (for address-to-city resolution)
+  type LocationState = {
+    city: string
+    state: string
+    country: string
+    searchedAddress?: string
+  }
+
   // Determine the default location:
   // 1. Route param takes priority (for navigation from other screens)
   // 2. For authenticated users, use their primary subscription
   // 3. For guests, show empty state to prompt location lookup
-  const getDefaultLocation = (): { city: string; state: string; country: string } | null => {
+  const getDefaultLocation = (): LocationState | null => {
     if (route.params?.city && route.params?.state) {
       return {
         city: route.params.city,
@@ -174,9 +182,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
 
   // Handle location selection from PlacesSearchBar
-  const handleLocationSelect = useCallback((city: string, state: string, country: string) => {
-    setCurrentLocation({ city, state, country })
-  }, [])
+  const handleLocationSelect = useCallback(
+    (city: string, state: string, country: string, searchedAddress?: string) => {
+      setCurrentLocation({ city, state, country, searchedAddress })
+    },
+    [],
+  )
 
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
@@ -396,6 +407,22 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
     fontSize: 12,
     color: "#92400E",
     textAlign: "center",
+    flex: 1,
+  }
+
+  const $searchedAddressBanner: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 6,
+    paddingHorizontal: 16,
+    marginHorizontal: 16,
+    marginTop: -4,
+    marginBottom: 8,
+    gap: 6,
+  }
+
+  const $searchedAddressText: TextStyle = {
+    fontSize: 12,
     flex: 1,
   }
 
@@ -648,6 +675,16 @@ Check MapYourHealth for details: https://app.mapyourhealth.info`
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
       />
+
+      {/* Searched Address Banner - shown when user searched for a specific address */}
+      {currentLocation?.searchedAddress && (
+        <View style={$searchedAddressBanner}>
+          <MaterialCommunityIcons name="map-marker" size={14} color={theme.colors.textDim} />
+          <Text style={[$searchedAddressText, { color: theme.colors.textDim }]}>
+            Showing data for nearest city to: {currentLocation.searchedAddress}
+          </Text>
+        </View>
+      )}
 
       {/* Offline Banner - shown when using cached data while offline */}
       {isOffline && isCachedData && (
