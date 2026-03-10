@@ -197,7 +197,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
             button="Refresh"
             buttonOnPress={refresh}
             ImageProps={{
-              source: require("../../assets/images/empty-state.png"),
+              source: require("../../assets/images/sad-face.png"),
             }}
           />
         </Screen>
