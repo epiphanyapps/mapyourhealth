@@ -33,7 +33,16 @@ const TEST_CONTAMINANT = {
   source: "E2E Test",
 };
 
+// Skip in CI - these are full integration tests requiring deployed apps
+test.describe.configure({ mode: "serial" });
+
 test.describe("Email Notification Flow", () => {
+  // Skip all tests in this file in CI - they require live deployed apps
+  test.skip(
+    () => !!process.env.CI,
+    "Skipping email E2E tests in CI - requires deployed mobile/admin apps"
+  );
+
   let testEmail: string;
 
   test.beforeAll(async () => {
