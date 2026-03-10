@@ -15,7 +15,6 @@ import {
   ViewStyle,
   TextStyle,
   Platform,
-  StyleSheet,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
@@ -157,6 +156,7 @@ function WebSuggestionItem({
     textAlign: "left",
     position: "relative",
     zIndex: 1,
+    color: "inherit", // Prevent browser default button color from overriding text
   }
 
   const $webIconContainer: ViewStyle = {
@@ -167,18 +167,6 @@ function WebSuggestionItem({
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
-  }
-
-  const $webDisplayText: TextStyle = {
-    fontSize: 16,
-    color: theme.colors.text,
-    fontWeight: "500",
-  }
-
-  const $webSecondaryText: TextStyle = {
-    fontSize: 13,
-    color: theme.colors.textDim,
-    marginTop: 2,
   }
 
   return (
@@ -201,10 +189,16 @@ function WebSuggestionItem({
           color={theme.colors.tint}
         />
       </View>
-      <View style={webStyles.textContainer}>
-        <Text style={$webDisplayText}>{item.displayText}</Text>
-        <Text style={$webSecondaryText}>{item.secondaryText}</Text>
-      </View>
+      {/* eslint-disable react-native/no-inline-styles -- Native HTML elements for web */}
+      <div style={{ flex: 1 }}>
+        <div style={{ fontSize: 16, color: theme.colors.text, fontWeight: 500 }}>
+          {item.displayText}
+        </div>
+        <div style={{ fontSize: 13, color: theme.colors.textDim, marginTop: 2 }}>
+          {item.secondaryText}
+        </div>
+      </div>
+      {/* eslint-enable react-native/no-inline-styles */}
       <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
     </button>
   )
@@ -413,9 +407,3 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     </View>
   )
 }
-
-const webStyles = StyleSheet.create({
-  textContainer: {
-    flex: 1,
-  },
-})
