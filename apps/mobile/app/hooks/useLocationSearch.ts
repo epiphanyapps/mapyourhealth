@@ -108,6 +108,8 @@ export function useLocationSearch(): UseLocationSearchResult {
 
   const searchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const sessionTokenRef = useRef<string>(generateSessionToken())
+  // Track request ID to ignore stale errors from previous searches
+  const searchRequestIdRef = useRef<number>(0)
 
   // Fetch all locations with React Query (cached globally)
   const {
@@ -200,41 +202,47 @@ export function useLocationSearch(): UseLocationSearchResult {
   )
 
   // Fetch Google Places autocomplete suggestions via backend proxy
-  const fetchPlacesSuggestions = useCallback(async (query: string): Promise<SearchSuggestion[]> => {
-    console.log("[Places] Fetching via backend proxy")
+  const fetchPlacesSuggestions = useCallback(
+    async (query: string, requestId: number): Promise<SearchSuggestion[]> => {
+      console.log("[Places] Fetching via backend proxy, requestId:", requestId)
 
-    try {
-      const data = await Promise.race([
-        getPlacesAutocomplete(query, sessionTokenRef.current),
-        new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error("timeout")), FETCH_TIMEOUT_MS),
-        ),
-      ])
-      console.log(
-        "[Places] Response status:",
-        data.status,
-        "predictions:",
-        data.predictions?.length,
-        "cached:",
-        data.cached,
-      )
+      try {
+        const data = await Promise.race([
+          getPlacesAutocomplete(query, sessionTokenRef.current),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("timeout")), FETCH_TIMEOUT_MS),
+          ),
+        ])
+        console.log(
+          "[Places] Response status:",
+          data.status,
+          "predictions:",
+          data.predictions?.length,
+          "cached:",
+          data.cached,
+        )
 
-      if (data.status !== "OK" || !data.predictions) return []
+        if (data.status !== "OK" || !data.predictions) return []
 
-      return data.predictions.slice(0, 5).map((prediction) => ({
-        type: "address" as const,
-        displayText: prediction.main_text || prediction.description,
-        secondaryText: prediction.secondary_text || "Google Places result",
-        placeId: prediction.place_id,
-      }))
-    } catch (err) {
-      console.error("[Places] Error:", err)
-      if (err instanceof Error && err.message === "timeout") {
-        setSearchError("Search is taking too long. Please try again.")
+        return data.predictions.slice(0, 5).map((prediction) => ({
+          type: "address" as const,
+          displayText: prediction.main_text || prediction.description,
+          secondaryText: prediction.secondary_text || "Google Places result",
+          placeId: prediction.place_id,
+        }))
+      } catch (err) {
+        console.error("[Places] Error:", err)
+        // Only set error if this is still the current request (not stale)
+        if (err instanceof Error && err.message === "timeout") {
+          if (requestId === searchRequestIdRef.current) {
+            setSearchError("Search is taking too long. Please try again.")
+          }
+        }
+        return []
       }
-      return []
-    }
-  }, [])
+    },
+    [],
+  )
 
   // Resolve a Google Places placeId to the nearest city in our database via backend proxy
   const resolveAddressToNearestCity = useCallback(
@@ -271,6 +279,10 @@ export function useLocationSearch(): UseLocationSearchResult {
         setIsSearching(false)
         return
       }
+
+      // Increment request ID to track stale requests
+      searchRequestIdRef.current += 1
+      const currentRequestId = searchRequestIdRef.current
 
       setIsSearching(true)
       setSearchError(null)
@@ -350,7 +362,7 @@ export function useLocationSearch(): UseLocationSearchResult {
         )
         if (results.length < 3 && looksLikeAddress(trimmedQuery)) {
           console.log("[Search] Triggering Google Places search for:", trimmedQuery)
-          const placesResults = await fetchPlacesSuggestions(trimmedQuery)
+          const placesResults = await fetchPlacesSuggestions(trimmedQuery, currentRequestId)
           const remaining = MAX_SUGGESTIONS - results.length
           results.push(...placesResults.slice(0, remaining))
         }
