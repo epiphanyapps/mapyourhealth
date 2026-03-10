@@ -222,7 +222,20 @@ export const handler: Handler<PlacesAutocompleteEvent, PlacesAutocompleteResult 
     // Check cache first
     const cached = await getCachedResult(cacheKey);
     if (cached) {
-      return cached as PlaceDetailsResult;
+      // Handle both new format (lat/lng at top) and old format (nested in result.geometry)
+      const cachedResult = cached as PlaceDetailsResult & { result?: { geometry?: { location?: { lat: number; lng: number } } } };
+      if (cachedResult.lat != null && cachedResult.lng != null) {
+        return cachedResult;
+      }
+      // Old format - extract from nested structure
+      if (cachedResult.result?.geometry?.location) {
+        return {
+          status: 'OK',
+          lat: cachedResult.result.geometry.location.lat,
+          lng: cachedResult.result.geometry.location.lng,
+          cached: true,
+        };
+      }
     }
 
     try {
@@ -235,8 +248,8 @@ export const handler: Handler<PlacesAutocompleteEvent, PlacesAutocompleteResult 
           lng: data.result.geometry.location.lng,
         };
 
-        // Cache successful results
-        await cacheResult(cacheKey, data);
+        // Cache the formatted result (not raw Google response)
+        await cacheResult(cacheKey, result);
 
         return result;
       }
