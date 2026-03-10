@@ -124,9 +124,9 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       setIsEditing(false)
       setInputValue("")
 
-      if (suggestion.type === "address" && suggestion.city) {
-        // suggestion.city holds the placeId for address suggestions
-        const nearest = await resolveAddressToNearestCity(suggestion.city)
+      if (suggestion.type === "address" && suggestion.placeId) {
+        // Use placeId to resolve address to nearest city in our database
+        const nearest = await resolveAddressToNearestCity(suggestion.placeId)
         if (nearest) {
           onLocationSelect(nearest.city, nearest.state, nearest.country)
         }

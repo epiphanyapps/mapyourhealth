@@ -448,6 +448,8 @@ export interface SearchSuggestion {
   state?: string
   /** Country code */
   country?: string
+  /** Google Places ID (for address type suggestions) */
+  placeId?: string
 }
 
 /**
