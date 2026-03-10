@@ -127,10 +127,15 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
 
       if (suggestion.type === "address" && suggestion.placeId) {
         // Use placeId to resolve address to nearest city in our database
+        console.log("[PlacesSearchBar] Resolving address placeId:", suggestion.placeId)
         const nearest = await resolveAddressToNearestCity(suggestion.placeId)
+        console.log("[PlacesSearchBar] Nearest city result:", nearest)
         if (nearest) {
           // Pass the original searched address for display
+          console.log("[PlacesSearchBar] Selecting location:", nearest.city, nearest.state)
           onLocationSelect(nearest.city, nearest.state, nearest.country, suggestion.displayText)
+        } else {
+          console.warn("[PlacesSearchBar] Could not resolve address to nearest city")
         }
         return
       }
