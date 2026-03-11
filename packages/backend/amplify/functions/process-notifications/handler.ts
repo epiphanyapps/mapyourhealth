@@ -94,7 +94,7 @@ interface Subscription {
 async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
   const command = new QueryCommand({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
-    IndexName: 'byCity',
+    IndexName: 'userSubscriptionsByCity',
     KeyConditionExpression: 'city = :city',
     ExpressionAttributeValues: {
       ':city': { S: city },
