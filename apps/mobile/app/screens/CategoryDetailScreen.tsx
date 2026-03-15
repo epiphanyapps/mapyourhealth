@@ -384,6 +384,38 @@ ${deepLink}`
     )
   }
 
+  // No data state - location exists but no measurements available yet
+  if (!zipData) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header
+          title={categoryName}
+          leftIcon="back"
+          onLeftPress={() => navigation.goBack()}
+          safeAreaEdges={[]}
+        />
+        <View style={$categoryHeader}>
+          <View style={$categoryIcon}>
+            <CategoryIcon category={category} size={40} color={categoryColor} />
+          </View>
+          <Text style={$categoryName}>{categoryName}</Text>
+        </View>
+        <View style={$errorContainer}>
+          <MaterialCommunityIcons
+            name="database-off-outline"
+            size={48}
+            color={theme.colors.textDim}
+          />
+          <Text style={[$categoryName, $noDataTitle]}>No data available yet</Text>
+          <Text style={$errorText}>
+            We do not have {categoryName.toLowerCase()} data for {city}
+            {state ? `, ${state}` : ""} yet. Check back later as we expand our coverage.
+          </Text>
+        </View>
+      </Screen>
+    )
+  }
+
   return (
     <Screen preset="fixed" safeAreaEdges={["top"]}>
       <Header
@@ -526,7 +558,16 @@ ${deepLink}`
               ))
             )
           ) : (
-            <Text style={$emptyText}>No risks detected for this category.</Text>
+            <View style={$safeStateContainer}>
+              <MaterialCommunityIcons
+                name="shield-check-outline"
+                size={48}
+                color={theme.colors.tint}
+              />
+              <Text style={[$emptyText, $safeStateText]}>
+                No contaminants exceed safety thresholds for this category.
+              </Text>
+            </View>
           )}
         </View>
       </ScrollView>
@@ -539,4 +580,20 @@ const $headerShareButton: ViewStyle = {
   paddingVertical: 8,
   justifyContent: "center",
   alignItems: "center",
+}
+
+const $noDataTitle: TextStyle = {
+  fontSize: 20,
+  marginTop: 16,
+  textAlign: "center",
+}
+
+const $safeStateContainer: ViewStyle = {
+  alignItems: "center",
+  paddingVertical: 32,
+  paddingHorizontal: 16,
+}
+
+const $safeStateText: TextStyle = {
+  marginTop: 12,
 }
