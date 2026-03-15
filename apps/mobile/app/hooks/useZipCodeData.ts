@@ -196,7 +196,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // If offline, use MMKV cache or mock data
+    // If offline, use MMKV cache (or mock data in dev only)
     if (isOffline) {
       const cached = getCachedData(zipCode)
       if (cached) {
@@ -208,25 +208,27 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
           warning: null,
         }
       }
-      const mockData = getMockLocationData(zipCode)
-      if (mockData) {
-        const legacyData: ZipCodeData = {
-          zipCode: mockData.city,
-          cityName: mockData.city,
-          state: mockData.state,
-          stats: mockData.measurements.map((m) => ({
-            statId: m.contaminantId,
-            value: m.value,
-            status: m.status,
-            lastUpdated: m.measuredAt,
-          })),
-        }
-        return {
-          zipData: legacyData,
-          isMockData: true,
-          isCachedData: false,
-          lastUpdated: null,
-          warning: "You're offline - showing sample data",
+      if (__DEV__) {
+        const mockData = getMockLocationData(zipCode)
+        if (mockData) {
+          const legacyData: ZipCodeData = {
+            zipCode: mockData.city,
+            cityName: mockData.city,
+            state: mockData.state,
+            stats: mockData.measurements.map((m) => ({
+              statId: m.contaminantId,
+              value: m.value,
+              status: m.status,
+              lastUpdated: m.measuredAt,
+            })),
+          }
+          return {
+            zipData: legacyData,
+            isMockData: true,
+            isCachedData: false,
+            lastUpdated: null,
+            warning: "You're offline - showing sample data",
+          }
         }
       }
       throw new Error("You're offline and no cached data is available")
@@ -251,7 +253,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // No data from backend - try cache, then mock
+    // No data from backend - try cache (and mock in dev only)
     const cached = getCachedData(zipCode)
     if (cached) {
       return {
@@ -263,25 +265,27 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    const mockData = getMockLocationData(zipCode)
-    if (mockData) {
-      const legacyData: ZipCodeData = {
-        zipCode: mockData.city,
-        cityName: mockData.city,
-        state: mockData.state,
-        stats: mockData.measurements.map((m) => ({
-          statId: m.contaminantId,
-          value: m.value,
-          status: m.status,
-          lastUpdated: m.measuredAt,
-        })),
-      }
-      return {
-        zipData: legacyData,
-        isMockData: true,
-        isCachedData: false,
-        lastUpdated: null,
-        warning: null,
+    if (__DEV__) {
+      const mockData = getMockLocationData(zipCode)
+      if (mockData) {
+        const legacyData: ZipCodeData = {
+          zipCode: mockData.city,
+          cityName: mockData.city,
+          state: mockData.state,
+          stats: mockData.measurements.map((m) => ({
+            statId: m.contaminantId,
+            value: m.value,
+            status: m.status,
+            lastUpdated: m.measuredAt,
+          })),
+        }
+        return {
+          zipData: legacyData,
+          isMockData: true,
+          isCachedData: false,
+          lastUpdated: null,
+          warning: null,
+        }
       }
     }
 
