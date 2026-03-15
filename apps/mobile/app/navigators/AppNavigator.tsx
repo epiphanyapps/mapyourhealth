@@ -112,8 +112,8 @@ const $loadingContainer: ViewStyle = {
 }
 
 /**
- * Deep linking configuration for the app
- * Handles magic link authentication URLs
+ * Deep linking configuration for the app.
+ * Maps URL paths to screens so URLs update during navigation (shareable links).
  */
 const linking: LinkingOptions<AppStackParamList> = {
   prefixes: [Linking.createURL("/"), "mapyourhealth://"],
@@ -134,6 +134,31 @@ const linking: LinkingOptions<AppStackParamList> = {
           country: (country: string) => decodeURIComponent(country),
         },
       },
+      CategoryDetail: {
+        path: "location/:city/:state/category/:category",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          category: (category: string) => category,
+        },
+      },
+      StatTrend: {
+        path: "location/:city/:state/contaminant/:statId",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          statId: (statId: string) => decodeURIComponent(statId),
+        },
+      },
+      LocationObservations: {
+        path: "location/:city/:state/:country/observations",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+        },
+      },
+      Compare: "compare",
       Login: "login",
       Signup: "signup",
     },

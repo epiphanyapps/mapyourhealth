@@ -7,7 +7,7 @@ import {
 } from "@react-navigation/native"
 import { NativeStackScreenProps } from "@react-navigation/native-stack"
 
-import type { StatCategory, StatHistoryEntry, StatStatus } from "@/data/types/safety"
+import type { StatCategory } from "@/data/types/safety"
 
 // Demo Tab Navigator types
 export type DemoTabParamList = {
@@ -35,14 +35,7 @@ export type AppStackParamList = {
   SubscriptionsSettings: undefined
   Profile: undefined
   StatTrend: {
-    statName: string
     statId: string
-    unit: string
-    currentValue: number
-    currentStatus: StatStatus
-    history: StatHistoryEntry[]
-    higherIsBad: boolean
-    lastUpdated: string
     city: string
     state: string
   }
@@ -51,7 +44,7 @@ export type AppStackParamList = {
     city: string
     state: string
     country: string
-    jurisdictionCode: string
+    jurisdictionCode?: string
   }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

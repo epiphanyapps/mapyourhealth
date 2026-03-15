@@ -142,17 +142,13 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const deepLink =
-      zipData.cityName && zipData.state
-        ? `https://app.mapyourhealth.info/location/${encodeURIComponent(zipData.cityName)}/${zipData.state}/US`
-        : `https://app.mapyourhealth.info/location/${encodeURIComponent(zipData.zipCode)}//US`
+    const shareUrl = `https://app.mapyourhealth.info/location/${encodeURIComponent(city)}/${encodeURIComponent(state)}/category/${encodeURIComponent(category)}`
 
     const shareMessage = `${categoryName} Risk Report for ${locationName}
 
 ${riskDetails || "No risks detected"}
 
-Check MapYourHealth for details.
-${deepLink}`
+View details: ${shareUrl}`
 
     try {
       await Share.share({
@@ -163,7 +159,7 @@ ${deepLink}`
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, stats, categoryName])
+  }, [zipData, stats, categoryName, city, state, category])
 
   // Custom share button component for header
   const ShareButton = (
@@ -540,15 +536,7 @@ ${deepLink}`
                     stat.history && stat.history.length > 0
                       ? () =>
                           navigation.navigate("StatTrend", {
-                            statName: definition.name,
                             statId: stat.statId,
-                            unit: definition.unit,
-                            currentValue: stat.value,
-                            currentStatus: stat.status,
-                            history: stat.history || [],
-                            higherIsBad:
-                              definition.higherIsBad ?? definition.thresholds?.higherIsBad ?? true,
-                            lastUpdated: stat.lastUpdated,
                             city,
                             state,
                           })
