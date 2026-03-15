@@ -96,51 +96,34 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [getCategoryName],
   )
 
-  // Location type with optional searched address (for address-to-city resolution)
-  type LocationState = {
-    city: string
-    state: string
-    country: string
-    searchedAddress?: string
-  }
-
-  // Determine the default location:
-  // 1. Route param takes priority (for navigation from other screens)
-  // 2. For authenticated users, use their primary subscription
-  // 3. For guests, show empty state to prompt location lookup
-  const getDefaultLocation = (): LocationState | null => {
-    if (route.params?.city && route.params?.state) {
-      return {
-        city: route.params.city,
-        state: route.params.state,
-        country: route.params.country || "US",
-      }
-    }
-    if (isAuthenticated && primarySubscription) {
-      return {
-        city: primarySubscription.city,
-        state: primarySubscription.state,
-        country: primarySubscription.country,
-      }
-    }
-    return null
-  }
-
-  // State for current location
-  const [currentLocation, setCurrentLocation] = useState(getDefaultLocation())
+  // UI-only state for searched address (not part of URL)
+  const [searchedAddress, setSearchedAddress] = useState<string | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
-  // Update location when primary subscription loads (for authenticated users)
+  // Sync primary subscription to route params when no location is set yet
   useEffect(() => {
     if (!route.params?.city && isAuthenticated && primarySubscription && !subsLoading) {
-      setCurrentLocation({
+      navigation.setParams({
         city: primarySubscription.city,
         state: primarySubscription.state,
         country: primarySubscription.country,
       })
     }
-  }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city])
+  }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])
+
+  // Derive current location from route params (single source of truth — keeps URL in sync)
+  const currentLocation = useMemo(() => {
+    if (route.params?.city && route.params?.state) {
+      return {
+        city: route.params.city,
+        state: route.params.state,
+        country: route.params.country || "US",
+        searchedAddress: searchedAddress ?? undefined,
+      }
+    }
+    return null
+  }, [route.params?.city, route.params?.state, route.params?.country, searchedAddress])
 
   // Fetch data for current location from Amplify (with caching and offline support)
   const locationData = useZipCodeData(currentLocation?.city || "")
@@ -181,12 +164,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Categories to display (water and air only - health and disaster removed per issue #126)
   const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
 
-  // Handle location selection from PlacesSearchBar
+  // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
-    (city: string, state: string, country: string, searchedAddress?: string) => {
-      setCurrentLocation({ city, state, country, searchedAddress })
+    (city: string, state: string, country: string, addr?: string) => {
+      navigation.setParams({ city, state, country })
+      setSearchedAddress(addr ?? null)
     },
-    [],
+    [navigation],
   )
 
   // Handle location button press - get location from GPS
@@ -195,9 +179,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (zipCode) {
       // GPS returns a zip code, but we treat it as a city lookup
       // TODO: Reverse geocode to city/state instead
-      setCurrentLocation({ city: zipCode, state: "", country: "US" })
+      navigation.setParams({ city: zipCode, state: "", country: "US" })
+      setSearchedAddress(null)
     }
-  }, [getLocationZipCode])
+  }, [getLocationZipCode, navigation])
 
   // Handle Follow button press - auth gated
   const handleFollow = useCallback(async () => {
@@ -313,11 +298,15 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       ? `${currentLocation.city}, ${currentLocation.state}`
       : "Unknown Location"
 
+    const shareUrl = currentLocation
+      ? `https://app.mapyourhealth.info/location/${encodeURIComponent(currentLocation.city)}/${encodeURIComponent(currentLocation.state)}/${encodeURIComponent(currentLocation.country)}`
+      : "https://app.mapyourhealth.info"
+
     const shareMessage = `Safety Alert for ${locationName}
 
 ${categoryRisks || "No risks detected"}
 
-Check MapYourHealth for details: https://app.mapyourhealth.info`
+View details: ${shareUrl}`
 
     try {
       await Share.share({

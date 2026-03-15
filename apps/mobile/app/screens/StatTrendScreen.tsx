@@ -1,4 +1,4 @@
-import { View, ViewStyle, TextStyle, ScrollView } from "react-native"
+import { ActivityIndicator, View, ViewStyle, TextStyle, ScrollView } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { useNavigation, useRoute, RouteProp } from "@react-navigation/native"
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
@@ -8,7 +8,9 @@ import { Header } from "@/components/Header"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TrendChart, calculateTrendDirection } from "@/components/TrendChart"
+import { useContaminants } from "@/context/ContaminantsContext"
 import type { StatStatus, TrendDirection } from "@/data/types/safety"
+import { useZipCodeData } from "@/hooks/useZipCodeData"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -64,19 +66,54 @@ export function StatTrendScreen() {
   const navigation = useNavigation<NavigationProp>()
   const route = useRoute<StatTrendRouteProp>()
   const { theme } = useAppTheme()
+  const { contaminantMap } = useContaminants()
 
-  const {
-    statName,
-    statId: _statId,
-    unit,
-    currentValue,
-    currentStatus,
-    history,
-    higherIsBad,
-    lastUpdated,
-    city,
-    state,
-  } = route.params
+  const { statId, city, state } = route.params
+
+  // Fetch data for this location (uses React Query caching — likely already cached from CategoryDetail)
+  const { zipData, isLoading } = useZipCodeData(city)
+
+  // Look up the contaminant definition
+  const definition = contaminantMap.get(statId)
+  const statName = definition?.name ?? statId
+  const unit = definition?.unit ?? ""
+  const higherIsBad = definition?.higherIsBad ?? true
+
+  // Find this stat in the zip data
+  const stat = zipData?.stats.find((s) => s.statId === statId)
+  const currentValue = stat?.value ?? 0
+  const currentStatus = stat?.status ?? "safe"
+  const history = stat?.history ?? []
+  const lastUpdated = stat?.lastUpdated ?? ""
+
+  // Loading state
+  if (isLoading && !zipData) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
+        <View style={$loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.tint} />
+          <Text style={[$loadingText, { color: theme.colors.textDim }]}>Loading trend data...</Text>
+        </View>
+      </Screen>
+    )
+  }
+
+  // No data state
+  if (!stat) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
+        <View style={$loadingContainer}>
+          <MaterialCommunityIcons name="chart-line" size={64} color={theme.colors.textDim} />
+          <Text style={[$emptyTitle, { color: theme.colors.text }]}>No data available</Text>
+          <Text style={[$emptySubtitle, { color: theme.colors.textDim }]}>
+            No measurements found for {statName} in {city}, {state}.
+          </Text>
+        </View>
+      </Screen>
+    )
+  }
 
   const trend = calculateTrendDirection(history, currentValue, higherIsBad)
   const trendColor = getTrendColor(trend)
@@ -200,8 +237,8 @@ export function StatTrendScreen() {
   )
 
   // Get trend description
-  const getTrendDescription = (trend: TrendDirection): string => {
-    switch (trend) {
+  const getTrendDescription = (t: TrendDirection): string => {
+    switch (t) {
       case "improving":
         return higherIsBad
           ? "Values have been decreasing over time, indicating conditions are getting better."
@@ -294,4 +331,29 @@ export function StatTrendScreen() {
       </ScrollView>
     </Screen>
   )
+}
+
+const $loadingContainer: ViewStyle = {
+  flex: 1,
+  justifyContent: "center",
+  alignItems: "center",
+  paddingVertical: 40,
+}
+
+const $loadingText: TextStyle = {
+  marginTop: 12,
+}
+
+const $emptyTitle: TextStyle = {
+  fontSize: 20,
+  fontWeight: "700",
+  textAlign: "center",
+  marginTop: 16,
+}
+
+const $emptySubtitle: TextStyle = {
+  fontSize: 14,
+  textAlign: "center",
+  marginTop: 8,
+  paddingHorizontal: 32,
 }
