@@ -406,9 +406,7 @@ ${deepLink}`
             size={48}
             color={theme.colors.textDim}
           />
-          <Text style={[$categoryName, { fontSize: 20, marginTop: 16, textAlign: "center" }]}>
-            No data available yet
-          </Text>
+          <Text style={[$categoryName, $noDataTitle]}>No data available yet</Text>
           <Text style={$errorText}>
             We do not have {categoryName.toLowerCase()} data for {city}
             {state ? `, ${state}` : ""} yet. Check back later as we expand our coverage.
@@ -560,13 +558,13 @@ ${deepLink}`
               ))
             )
           ) : (
-            <View style={{ alignItems: "center", paddingVertical: 32, paddingHorizontal: 16 }}>
+            <View style={$safeStateContainer}>
               <MaterialCommunityIcons
                 name="shield-check-outline"
                 size={48}
                 color={theme.colors.tint}
               />
-              <Text style={[$emptyText, { marginTop: 12 }]}>
+              <Text style={[$emptyText, $safeStateText]}>
                 No contaminants exceed safety thresholds for this category.
               </Text>
             </View>
@@ -582,4 +580,20 @@ const $headerShareButton: ViewStyle = {
   paddingVertical: 8,
   justifyContent: "center",
   alignItems: "center",
+}
+
+const $noDataTitle: TextStyle = {
+  fontSize: 20,
+  marginTop: 16,
+  textAlign: "center",
+}
+
+const $safeStateContainer: ViewStyle = {
+  alignItems: "center",
+  paddingVertical: 32,
+  paddingHorizontal: 16,
+}
+
+const $safeStateText: TextStyle = {
+  marginTop: 12,
 }

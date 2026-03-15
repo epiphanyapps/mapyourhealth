@@ -253,17 +253,8 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // No data from backend - try cache (and mock in dev only)
-    const cached = getCachedData(zipCode)
-    if (cached) {
-      return {
-        zipData: cached.data,
-        isMockData: false,
-        isCachedData: true,
-        lastUpdated: cached.cachedAt,
-        warning: null,
-      }
-    }
+    // No data from backend - clear stale cache (may contain old mock-derived data)
+    clearCachedZipCodeData(zipCode)
 
     if (__DEV__) {
       const mockData = getMockLocationData(zipCode)
