@@ -6,11 +6,11 @@ on:
   #   paths:
   #     - 'apps/mobile/**'
   #     - '.github/workflows/e2e-tests.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-tests.yml'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - '.github/workflows/e2e-tests.yml'
   workflow_dispatch:
 
 permissions:
