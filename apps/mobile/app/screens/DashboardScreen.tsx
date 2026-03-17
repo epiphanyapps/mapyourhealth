@@ -106,6 +106,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         city: primarySubscription.city,
         state: primarySubscription.state,
         country: primarySubscription.country,
+        address: undefined,
       })
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])

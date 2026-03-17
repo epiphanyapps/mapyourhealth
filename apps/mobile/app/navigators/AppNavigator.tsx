@@ -126,21 +126,8 @@ const linking: LinkingOptions<AppStackParamList> = {
           token: (token: string) => token,
         },
       },
-      Dashboard: {
-        path: "location/:city/:state/:country",
-        parse: {
-          city: (city: string) => decodeURIComponent(city),
-          state: (state: string) => decodeURIComponent(state),
-          country: (country: string) => decodeURIComponent(country),
-          address: (address: string) => decodeURIComponent(address),
-        },
-        stringify: {
-          city: (city: string) => encodeURIComponent(city),
-          state: (state: string) => encodeURIComponent(state),
-          country: (country: string) => encodeURIComponent(country),
-          address: (address: string) => encodeURIComponent(address),
-        },
-      },
+      // Specific sub-paths must come before the generic Dashboard path
+      // so React Navigation matches literal segments (category, contaminant, observations) first.
       CategoryDetail: {
         path: "location/:city/:state/:country/category/:category",
         parse: {
@@ -181,6 +168,21 @@ const linking: LinkingOptions<AppStackParamList> = {
           city: (city: string) => encodeURIComponent(city),
           state: (state: string) => encodeURIComponent(state),
           country: (country: string) => encodeURIComponent(country),
+        },
+      },
+      Dashboard: {
+        path: "location/:city/:state/:country",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+          address: (address: string) => decodeURIComponent(address),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+          address: (address: string) => encodeURIComponent(address),
         },
       },
       Compare: "compare",
