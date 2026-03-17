@@ -199,6 +199,14 @@ export function StatTrendScreen() {
         fontSize: 14,
         color: theme.colors.text,
       } as TextStyle,
+      $historyItemLast: {
+        borderBottomWidth: 0,
+      } as ViewStyle,
+      $statusDot: {
+        width: 10,
+        height: 10,
+        borderRadius: 5,
+      } as ViewStyle,
     }),
     [theme, trendColor],
   )
@@ -291,7 +299,7 @@ export function StatTrendScreen() {
                 key={entry.recordedAt}
                 style={[
                   themedStyles.$historyItem,
-                  index === Math.min(sortedHistory.length, 12) - 1 && $historyItemLast,
+                  index === Math.min(sortedHistory.length, 12) - 1 && themedStyles.$historyItemLast,
                 ]}
               >
                 <Text style={themedStyles.$historyDate}>
@@ -301,7 +309,12 @@ export function StatTrendScreen() {
                   <Text style={themedStyles.$historyValueText}>
                     {entry.value} {unit}
                   </Text>
-                  <View style={[$statusDot, { backgroundColor: getStatusColor(entry.status) }]} />
+                  <View
+                    style={[
+                      themedStyles.$statusDot,
+                      { backgroundColor: getStatusColor(entry.status) },
+                    ]}
+                  />
                 </View>
               </View>
             ))}
@@ -321,16 +334,6 @@ export function StatTrendScreen() {
       </ScrollView>
     </Screen>
   )
-}
-
-const $historyItemLast: ViewStyle = {
-  borderBottomWidth: 0,
-}
-
-const $statusDot: ViewStyle = {
-  width: 10,
-  height: 10,
-  borderRadius: 5,
 }
 
 const $loadingContainer: ViewStyle = {
