@@ -33,6 +33,7 @@ import {
 import { useLocationObservations } from "@/hooks/useLocationObservations"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { getJurisdictionForState } from "@/utils/jurisdiction"
 import { getCategoryIcon, getStatusColorKey } from "@/utils/observations"
 
 interface LocationObservationsScreenProps extends AppStackScreenProps<"LocationObservations"> {}
@@ -96,7 +97,9 @@ const CATEGORY_ORDER: ObservedPropertyCategory[] = [
 export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
   function LocationObservationsScreen(props) {
     const { navigation, route } = props
-    const { city, state, country, jurisdictionCode } = route.params
+    const { city, state, country } = route.params
+    const jurisdictionCode =
+      route.params.jurisdictionCode ?? getJurisdictionForState(state, country)
     const { theme } = useAppTheme()
 
     const { observations, isLoading, error, isOffline, refresh, worstStatus, alertCount } =
@@ -133,7 +136,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Loading state
     if (isLoading) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-loading">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -153,7 +156,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Error state
     if (error && observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-error">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -184,7 +187,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Empty state
     if (observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-empty">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -196,16 +199,14 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
             content={`No health observations are available for ${locationName} at this time.`}
             button="Refresh"
             buttonOnPress={refresh}
-            ImageProps={{
-              source: require("../../assets/images/sad-face.png"),
-            }}
+            imageSource={require("../../assets/images/sad-face.png")}
           />
         </Screen>
       )
     }
 
     return (
-      <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen">
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
         <Header
           title="Health Observations"
           leftIcon="back"

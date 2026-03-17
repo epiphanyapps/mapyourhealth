@@ -112,8 +112,8 @@ const $loadingContainer: ViewStyle = {
 }
 
 /**
- * Deep linking configuration for the app
- * Handles magic link authentication URLs
+ * Deep linking configuration for the app.
+ * Maps URL paths to screens so URLs update during navigation (shareable links).
  */
 const linking: LinkingOptions<AppStackParamList> = {
   prefixes: [Linking.createURL("/"), "mapyourhealth://"],
@@ -133,7 +133,55 @@ const linking: LinkingOptions<AppStackParamList> = {
           state: (state: string) => decodeURIComponent(state),
           country: (country: string) => decodeURIComponent(country),
         },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+        },
       },
+      CategoryDetail: {
+        path: "location/:city/:state/:country/category/:category",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+          category: (category: string) => category,
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+        },
+      },
+      StatTrend: {
+        path: "location/:city/:state/:country/contaminant/:statId",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+          statId: (statId: string) => decodeURIComponent(statId),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+          statId: (statId: string) => encodeURIComponent(statId),
+        },
+      },
+      LocationObservations: {
+        path: "location/:city/:state/:country/observations",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+        },
+      },
+      Compare: "compare",
       Login: "login",
       Signup: "signup",
     },
