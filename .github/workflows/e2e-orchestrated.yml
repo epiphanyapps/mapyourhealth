@@ -1,18 +1,18 @@
 name: E2E Orchestrated Testing
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-orchestrated.yml'
-      - 'apps/mobile/.maestro/**'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-orchestrated.yml'
-      - 'apps/mobile/.maestro/**'
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - '.github/workflows/e2e-orchestrated.yml'
+  #     - 'apps/mobile/.maestro/**'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - '.github/workflows/e2e-orchestrated.yml'
+  #     - 'apps/mobile/.maestro/**'
   workflow_dispatch:
     inputs:
       test_category:

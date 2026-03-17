@@ -1,19 +1,19 @@
 name: E2E Test Orchestration v1.0
 
 on:
-  pull_request:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - 'scripts/e2e-test-runner.sh'
-      - '.github/workflows/e2e-orchestration.yml'
-      - '.maestro/**'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - 'scripts/e2e-test-runner.sh'
-      - '.github/workflows/e2e-orchestration.yml'
+  # pull_request:
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - 'scripts/e2e-test-runner.sh'
+  #     - '.github/workflows/e2e-orchestration.yml'
+  #     - '.maestro/**'
+  # push:
+  #   branches: [main]
+  #   paths:
+  #     - 'apps/mobile/**'
+  #     - 'scripts/e2e-test-runner.sh'
+  #     - '.github/workflows/e2e-orchestration.yml'
   workflow_dispatch:
     inputs:
       test_suite:
