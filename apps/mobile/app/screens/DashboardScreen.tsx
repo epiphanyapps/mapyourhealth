@@ -96,8 +96,6 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [getCategoryName],
   )
 
-  // UI-only state for searched address (not part of URL)
-  const [searchedAddress, setSearchedAddress] = useState<string | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
   const [isProfileMenuVisible, setIsProfileMenuVisible] = useState(false)
 
@@ -108,6 +106,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         city: primarySubscription.city,
         state: primarySubscription.state,
         country: primarySubscription.country,
+        address: undefined,
       })
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])
@@ -119,11 +118,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         city: route.params.city,
         state: route.params.state,
         country: route.params.country || "US",
-        searchedAddress: searchedAddress ?? undefined,
+        searchedAddress: route.params.address,
       }
     }
     return null
-  }, [route.params?.city, route.params?.state, route.params?.country, searchedAddress])
+  }, [route.params?.city, route.params?.state, route.params?.country, route.params?.address])
 
   // Fetch data for current location from Amplify (with caching and offline support)
   const locationData = useZipCodeData(currentLocation?.city || "")
@@ -167,8 +166,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
     (city: string, state: string, country: string, addr?: string) => {
-      navigation.setParams({ city, state, country })
-      setSearchedAddress(addr ?? null)
+      navigation.setParams({ city, state, country, address: addr })
     },
     [navigation],
   )
@@ -179,8 +177,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (zipCode) {
       // GPS returns a zip code, but we treat it as a city lookup
       // TODO: Reverse geocode to city/state instead
-      navigation.setParams({ city: zipCode, state: "", country: "US" })
-      setSearchedAddress(null)
+      navigation.setParams({ city: zipCode, state: "", country: "US", address: undefined })
     }
   }, [getLocationZipCode, navigation])
 

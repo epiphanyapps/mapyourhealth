@@ -286,55 +286,64 @@ jobs:
           ANDROID_RESULT="${{ needs.e2e-android.result }}"
           IOS_SUCCESS_RATE="${{ needs.e2e-ios.outputs.success_rate }}"
           ANDROID_SUCCESS_RATE="${{ needs.e2e-android.outputs.success_rate }}"
-          
+          IOS_TEST_RESULTS="${{ needs.e2e-ios.outputs.test_results }}"
+          ANDROID_TEST_RESULTS="${{ needs.e2e-android.outputs.test_results }}"
+
           OVERALL_STATUS="success"
           PLATFORMS_TESTED=""
-          
+
           if [[ "$IOS_RESULT" != "skipped" ]]; then
             PLATFORMS_TESTED="iOS"
-            if [[ "$IOS_RESULT" != "success" ]]; then
+            # Treat missing test results as failure — job succeeded but no tests ran
+            if [[ "$IOS_RESULT" != "success" ]] || [[ -z "$IOS_SUCCESS_RATE" ]]; then
               OVERALL_STATUS="failure"
             fi
           fi
-          
+
           if [[ "$ANDROID_RESULT" != "skipped" ]]; then
             if [[ -n "$PLATFORMS_TESTED" ]]; then
               PLATFORMS_TESTED="$PLATFORMS_TESTED, Android"
             else
               PLATFORMS_TESTED="Android"
             fi
-            if [[ "$ANDROID_RESULT" != "success" ]]; then
+            if [[ "$ANDROID_RESULT" != "success" ]] || [[ -z "$ANDROID_SUCCESS_RATE" ]]; then
               OVERALL_STATUS="failure"
             fi
           fi
-          
+
           echo "overall_status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
           echo "platforms_tested=$PLATFORMS_TESTED" >> $GITHUB_OUTPUT
-          
+
           # Create summary
           SUMMARY="## 🧪 E2E Test Results - ${{ needs.test-strategy.outputs.test_suite }} suite\n\n"
           SUMMARY+="**Trigger:** ${{ github.event_name }}\n"
           SUMMARY+="**Platforms:** $PLATFORMS_TESTED\n"
           SUMMARY+="**Commit:** [${{ github.sha }}](${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }})\n\n"
-          
+
           if [[ "$IOS_RESULT" != "skipped" ]]; then
-            if [[ "$IOS_RESULT" == "success" ]]; then
+            if [[ -z "$IOS_SUCCESS_RATE" ]]; then
+              SUMMARY+="⚠️ **iOS:** No test results reported (job exited without producing a report)\n\n"
+            elif [[ "$IOS_RESULT" == "success" ]]; then
               SUMMARY+="✅ **iOS:** Passed (${IOS_SUCCESS_RATE}% success rate)\n"
+              SUMMARY+="   - ${IOS_TEST_RESULTS}\n\n"
             else
               SUMMARY+="❌ **iOS:** Failed (${IOS_SUCCESS_RATE}% success rate)\n"
+              SUMMARY+="   - ${IOS_TEST_RESULTS}\n\n"
             fi
-            SUMMARY+="   - ${{ needs.e2e-ios.outputs.test_results }}\n\n"
           fi
-          
+
           if [[ "$ANDROID_RESULT" != "skipped" ]]; then
-            if [[ "$ANDROID_RESULT" == "success" ]]; then
+            if [[ -z "$ANDROID_SUCCESS_RATE" ]]; then
+              SUMMARY+="⚠️ **Android:** No test results reported (job exited without producing a report)\n\n"
+            elif [[ "$ANDROID_RESULT" == "success" ]]; then
               SUMMARY+="✅ **Android:** Passed (${ANDROID_SUCCESS_RATE}% success rate)\n"
+              SUMMARY+="   - ${ANDROID_TEST_RESULTS}\n\n"
             else
               SUMMARY+="❌ **Android:** Failed (${ANDROID_SUCCESS_RATE}% success rate)\n"
+              SUMMARY+="   - ${ANDROID_TEST_RESULTS}\n\n"
             fi
-            SUMMARY+="   - ${{ needs.e2e-android.outputs.test_results }}\n\n"
           fi
-          
+
           if [[ "$OVERALL_STATUS" == "failure" ]]; then
             SUMMARY+="🔍 **Check test artifacts for detailed failure analysis**\n"
           fi
