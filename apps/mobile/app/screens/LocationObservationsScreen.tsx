@@ -136,7 +136,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Loading state
     if (isLoading) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-loading">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -156,7 +156,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Error state
     if (error && observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-error">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -187,7 +187,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
     // Empty state
     if (observations.length === 0) {
       return (
-        <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen-empty">
+        <Screen preset="fixed" safeAreaEdges={["top"]}>
           <Header
             title="Health Observations"
             leftIcon="back"
@@ -199,16 +199,14 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
             content={`No health observations are available for ${locationName} at this time.`}
             button="Refresh"
             buttonOnPress={refresh}
-            ImageProps={{
-              source: require("../../assets/images/sad-face.png"),
-            }}
+            imageSource={require("../../assets/images/sad-face.png")}
           />
         </Screen>
       )
     }
 
     return (
-      <Screen preset="fixed" safeAreaEdges={["top"]} testID="observations-screen">
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
         <Header
           title="Health Observations"
           leftIcon="back"
