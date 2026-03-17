@@ -30,7 +30,13 @@ export type AppStackParamList = {
   OnboardingZipCodes: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: { city?: string; state?: string; country?: string } | undefined
-  CategoryDetail: { category: StatCategory; city: string; state: string; subCategoryId?: string }
+  CategoryDetail: {
+    category: StatCategory
+    city: string
+    state: string
+    country: string
+    subCategoryId?: string
+  }
   Report: undefined
   SubscriptionsSettings: undefined
   Profile: undefined
@@ -38,6 +44,7 @@ export type AppStackParamList = {
     statId: string
     city: string
     state: string
+    country: string
   }
   Compare: undefined
   LocationObservations: {

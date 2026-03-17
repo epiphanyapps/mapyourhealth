@@ -762,6 +762,7 @@ View details: ${shareUrl}`
                 category: mapToStatCategory(priorityAlert.definition.category),
                 city: currentLocation?.city || "",
                 state: currentLocation?.state || "",
+                country: currentLocation?.country || "US",
               })
             }}
           />
@@ -782,6 +783,7 @@ View details: ${shareUrl}`
                   category,
                   city: currentLocation?.city || "",
                   state: currentLocation?.state || "",
+                  country: currentLocation?.country || "US",
                   subCategoryId,
                 })
               }}

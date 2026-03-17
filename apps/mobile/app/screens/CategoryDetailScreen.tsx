@@ -44,7 +44,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   props,
 ) {
   const { navigation, route } = props
-  const { category, city, state, subCategoryId } = route.params
+  const { category, city, state, country, subCategoryId } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
@@ -142,7 +142,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         ? `${zipData.cityName}, ${zipData.state}`
         : zipData.cityName || zipData.state || "Unknown Location"
 
-    const shareUrl = `https://app.mapyourhealth.info/location/${encodeURIComponent(city)}/${encodeURIComponent(state)}/category/${encodeURIComponent(category)}`
+    const shareUrl = `https://app.mapyourhealth.info/location/${encodeURIComponent(city)}/${encodeURIComponent(state)}/${encodeURIComponent(country)}/category/${encodeURIComponent(category)}`
 
     const shareMessage = `${categoryName} Risk Report for ${locationName}
 
@@ -159,7 +159,7 @@ View details: ${shareUrl}`
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, stats, categoryName, city, state, category])
+  }, [zipData, stats, categoryName, city, state, country, category])
 
   // Custom share button component for header
   const ShareButton = (
@@ -539,6 +539,7 @@ View details: ${shareUrl}`
                             statId: stat.statId,
                             city,
                             state,
+                            country,
                           })
                       : undefined
                   }

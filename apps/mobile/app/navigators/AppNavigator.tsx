@@ -133,21 +133,39 @@ const linking: LinkingOptions<AppStackParamList> = {
           state: (state: string) => decodeURIComponent(state),
           country: (country: string) => decodeURIComponent(country),
         },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+        },
       },
       CategoryDetail: {
-        path: "location/:city/:state/category/:category",
+        path: "location/:city/:state/:country/category/:category",
         parse: {
           city: (city: string) => decodeURIComponent(city),
           state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
           category: (category: string) => category,
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
         },
       },
       StatTrend: {
-        path: "location/:city/:state/contaminant/:statId",
+        path: "location/:city/:state/:country/contaminant/:statId",
         parse: {
           city: (city: string) => decodeURIComponent(city),
           state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
           statId: (statId: string) => decodeURIComponent(statId),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+          statId: (statId: string) => encodeURIComponent(statId),
         },
       },
       LocationObservations: {
@@ -156,6 +174,11 @@ const linking: LinkingOptions<AppStackParamList> = {
           city: (city: string) => decodeURIComponent(city),
           state: (state: string) => decodeURIComponent(state),
           country: (country: string) => decodeURIComponent(country),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
         },
       },
       Compare: "compare",

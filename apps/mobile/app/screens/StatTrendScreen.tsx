@@ -62,6 +62,28 @@ function getStatusColor(status: StatStatus): string {
   }
 }
 
+/**
+ * Get description for trend direction
+ */
+function getTrendDescription(
+  trend: TrendDirection,
+  higherIsBad: boolean,
+): string {
+  switch (trend) {
+    case "improving":
+      return higherIsBad
+        ? "Values have been decreasing over time, indicating conditions are getting better."
+        : "Values have been increasing over time, indicating conditions are getting better."
+    case "worsening":
+      return higherIsBad
+        ? "Values have been increasing over time, indicating conditions may be deteriorating."
+        : "Values have been decreasing over time, indicating conditions may be deteriorating."
+    case "stable":
+    default:
+      return "Values have remained relatively consistent over time with no significant trend."
+  }
+}
+
 export function StatTrendScreen() {
   const navigation = useNavigation<NavigationProp>()
   const route = useRoute<StatTrendRouteProp>()
@@ -236,23 +258,6 @@ export function StatTrendScreen() {
     (a, b) => new Date(b.recordedAt).getTime() - new Date(a.recordedAt).getTime(),
   )
 
-  // Get trend description
-  const getTrendDescription = (t: TrendDirection): string => {
-    switch (t) {
-      case "improving":
-        return higherIsBad
-          ? "Values have been decreasing over time, indicating conditions are getting better."
-          : "Values have been increasing over time, indicating conditions are getting better."
-      case "worsening":
-        return higherIsBad
-          ? "Values have been increasing over time, indicating conditions may be deteriorating."
-          : "Values have been decreasing over time, indicating conditions may be deteriorating."
-      case "stable":
-      default:
-        return "Values have remained relatively consistent over time with no significant trend."
-    }
-  }
-
   return (
     <Screen style={$container} preset="fixed" safeAreaEdges={["top"]}>
       <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
@@ -288,7 +293,7 @@ export function StatTrendScreen() {
                   ? "Trend: Worsening"
                   : "Trend: Stable"}
             </Text>
-            <Text style={$infoDescription}>{getTrendDescription(trend)}</Text>
+            <Text style={$infoDescription}>{getTrendDescription(trend, higherIsBad)}</Text>
           </View>
         </View>
 
