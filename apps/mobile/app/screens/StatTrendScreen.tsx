@@ -65,10 +65,7 @@ function getStatusColor(status: StatStatus): string {
 /**
  * Get description for trend direction
  */
-function getTrendDescription(
-  trend: TrendDirection,
-  higherIsBad: boolean,
-): string {
+function getTrendDescription(trend: TrendDirection, higherIsBad: boolean): string {
   switch (trend) {
     case "improving":
       return higherIsBad
