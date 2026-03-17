@@ -132,11 +132,13 @@ const linking: LinkingOptions<AppStackParamList> = {
           city: (city: string) => decodeURIComponent(city),
           state: (state: string) => decodeURIComponent(state),
           country: (country: string) => decodeURIComponent(country),
+          address: (address: string) => decodeURIComponent(address),
         },
         stringify: {
           city: (city: string) => encodeURIComponent(city),
           state: (state: string) => encodeURIComponent(state),
           country: (country: string) => encodeURIComponent(country),
+          address: (address: string) => encodeURIComponent(address),
         },
       },
       CategoryDetail: {
