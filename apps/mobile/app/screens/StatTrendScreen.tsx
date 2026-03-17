@@ -103,37 +103,8 @@ export function StatTrendScreen() {
   const stat = zipData?.stats.find((s) => s.statId === statId)
   const currentValue = stat?.value ?? 0
   const currentStatus = stat?.status ?? "safe"
-  const history = stat?.history ?? []
+  const history = useMemo(() => stat?.history ?? [], [stat?.history])
   const lastUpdated = stat?.lastUpdated ?? ""
-
-  // Loading state
-  if (isLoading && !zipData) {
-    return (
-      <Screen preset="fixed" safeAreaEdges={["top"]}>
-        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
-        <View style={$loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.tint} />
-          <Text style={[$loadingText, { color: theme.colors.textDim }]}>Loading trend data...</Text>
-        </View>
-      </Screen>
-    )
-  }
-
-  // No data state
-  if (!stat) {
-    return (
-      <Screen preset="fixed" safeAreaEdges={["top"]}>
-        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
-        <View style={$loadingContainer}>
-          <MaterialCommunityIcons name="chart-line" size={64} color={theme.colors.textDim} />
-          <Text style={[$emptyTitle, { color: theme.colors.text }]}>No data available</Text>
-          <Text style={[$emptySubtitle, { color: theme.colors.textDim }]}>
-            No measurements found for {statName} in {city}, {state}, {country}.
-          </Text>
-        </View>
-      </Screen>
-    )
-  }
 
   const trend = calculateTrendDirection(history, currentValue, higherIsBad)
   const trendColor = getTrendColor(trend)
@@ -240,6 +211,35 @@ export function StatTrendScreen() {
       ),
     [history],
   )
+
+  // Loading state
+  if (isLoading && !zipData) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
+        <View style={$loadingContainer}>
+          <ActivityIndicator size="large" color={theme.colors.tint} />
+          <Text style={[$loadingText, { color: theme.colors.textDim }]}>Loading trend data...</Text>
+        </View>
+      </Screen>
+    )
+  }
+
+  // No data state
+  if (!stat) {
+    return (
+      <Screen preset="fixed" safeAreaEdges={["top"]}>
+        <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />
+        <View style={$loadingContainer}>
+          <MaterialCommunityIcons name="chart-line" size={64} color={theme.colors.textDim} />
+          <Text style={[$emptyTitle, { color: theme.colors.text }]}>No data available</Text>
+          <Text style={[$emptySubtitle, { color: theme.colors.textDim }]}>
+            No measurements found for {statName} in {city}, {state}, {country}.
+          </Text>
+        </View>
+      </Screen>
+    )
+  }
 
   return (
     <Screen style={themedStyles.$container} preset="fixed" safeAreaEdges={["top"]}>
