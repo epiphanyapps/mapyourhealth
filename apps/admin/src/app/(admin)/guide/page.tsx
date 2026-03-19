@@ -1,3 +1,5 @@
+"use client";
+
 import {
   Card,
   CardContent,
@@ -43,7 +45,7 @@ export default function GuidePage() {
             </p>
             <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
               <code>
-                locationName,contaminantId,value,unit,measuredAt,source
+                city,state,country,contaminantId,value,source
               </code>
             </pre>
           </div>
@@ -56,11 +58,11 @@ export default function GuidePage() {
             <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
               <code>{`[
   {
-    "locationName": "New York",
-    "contaminantId": "water-lead",
-    "value": 12.5,
-    "unit": "ppb",
-    "measuredAt": "2026-01-15T00:00:00Z",
+    "city": "Beverly Hills",
+    "state": "CA",
+    "country": "US",
+    "contaminantId": "lead",
+    "value": 8.2,
     "source": "EPA Report 2026"
   }
 ]`}</code>
@@ -80,29 +82,32 @@ export default function GuidePage() {
             <h3 className="font-semibold mb-2">Required Fields</h3>
             <ul className="text-sm space-y-1 list-disc ml-6 text-muted-foreground">
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">locationName</code>{" "}
-                — Name of the location (must match an existing Location record)
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">city</code>{" "}
+                — City name (e.g., &quot;Beverly Hills&quot;)
+              </li>
+              <li>
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">state</code>{" "}
+                — State or province code (e.g., &quot;CA&quot;, &quot;QC&quot;)
+              </li>
+              <li>
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">country</code>{" "}
+                — Country code (e.g., &quot;US&quot;, &quot;CA&quot;)
               </li>
               <li>
                 <code className="px-1 py-0.5 bg-muted rounded text-foreground">contaminantId</code>{" "}
                 — ID of the contaminant (e.g.,{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">water-lead</code>)
+                <code className="px-1 py-0.5 bg-muted rounded">lead</code>,{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">nitrate</code>,{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">radon</code>)
               </li>
               <li>
                 <code className="px-1 py-0.5 bg-muted rounded text-foreground">value</code>{" "}
                 — Numeric measurement value
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">unit</code>{" "}
-                — Unit of measurement (e.g., ppb, mg/L, CFU/100mL)
-              </li>
-              <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">measuredAt</code>{" "}
-                — ISO 8601 date string for when the measurement was taken
-              </li>
-              <li>
                 <code className="px-1 py-0.5 bg-muted rounded text-foreground">source</code>{" "}
-                — Data source attribution (e.g., &quot;EPA Report 2026&quot;)
+                — Data source attribution (optional, e.g., &quot;EPA Report
+                2026&quot;)
               </li>
             </ul>
           </div>
@@ -384,14 +389,15 @@ export default function GuidePage() {
               </li>
               <li>
                 <span className="font-medium text-foreground">
-                  Mismatched location names
+                  Mismatched location fields
                 </span>{" "}
                 — The{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">
-                  locationName
-                </code>{" "}
-                in your import file must exactly match an existing Location
-                record. Check for typos and case sensitivity.
+                <code className="px-1 py-0.5 bg-muted rounded">city</code>,{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">state</code>,
+                and{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">country</code>{" "}
+                in your import file must match existing Location records. Check
+                for typos and case sensitivity.
               </li>
               <li>
                 <span className="font-medium text-foreground">
