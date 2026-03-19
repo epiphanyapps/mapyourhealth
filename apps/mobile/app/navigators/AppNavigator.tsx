@@ -12,6 +12,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
+import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
@@ -69,33 +70,36 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName="Dashboard"
+      initialRouteName={isAuthenticated ? "Dashboard" : "ComingSoon"}
     >
-      {/* Screens available to all users (guests and authenticated) */}
-      <Stack.Screen name="Dashboard" component={DashboardScreen} />
-      <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
-      <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
-      <Stack.Screen name="StatTrend" component={StatTrendScreen} />
-      <Stack.Screen name="Compare" component={CompareScreen} />
-
-      {/* Auth screens - available to guests for login/signup flow */}
-      <Stack.Screen name="Login" component={LoginScreen} />
-      <Stack.Screen name="Signup" component={SignupScreen} />
-      <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
-      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-      <Stack.Screen name="MagicLink" component={MagicLinkScreen} />
-      <Stack.Screen name="MagicLinkSent" component={MagicLinkSentScreen} />
-      <Stack.Screen name="MagicLinkVerify" component={MagicLinkVerifyScreen} />
-
-      {/* Authenticated-only screens */}
-      {isAuthenticated && (
+      {isAuthenticated ? (
         <>
+          {/* Screens available to authenticated users */}
+          <Stack.Screen name="Dashboard" component={DashboardScreen} />
+          <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+          <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
+          <Stack.Screen name="StatTrend" component={StatTrendScreen} />
+          <Stack.Screen name="Compare" component={CompareScreen} />
           <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
           <Stack.Screen name="Report" component={ReportScreen} />
           <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
           <Stack.Screen name="Profile" component={ProfileScreen} />
           <Stack.Screen name="Welcome" component={WelcomeScreen} />
           <Stack.Screen name="Demo" component={DemoNavigator} />
+        </>
+      ) : (
+        <>
+          {/* Coming Soon gate for unauthenticated users */}
+          <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
+
+          {/* Auth screens - available to guests for login/signup flow */}
+          <Stack.Screen name="Login" component={LoginScreen} />
+          <Stack.Screen name="Signup" component={SignupScreen} />
+          <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
+          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="MagicLink" component={MagicLinkScreen} />
+          <Stack.Screen name="MagicLinkSent" component={MagicLinkSentScreen} />
+          <Stack.Screen name="MagicLinkVerify" component={MagicLinkVerifyScreen} />
         </>
       )}
 
@@ -186,6 +190,7 @@ const linking: LinkingOptions<AppStackParamList> = {
         },
       },
       Compare: "compare",
+      ComingSoon: "coming-soon",
       Login: "login",
       Signup: "signup",
     },

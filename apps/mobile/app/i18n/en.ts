@@ -29,6 +29,14 @@ const en = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "Coming Soon",
+    preparing: "We're preparing your health data",
+    description:
+      "MapYourHealth helps you monitor water quality and environmental contaminants in your area. Sign up to get notified when we launch.",
+    signUp: "Sign Up",
+    logIn: "Log In",
+  },
   errors: {
     invalidEmail: "Invalid email address.",
   },

@@ -31,6 +31,14 @@ const fr: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "Bientôt disponible",
+    preparing: "Nous préparons vos données de santé",
+    description:
+      "MapYourHealth vous aide à surveiller la qualité de l'eau et les contaminants environnementaux dans votre région. Inscrivez-vous pour être informé de notre lancement.",
+    signUp: "S'inscrire",
+    logIn: "Se connecter",
+  },
   errors: {
     invalidEmail: "Adresse e-mail invalide.",
   },
