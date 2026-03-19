@@ -26,6 +26,7 @@ import {
   Shield,
   KeyRound,
   TestTube,
+  BookOpen,
   Droplets,
   Scale,
   Globe,
@@ -86,6 +87,11 @@ const menuItems = [
     title: "Testing Guide",
     url: "/testing",
     icon: TestTube,
+  },
+  {
+    title: "Guide",
+    url: "/guide",
+    icon: BookOpen,
   },
 ];
 
