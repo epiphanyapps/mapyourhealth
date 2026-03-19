@@ -33,9 +33,7 @@ const en = {
     heading: "Coming Soon",
     preparing: "We're preparing your health data",
     description:
-      "MapYourHealth helps you monitor water quality and environmental contaminants in your area. Sign up to get notified when we launch.",
-    signUp: "Sign Up",
-    logIn: "Log In",
+      "MapYourHealth helps you monitor environmental health risks in your area. Stay tuned for our launch.",
   },
   errors: {
     invalidEmail: "Invalid email address.",
