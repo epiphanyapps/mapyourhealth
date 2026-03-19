@@ -70,11 +70,11 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Dashboard" : "ComingSoon"}
+      initialRouteName={isAuthenticated || __DEV__ ? "Dashboard" : "ComingSoon"}
     >
-      {isAuthenticated ? (
+      {isAuthenticated || __DEV__ ? (
         <>
-          {/* Screens available to authenticated users */}
+          {/* Screens available to authenticated users (and dev mode) */}
           <Stack.Screen name="Dashboard" component={DashboardScreen} />
           <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
           <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
