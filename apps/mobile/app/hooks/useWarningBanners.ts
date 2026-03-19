@@ -76,7 +76,8 @@ export function useWarningBanners(options: UseWarningBannersOptions): UseWarning
       // Check location match
       const cityMatch = !banner.city || banner.city.toLowerCase() === city?.toLowerCase()
       const stateMatch = !banner.state || banner.state.toLowerCase() === state?.toLowerCase()
-      const countryMatch = !banner.country || banner.country.toLowerCase() === country?.toLowerCase()
+      const countryMatch =
+        !banner.country || banner.country.toLowerCase() === country?.toLowerCase()
 
       return cityMatch && stateMatch && countryMatch
     })
