@@ -14,6 +14,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
 
+import { AdminWarningBanner } from "@/components/AdminWarningBanner"
 import { Card } from "@/components/Card"
 import {
   ExpandableCategoryCard,
@@ -36,6 +37,7 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
+import { useWarningBanners } from "@/hooks/useWarningBanners"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -91,6 +93,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
+  const { banners: adminBanners } = useWarningBanners({
+    city: route.params?.city,
+    state: route.params?.state,
+    country: route.params?.country,
+  })
 
   // Helper to get display name from dynamic categories with fallback
   const getCategoryDisplayName = useCallback(
@@ -851,6 +858,14 @@ View details: ${shareUrl}`
           <Text style={[$actionButtonText, { color: theme.colors.tint }]}>Compare</Text>
         </Pressable>
       </View>
+
+      {/* Admin Warning Banners */}
+      {adminBanners.length > 0 &&
+        adminBanners.map((banner) => (
+          <View key={banner.id} style={$warningBannerContainer}>
+            <AdminWarningBanner banner={banner} />
+          </View>
+        ))}
 
       {/* Warning Banner - shows for danger/warning stats */}
       {priorityAlert && priorityAlert.definition && (

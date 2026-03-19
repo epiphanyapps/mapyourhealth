@@ -22,6 +22,7 @@ import {
   MapPin,
   Upload,
   AlertTriangle,
+  Megaphone,
   LogOut,
   Shield,
   KeyRound,
@@ -77,6 +78,11 @@ const menuItems = [
     title: "Import Data",
     url: "/import",
     icon: Upload,
+  },
+  {
+    title: "Warning Banners",
+    url: "/banners",
+    icon: Megaphone,
   },
   {
     title: "Hazard Reports",

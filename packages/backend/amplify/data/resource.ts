@@ -367,6 +367,36 @@ const schema = a.schema({
     ]),
 
   // =========================================================================
+  // Warning Banners (Admin-managed alerts)
+  // =========================================================================
+
+  /**
+   * WarningBanner - manual warning banners created by admins
+   * Displayed to mobile users based on location and time window
+   * Public read, admin write
+   */
+  WarningBanner: a
+    .model({
+      title: a.string().required(),
+      titleFr: a.string(),
+      description: a.string().required(),
+      descriptionFr: a.string(),
+      severity: a.enum(["critical", "warning", "info"]),
+      city: a.string(),
+      state: a.string(),
+      country: a.string(),
+      startsAt: a.datetime().required(),
+      expiresAt: a.datetime(),
+      isActive: a.boolean().default(true),
+      createdBy: a.string(),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ]),
+
+  // =========================================================================
   // Observations & Measurements (O&M) Data Model
   // Flexible system for tracking various environmental/health properties
   // =========================================================================
