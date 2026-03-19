@@ -32,10 +32,10 @@ const fr: Translations = {
   },
 
   comingSoonScreen: {
-    heading: "Bientot disponible",
-    preparing: "Nous preparons vos donnees de sante",
+    heading: "Bientôt disponible",
+    preparing: "Nous préparons vos données de santé",
     description:
-      "MapYourHealth vous aide a surveiller la qualite de l'eau et les contaminants environnementaux dans votre region. Inscrivez-vous pour etre informe de notre lancement.",
+      "MapYourHealth vous aide à surveiller la qualité de l'eau et les contaminants environnementaux dans votre région. Inscrivez-vous pour être informé de notre lancement.",
     signUp: "S'inscrire",
     logIn: "Se connecter",
   },
