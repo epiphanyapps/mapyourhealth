@@ -12,7 +12,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
-import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
@@ -46,7 +45,7 @@ const exitRoutes = Config.exitRoutes
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const { isAuthenticated, isLoading } = useAuth()
+  const { isLoading } = useAuth()
 
   const {
     theme: { colors },
@@ -70,38 +69,28 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated || __DEV__ ? "Dashboard" : "ComingSoon"}
+      initialRouteName="Dashboard"
     >
-      {isAuthenticated || __DEV__ ? (
-        <>
-          {/* Screens available to authenticated users (and dev mode) */}
-          <Stack.Screen name="Dashboard" component={DashboardScreen} />
-          <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
-          <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
-          <Stack.Screen name="StatTrend" component={StatTrendScreen} />
-          <Stack.Screen name="Compare" component={CompareScreen} />
-          <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
-          <Stack.Screen name="Report" component={ReportScreen} />
-          <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
-          <Stack.Screen name="Profile" component={ProfileScreen} />
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Demo" component={DemoNavigator} />
-        </>
-      ) : (
-        <>
-          {/* Coming Soon gate for unauthenticated users */}
-          <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
+      <Stack.Screen name="Dashboard" component={DashboardScreen} />
+      <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
+      <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
+      <Stack.Screen name="StatTrend" component={StatTrendScreen} />
+      <Stack.Screen name="Compare" component={CompareScreen} />
+      <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
+      <Stack.Screen name="Report" component={ReportScreen} />
+      <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
+      <Stack.Screen name="Profile" component={ProfileScreen} />
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
+      <Stack.Screen name="Demo" component={DemoNavigator} />
 
-          {/* Auth screens - available to guests for login/signup flow */}
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="Signup" component={SignupScreen} />
-          <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
-          <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
-          <Stack.Screen name="MagicLink" component={MagicLinkScreen} />
-          <Stack.Screen name="MagicLinkSent" component={MagicLinkSentScreen} />
-          <Stack.Screen name="MagicLinkVerify" component={MagicLinkVerifyScreen} />
-        </>
-      )}
+      {/* Auth screens */}
+      <Stack.Screen name="Login" component={LoginScreen} />
+      <Stack.Screen name="Signup" component={SignupScreen} />
+      <Stack.Screen name="ConfirmSignup" component={ConfirmSignupScreen} />
+      <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+      <Stack.Screen name="MagicLink" component={MagicLinkScreen} />
+      <Stack.Screen name="MagicLinkSent" component={MagicLinkSentScreen} />
+      <Stack.Screen name="MagicLinkVerify" component={MagicLinkVerifyScreen} />
 
       {/** 🔥 Your screens go here */}
       {/* IGNITE_GENERATOR_ANCHOR_APP_STACK_SCREENS */}
@@ -190,7 +179,6 @@ const linking: LinkingOptions<AppStackParamList> = {
         },
       },
       Compare: "compare",
-      ComingSoon: "coming-soon",
       Login: "login",
       Signup: "signup",
     },

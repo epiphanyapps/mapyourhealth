@@ -19,7 +19,6 @@ export type DemoTabParamList = {
 
 // App Stack Navigator types
 export type AppStackParamList = {
-  ComingSoon: undefined
   Welcome: undefined
   Login: { email?: string } | undefined
   Signup: undefined
