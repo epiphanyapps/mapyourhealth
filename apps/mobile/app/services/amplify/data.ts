@@ -64,6 +64,9 @@ export type AmplifyLocationMeasurement = Schema["LocationMeasurement"]["type"]
 export type AmplifyUserSubscription = Schema["UserSubscription"]["type"]
 export type AmplifyHazardReport = Schema["HazardReport"]["type"]
 
+// Warning Banners
+export type AmplifyWarningBanner = Schema["WarningBanner"]["type"]
+
 // O&M (Observations & Measurements) Types
 export type AmplifyObservedProperty = Schema["ObservedProperty"]["type"]
 export type AmplifyPropertyThreshold = Schema["PropertyThreshold"]["type"]
@@ -745,6 +748,25 @@ export async function getLocationObservationsByCountry(
   if (errors) {
     console.error("Error fetching location observations by country:", errors)
     throw new Error("Failed to fetch location observations by country")
+  }
+  return data
+}
+
+// =============================================================================
+// Warning Banners (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all active warning banners
+ */
+export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.WarningBanner.list({
+    limit: 100,
+  })
+  if (errors) {
+    console.error("Error fetching warning banners:", errors)
+    throw new Error("Failed to fetch warning banners")
   }
   return data
 }

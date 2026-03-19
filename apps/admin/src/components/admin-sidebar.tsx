@@ -78,6 +78,11 @@ const menuItems = [
     icon: Upload,
   },
   {
+    title: "Warning Banners",
+    url: "/banners",
+    icon: AlertTriangle,
+  },
+  {
     title: "Hazard Reports",
     url: "/reports",
     icon: AlertTriangle,
