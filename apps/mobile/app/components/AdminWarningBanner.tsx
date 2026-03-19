@@ -1,7 +1,7 @@
 import { useMemo } from "react"
 import { View, ViewStyle, TextStyle } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
-import * as Localization from "expo-localization"
+import i18n from "i18next"
 
 import { Text } from "@/components/Text"
 import type { AmplifyWarningBanner } from "@/services/amplify/data"
@@ -58,13 +58,11 @@ export interface AdminWarningBannerProps {
 
 /**
  * Determine the user's current language prefix (e.g., "fr" or "en")
+ * Uses the app's i18next instance to stay in sync with user language settings.
  */
 function getCurrentLanguage(): string {
-  const locales = Localization.getLocales()
-  if (locales.length > 0) {
-    return locales[0].languageCode ?? "en"
-  }
-  return "en"
+  const primaryTag = i18n.language?.split("-")[0]
+  return primaryTag || "en"
 }
 
 /**
@@ -110,15 +108,14 @@ export function AdminWarningBanner(props: AdminWarningBannerProps) {
   return (
     <View style={themedStyles.container} accessibilityRole="alert">
       <View style={$contentRow}>
-        <MaterialCommunityIcons
-          name={colors.icon}
-          size={24}
-          color={colors.accent}
-          style={$icon}
-        />
+        <MaterialCommunityIcons name={colors.icon} size={24} color={colors.accent} style={$icon} />
         <View style={$textContainer}>
           <Text style={themedStyles.labelText}>
-            {severity === "critical" ? "Critical Alert" : severity === "warning" ? "Warning" : "Notice"}
+            {severity === "critical"
+              ? "Critical Alert"
+              : severity === "warning"
+                ? "Warning"
+                : "Notice"}
           </Text>
           <Text style={themedStyles.titleText}>{title}</Text>
           <Text style={themedStyles.descriptionText}>{description}</Text>

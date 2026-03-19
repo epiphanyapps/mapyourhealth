@@ -35,6 +35,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import { z } from "zod";
 
 type WarningBanner = Schema["WarningBanner"]["type"];
 
@@ -51,6 +52,33 @@ const SEVERITY_COLORS: Record<Severity, string> = {
   warning: "bg-amber-100 text-amber-800",
   info: "bg-blue-100 text-blue-800",
 };
+
+const bannerFormSchema = z
+  .object({
+    title: z.string().min(1, "Title is required"),
+    titleFr: z.string().optional(),
+    description: z.string().min(1, "Description is required"),
+    descriptionFr: z.string().optional(),
+    severity: z.enum(["critical", "warning", "info"]),
+    city: z.string().optional(),
+    state: z.string().optional(),
+    country: z.string().optional(),
+    startsAt: z.string().min(1, "Start date is required"),
+    expiresAt: z.string().optional(),
+    isActive: z.boolean(),
+  })
+  .refine(
+    (data) => {
+      if (data.expiresAt && data.startsAt) {
+        return new Date(data.expiresAt) > new Date(data.startsAt);
+      }
+      return true;
+    },
+    {
+      message: "Expiration date must be after start date",
+      path: ["expiresAt"],
+    },
+  );
 
 interface FormData {
   title: string;
@@ -155,8 +183,10 @@ export default function BannersPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.title || !formData.description || !formData.startsAt) {
-      toast.error("Please fill in all required fields");
+    const result = bannerFormSchema.safeParse(formData);
+    if (!result.success) {
+      const firstError = result.error.errors[0]?.message;
+      toast.error(firstError || "Please fix the form errors");
       return;
     }
 
@@ -164,20 +194,21 @@ export default function BannersPage() {
     try {
       const client = generateClient<Schema>();
 
+      const validated = result.data;
       const bannerData = {
-        title: formData.title,
-        titleFr: formData.titleFr || null,
-        description: formData.description,
-        descriptionFr: formData.descriptionFr || null,
-        severity: formData.severity,
-        city: formData.city || null,
-        state: formData.state || null,
-        country: formData.country || null,
-        startsAt: new Date(formData.startsAt).toISOString(),
-        expiresAt: formData.expiresAt
-          ? new Date(formData.expiresAt).toISOString()
+        title: validated.title,
+        titleFr: validated.titleFr || null,
+        description: validated.description,
+        descriptionFr: validated.descriptionFr || null,
+        severity: validated.severity,
+        city: validated.city || null,
+        state: validated.state || null,
+        country: validated.country || null,
+        startsAt: new Date(validated.startsAt).toISOString(),
+        expiresAt: validated.expiresAt
+          ? new Date(validated.expiresAt).toISOString()
           : null,
-        isActive: formData.isActive,
+        isActive: validated.isActive,
       };
 
       if (editingBanner) {
@@ -187,10 +218,7 @@ export default function BannersPage() {
         });
         toast.success("Banner updated");
       } else {
-        await client.models.WarningBanner.create({
-          bannerId: crypto.randomUUID(),
-          ...bannerData,
-        });
+        await client.models.WarningBanner.create(bannerData);
         toast.success("Banner created");
       }
 

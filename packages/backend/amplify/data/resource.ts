@@ -377,7 +377,6 @@ const schema = a.schema({
    */
   WarningBanner: a
     .model({
-      bannerId: a.id().required(),
       title: a.string().required(),
       titleFr: a.string(),
       description: a.string().required(),
@@ -394,7 +393,7 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.guest().to(["read"]),
       allow.authenticated().to(["read"]),
-      allow.group("ADMINS"),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
     ]),
 
   // =========================================================================
