@@ -35,6 +35,10 @@ interface SearchSuggestionsDropdownProps {
   isLoading?: boolean
   /** Error message to display */
   error?: string | null
+  /** Optional header text (e.g., "Cities in California") */
+  headerText?: string | null
+  /** Callback when back button in header is pressed */
+  onBackPress?: () => void
 }
 
 /**
@@ -216,7 +220,15 @@ function WebSuggestionItem({
  * />
  */
 export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps) {
-  const { suggestions, visible, onSelect, isLoading = false, error = null } = props
+  const {
+    suggestions,
+    visible,
+    onSelect,
+    isLoading = false,
+    error = null,
+    headerText = null,
+    onBackPress,
+  } = props
   const { theme } = useAppTheme()
   const pulseOpacity = usePulseAnimation()
 
@@ -338,6 +350,46 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     flex: 1,
   }
 
+  const $headerContainer: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.palette.neutral200,
+  }
+
+  const $headerBackButton: ViewStyle = {
+    marginRight: 8,
+    padding: 4,
+  }
+
+  const $headerText: TextStyle = {
+    fontSize: 14,
+    fontWeight: "600",
+    color: theme.colors.textDim,
+    flex: 1,
+  }
+
+  const renderHeader = () => {
+    if (!headerText) return null
+
+    return (
+      <Pressable
+        onPress={onBackPress}
+        style={$headerContainer}
+        accessibilityRole="button"
+        accessibilityLabel={`Back to search results`}
+      >
+        <View style={$headerBackButton}>
+          <MaterialCommunityIcons name="arrow-left" size={18} color={theme.colors.tint} />
+        </View>
+        <Text style={$headerText}>{headerText}</Text>
+      </Pressable>
+    )
+  }
+
   const renderLoadingSkeletons = () => (
     <>
       {[0, 1, 2].map((i) => (
@@ -361,6 +413,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     return (
       <View style={$dropdownContainer} accessibilityLiveRegion="polite">
         <ScrollView keyboardShouldPersistTaps="always" showsVerticalScrollIndicator={false}>
+          {renderHeader()}
           {error ? (
             renderError()
           ) : isLoading && suggestions.length === 0 ? (
@@ -386,6 +439,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
 
   return (
     <View style={$dropdownContainer} accessibilityLiveRegion="polite">
+      {renderHeader()}
       {error ? (
         renderError()
       ) : isLoading && suggestions.length === 0 ? (

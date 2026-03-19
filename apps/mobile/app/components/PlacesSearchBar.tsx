@@ -85,6 +85,9 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   // Track whether user is actively editing (to hide selected location display)
   const [isEditing, setIsEditing] = useState(false)
+  // Track state drill-down mode: when a state is selected, show its cities
+  const [selectedStateName, setSelectedStateName] = useState<string | null>(null)
+  const [stateCities, setStateCities] = useState<SearchSuggestion[]>([])
 
   // Display value: show input when editing, otherwise show selected location
   const displayValue = isEditing
@@ -93,8 +96,18 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       ? `${selectedLocation.city}, ${selectedLocation.state}`
       : ""
 
-  const { suggestions, isSearching, search, clearSuggestions, resolveAddressToNearestCity, error } =
-    useLocationSearch()
+  const {
+    suggestions,
+    isSearching,
+    search,
+    clearSuggestions,
+    resolveAddressToNearestCity,
+    getCitiesForState,
+    error,
+  } = useLocationSearch()
+
+  // Determine which suggestions to show: state cities or normal search results
+  const activeSuggestions = selectedStateName ? stateCities : suggestions
 
   /**
    * Handle text input changes
@@ -103,6 +116,11 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     (text: string) => {
       setIsEditing(true)
       setInputValue(text)
+      // Exit state drill-down mode when user types
+      if (selectedStateName) {
+        setSelectedStateName(null)
+        setStateCities([])
+      }
       if (text.trim().length >= 2) {
         setShowSuggestions(true)
         search(text)
@@ -111,16 +129,37 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         clearSuggestions()
       }
     },
-    [search, clearSuggestions],
+    [search, clearSuggestions, selectedStateName],
   )
 
   /**
-   * Handle suggestion selection
+   * Handle back button press in state drill-down mode
    */
+  const handleStateBackPress = useCallback(() => {
+    setSelectedStateName(null)
+    setStateCities([])
+    // Restore normal search suggestions if there's input
+    if (inputValue.trim().length >= 2) {
+      search(inputValue)
+    }
+  }, [inputValue, search])
+
   const handleSuggestionSelect = useCallback(
     async (suggestion: SearchSuggestion) => {
+      // When a state is selected, show its cities instead of navigating
+      if (suggestion.type === "state" && suggestion.state) {
+        const cities = getCitiesForState(suggestion.state)
+        setSelectedStateName(suggestion.displayText)
+        setStateCities(cities)
+        setShowSuggestions(true)
+        clearSuggestions()
+        return
+      }
+
       setShowSuggestions(false)
       clearSuggestions()
+      setSelectedStateName(null)
+      setStateCities([])
       // Exit editing mode - the selected location will be shown via displayValue
       setIsEditing(false)
       setInputValue("")
@@ -146,7 +185,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         onLocationSelect("", suggestion.state, suggestion.country)
       }
     },
-    [onLocationSelect, clearSuggestions, resolveAddressToNearestCity],
+    [onLocationSelect, clearSuggestions, resolveAddressToNearestCity, getCitiesForState],
   )
 
   /**
@@ -165,6 +204,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const handleDismiss = useCallback(() => {
     setShowSuggestions(false)
     clearSuggestions()
+    setSelectedStateName(null)
+    setStateCities([])
   }, [clearSuggestions])
 
   // Styles
@@ -264,12 +305,14 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         )}
       </View>
       <SearchSuggestionsDropdown
-        suggestions={suggestions}
-        visible={showSuggestions}
+        suggestions={activeSuggestions}
+        visible={showSuggestions || !!selectedStateName}
         onSelect={handleSuggestionSelect}
         onDismiss={handleDismiss}
-        isLoading={isSearching}
-        error={error}
+        isLoading={isSearching && !selectedStateName}
+        error={selectedStateName ? null : error}
+        headerText={selectedStateName ? `Cities in ${selectedStateName}` : null}
+        onBackPress={handleStateBackPress}
       />
     </View>
   )
