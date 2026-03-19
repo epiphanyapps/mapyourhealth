@@ -297,9 +297,13 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
             accessibilityRole="button"
           >
             {isLocating ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
+              <ActivityIndicator size="small" color={theme.colors.palette.neutral100} />
             ) : (
-              <MaterialCommunityIcons name="crosshairs-gps" size={20} color="#FFFFFF" />
+              <MaterialCommunityIcons
+                name="crosshairs-gps"
+                size={20}
+                color={theme.colors.palette.neutral100}
+              />
             )}
           </Pressable>
         )}

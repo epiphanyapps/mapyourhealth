@@ -5,7 +5,7 @@
  * Shows city, state, and postal code suggestions with icons.
  */
 
-import { useCallback, useEffect, useRef } from "react"
+import { useCallback, useEffect, useMemo, useRef } from "react"
 import {
   Animated,
   View,
@@ -232,6 +232,31 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
   const { theme } = useAppTheme()
   const pulseOpacity = usePulseAnimation()
 
+  const headerStyles = useMemo(
+    () => ({
+      $headerContainer: {
+        flexDirection: "row",
+        alignItems: "center",
+        paddingVertical: 10,
+        paddingHorizontal: 16,
+        borderBottomWidth: 1,
+        borderBottomColor: theme.colors.border,
+        backgroundColor: theme.colors.palette.neutral200,
+      } as ViewStyle,
+      $headerBackButton: {
+        marginRight: 8,
+        padding: 4,
+      } as ViewStyle,
+      $headerText: {
+        fontSize: 14,
+        fontWeight: "600",
+        color: theme.colors.textDim,
+        flex: 1,
+      } as TextStyle,
+    }),
+    [theme],
+  )
+
   const renderItem = useCallback(
     ({ item }: { item: SearchSuggestion }) => {
       const $itemContainer: ViewStyle = {
@@ -350,42 +375,20 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     flex: 1,
   }
 
-  const $headerContainer: ViewStyle = {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-    backgroundColor: theme.colors.palette.neutral200,
-  }
-
-  const $headerBackButton: ViewStyle = {
-    marginRight: 8,
-    padding: 4,
-  }
-
-  const $headerText: TextStyle = {
-    fontSize: 14,
-    fontWeight: "600",
-    color: theme.colors.textDim,
-    flex: 1,
-  }
-
   const renderHeader = () => {
     if (!headerText) return null
 
     return (
       <Pressable
         onPress={onBackPress}
-        style={$headerContainer}
+        style={headerStyles.$headerContainer}
         accessibilityRole="button"
         accessibilityLabel={`Back to search results`}
       >
-        <View style={$headerBackButton}>
+        <View style={headerStyles.$headerBackButton}>
           <MaterialCommunityIcons name="arrow-left" size={18} color={theme.colors.tint} />
         </View>
-        <Text style={$headerText}>{headerText}</Text>
+        <Text style={headerStyles.$headerText}>{headerText}</Text>
       </Pressable>
     )
   }
