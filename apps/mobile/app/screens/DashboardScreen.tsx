@@ -15,7 +15,10 @@ import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
 
 import { Card } from "@/components/Card"
-import { ExpandableCategoryCard } from "@/components/ExpandableCategoryCard"
+import {
+  ExpandableCategoryCard,
+  SubCategoryStatusResult,
+} from "@/components/ExpandableCategoryCard"
 import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
@@ -27,6 +30,7 @@ import { Text } from "@/components/Text"
 import { WarningBanner } from "@/components/WarningBanner"
 import { useAuth } from "@/context/AuthContext"
 import { useCategories } from "@/context/CategoriesContext"
+import { useContaminants } from "@/context/ContaminantsContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
@@ -37,6 +41,9 @@ import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import { getJurisdictionForState } from "@/utils/jurisdiction"
 // postalCode utilities removed - using city-level granularity
+
+/** Orange color for WHO-only exceedances */
+const WHO_EXCEEDANCE_COLOR = "#F97316"
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -80,6 +87,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
+  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
@@ -168,6 +176,83 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       return getWorstStatusForCategory(zipData, category, statDefinitions)
     },
     [zipData, statDefinitions],
+  )
+
+  // Determine the jurisdiction code for the current location
+  const currentJurisdictionCode = useMemo(() => {
+    if (!currentLocation) return "WHO"
+    return getJurisdictionForState(currentLocation.state, currentLocation.country)
+  }, [currentLocation])
+
+  // Get sub-category status with WHO-vs-national color coding
+  const getSubCategoryStatusForCategory = useCallback(
+    (subCategoryId: string): SubCategoryStatusResult => {
+      if (!zipData) return { status: "safe" }
+
+      // Find contaminants that belong to this sub-category
+      const subCategoryContaminants = contaminants.filter((c) => c.category === subCategoryId)
+      const subCategoryContaminantIds = new Set(subCategoryContaminants.map((c) => c.id))
+
+      // Filter measurements for this sub-category
+      const relevantStats = zipData.stats.filter((stat) =>
+        subCategoryContaminantIds.has(stat.statId),
+      )
+
+      if (relevantStats.length === 0) return { status: "safe" }
+
+      let hasNationalExceedance = false
+      let hasWHOOnlyExceedance = false
+
+      for (const stat of relevantStats) {
+        if (stat.status === "safe") continue
+
+        // Check if this exceedance is against national/state threshold or WHO-only
+        const nationalThreshold = getThreshold(stat.statId, currentJurisdictionCode)
+        const whoThreshold = getWHOThreshold(stat.statId)
+        const contaminant = subCategoryContaminants.find((c) => c.id === stat.statId)
+        const higherIsBad = contaminant?.higherIsBad ?? true
+
+        // Check if the measurement exceeds the national/state threshold
+        let exceedsNational = false
+        if (
+          nationalThreshold &&
+          nationalThreshold.jurisdictionCode !== "WHO" &&
+          nationalThreshold.limitValue !== null
+        ) {
+          const limit = nationalThreshold.limitValue
+          exceedsNational = higherIsBad ? stat.value >= limit : stat.value <= limit
+        }
+
+        // Check if the measurement exceeds the WHO threshold
+        let exceedsWHO = false
+        if (whoThreshold && whoThreshold.limitValue !== null) {
+          const limit = whoThreshold.limitValue
+          exceedsWHO = higherIsBad ? stat.value >= limit : stat.value <= limit
+        }
+
+        if (exceedsNational) {
+          hasNationalExceedance = true
+        } else if (exceedsWHO) {
+          hasWHOOnlyExceedance = true
+        }
+      }
+
+      if (hasNationalExceedance) {
+        return { status: "danger" }
+      }
+      if (hasWHOOnlyExceedance) {
+        return { status: "danger", color: WHO_EXCEEDANCE_COLOR }
+      }
+
+      // Check for warnings (non-exceedance but above warning threshold)
+      const hasWarning = relevantStats.some((stat) => stat.status === "warning")
+      if (hasWarning) {
+        return { status: "warning" }
+      }
+
+      return { status: "safe" }
+    },
+    [zipData, contaminants, getThreshold, getWHOThreshold, currentJurisdictionCode],
   )
 
   // Categories to display (water and air only - health and disaster removed per issue #126)
@@ -795,6 +880,7 @@ View details: ${shareUrl}`
               category={category}
               categoryName={getCategoryDisplayName(category)}
               status={getStatusForCategory(category)}
+              getSubCategoryStatus={getSubCategoryStatusForCategory}
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {
                   category,
