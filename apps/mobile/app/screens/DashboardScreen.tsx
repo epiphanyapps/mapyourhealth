@@ -11,6 +11,7 @@ import {
   Share,
 } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
+import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
 
 import { Card } from "@/components/Card"
@@ -102,12 +103,21 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Sync primary subscription to route params when no location is set yet
   useEffect(() => {
     if (!route.params?.city && isAuthenticated && primarySubscription && !subsLoading) {
-      navigation.setParams({
-        city: primarySubscription.city,
-        state: primarySubscription.state,
-        country: primarySubscription.country,
-        address: undefined,
-      })
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [
+            {
+              name: "Dashboard",
+              params: {
+                city: primarySubscription.city,
+                state: primarySubscription.state,
+                country: primarySubscription.country,
+              },
+            },
+          ],
+        }),
+      )
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])
 
@@ -166,7 +176,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
     (city: string, state: string, country: string, addr?: string) => {
-      navigation.setParams({ city, state, country, address: addr })
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Dashboard", params: { city, state, country, address: addr } }],
+        }),
+      )
     },
     [navigation],
   )
@@ -177,7 +192,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     if (zipCode) {
       // GPS returns a zip code, but we treat it as a city lookup
       // TODO: Reverse geocode to city/state instead
-      navigation.setParams({ city: zipCode, state: "", country: "US", address: undefined })
+      navigation.dispatch(
+        CommonActions.reset({
+          index: 0,
+          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "US" } }],
+        }),
+      )
     }
   }, [getLocationZipCode, navigation])
 

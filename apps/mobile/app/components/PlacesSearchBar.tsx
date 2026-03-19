@@ -131,6 +131,10 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         if (nearest) {
           // Pass the original searched address for display
           onLocationSelect(nearest.city, nearest.state, nearest.country, suggestion.displayText)
+        } else {
+          // Resolution failed — re-enter editing so user can retry
+          setIsEditing(true)
+          setInputValue(suggestion.displayText)
         }
         return
       }
