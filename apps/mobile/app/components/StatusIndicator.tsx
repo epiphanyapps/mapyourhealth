@@ -33,6 +33,10 @@ export interface StatusIndicatorProps {
    */
   size?: IndicatorSize
   /**
+   * Optional color override (e.g., orange for WHO-only exceedances)
+   */
+  color?: string
+  /**
    * Optional style override for the container
    */
   style?: StyleProp<ViewStyle>
@@ -46,10 +50,10 @@ export interface StatusIndicatorProps {
  * <StatusIndicator status="danger" size="large" />
  */
 export function StatusIndicator(props: StatusIndicatorProps) {
-  const { status, size = "medium", style } = props
+  const { status, size = "medium", color, style } = props
 
   const dimension = SIZE_DIMENSIONS[size]
-  const backgroundColor = STATUS_COLORS[status]
+  const backgroundColor = color ?? STATUS_COLORS[status]
 
   const $indicatorStyle: ViewStyle = {
     width: dimension,

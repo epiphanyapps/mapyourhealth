@@ -22,6 +22,16 @@ import { Text } from "./Text"
 const ANIMATION_DURATION = 300
 const EASING = Easing.bezier(0.4, 0, 0.2, 1)
 
+/**
+ * Result from getSubCategoryStatus callback
+ */
+export interface SubCategoryStatusResult {
+  /** The safety status for the sub-category */
+  status: StatStatus
+  /** Optional color override (e.g., orange for WHO-only exceedances) */
+  color?: string
+}
+
 export interface ExpandableCategoryCardProps {
   /**
    * The safety category to display
@@ -33,12 +43,18 @@ export interface ExpandableCategoryCardProps {
   categoryName: string
   /**
    * The overall status for this category
+   * @deprecated No longer displayed on the main row; kept for accessibility label
    */
   status: StatStatus
   /**
    * Callback when the card (or a sub-category) should navigate to details
    */
   onPress: (subCategoryId?: string) => void
+  /**
+   * Callback to determine status and color for a sub-category.
+   * Returns status and optional color override.
+   */
+  getSubCategoryStatus?: (subCategoryId: string) => SubCategoryStatusResult
   /**
    * Optional style override for the container
    */
@@ -62,7 +78,7 @@ export interface ExpandableCategoryCardProps {
  * />
  */
 export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
-  const { category, categoryName, status, onPress, style } = props
+  const { category, categoryName, status, onPress, getSubCategoryStatus, style } = props
   const { theme } = useAppTheme()
   const { getSubCategoriesByCategoryId } = useCategories()
 
@@ -189,10 +205,6 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     color: theme.colors.text,
   }
 
-  const $statusContainer: ViewStyle = {
-    marginLeft: 12,
-  }
-
   const $chevronContainer: ViewStyle = {
     marginLeft: 8,
   }
@@ -219,6 +231,10 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     color: theme.colors.text,
   }
 
+  const $subCategoryStatusContainer: ViewStyle = {
+    marginLeft: 8,
+  }
+
   const $subCategoryChevron: ViewStyle = {
     marginLeft: 8,
   }
@@ -242,6 +258,7 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
       {subCategories.map((subCategory) => {
         // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
         const key = "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
+        const subCategoryStatusResult = getSubCategoryStatus?.(key)
         return (
           <Pressable
             key={key}
@@ -251,9 +268,18 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
               pressed && { backgroundColor: theme.colors.palette.neutral100 },
             ]}
             accessibilityRole="button"
-            accessibilityLabel={`${subCategory.name} sub-category`}
+            accessibilityLabel={`${subCategory.name} sub-category${subCategoryStatusResult ? `, status: ${subCategoryStatusResult.status}` : ""}`}
           >
             <Text style={$subCategoryText}>{subCategory.name}</Text>
+            {subCategoryStatusResult && (
+              <View style={$subCategoryStatusContainer}>
+                <StatusIndicator
+                  status={subCategoryStatusResult.status}
+                  size="small"
+                  color={subCategoryStatusResult.color}
+                />
+              </View>
+            )}
             <View style={$subCategoryChevron}>
               <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
             </View>
@@ -277,9 +303,6 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
         </View>
         <View style={$textContainer}>
           <Text style={$categoryNameText}>{categoryName}</Text>
-        </View>
-        <View style={$statusContainer}>
-          <StatusIndicator status={status} size="medium" />
         </View>
         {hasSubCategories ? (
           <Animated.View style={[$chevronContainer, animatedChevronStyle]}>
