@@ -85,6 +85,8 @@ interface UseLocationSearchResult {
   clearSuggestions: () => void
   /** Resolve a Google Places suggestion to the nearest city in our database */
   resolveAddressToNearestCity: (placeId: string) => Promise<NearestCityResult | null>
+  /** Get city suggestions for a given state code */
+  getCitiesForState: (stateCode: string) => SearchSuggestion[]
 }
 
 /**
@@ -409,6 +411,31 @@ export function useLocationSearch(): UseLocationSearchResult {
     }
   }, [])
 
+  // Get all cities for a given state code
+  const getCitiesForState = useCallback(
+    (stateCode: string): SearchSuggestion[] => {
+      const stateLower = stateCode.toLowerCase()
+      const cities = groupedByCityState
+        .filter((group) => group.state.toLowerCase() === stateLower)
+        .sort((a, b) => a.city.localeCompare(b.city))
+
+      return cities.map((city) => ({
+        type: "city" as const,
+        displayText: `${city.city}, ${city.state}`,
+        secondaryText: city.county
+          ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
+          : city.country === "CA"
+            ? "Canada"
+            : "United States",
+        city: city.city,
+        state: city.state,
+        country: city.country,
+        county: city.county,
+      }))
+    },
+    [groupedByCityState],
+  )
+
   // Cleanup timeout on unmount to prevent memory leak
   useEffect(() => {
     return () => {
@@ -426,5 +453,6 @@ export function useLocationSearch(): UseLocationSearchResult {
     search,
     clearSuggestions,
     resolveAddressToNearestCity,
+    getCitiesForState,
   }
 }
