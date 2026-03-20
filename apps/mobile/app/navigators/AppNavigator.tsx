@@ -75,9 +75,8 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Dashboard" : "ComingSoon"}
+      initialRouteName="Dashboard"
     >
-      <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
@@ -115,10 +114,9 @@ const $loadingContainer: ViewStyle = {
  * Deep linking configuration for the app.
  * Maps URL paths to screens so URLs update during navigation (shareable links).
  */
-const buildLinking = (isAuthenticated: boolean): LinkingOptions<AppStackParamList> => ({
+const linking: LinkingOptions<AppStackParamList> = {
   prefixes: [Linking.createURL("/"), "mapyourhealth://"],
   config: {
-    initialRouteName: isAuthenticated ? "Dashboard" : "ComingSoon",
     screens: {
       MagicLinkVerify: {
         path: "auth/verify",
@@ -186,18 +184,15 @@ const buildLinking = (isAuthenticated: boolean): LinkingOptions<AppStackParamLis
           address: (address: string) => encodeURIComponent(address),
         },
       },
-      ComingSoon: "coming-soon",
       Compare: "compare",
       Login: "login",
       Signup: "signup",
     },
   },
-})
+}
 
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
-  const { isAuthenticated } = useAuth()
-  const linking = buildLinking(isAuthenticated)
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
