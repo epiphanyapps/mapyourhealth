@@ -30,6 +30,12 @@ const ar: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "قريباً",
+    preparing: "نحن نجهز بيانات صحتك",
+    description:
+      "يساعدك MapYourHealth على مراقبة المخاطر الصحية البيئية في منطقتك. ترقبوا إطلاقنا.",
+  },
   errors: {
     invalidEmail: "عنوان البريد الالكتروني غير صالح",
   },

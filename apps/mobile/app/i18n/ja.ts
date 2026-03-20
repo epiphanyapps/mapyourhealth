@@ -31,6 +31,12 @@ const ja: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "近日公開",
+    preparing: "健康データを準備しています",
+    description:
+      "MapYourHealthは、お住まいの地域の環境健康リスクを監視するお手伝いをします。ローンチをお楽しみに。",
+  },
   errors: {
     invalidEmail: "有効なメールアドレスを入力してください.",
   },

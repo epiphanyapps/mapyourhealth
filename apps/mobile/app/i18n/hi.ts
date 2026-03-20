@@ -30,6 +30,12 @@ const hi: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "जल्द आ रहा है",
+    preparing: "हम आपका स्वास्थ्य डेटा तैयार कर रहे हैं",
+    description:
+      "MapYourHealth आपके क्षेत्र में पर्यावरणीय स्वास्थ्य जोखिमों की निगरानी करने में आपकी मदद करता है। हमारे लॉन्च के लिए बने रहें।",
+  },
   errors: {
     invalidEmail: "अमान्य ईमेल पता।",
   },
