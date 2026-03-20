@@ -12,7 +12,6 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
-import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
@@ -61,11 +60,6 @@ const AppStack = () => {
     )
   }
 
-  // Gate: unauthenticated users see ComingSoon directly
-  if (!isAuthenticated) {
-    return <ComingSoonScreen />
-  }
-
   return (
     <Stack.Navigator
       screenOptions={{
@@ -75,7 +69,7 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName="Dashboard"
+      initialRouteName={isAuthenticated ? "Dashboard" : "Welcome"}
     >
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
