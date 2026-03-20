@@ -841,6 +841,9 @@ export interface PlacesAutocompleteResponse {
   predictions?: PlacesPrediction[]
   lat?: number
   lng?: number
+  city?: string | null
+  state?: string | null
+  country?: string | null
   cached?: boolean
   error?: string
 }
@@ -893,7 +896,7 @@ export async function getPlacesAutocomplete(
 export async function getPlaceDetails(
   placeId: string,
   sessionToken?: string,
-): Promise<{ lat: number; lng: number } | null> {
+): Promise<{ lat: number; lng: number; city?: string; state?: string; country?: string } | null> {
   const client = await getPublicClient()
   const { data, errors } = await client.queries.placesAutocomplete({
     query: `details:${placeId}`,
@@ -911,7 +914,13 @@ export async function getPlaceDetails(
 
   const response = data as PlacesAutocompleteResponse
   if (response.status === "OK" && response.lat != null && response.lng != null) {
-    return { lat: response.lat, lng: response.lng }
+    return {
+      lat: response.lat,
+      lng: response.lng,
+      city: response.city ?? undefined,
+      state: response.state ?? undefined,
+      country: response.country ?? undefined,
+    }
   }
 
   return null

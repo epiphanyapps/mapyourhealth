@@ -31,6 +31,9 @@ const schema = a.schema({
     predictions: a.json(), // Array of PlacesPrediction
     lat: a.float(), // For place details response
     lng: a.float(), // For place details response
+    city: a.string(), // Resolved city from address_components
+    state: a.string(), // Resolved state from address_components
+    country: a.string(), // Resolved country from address_components
     cached: a.boolean(),
     error: a.string(),
   }),

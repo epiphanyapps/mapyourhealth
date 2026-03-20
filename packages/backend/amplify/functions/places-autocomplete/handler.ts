@@ -40,6 +40,12 @@ interface GoogleAutocompleteResponse {
   error_message?: string;
 }
 
+interface AddressComponent {
+  long_name: string;
+  short_name: string;
+  types: string[];
+}
+
 interface PlaceDetailsResponse {
   status: string;
   result?: {
@@ -49,6 +55,7 @@ interface PlaceDetailsResponse {
         lng: number;
       };
     };
+    address_components?: AddressComponent[];
   };
   error_message?: string;
 }
@@ -64,6 +71,9 @@ interface PlaceDetailsResult {
   status: string;
   lat?: number;
   lng?: number;
+  city?: string;
+  state?: string;
+  country?: string;
   cached?: boolean;
   error?: string;
 }
@@ -172,7 +182,7 @@ async function fetchPlaceDetails(
   const params = new URLSearchParams({
     place_id: placeId,
     key: GOOGLE_PLACES_API_KEY,
-    fields: 'geometry',
+    fields: 'geometry,address_components',
   });
 
   if (sessionToken) {
@@ -242,10 +252,24 @@ export const handler: Handler<PlacesAutocompleteEvent, PlacesAutocompleteResult 
       const data = await fetchPlaceDetails(placeId, sessionToken);
 
       if (data.status === 'OK' && data.result?.geometry?.location) {
+        // Extract city/state/country from address_components
+        const components = data.result.address_components || [];
+        const findComponent = (type: string) =>
+          components.find((c) => c.types.includes(type));
+
+        const localityComp = findComponent('locality')
+          || findComponent('sublocality')
+          || findComponent('administrative_area_level_3');
+        const stateComp = findComponent('administrative_area_level_1');
+        const countryComp = findComponent('country');
+
         const result: PlaceDetailsResult = {
           status: 'OK',
           lat: data.result.geometry.location.lat,
           lng: data.result.geometry.location.lng,
+          city: localityComp?.long_name,
+          state: stateComp?.short_name,
+          country: countryComp?.short_name,
         };
 
         // Cache the formatted result (not raw Google response)

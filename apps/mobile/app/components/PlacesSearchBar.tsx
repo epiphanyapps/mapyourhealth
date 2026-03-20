@@ -168,8 +168,12 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         // Use placeId to resolve address to nearest city in our database
         const nearest = await resolveAddressToNearestCity(suggestion.placeId)
         if (nearest) {
-          // Pass the original searched address for display
-          onLocationSelect(nearest.city, nearest.state, nearest.country, suggestion.displayText)
+          // Use the actual city/state from Google (e.g., "Bayville, NY") for display,
+          // falling back to the nearest DB city if address_components weren't available
+          const displayCity = nearest.actualCity || nearest.city
+          const displayState = nearest.actualState || nearest.state
+          const displayCountry = nearest.actualCountry || nearest.country
+          onLocationSelect(displayCity, displayState, displayCountry, suggestion.displayText)
         } else {
           // Resolution failed — re-enter editing so user can retry
           setIsEditing(true)

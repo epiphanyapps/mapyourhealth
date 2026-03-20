@@ -41,12 +41,13 @@ aws <command> --profile rayane
 
 **Amplify App IDs (ca-central-1):**
 - Backend: `d3jl0ykn4qgj9r`
-- Mobile Web: `d2z5ddqhlc1q5`
+- Mobile Web: `d2z5ddqhlc1q5` (branches: `main`, `staging`)
 - Admin Dashboard: `d26q32gc98goap`
 
 ## Project URLs
 
 - **Mobile App (Web)**: https://app.mapyourhealth.info/
+- **Mobile App (Staging)**: https://staging.d2z5ddqhlc1q5.amplifyapp.com/
 - **Admin Dashboard**: https://admin.mapyourhealth.info/
 
 ## Region
@@ -264,7 +265,7 @@ This copies from `packages/backend/amplify_outputs.json` → root and mobile. If
 
 **When setting up worktrees or fresh clones, always run `yarn sync:amplify` before starting Metro or running tests.**
 
-If no outputs file exists anywhere, run `yarn backend:sandbox` to generate one from AWS.
+If no outputs file exists anywhere, run `yarn fetch:outputs` to download from AWS.
 
 ## Testing
 
@@ -383,6 +384,12 @@ EXPO_PUBLIC_GOOGLE_PLACES_API_KEY=  # Google Places API key
 - `GOOGLE_PLACES_API_KEY` - For places-autocomplete Lambda
 - SES configuration for email sending
 
+### Seed Script Cognito Admin User
+- **Email:** `seed@mapyourhealth.info`
+- **Password:** `SeedAdmin2026!`
+- Used by `seed-categories.ts` and `seed-om-data.ts` (AppSync seeding that requires admin auth)
+- Usage: `COGNITO_EMAIL=seed@mapyourhealth.info COGNITO_PASSWORD=SeedAdmin2026! yarn seed:om`
+
 ## Quick Start
 
 ```bash
@@ -398,23 +405,103 @@ yarn mobile
 # OR start admin dashboard
 cd apps/admin && npm run dev
 
-# OR start backend sandbox
-yarn backend:sandbox
 ```
+
+## Feature Branch Testing Workflow
+
+All feature branches should be tested using the **staging environment** before merging to `main`.
+
+- **Staging URL**: https://staging.d2z5ddqhlc1q5.amplifyapp.com/
+- The staging frontend (`staging` branch on Mobile Web app `d2z5ddqhlc1q5`) shares the production backend
+- Push feature branches to `staging` to deploy and test
+
+### Testing Strategy by Change Type
+
+| Change Type | How to Test |
+|-------------|-------------|
+| **Backend only** (schema, Lambda) | Deploy backend to `main` → verify via staging or AppSync console |
+| **Mobile only** (UI, hooks, screens) | Push to `staging` branch → test at staging URL |
+| **Admin only** (pages, components) | `cd apps/admin && npm run dev` locally |
+| **Backend + Frontend** | Deploy backend first → push frontend to `staging` → test |
+| **Full stack** | Deploy backend → push mobile to `staging` + run admin locally |
+
+### Step-by-Step: Staging Testing
+
+```bash
+# 1. Develop on feature branch
+git checkout feat/my-feature
+
+# 2. Push to staging to deploy
+git push origin feat/my-feature:staging
+
+# 3. Wait for Amplify to build and deploy
+# Check status at: https://console.aws.amazon.com/amplify/apps/d2z5ddqhlc1q5/branches/staging
+
+# 4. Test at staging URL
+# https://staging.d2z5ddqhlc1q5.amplifyapp.com/
+
+# 5. For local development, use:
+yarn mobile                      # Mobile app (local)
+cd apps/admin && npm run dev     # Admin dashboard (local)
+```
+
+### Pre-Merge Checklist
+
+Before merging any PR to `main`, verify:
+
+```bash
+# 1. Lint passes
+npx eslint apps/mobile/app --ext .ts,.tsx    # Mobile
+cd apps/admin && npm run lint                 # Admin
+
+# 2. Type check passes
+cd apps/mobile && npx tsc --noEmit           # Mobile
+cd apps/admin && npx tsc --noEmit            # Admin
+
+# 3. Unit tests pass
+cd apps/mobile && npm run test               # Jest
+
+# 4. Manual smoke test
+# - Run the app and verify the feature works
+# - Check for visual regressions on affected screens
+
+# 5. E2E tests (if feature touches critical flows)
+cd apps/mobile && npm run test:maestro       # Maestro (requires preview build)
+cd apps/admin && npm run test:e2e            # Playwright
+```
+
+### Merge Order for Related PRs
+
+When multiple PRs touch overlapping files, merge in dependency order:
+1. Backend-only changes first (schema must exist before frontend uses it)
+2. Admin-only changes (independent of mobile)
+3. Mobile-only changes (independent of admin)
+4. Full-stack changes last (depend on backend being deployed)
+
+After each merge to `main`, CI auto-deploys. Wait for deployment to complete before merging the next PR if they share backend dependencies.
 
 ## Deployment
 
-Deployments are managed via AWS Amplify Hosting:
+**All deployments are triggered by pushing to the appropriate git branch.** There is no manual deploy command — Amplify auto-builds and deploys on push.
 
-1. **Backend**: Auto-deploys on push to `main` from `packages/backend`
-2. **Mobile Web**: Auto-deploys on push to `main` from `apps/mobile`
-3. **Admin**: Auto-deploys on push to `main` from `apps/admin`
+1. **Backend**: Push to `main` → Amplify auto-deploys (App ID: `d3jl0ykn4qgj9r`)
+2. **Mobile Web (prod)**: Push to `main` → Amplify auto-deploys (App ID: `d2z5ddqhlc1q5`)
+3. **Mobile Web (staging)**: Push to `staging` branch → Amplify auto-deploys → https://staging.d2z5ddqhlc1q5.amplifyapp.com/
+4. **Admin**: Push to `main` → Amplify auto-deploys (App ID: `d26q32gc98goap`)
 
-Manual deployment:
 ```bash
-# Backend
-cd packages/backend && yarn deploy
+# Deploy backend + frontend to production
+git push origin main
 
-# Mobile (EAS Build)
+# Deploy to staging (push feature branch)
+git push origin feat/my-feature:staging
+
+# Mobile native builds (EAS Build)
 cd apps/mobile && eas build --profile production --platform all
+```
+
+**Monitor deployments:**
+```bash
+# Check latest deployment status
+aws amplify list-jobs --app-id <app-id> --branch-name main --max-items 1 --profile rayane --region ca-central-1
 ```
