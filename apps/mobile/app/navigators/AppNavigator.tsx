@@ -110,9 +110,10 @@ const $loadingContainer: ViewStyle = {
  * Deep linking configuration for the app.
  * Maps URL paths to screens so URLs update during navigation (shareable links).
  */
-const linking: LinkingOptions<AppStackParamList> = {
+const buildLinking = (isAuthenticated: boolean): LinkingOptions<AppStackParamList> => ({
   prefixes: [Linking.createURL("/"), "mapyourhealth://"],
   config: {
+    initialRouteName: isAuthenticated ? "Dashboard" : "ComingSoon",
     screens: {
       MagicLinkVerify: {
         path: "auth/verify",
@@ -186,10 +187,12 @@ const linking: LinkingOptions<AppStackParamList> = {
       Signup: "signup",
     },
   },
-}
+})
 
 export const AppNavigator = (props: NavigationProps) => {
   const { navigationTheme } = useAppTheme()
+  const { isAuthenticated } = useAuth()
+  const linking = buildLinking(isAuthenticated)
 
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
