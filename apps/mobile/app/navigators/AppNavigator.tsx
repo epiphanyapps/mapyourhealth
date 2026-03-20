@@ -61,6 +61,11 @@ const AppStack = () => {
     )
   }
 
+  // Gate: unauthenticated users see ComingSoon directly
+  if (!isAuthenticated) {
+    return <ComingSoonScreen />
+  }
+
   return (
     <Stack.Navigator
       screenOptions={{
