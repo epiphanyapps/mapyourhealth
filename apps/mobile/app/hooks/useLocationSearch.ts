@@ -68,6 +68,9 @@ interface NearestCityResult {
   country: string
   county?: string
   distanceKm: number
+  actualCity?: string
+  actualState?: string
+  actualCountry?: string
 }
 
 interface UseLocationSearchResult {
@@ -260,7 +263,15 @@ export function useLocationSearch(): UseLocationSearchResult {
         // Regenerate session token after completing a search session
         sessionTokenRef.current = generateSessionToken()
 
-        return nearest
+        if (!nearest) return null
+
+        // Attach the actual city/state/country from Google Places address_components
+        return {
+          ...nearest,
+          actualCity: location.city,
+          actualState: location.state,
+          actualCountry: location.country,
+        }
       } catch (error) {
         console.error("[Places] Error resolving address:", error)
         return null

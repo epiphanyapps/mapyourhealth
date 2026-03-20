@@ -12,6 +12,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
+import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
@@ -45,7 +46,7 @@ const exitRoutes = Config.exitRoutes
 const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
-  const { isLoading } = useAuth()
+  const { isLoading, isAuthenticated } = useAuth()
 
   const {
     theme: { colors },
@@ -69,8 +70,9 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName="Dashboard"
+      initialRouteName={isAuthenticated ? "Dashboard" : "ComingSoon"}
     >
+      <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
@@ -178,6 +180,7 @@ const linking: LinkingOptions<AppStackParamList> = {
           address: (address: string) => encodeURIComponent(address),
         },
       },
+      ComingSoon: "coming-soon",
       Compare: "compare",
       Login: "login",
       Signup: "signup",
