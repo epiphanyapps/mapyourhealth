@@ -65,12 +65,14 @@ mapyourhealth-monorepo/
 
 ```bash
 # 1. Clone the repo
-git clone <repo-url> && cd mapyourhealth-monorepo
+git clone https://github.com/epiphanyapps/mapyourhealth.git && cd mapyourhealth-monorepo
 
 # 2. Install dependencies
 yarn install
 
 # 3. Sync Amplify outputs (required for AWS connectivity)
+# This copies amplify_outputs.json from the backend package.
+# If it doesn't exist yet, run: yarn fetch:outputs
 yarn sync:amplify
 
 # 4. Start the mobile app
@@ -227,6 +229,42 @@ Deployments are managed via AWS Amplify Hosting — pushes to `main` auto-deploy
 
 - **Mobile App (Web):** <https://app.mapyourhealth.info/>
 - **Admin Dashboard:** <https://admin.mapyourhealth.info/>
+
+## Configuration
+
+### Mobile App (`apps/mobile/.env`)
+
+| Variable | Description |
+| -------- | ----------- |
+| `EXPO_PUBLIC_GOOGLE_PLACES_API_KEY` | Google Places API key for location search |
+
+### Backend (AWS Secrets/Environment)
+
+| Variable | Description |
+| -------- | ----------- |
+| `GOOGLE_PLACES_API_KEY` | Google Places API key for the `places-autocomplete` Lambda |
+| SES configuration | AWS SES must be configured in `ca-central-1` for email sending |
+
+### Amplify Outputs
+
+The app requires `amplify_outputs.json` for AWS Amplify connectivity. This file is gitignored and must be synced before running the app:
+
+```bash
+yarn sync:amplify        # Copy from backend package to root + mobile
+yarn fetch:outputs       # Download from AWS if no local copy exists
+```
+
+## Contributing
+
+1. Create a feature branch from `main`
+2. Make your changes following the project's linting rules (see `CLAUDE.md` for full details)
+3. Run lint, type-check, and tests before opening a PR:
+   ```bash
+   yarn lint && yarn type-check
+   cd apps/mobile && npm run test
+   ```
+4. Push to `staging` branch to test via the [staging environment](https://staging.d2z5ddqhlc1q5.amplifyapp.com/) before merging
+5. Open a PR against `main`
 
 ## Documentation
 
