@@ -185,7 +185,7 @@ export default function BannersPage() {
   const handleSave = async () => {
     const result = bannerFormSchema.safeParse(formData);
     if (!result.success) {
-      const firstError = result.error.errors[0]?.message;
+      const firstError = result.error.issues[0]?.message;
       toast.error(firstError || "Please fix the form errors");
       return;
     }
