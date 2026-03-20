@@ -30,6 +30,12 @@ const ko: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "곧 출시",
+    preparing: "건강 데이터를 준비하고 있습니다",
+    description:
+      "MapYourHealth는 해당 지역의 환경 건강 위험을 모니터링하는 데 도움을 줍니다. 출시를 기대해 주세요.",
+  },
   errors: {
     invalidEmail: "잘못된 이메일 주소 입니다.",
   },

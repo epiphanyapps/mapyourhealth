@@ -61,6 +61,11 @@ const AppStack = () => {
     )
   }
 
+  // Gate: unauthenticated users see ComingSoon directly
+  if (!isAuthenticated) {
+    return <ComingSoonScreen />
+  }
+
   return (
     <Stack.Navigator
       screenOptions={{
@@ -70,9 +75,8 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Dashboard" : "ComingSoon"}
+      initialRouteName="Dashboard"
     >
-      <Stack.Screen name="ComingSoon" component={ComingSoonScreen} />
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
@@ -180,7 +184,6 @@ const linking: LinkingOptions<AppStackParamList> = {
           address: (address: string) => encodeURIComponent(address),
         },
       },
-      ComingSoon: "coming-soon",
       Compare: "compare",
       Login: "login",
       Signup: "signup",

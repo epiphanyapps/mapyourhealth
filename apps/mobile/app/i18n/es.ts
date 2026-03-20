@@ -31,6 +31,12 @@ const es: Translations = {
     },
   },
 
+  comingSoonScreen: {
+    heading: "Próximamente",
+    preparing: "Estamos preparando tus datos de salud",
+    description:
+      "MapYourHealth te ayuda a monitorear los riesgos ambientales para la salud en tu área. Mantente atento a nuestro lanzamiento.",
+  },
   errors: {
     invalidEmail: "Email inválido.",
   },
