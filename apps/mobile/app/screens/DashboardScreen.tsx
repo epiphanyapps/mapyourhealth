@@ -41,7 +41,7 @@ import { useWarningBanners } from "@/hooks/useWarningBanners"
 import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import { getJurisdictionForState } from "@/utils/jurisdiction"
+// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 // postalCode utilities removed - using city-level granularity
 
 /** Orange color for WHO-only exceedances */
@@ -89,7 +89,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
-  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
+    useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
@@ -188,8 +189,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Determine the jurisdiction code for the current location
   const currentJurisdictionCode = useMemo(() => {
     if (!currentLocation) return "WHO"
-    return getJurisdictionForState(currentLocation.state, currentLocation.country)
-  }, [currentLocation])
+    return getJurisdictionForLocation(currentLocation.state, currentLocation.country)?.code || "WHO"
+  }, [currentLocation, getJurisdictionForLocation])
 
   // Get sub-category status with WHO-vs-national color coding
   const getSubCategoryStatusForCategory = useCallback(
@@ -916,10 +917,11 @@ View details: ${shareUrl}`
           heading="Environmental Health"
           content="View radon zones, disease endemic status, and other environmental health observations for this area."
           onPress={() => {
-            const jurisdictionCode = getJurisdictionForState(
-              currentLocation?.state || "",
-              currentLocation?.country || "US",
-            )
+            const jurisdictionCode =
+              getJurisdictionForLocation(
+                currentLocation?.state || "",
+                currentLocation?.country || "US",
+              )?.code || "WHO"
             navigation.navigate("LocationObservations", {
               city: currentLocation?.city || "",
               state: currentLocation?.state || "",
