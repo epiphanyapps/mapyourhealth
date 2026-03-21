@@ -1,0 +1,218 @@
+{
+  "hazardCategories": [
+    {
+      "hazardId": "hazard-contaminated-water",
+      "name": "Contaminated Water",
+      "nameFr": "Eau contaminée",
+      "description": "Water supply may contain elevated levels of lead, bacteria, nitrates, or other contaminants that pose health risks.",
+      "descriptionFr": "L'approvisionnement en eau peut contenir des niveaux élevés de plomb, de bactéries, de nitrates ou d'autres contaminants posant des risques pour la santé.",
+      "relatedCategories": ["water"],
+      "sortOrder": 0,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-poor-air-quality",
+      "name": "Poor Air Quality",
+      "nameFr": "Mauvaise qualité de l'air",
+      "description": "Air quality index, PM2.5, or ozone levels exceed healthy thresholds. Outdoor activities may be restricted.",
+      "descriptionFr": "L'indice de qualité de l'air, les PM2,5 ou les niveaux d'ozone dépassent les seuils sains. Les activités de plein air peuvent être restreintes.",
+      "relatedCategories": ["air"],
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-respiratory",
+      "name": "Respiratory Health Concerns",
+      "nameFr": "Problèmes de santé respiratoire",
+      "description": "Air conditions may aggravate respiratory conditions like asthma, COPD, or allergies.",
+      "descriptionFr": "Les conditions de l'air peuvent aggraver les problèmes respiratoires comme l'asthme, la BPCO ou les allergies.",
+      "relatedCategories": ["air", "health"],
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-infectious-disease",
+      "name": "Infectious Disease Outbreak",
+      "nameFr": "Épidémie de maladie infectieuse",
+      "description": "Elevated cases of COVID-19, influenza, or other infectious diseases in the area.",
+      "descriptionFr": "Cas élevés de COVID-19, de grippe ou d'autres maladies infectieuses dans la région.",
+      "relatedCategories": ["health"],
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-limited-healthcare",
+      "name": "Limited Healthcare Access",
+      "nameFr": "Accès limité aux soins de santé",
+      "description": "Area has limited access to primary healthcare facilities, hospitals, or emergency services.",
+      "descriptionFr": "La zone a un accès limité aux établissements de soins de santé primaires, aux hôpitaux ou aux services d'urgence.",
+      "relatedCategories": ["health"],
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-wildfire",
+      "name": "Wildfire Danger",
+      "nameFr": "Danger d'incendie de forêt",
+      "description": "High wildfire risk due to dry conditions, vegetation, or historical fire activity. Evacuation may be required.",
+      "descriptionFr": "Risque élevé d'incendie de forêt en raison de conditions sèches, de la végétation ou de l'historique d'activité incendiaire. Une évacuation peut être nécessaire.",
+      "relatedCategories": ["disaster"],
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-flood",
+      "name": "Flood Danger",
+      "nameFr": "Danger d'inondation",
+      "description": "High flood risk due to terrain, rainfall patterns, or proximity to waterways. Property damage possible.",
+      "descriptionFr": "Risque élevé d'inondation en raison du terrain, des régimes de précipitations ou de la proximité de cours d'eau. Dommages matériels possibles.",
+      "relatedCategories": ["disaster"],
+      "sortOrder": 6,
+      "isActive": true
+    },
+    {
+      "hazardId": "hazard-general-emergency",
+      "name": "General Emergency Preparedness",
+      "nameFr": "Préparation générale aux urgences",
+      "description": "General preparedness for multiple hazard types including natural disasters, infrastructure failures, and health emergencies.",
+      "descriptionFr": "Préparation générale pour plusieurs types de dangers, y compris les catastrophes naturelles, les défaillances d'infrastructure et les urgences sanitaires.",
+      "relatedCategories": ["water", "air", "health", "disaster"],
+      "sortOrder": 7,
+      "isActive": true
+    }
+  ],
+  "productRecommendations": [
+    {
+      "recommendationId": "rec-water-filter",
+      "name": "Home Water Filtration System",
+      "nameFr": "Système de filtration d'eau domestique",
+      "description": "NSF-certified water filter that removes lead, bacteria, and other contaminants. Installs under sink or on countertop.",
+      "descriptionFr": "Filtre à eau certifié NSF qui élimine le plomb, les bactéries et autres contaminants. S'installe sous l'évier ou sur le comptoir.",
+      "url": "https://www.example.com/water-filter",
+      "hazardCategoryIds": ["hazard-contaminated-water"],
+      "sortOrder": 0,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-water-test-kit",
+      "name": "Water Quality Test Kit",
+      "nameFr": "Kit de test de qualité de l'eau",
+      "description": "Test your tap water for lead, bacteria, nitrates, pH, and other common contaminants. Results in minutes.",
+      "descriptionFr": "Testez votre eau du robinet pour le plomb, les bactéries, les nitrates, le pH et d'autres contaminants courants. Résultats en quelques minutes.",
+      "url": "https://www.example.com/water-test-kit",
+      "hazardCategoryIds": ["hazard-contaminated-water"],
+      "sortOrder": 1,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-air-purifier",
+      "name": "HEPA Air Purifier",
+      "nameFr": "Purificateur d'air HEPA",
+      "description": "Medical-grade HEPA air purifier removes 99.97% of airborne particles including smoke, dust, pollen, and PM2.5.",
+      "descriptionFr": "Le purificateur d'air HEPA de qualité médicale élimine 99,97 % des particules en suspension, y compris la fumée, la poussière, le pollen et les PM2,5.",
+      "url": "https://www.example.com/air-purifier",
+      "hazardCategoryIds": ["hazard-poor-air-quality", "hazard-respiratory"],
+      "sortOrder": 2,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-n95-masks",
+      "name": "N95 Respirator Masks",
+      "nameFr": "Masques respiratoires N95",
+      "description": "NIOSH-approved N95 masks for protection against wildfire smoke, air pollution, and airborne particles.",
+      "descriptionFr": "Masques N95 approuvés par le NIOSH pour la protection contre la fumée d'incendie de forêt, la pollution atmosphérique et les particules en suspension.",
+      "url": "https://www.example.com/n95-masks",
+      "hazardCategoryIds": ["hazard-poor-air-quality", "hazard-respiratory", "hazard-wildfire"],
+      "sortOrder": 3,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-air-quality-monitor",
+      "name": "Indoor Air Quality Monitor",
+      "nameFr": "Moniteur de qualité de l'air intérieur",
+      "description": "Monitor PM2.5, CO2, humidity, and temperature levels in your home. Real-time alerts when air quality drops.",
+      "descriptionFr": "Surveillez les niveaux de PM2,5, CO2, humidité et température chez vous. Alertes en temps réel lorsque la qualité de l'air diminue.",
+      "url": "https://www.example.com/air-monitor",
+      "hazardCategoryIds": ["hazard-poor-air-quality", "hazard-respiratory"],
+      "sortOrder": 4,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-first-aid-kit",
+      "name": "Comprehensive First Aid Kit",
+      "nameFr": "Trousse de premiers soins complète",
+      "description": "300+ piece first aid kit for home emergencies. Includes bandages, medications, CPR mask, and emergency blanket.",
+      "descriptionFr": "Trousse de premiers soins de plus de 300 pièces pour les urgences domestiques. Comprend des bandages, des médicaments, un masque de RCR et une couverture d'urgence.",
+      "url": "https://www.example.com/first-aid-kit",
+      "hazardCategoryIds": ["hazard-limited-healthcare", "hazard-general-emergency"],
+      "sortOrder": 5,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-sanitizer-supplies",
+      "name": "Infection Prevention Kit",
+      "nameFr": "Kit de prévention des infections",
+      "description": "Hand sanitizers, disinfectant wipes, disposable gloves, and face masks for disease outbreak protection.",
+      "descriptionFr": "Désinfectants pour les mains, lingettes désinfectantes, gants jetables et masques faciaux pour la protection contre les épidémies.",
+      "url": "https://www.example.com/sanitizer-kit",
+      "hazardCategoryIds": ["hazard-infectious-disease"],
+      "sortOrder": 6,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-oximeter",
+      "name": "Pulse Oximeter",
+      "nameFr": "Oxymètre de pouls",
+      "description": "FDA-approved pulse oximeter to monitor blood oxygen levels at home. Essential for respiratory illness monitoring.",
+      "descriptionFr": "Oxymètre de pouls approuvé par la FDA pour surveiller les niveaux d'oxygène sanguin à domicile. Essentiel pour le suivi des maladies respiratoires.",
+      "url": "https://www.example.com/oximeter",
+      "hazardCategoryIds": ["hazard-infectious-disease", "hazard-respiratory", "hazard-limited-healthcare"],
+      "sortOrder": 7,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-emergency-kit",
+      "name": "72-Hour Emergency Survival Kit",
+      "nameFr": "Kit de survie d'urgence 72 heures",
+      "description": "Complete emergency kit with food, water, first aid, flashlight, radio, and shelter supplies for family of 4.",
+      "descriptionFr": "Kit d'urgence complet avec nourriture, eau, premiers soins, lampe de poche, radio et fournitures d'abri pour une famille de 4 personnes.",
+      "url": "https://www.example.com/emergency-kit",
+      "hazardCategoryIds": ["hazard-wildfire", "hazard-flood", "hazard-general-emergency"],
+      "sortOrder": 8,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-weather-radio",
+      "name": "Emergency Weather Radio",
+      "nameFr": "Radio météo d'urgence",
+      "description": "NOAA weather radio with hand crank, solar panel, flashlight, and USB charging. Receives emergency alerts.",
+      "descriptionFr": "Radio météo NOAA avec manivelle, panneau solaire, lampe de poche et chargement USB. Reçoit les alertes d'urgence.",
+      "url": "https://www.example.com/weather-radio",
+      "hazardCategoryIds": ["hazard-wildfire", "hazard-flood", "hazard-general-emergency"],
+      "sortOrder": 9,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-go-bag",
+      "name": "Evacuation Go Bag",
+      "nameFr": "Sac d'évacuation",
+      "description": "Pre-packed evacuation bag with essential documents holder, change of clothes, toiletries, and survival gear.",
+      "descriptionFr": "Sac d'évacuation pré-emballé avec porte-documents essentiels, vêtements de rechange, articles de toilette et équipement de survie.",
+      "url": "https://www.example.com/go-bag",
+      "hazardCategoryIds": ["hazard-wildfire", "hazard-flood"],
+      "sortOrder": 10,
+      "isActive": true
+    },
+    {
+      "recommendationId": "rec-flood-barriers",
+      "name": "Portable Flood Barriers",
+      "nameFr": "Barrières anti-inondation portables",
+      "description": "Reusable sandbag alternatives that expand when wet. Protects doorways and low areas from floodwater.",
+      "descriptionFr": "Alternatives réutilisables aux sacs de sable qui se gonflent lorsqu'ils sont mouillés. Protège les portes et les zones basses contre les eaux de crue.",
+      "url": "https://www.example.com/flood-barriers",
+      "hazardCategoryIds": ["hazard-flood"],
+      "sortOrder": 11,
+      "isActive": true
+    }
+  ]
+}

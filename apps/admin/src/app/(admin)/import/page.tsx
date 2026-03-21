@@ -44,6 +44,8 @@ type Contaminant = Schema["Contaminant"]["type"];
 type ImportCategory = "water" | "air";
 
 // Contaminant categories that belong to each import category
+// NOTE: This mapping is kept in code because it controls the import UI tabs,
+// which is a view-level concern. The SubCategory model drives display names.
 const CATEGORY_CONTAMINANT_TYPES: Record<ImportCategory, string[]> = {
   water: [
     "fertilizer",

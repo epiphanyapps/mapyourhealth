@@ -25,6 +25,7 @@ import { ObservationCard } from "@/components/ObservationCard"
 import { Screen } from "@/components/Screen"
 import { StatusIndicator } from "@/components/StatusIndicator"
 import { Text } from "@/components/Text"
+import { useContaminants } from "@/context/ContaminantsContext"
 import {
   type ObservedPropertyCategory,
   type ObservationWithStatus,
@@ -98,8 +99,9 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
   function LocationObservationsScreen(props) {
     const { navigation, route } = props
     const { city, state, country } = route.params
+    const { jurisdictions } = useContaminants()
     const jurisdictionCode =
-      route.params.jurisdictionCode ?? getJurisdictionForState(state, country)
+      route.params.jurisdictionCode ?? getJurisdictionForState(state, country, jurisdictions)
     const { theme } = useAppTheme()
 
     const { observations, isLoading, error, isOffline, refresh, worstStatus, alertCount } =

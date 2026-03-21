@@ -18,7 +18,7 @@ export const CONTAMINANT_CATEGORIES = [
 ] as const;
 export type ContaminantCategory = (typeof CONTAMINANT_CATEGORIES)[number];
 
-/** Display names for contaminant categories */
+/** Display names for contaminant categories (fallback — prefer SubCategory.name from backend) */
 export const contaminantCategoryNames: Record<ContaminantCategory, string> = {
   fertilizer: "Fertilizers",
   pesticide: "Pesticides",

@@ -400,6 +400,57 @@ const schema = a.schema({
     ]),
 
   // =========================================================================
+  // Hazard Categories & Product Recommendations
+  // =========================================================================
+
+  /**
+   * HazardCategory - Types of environmental/health hazards
+   * Drives the recommendations shown to users based on detected risks
+   * Public read, admin write
+   */
+  HazardCategory: a
+    .model({
+      hazardId: a.string().required(), // "hazard-contaminated-water", "hazard-poor-air-quality"
+      name: a.string().required(), // "Contaminated Water"
+      nameFr: a.string(), // French name
+      description: a.string().required(), // Description of the hazard
+      descriptionFr: a.string(), // French description
+      relatedCategories: a.string().array(), // ["water"], ["air", "health"], etc.
+      sortOrder: a.integer().default(0),
+      isActive: a.boolean().default(true),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("hazardId")]),
+
+  /**
+   * ProductRecommendation - Products recommended for hazard mitigation
+   * Linked to hazard categories so users see relevant recommendations
+   * Public read, admin write
+   */
+  ProductRecommendation: a
+    .model({
+      recommendationId: a.string().required(), // "rec-water-filter"
+      name: a.string().required(), // "Home Water Filtration System"
+      nameFr: a.string(), // French name
+      description: a.string().required(), // Product description
+      descriptionFr: a.string(), // French description
+      url: a.string().required(), // Product URL
+      hazardCategoryIds: a.string().array(), // ["hazard-contaminated-water"]
+      sortOrder: a.integer().default(0),
+      isActive: a.boolean().default(true),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("recommendationId")]),
+
+  // =========================================================================
   // Observations & Measurements (O&M) Data Model
   // Flexible system for tracking various environmental/health properties
   // =========================================================================

@@ -138,7 +138,7 @@ export function clearCachedZipCodeData(zipCode: string): void {
  * Hook to fetch zip code safety data with caching support
  */
 export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
-  const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
+  const { contaminants, jurisdictions, getThreshold, isLoading: defsLoading } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -240,7 +240,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
     if (measurements.length > 0) {
       const { cityName, state } = getCityStateForZipCode(zipCode)
       const country = detectPostalCodeRegion(zipCode) || "US"
-      const jurisdictionCode = getJurisdictionForPostalCode(zipCode, state, country)
+      const jurisdictionCode = getJurisdictionForPostalCode(zipCode, state, country, jurisdictions)
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: ZipCodeData = { zipCode, cityName, state, stats }
       setCachedData(zipCode, newData)
@@ -287,7 +287,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       lastUpdated: null,
       warning: null,
     }
-  }, [zipCode, isOffline, mapMeasurementToLegacyStat])
+  }, [zipCode, isOffline, mapMeasurementToLegacyStat, jurisdictions])
 
   const query = useQuery({
     queryKey: queryKeys.measurements.byPostalCode(zipCode),

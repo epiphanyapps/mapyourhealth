@@ -26,7 +26,6 @@ import { Text } from "@/components/Text"
 import { useCategories } from "@/context/CategoriesContext"
 import { useContaminants } from "@/context/ContaminantsContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
-import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
 import { useZipCodeData, getRiskStatsForCategory } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -48,7 +47,13 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
   const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
-  const { getCategoryName, getCategoryColor } = useCategories()
+  const {
+    getCategoryName,
+    getCategoryColor,
+    getCategoryDescription: getDynamicCategoryDescription,
+    getCategoryById,
+    getSubCategoriesByCategoryId,
+  } = useCategories()
 
   // Fetch data for the passed city from Amplify (with caching and offline support)
   const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
@@ -57,8 +62,11 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
 
-  // Get category config for description and links
-  const categoryConfig = CATEGORY_CONFIG[category]
+  // Get category data from backend context
+  const categoryData = getCategoryById(categoryId)
+  const categoryLinks = categoryData?.links ?? []
+  const showStandardsTable = categoryData?.showStandardsTable ?? (category === StatCategory.water)
+  const dynamicSubCategories = getSubCategoriesByCategoryId(categoryId)
 
   // Handle pull-to-refresh
   const onRefresh = useCallback(async () => {
@@ -116,7 +124,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   }, [tableRows])
 
   // Get category description with dynamic values
-  const categoryDescription = getCategoryDescription(category, { count: exceedingCount })
+  const categoryDescription = getDynamicCategoryDescription(categoryId, { count: exceedingCount })
 
   // Handle link press
   const handleLinkPress = useCallback((url: string) => {
@@ -451,9 +459,9 @@ View details: ${shareUrl}`
         </View>
 
         {/* Links to external resources */}
-        {categoryConfig.links.length > 0 && (
+        {categoryLinks.length > 0 && (
           <View style={$linksContainer}>
-            {categoryConfig.links.map((link, index) => (
+            {categoryLinks.map((link, index) => (
               <TouchableOpacity
                 key={index}
                 style={$linkButton}
@@ -469,13 +477,13 @@ View details: ${shareUrl}`
         )}
 
         {/* Sub-categories (expandable dropdowns) */}
-        {categoryConfig.subCategories && categoryConfig.subCategories.length > 0 && (
+        {dynamicSubCategories.length > 0 && (
           <View style={$subCategoriesContainer}>
-            {categoryConfig.subCategories.map((subCategory) => (
+            {dynamicSubCategories.map((subCategory) => (
               <ExpandableCard
-                key={subCategory.id}
+                key={subCategory.subCategoryId}
                 header={<Text style={$subCategoryHeader}>{subCategory.name}</Text>}
-                initiallyExpanded={subCategoryId === subCategory.id}
+                initiallyExpanded={subCategoryId === subCategory.subCategoryId}
               >
                 <Text style={$subCategoryDescription}>{subCategory.description}</Text>
                 {subCategory.links?.map((link, idx) => (
@@ -519,7 +527,7 @@ View details: ${shareUrl}`
         {/* Stats List - Table for water, list for others */}
         <View style={$statsContainer}>
           {stats.length > 0 ? (
-            category === StatCategory.water && categoryConfig.showStandardsTable ? (
+            category === StatCategory.water && showStandardsTable ? (
               // Water category: Show contaminant table with WHO/Local standards
               <ContaminantTable rows={tableRows} />
             ) : (

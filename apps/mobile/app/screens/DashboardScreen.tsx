@@ -89,7 +89,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
-  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
+  const { contaminants, jurisdictions, getThreshold, getWHOThreshold } = useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
@@ -188,8 +188,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Determine the jurisdiction code for the current location
   const currentJurisdictionCode = useMemo(() => {
     if (!currentLocation) return "WHO"
-    return getJurisdictionForState(currentLocation.state, currentLocation.country)
-  }, [currentLocation])
+    return getJurisdictionForState(currentLocation.state, currentLocation.country, jurisdictions)
+  }, [currentLocation, jurisdictions])
 
   // Get sub-category status with WHO-vs-national color coding
   const getSubCategoryStatusForCategory = useCallback(
@@ -919,6 +919,7 @@ View details: ${shareUrl}`
             const jurisdictionCode = getJurisdictionForState(
               currentLocation?.state || "",
               currentLocation?.country || "US",
+              jurisdictions,
             )
             navigation.navigate("LocationObservations", {
               city: currentLocation?.city || "",

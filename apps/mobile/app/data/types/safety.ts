@@ -501,35 +501,57 @@ export function calculateStatus(
 }
 
 /**
- * Get the category display name
+ * Fallback display names for contaminant categories.
+ * Prefer using SubCategory.name from CategoriesContext when available.
  */
-export function getCategoryDisplayName(category: ContaminantCategory): string {
-  const names: Record<ContaminantCategory, string> = {
-    fertilizer: "Fertilizers",
-    pesticide: "Pesticides",
-    radioactive: "Radioactive",
-    disinfectant: "Disinfection Byproducts",
-    inorganic: "Heavy Metals & Inorganics",
-    organic: "Organic Compounds",
-    microbiological: "Microbiological",
-  }
-  return names[category] || category
+const FALLBACK_CATEGORY_NAMES: Record<ContaminantCategory, string> = {
+  fertilizer: "Fertilizers",
+  pesticide: "Pesticides",
+  radioactive: "Radioactive",
+  disinfectant: "Disinfection Byproducts",
+  inorganic: "Heavy Metals & Inorganics",
+  organic: "Organic Compounds",
+  microbiological: "Microbiological",
+}
+
+const FALLBACK_CATEGORY_NAMES_FR: Record<ContaminantCategory, string> = {
+  fertilizer: "Engrais",
+  pesticide: "Pesticides",
+  radioactive: "Radioactifs",
+  disinfectant: "Sous-produits de désinfection",
+  inorganic: "Métaux lourds et inorganiques",
+  organic: "Composés organiques",
+  microbiological: "Microbiologiques",
 }
 
 /**
- * Get the category display name in French
+ * Get the category display name.
+ * Optionally pass a SubCategory map from CategoriesContext for dynamic names.
  */
-export function getCategoryDisplayNameFr(category: ContaminantCategory): string {
-  const names: Record<ContaminantCategory, string> = {
-    fertilizer: "Engrais",
-    pesticide: "Pesticides",
-    radioactive: "Radioactifs",
-    disinfectant: "Sous-produits de désinfection",
-    inorganic: "Métaux lourds et inorganiques",
-    organic: "Composés organiques",
-    microbiological: "Microbiologiques",
+export function getCategoryDisplayName(
+  category: ContaminantCategory,
+  subCategoryMap?: Map<string, SubCategory>,
+): string {
+  if (subCategoryMap) {
+    const sub = subCategoryMap.get(category)
+    if (sub) return sub.name
   }
-  return names[category] || category
+  return FALLBACK_CATEGORY_NAMES[category] || category
+}
+
+/**
+ * Get the category display name in French.
+ * Optionally pass a SubCategory map from CategoriesContext for dynamic names.
+ */
+export function getCategoryDisplayNameFr(
+  category: ContaminantCategory,
+  subCategoryMap?: Map<string, SubCategory>,
+): string {
+  if (subCategoryMap) {
+    const sub = subCategoryMap.get(category)
+    if (sub?.nameFr) return sub.nameFr
+  }
+  return FALLBACK_CATEGORY_NAMES_FR[category] || category
 }
 
 // =============================================================================

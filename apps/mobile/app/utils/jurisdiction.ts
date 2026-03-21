@@ -3,15 +3,20 @@
  *
  * Maps states/provinces to their appropriate jurisdiction codes for
  * contaminant threshold lookups.
+ *
+ * Supports dynamic jurisdiction data from the backend (via Jurisdiction model).
+ * Falls back to a hardcoded map when no backend data is available.
  */
+
+import type { Jurisdiction } from "@/data/types/safety"
 
 import { detectPostalCodeRegion } from "./postalCode"
 
 /**
- * State-specific jurisdictions that have their own threshold limits.
- * These states have stricter or different limits than their federal counterparts.
+ * Hardcoded fallback map - used when no backend jurisdiction data is available.
+ * @deprecated Prefer passing jurisdictions from ContaminantsContext.
  */
-const STATE_JURISDICTIONS: Record<string, string> = {
+const FALLBACK_STATE_JURISDICTIONS: Record<string, string> = {
   // US States with specific thresholds
   NY: "US-NY",
   CA: "US-CA",
@@ -32,6 +37,20 @@ const STATE_JURISDICTIONS: Record<string, string> = {
 }
 
 /**
+ * Build a state→jurisdiction map from backend jurisdiction data.
+ * Only includes jurisdictions that have a region (state/province) code.
+ */
+function buildStateJurisdictionMap(jurisdictions: Jurisdiction[]): Record<string, string> {
+  const map: Record<string, string> = {}
+  for (const j of jurisdictions) {
+    if (j.region) {
+      map[j.region.toUpperCase()] = j.code
+    }
+  }
+  return map
+}
+
+/**
  * Get the appropriate jurisdiction code for a state/province and country.
  *
  * Falls back through the hierarchy:
@@ -41,6 +60,7 @@ const STATE_JURISDICTIONS: Record<string, string> = {
  *
  * @param state - Two-letter state/province code (e.g., "NY", "QC")
  * @param country - Two-letter country code (e.g., "US", "CA")
+ * @param jurisdictions - Optional backend jurisdiction data for dynamic lookup
  * @returns Jurisdiction code for threshold lookup
  *
  * @example
@@ -49,13 +69,22 @@ const STATE_JURISDICTIONS: Record<string, string> = {
  * getJurisdictionForState("QC", "CA") // "CA-QC"
  * getJurisdictionForState("SK", "CA") // "CA" (Saskatchewan uses federal limits)
  */
-export function getJurisdictionForState(state: string, country: string): string {
+export function getJurisdictionForState(
+  state: string,
+  country: string,
+  jurisdictions?: Jurisdiction[],
+): string {
   // Normalize inputs
   const normalizedState = state?.toUpperCase() || ""
   const normalizedCountry = country?.toUpperCase() || ""
 
+  // Use dynamic jurisdictions if available, otherwise fall back to hardcoded map
+  const stateMap = jurisdictions
+    ? buildStateJurisdictionMap(jurisdictions)
+    : FALLBACK_STATE_JURISDICTIONS
+
   // Try state-specific jurisdiction first
-  const stateJurisdiction = STATE_JURISDICTIONS[normalizedState]
+  const stateJurisdiction = stateMap[normalizedState]
   if (stateJurisdiction) {
     return stateJurisdiction
   }
@@ -78,6 +107,7 @@ export function getJurisdictionForState(state: string, country: string): string 
  * @param postalCode - The postal/zip code
  * @param state - Optional state code (if already known)
  * @param country - Optional country code (if already known)
+ * @param jurisdictions - Optional backend jurisdiction data for dynamic lookup
  * @returns Jurisdiction code for threshold lookup
  *
  * @example
@@ -89,13 +119,14 @@ export function getJurisdictionForPostalCode(
   postalCode: string,
   state?: string,
   country?: string,
+  jurisdictions?: Jurisdiction[],
 ): string {
   // If country not provided, detect from postal code format
   const detectedCountry = country || detectPostalCodeRegion(postalCode) || "US"
 
   // If state is provided, use state-based lookup
   if (state) {
-    return getJurisdictionForState(state, detectedCountry)
+    return getJurisdictionForState(state, detectedCountry, jurisdictions)
   }
 
   // Without state, fall back to country level
@@ -111,20 +142,37 @@ export function getJurisdictionForPostalCode(
  * Check if a jurisdiction has state/province-specific limits.
  *
  * @param state - Two-letter state/province code
+ * @param jurisdictions - Optional backend jurisdiction data for dynamic lookup
  * @returns True if the state has specific thresholds
  */
-export function hasStateSpecificLimits(state: string): boolean {
-  return state?.toUpperCase() in STATE_JURISDICTIONS
+export function hasStateSpecificLimits(state: string, jurisdictions?: Jurisdiction[]): boolean {
+  const stateMap = jurisdictions
+    ? buildStateJurisdictionMap(jurisdictions)
+    : FALLBACK_STATE_JURISDICTIONS
+  return state?.toUpperCase() in stateMap
 }
 
 /**
  * Get all jurisdictions for a country.
  *
  * @param country - Two-letter country code
+ * @param jurisdictions - Optional backend jurisdiction data for dynamic lookup
  * @returns Array of jurisdiction codes for that country
  */
-export function getJurisdictionsForCountry(country: string): string[] {
+export function getJurisdictionsForCountry(
+  country: string,
+  jurisdictions?: Jurisdiction[],
+): string[] {
   const normalizedCountry = country?.toUpperCase() || ""
+
+  // If dynamic jurisdictions available, use them
+  if (jurisdictions) {
+    return jurisdictions
+      .filter((j) => j.country.toUpperCase() === normalizedCountry)
+      .map((j) => j.code)
+  }
+
+  // Fallback to hardcoded
   const result: string[] = []
 
   // Add federal jurisdiction
@@ -133,7 +181,7 @@ export function getJurisdictionsForCountry(country: string): string[] {
   }
 
   // Add state-specific jurisdictions
-  for (const [_state, jurisdiction] of Object.entries(STATE_JURISDICTIONS)) {
+  for (const [, jurisdiction] of Object.entries(FALLBACK_STATE_JURISDICTIONS)) {
     if (jurisdiction.startsWith(`${normalizedCountry}-`)) {
       result.push(jurisdiction)
     }

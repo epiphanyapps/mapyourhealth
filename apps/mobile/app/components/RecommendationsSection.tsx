@@ -1,8 +1,8 @@
 import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
 
 import { getAlertStats } from "@/data/helpers"
-import { getHazardCategoriesByStatCategory, getRecommendationsForHazards } from "@/data/mock"
 import type { ZipCodeData } from "@/data/types/safety"
+import { useHazardsAndRecommendations } from "@/hooks/useHazardsAndRecommendations"
 import { useAppTheme } from "@/theme/context"
 
 import { ProductRecommendationCard } from "./ProductRecommendationCard"
@@ -31,6 +31,8 @@ export interface RecommendationsSectionProps {
 export function RecommendationsSection(props: RecommendationsSectionProps) {
   const { zipData, style } = props
   const { theme } = useAppTheme()
+  const { getHazardCategoriesByStatCategory, getRecommendationsForHazards } =
+    useHazardsAndRecommendations()
 
   // Get all danger/warning stats
   const alertStats = getAlertStats(zipData)

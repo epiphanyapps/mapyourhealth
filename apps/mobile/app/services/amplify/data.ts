@@ -67,6 +67,10 @@ export type AmplifyHazardReport = Schema["HazardReport"]["type"]
 // Warning Banners
 export type AmplifyWarningBanner = Schema["WarningBanner"]["type"]
 
+// Hazard Categories & Product Recommendations
+export type AmplifyHazardCategory = Schema["HazardCategory"]["type"]
+export type AmplifyProductRecommendation = Schema["ProductRecommendation"]["type"]
+
 // O&M (Observations & Measurements) Types
 export type AmplifyObservedProperty = Schema["ObservedProperty"]["type"]
 export type AmplifyPropertyThreshold = Schema["PropertyThreshold"]["type"]
@@ -568,6 +572,44 @@ export async function getUserHazardReports(): Promise<AmplifyHazardReport[]> {
   if (errors) {
     console.error("Error fetching hazard reports:", errors)
     throw new Error("Failed to fetch hazard reports")
+  }
+  return data
+}
+
+// =============================================================================
+// Hazard Categories (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all hazard categories
+ */
+export async function getHazardCategories(): Promise<AmplifyHazardCategory[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.HazardCategory.list({
+    limit: 100,
+  })
+  if (errors) {
+    console.error("Error fetching hazard categories:", errors)
+    throw new Error("Failed to fetch hazard categories")
+  }
+  return data
+}
+
+// =============================================================================
+// Product Recommendations (Public Read)
+// =============================================================================
+
+/**
+ * Fetch all product recommendations
+ */
+export async function getProductRecommendations(): Promise<AmplifyProductRecommendation[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.ProductRecommendation.list({
+    limit: 100,
+  })
+  if (errors) {
+    console.error("Error fetching product recommendations:", errors)
+    throw new Error("Failed to fetch product recommendations")
   }
   return data
 }

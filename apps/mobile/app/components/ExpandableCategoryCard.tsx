@@ -11,7 +11,6 @@ import Animated, {
 } from "react-native-reanimated"
 
 import { useCategories } from "@/context/CategoriesContext"
-import { CATEGORY_CONFIG, SubCategory as LegacySubCategory } from "@/data/categoryConfig"
 import type { StatCategory, StatStatus, SubCategory } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
@@ -85,14 +84,8 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   // Get category ID as string (handles both enum and string)
   const categoryId = String(category)
 
-  // Try dynamic sub-categories first, fallback to legacy config
-  const dynamicSubCategories = getSubCategoriesByCategoryId(categoryId)
-  const legacyConfig = CATEGORY_CONFIG[category as StatCategory]
-  const legacySubCategories: LegacySubCategory[] = legacyConfig?.subCategories || []
-
-  // Use dynamic if available, otherwise fallback to legacy
-  const subCategories: Array<SubCategory | LegacySubCategory> =
-    dynamicSubCategories.length > 0 ? dynamicSubCategories : legacySubCategories
+  // Get sub-categories from backend context
+  const subCategories = getSubCategoriesByCategoryId(categoryId)
   const hasSubCategories = subCategories.length > 0
 
   const [expanded, setExpanded] = useState(false)
@@ -135,11 +128,8 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     }
   }
 
-  const handleSubCategoryPress = (subCategory: SubCategory | LegacySubCategory) => {
-    // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
-    const subCategoryId =
-      "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
-    onPress(subCategoryId)
+  const handleSubCategoryPress = (subCategory: SubCategory) => {
+    onPress(subCategory.subCategoryId)
   }
 
   // Animated style for content container
@@ -256,8 +246,7 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     <View style={$subCategoriesContainer}>
       <View style={$divider} />
       {subCategories.map((subCategory) => {
-        // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
-        const key = "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
+        const key = subCategory.subCategoryId
         const subCategoryStatusResult = getSubCategoryStatus?.(key)
         return (
           <Pressable

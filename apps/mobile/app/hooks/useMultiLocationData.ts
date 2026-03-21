@@ -49,7 +49,7 @@ function getWorseStatus(a: StatStatus, b: StatStatus): StatStatus {
 export function useMultiLocationData(
   selectedCity: SelectedCity | null,
 ): UseMultiLocationDataResult {
-  const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
+  const { contaminants, jurisdictions, getThreshold, isLoading: defsLoading } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -159,6 +159,7 @@ export function useMultiLocationData(
         firstPostalCode,
         selectedCity.state,
         country,
+        jurisdictions,
       )
 
       const aggregatedStats = aggregateMeasurements(allMeasurements, jurisdictionCode)

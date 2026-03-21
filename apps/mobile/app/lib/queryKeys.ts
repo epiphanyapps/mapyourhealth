@@ -79,4 +79,14 @@ export const queryKeys = {
     byJurisdiction: (code: string) =>
       [...queryKeys.propertyThresholds.all, "jurisdiction", code] as const,
   },
+
+  // ── Hazard Categories & Product Recommendations ──
+  hazardCategories: {
+    all: ["hazardCategories"] as const,
+    list: () => [...queryKeys.hazardCategories.all, "list"] as const,
+  },
+  productRecommendations: {
+    all: ["productRecommendations"] as const,
+    list: () => [...queryKeys.productRecommendations.all, "list"] as const,
+  },
 } as const
