@@ -1,0 +1,597 @@
+<!DOCTYPE html><html><head><title></title><meta charset="utf-8"><style>* {
+	box-sizing: border-box;
+}
+
+html {
+	font-size: 100%;
+}
+
+body {
+	font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
+		'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+	line-height: 1.6;
+	font-size: 0.6875em; /* 11 pt */
+	color: #111;
+	margin: 0;
+}
+
+body > :first-child {
+	padding-top: 0;
+	margin-top: 0;
+}
+
+body > :last-child {
+	margin-bottom: 0;
+	padding-bottom: 0;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	margin: 0;
+	padding: 0.5em 0 0.25em;
+}
+
+h5,
+h6 {
+	padding: 0;
+}
+
+h5 {
+	font-size: 1em;
+}
+
+h6 {
+	font-size: 0.875em;
+	text-transform: uppercase;
+}
+
+p {
+	margin: 0.25em 0 1em;
+}
+
+blockquote {
+	margin: 0.5em 0 1em;
+	padding-left: 0.5em;
+	padding-right: 1em;
+	border-left: 4px solid gainsboro;
+	font-style: italic;
+}
+
+ul,
+ol {
+	margin: 0;
+	margin-left: 1em;
+	padding: 0 1.5em 0.5em;
+}
+
+pre {
+	white-space: pre-wrap;
+}
+
+h1 code,
+h2 code,
+h3 code,
+h4 code,
+h5 code,
+h6 code,
+p code,
+li code,
+pre code {
+	background-color: #f8f8f8;
+	padding: 0.1em 0.375em;
+	border: 1px solid #f8f8f8;
+	border-radius: 0.25em;
+	font-family: monospace;
+	font-size: 1.2em;
+}
+
+pre code {
+	display: block;
+	padding: 0.5em;
+}
+
+.page-break {
+	page-break-after: always;
+}
+
+img {
+	max-width: 100%;
+	margin: 1em 0;
+}
+
+table {
+	border-spacing: 0;
+	border-collapse: collapse;
+	display: block;
+	margin: 0 0 1em;
+	width: 100%;
+	overflow: auto;
+}
+
+table th,
+table td {
+	padding: 0.5em 1em;
+	border: 1px solid gainsboro;
+}
+
+table th {
+	font-weight: 600;
+}
+
+table tr {
+	background-color: white;
+	border-top: 1px solid gainsboro;
+}
+
+table tr:nth-child(2n) {
+	background-color: whitesmoke;
+}
+/*# sourceURL=/Users/waltervargas-pena/.npm/_npx/55158e48eb5c59f7/node_modules/md-to-pdf/markdown.css*/</style><style>pre code.hljs {
+  display: block;
+  overflow-x: auto;
+  padding: 1em
+}
+code.hljs {
+  padding: 3px 5px
+}
+/*!
+  Theme: GitHub
+  Description: Light theme as seen on github.com
+  Author: github.com
+  Maintainer: @Hirse
+  Updated: 2021-05-15
+
+  Outdated base version: https://github.com/primer/github-syntax-light
+  Current colors taken from GitHub's CSS
+*/
+.hljs {
+  color: #24292e;
+  background: #ffffff
+}
+.hljs-doctag,
+.hljs-keyword,
+.hljs-meta .hljs-keyword,
+.hljs-template-tag,
+.hljs-template-variable,
+.hljs-type,
+.hljs-variable.language_ {
+  /* prettylights-syntax-keyword */
+  color: #d73a49
+}
+.hljs-title,
+.hljs-title.class_,
+.hljs-title.class_.inherited__,
+.hljs-title.function_ {
+  /* prettylights-syntax-entity */
+  color: #6f42c1
+}
+.hljs-attr,
+.hljs-attribute,
+.hljs-literal,
+.hljs-meta,
+.hljs-number,
+.hljs-operator,
+.hljs-variable,
+.hljs-selector-attr,
+.hljs-selector-class,
+.hljs-selector-id {
+  /* prettylights-syntax-constant */
+  color: #005cc5
+}
+.hljs-regexp,
+.hljs-string,
+.hljs-meta .hljs-string {
+  /* prettylights-syntax-string */
+  color: #032f62
+}
+.hljs-built_in,
+.hljs-symbol {
+  /* prettylights-syntax-variable */
+  color: #e36209
+}
+.hljs-comment,
+.hljs-code,
+.hljs-formula {
+  /* prettylights-syntax-comment */
+  color: #6a737d
+}
+.hljs-name,
+.hljs-quote,
+.hljs-selector-tag,
+.hljs-selector-pseudo {
+  /* prettylights-syntax-entity-tag */
+  color: #22863a
+}
+.hljs-subst {
+  /* prettylights-syntax-storage-modifier-import */
+  color: #24292e
+}
+.hljs-section {
+  /* prettylights-syntax-markup-heading */
+  color: #005cc5;
+  font-weight: bold
+}
+.hljs-bullet {
+  /* prettylights-syntax-markup-list */
+  color: #735c0f
+}
+.hljs-emphasis {
+  /* prettylights-syntax-markup-italic */
+  color: #24292e;
+  font-style: italic
+}
+.hljs-strong {
+  /* prettylights-syntax-markup-bold */
+  color: #24292e;
+  font-weight: bold
+}
+.hljs-addition {
+  /* prettylights-syntax-markup-inserted */
+  color: #22863a;
+  background-color: #f0fff4
+}
+.hljs-deletion {
+  /* prettylights-syntax-markup-deleted */
+  color: #b31d28;
+  background-color: #ffeef0
+}
+.hljs-char.escape_,
+.hljs-link,
+.hljs-params,
+.hljs-property,
+.hljs-punctuation,
+.hljs-tag {
+  /* purposely ignored */
+  
+}/*# sourceURL=/Users/waltervargas-pena/.npm/_npx/55158e48eb5c59f7/node_modules/highlight.js/styles/github.css*/</style></head>
+	<body class="">
+		<h1 id="how-your-safety-data-gets-to-your-screen">How Your Safety Data Gets to Your Screen</h1>
+<p>This guide shows exactly how data from our source spreadsheet appears on your phone.</p>
+<hr>
+<h2 id="screenshots-from-the-app">Screenshots from the App</h2>
+<h3 id="1-location-overview-city-search">1. Location Overview (City Search)</h3>
+<p><img src="screenshots/01-dashboard.png" alt="Location Overview"></p>
+<p>When you search for a <strong>city name</strong> (e.g., "New York, NY"), the app shows:</p>
+<ul>
+<li><strong>Location header</strong> - Your searched city (New York, NY)</li>
+<li><strong>Warning banner</strong> - Highlights the most critical issue (Lead at 12 μg/L)</li>
+<li><strong>Category cards</strong> - Water Quality, Air Quality, etc.</li>
+</ul>
+<h3 id="2-location-overview-address-search">2. Location Overview (Address Search)</h3>
+<p><img src="screenshots/04-dashboard-address.png" alt="Location Overview - Address"></p>
+<p>When you search for a <strong>street address</strong> (e.g., "350 Fifth Avenue, New York, NY, USA"), the app:</p>
+<ul>
+<li>Finds the <strong>nearest city</strong> in our database to that address</li>
+<li>Shows: <em>"Showing data for nearest city to: 350 Fifth Avenue, New York, NY, USA"</em></li>
+<li>Displays the same data as a city search, using the resolved city's jurisdiction</li>
+</ul>
+<h3 id="3-category-detail-view">3. Category Detail View</h3>
+<p><img src="screenshots/03-category-detail.png" alt="Category Detail"></p>
+<p>The detail view shows:</p>
+<ul>
+<li><strong>Category header</strong> - Water Quality with icon</li>
+<li><strong>Description</strong> - Dynamic count of contaminants exceeding limits</li>
+<li><strong>External links</strong> - WHO guidelines, Local standards</li>
+<li><strong>Contaminant table</strong> - Side-by-side comparison of WHO vs Local limits</li>
+</ul>
+<hr>
+<h2 id="the-source-risksxlsx">The Source: Risks.xlsx</h2>
+<p>Our water quality data comes from a master spreadsheet with 172+ contaminants:</p>
+<pre><code>┌──────────────────────────────────────────────────────────────────────────────┐
+│  A           │  B      │  C       │  D     │  E     │ ... │  K               │
+├──────────────┼─────────┼──────────┼────────┼────────┼─────┼──────────────────┤
+│  NAME        │  WHO    │  QUEBEC  │  NY    │  CA    │     │  DESCRIPTION_EN  │
+├──────────────┼─────────┼──────────┼────────┼────────┼─────┼──────────────────┤
+│  Lead        │  10     │  10      │  15    │  10    │     │  Neurotoxin...   │
+│  Nitrate     │  50     │  10      │  10    │  10    │     │  Blue baby...    │
+│  Arsenic     │  10     │  10      │  10    │  10    │     │  Carcinogen...   │
+└──────────────┴─────────┴──────────┴────────┴────────┴─────┴──────────────────┘
+</code></pre>
+<hr>
+<h2 id="field-mapping-spreadsheet-→-app-screen">Field Mapping: Spreadsheet → App Screen</h2>
+<p>Here's exactly how each spreadsheet column becomes a UI element on the detail screen:</p>
+<h3 id="the-contaminant-table">The Contaminant Table</h3>
+<p>Looking at the screenshot, here's how the data maps:</p>
+<table>
+<thead>
+<tr>
+<th>Spreadsheet Column</th>
+<th>Table Column</th>
+<th>Example Value</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><strong>Column A</strong> (NAME)</td>
+<td>CONTAMINANT</td>
+<td>"Lead"</td>
+</tr>
+<tr>
+<td><strong>Column B</strong> (WHO)</td>
+<td>WHO</td>
+<td>"10 μg/L"</td>
+</tr>
+<tr>
+<td><strong>Column D</strong> (NY)</td>
+<td>LOCAL</td>
+<td>"15 μg/L"</td>
+</tr>
+<tr>
+<td><em>Calculated</em></td>
+<td>Status dot</td>
+<td>🟡 (yellow = warning)</td>
+</tr>
+</tbody></table>
+<h3 id="visual-mapping">Visual Mapping</h3>
+<pre><code>SPREADSHEET (Risks.xlsx)                    APP SCREEN
+─────────────────────────────────────────────────────────────────────────
+
+Column A: "Lead"                    →       CONTAMINANT: "Lead"
+
+Column B: 10                        →       WHO: "10 μg/L"
+                                            (We add the unit automatically)
+
+Column D: 15                        →       LOCAL: "15 μg/L"
+(NY column, based on your location)         (Shows YOUR state's limit)
+
+Measured value: 12 μg/L             →       Status: 🟡
+(from LocationMeasurement table)            (12 is 80% of 15 = warning)
+</code></pre>
+<hr>
+<h2 id="how-your-address-becomes-a-jurisdiction">How Your Address Becomes a Jurisdiction</h2>
+<p>When you type an address or city name, the app resolves it to a regulatory jurisdiction in three steps:</p>
+<h3 id="step-1-find-your-city">Step 1: Find Your City</h3>
+<pre><code>You type: "350 Fifth Avenue, New York"
+                    │
+                    ▼
+        ┌───────────────────────────────┐
+        │  Search Local Database         │ ← We check our Location table first
+        │  (172+ cities indexed)         │
+        └───────────┬───────────────────┘
+                    │
+              Found match? ──── Yes ──→ Use city/state from database
+                    │
+                    No
+                    │
+                    ▼
+        ┌───────────────────────────────┐
+        │  Google Places API             │ ← Fallback for addresses not in DB
+        │  (US &amp; Canada only)            │
+        └───────────┬───────────────────┘
+                    │
+                    ▼
+        ┌───────────────────────────────┐
+        │  Resolve Coordinates           │ ← Get lat/lng from the address
+        │  Find Nearest City             │ ← Match to closest city we have
+        │  in our Location table         │    data for
+        └───────────────────────────────┘
+</code></pre>
+<p><strong>Result:</strong> <code>city: "New York"</code>, <code>state: "NY"</code>, <code>country: "US"</code></p>
+<p>This is why the app shows <em>"Showing data for nearest city to: 350 Fifth Avenue, New York, NY, USA"</em> when you search by address (see Screenshot 2 above).</p>
+<h3 id="step-2-map-state-to-jurisdiction-code">Step 2: Map State to Jurisdiction Code</h3>
+<p>Your state or province is mapped to a jurisdiction code:</p>
+<table>
+<thead>
+<tr>
+<th>Your State/Province</th>
+<th>Jurisdiction Code</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>New York</td>
+<td>US-NY</td>
+<td>New York state regulations</td>
+</tr>
+<tr>
+<td>California</td>
+<td>US-CA</td>
+<td>California state regulations</td>
+</tr>
+<tr>
+<td>Texas</td>
+<td>US-TX</td>
+<td>Texas state regulations</td>
+</tr>
+<tr>
+<td>Florida</td>
+<td>US-FL</td>
+<td>Florida state regulations</td>
+</tr>
+<tr>
+<td>Quebec</td>
+<td>CA-QC</td>
+<td>Quebec provincial regulations</td>
+</tr>
+<tr>
+<td>Ontario</td>
+<td>CA-ON</td>
+<td>Ontario provincial regulations</td>
+</tr>
+</tbody></table>
+<p>If your state doesn't have specific regulations, we fall back:</p>
+<ol>
+<li><strong>State-specific</strong> (e.g., <code>US-NY</code>) — first choice</li>
+<li><strong>Country federal</strong> (e.g., <code>US</code>) — if no state-level data exists</li>
+<li><strong>WHO</strong> — global default</li>
+</ol>
+<h3 id="step-3-look-up-safety-limits">Step 3: Look Up Safety Limits</h3>
+<p>The jurisdiction code determines which "LOCAL" column you see:</p>
+<table>
+<thead>
+<tr>
+<th>Jurisdiction Code</th>
+<th>Spreadsheet Column</th>
+<th>What Shows as "LOCAL"</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>US-NY</td>
+<td>Column D (NY)</td>
+<td>NY state limits</td>
+</tr>
+<tr>
+<td>US-CA</td>
+<td>Column E (CA)</td>
+<td>CA state limits</td>
+</tr>
+<tr>
+<td>US-TX</td>
+<td>Column F (TX)</td>
+<td>TX state limits</td>
+</tr>
+<tr>
+<td>US-FL</td>
+<td>Column G (FL)</td>
+<td>FL state limits</td>
+</tr>
+<tr>
+<td>CA-QC</td>
+<td>Column C (QUEBEC)</td>
+<td>Quebec limits</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="status-colors-explained">Status Colors Explained</h2>
+<p>The colored dot indicates risk level:</p>
+<table>
+<thead>
+<tr>
+<th>Color</th>
+<th>Meaning</th>
+<th>Calculation</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>🔴 Red</td>
+<td><strong>DANGER</strong></td>
+<td>Measured value ≥ Local limit</td>
+</tr>
+<tr>
+<td>🟡 Yellow</td>
+<td><strong>WARNING</strong></td>
+<td>Measured value is 80-99% of limit</td>
+</tr>
+<tr>
+<td>🟢 Green</td>
+<td><strong>SAFE</strong></td>
+<td>Measured value &lt; 80% of limit</td>
+</tr>
+</tbody></table>
+<h3 id="example-lead-in-new-york">Example: Lead in New York</h3>
+<p>From the screenshot:</p>
+<ul>
+<li><strong>WHO limit</strong>: 10 μg/L (from Column B)</li>
+<li><strong>Local limit</strong>: 15 μg/L (from Column D - NY)</li>
+<li><strong>Measured value</strong>: 12 μg/L (from your water report)</li>
+</ul>
+<p><strong>Calculation:</strong></p>
+<pre><code>Warning threshold = 15 × 0.80 = 12 μg/L
+
+Is 12 ≥ 15?  → No  → Not danger
+Is 12 ≥ 12?  → Yes → WARNING (🟡)
+</code></pre>
+<hr>
+<h2 id="special-values-in-the-spreadsheet">Special Values in the Spreadsheet</h2>
+<table>
+<thead>
+<tr>
+<th>Spreadsheet Value</th>
+<th>What It Means</th>
+<th>How It Appears</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>10</code> (number)</td>
+<td>Regulated at 10 μg/L</td>
+<td><code>10 μg/L</code></td>
+</tr>
+<tr>
+<td><code>BANNED</code></td>
+<td>Completely prohibited</td>
+<td><code>BANNED</code></td>
+</tr>
+<tr>
+<td><code>NOT APPROVED</code></td>
+<td>Not approved for use</td>
+<td><code>NOT APPROVED</code></td>
+</tr>
+<tr>
+<td>(empty cell)</td>
+<td>No standard set</td>
+<td><code>NO STANDARD</code></td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="why-two-standards">Why Two Standards?</h2>
+<p>We show both <strong>WHO</strong> and <strong>LOCAL</strong> so you can see:</p>
+<ol>
+<li><strong>WHO</strong> - The international health benchmark</li>
+<li><strong>LOCAL</strong> - What your state/province legally requires</li>
+</ol>
+<p>In the Lead example:</p>
+<ul>
+<li>WHO says: Keep it under <strong>10 μg/L</strong></li>
+<li>New York says: Keep it under <strong>15 μg/L</strong></li>
+</ul>
+<p>The WHO standard is stricter. Your water (12 μg/L) meets NY requirements but exceeds WHO recommendations - hence the warning.</p>
+<hr>
+<h2 id="complete-data-flow">Complete Data Flow</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────────────────┐
+│                         RISKS.XLSX (Source)                                 │
+│                                                                             │
+│    Lead  │  10  │  10  │  15  │  10  │  ...  │  Neurotoxin affecting...    │
+│          │ WHO  │  QC  │  NY  │  CA  │       │  (description)              │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │       PARSING SCRIPT          │
+                    │  • Extract: "Lead"            │
+                    │  • WHO limit: 10              │
+                    │  • US-NY limit: 15            │
+                    │  • Unit: μg/L                 │
+                    └───────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │         DATABASE              │
+                    │  Contaminant: lead            │
+                    │  ContaminantThreshold:        │
+                    │    WHO: 10 μg/L               │
+                    │    US-NY: 15 μg/L             │
+                    └───────────────────────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │    LOCATION MEASUREMENT       │
+                    │  City: New York               │
+                    │  State: NY                    │
+                    │  Lead: 12 μg/L                │
+                    │  Source: Water utility report │
+                    └───────────────────────────────┘
+                                    │
+                                    ▼
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        APP SCREEN (What You See)                            │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ CONTAMINANT    │    WHO       │   LOCAL      │  STATUS             │   │
+│  ├────────────────┼──────────────┼──────────────┼─────────────────────┤   │
+│  │ Lead           │  10 μg/L     │  15 μg/L     │    🟡               │   │
+│  └────────────────┴──────────────┴──────────────┴─────────────────────┘   │
+│                                                                             │
+│  Status is WARNING because 12 μg/L is ≥ 80% of the 15 μg/L limit           │
+└─────────────────────────────────────────────────────────────────────────────┘
+</code></pre>
+<hr>
+<h2 id="questions">Questions?</h2>
+<p>If you notice discrepancies between our data and official reports, please let us know. We continuously update our database as regulations change.</p>
+<p>If you'd like to add other data sources or consume data from an external API, we can integrate those as well — just let us know.</p>
+
+	
+
+</body></html>
