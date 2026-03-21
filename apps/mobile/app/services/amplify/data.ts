@@ -820,6 +820,69 @@ export async function getUserZipCodeSubscriptions(): Promise<AmplifyUserSubscrip
 }
 
 // =============================================================================
+// Location Resolution (Backend Proxy)
+// =============================================================================
+
+/**
+ * Response from resolveLocation mutation
+ */
+export interface ResolveLocationResponse {
+  city: string
+  state: string
+  country: string
+  county?: string | null
+  jurisdictionCode: string
+  latitude?: number | null
+  longitude?: number | null
+  hasData: boolean
+  isNew: boolean
+  error?: string | null
+}
+
+/**
+ * Resolve a Google Places placeId to a city/state/country with jurisdiction assignment.
+ * Auto-creates a Location record in DynamoDB if one doesn't exist.
+ * Returns data availability status.
+ */
+export async function resolveLocationByPlaceId(
+  placeId: string,
+  sessionToken?: string,
+): Promise<ResolveLocationResponse> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.mutations.resolveLocation({
+    placeId,
+    sessionToken,
+  })
+
+  if (errors) {
+    console.error("Error resolving location:", errors)
+    return {
+      city: "",
+      state: "",
+      country: "",
+      jurisdictionCode: "WHO",
+      hasData: false,
+      isNew: false,
+      error: errors.map((e: { message: string }) => e.message).join(", "),
+    }
+  }
+
+  if (!data) {
+    return {
+      city: "",
+      state: "",
+      country: "",
+      jurisdictionCode: "WHO",
+      hasData: false,
+      isNew: false,
+      error: "No data returned",
+    }
+  }
+
+  return data as ResolveLocationResponse
+}
+
+// =============================================================================
 // Places Autocomplete (Backend Proxy)
 // =============================================================================
 

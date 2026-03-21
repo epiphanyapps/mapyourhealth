@@ -29,7 +29,7 @@ jest.mock("@expo-google-fonts/space-grotesk", () => ({
 // Mock useLocationSearch hook
 const mockSearch = jest.fn()
 const mockClearSuggestions = jest.fn()
-const mockResolveAddressToNearestCity = jest.fn()
+const mockResolvePlace = jest.fn()
 
 jest.mock("../hooks/useLocationSearch", () => ({
   useLocationSearch: () => ({
@@ -39,7 +39,7 @@ jest.mock("../hooks/useLocationSearch", () => ({
     error: mockError,
     search: mockSearch,
     clearSuggestions: mockClearSuggestions,
-    resolveAddressToNearestCity: mockResolveAddressToNearestCity,
+    resolvePlace: mockResolvePlace,
   }),
 }))
 
@@ -359,21 +359,23 @@ describe("PlacesSearchBar", () => {
   })
 
   describe("address resolution", () => {
-    it("resolves address suggestions to nearest city", async () => {
+    it("resolves address suggestions via resolvePlace", async () => {
       mockSuggestions = [
         {
           type: "address" as const,
           displayText: "123 Main St",
           secondaryText: "Springfield, IL",
-          city: "place123", // placeId stored in city field for addresses
+          placeId: "place123",
         },
       ]
 
-      mockResolveAddressToNearestCity.mockResolvedValue({
+      mockResolvePlace.mockResolvedValue({
         city: "Springfield",
         state: "IL",
         country: "US",
-        distanceKm: 0.5,
+        jurisdictionCode: "US-IL",
+        hasData: true,
+        isNew: false,
       })
 
       const { getByPlaceholderText, getByText, rerender } = render(
@@ -398,11 +400,11 @@ describe("PlacesSearchBar", () => {
       fireEvent.press(getByText("123 Main St"))
 
       await waitFor(() => {
-        expect(mockResolveAddressToNearestCity).toHaveBeenCalledWith("place123")
+        expect(mockResolvePlace).toHaveBeenCalledWith("place123")
       })
 
       await waitFor(() => {
-        expect(mockOnLocationSelect).toHaveBeenCalledWith("Springfield", "IL", "US")
+        expect(mockOnLocationSelect).toHaveBeenCalledWith("Springfield", "IL", "US", "123 Main St")
       })
     })
   })
