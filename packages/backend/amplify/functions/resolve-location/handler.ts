@@ -179,18 +179,25 @@ function parseAddressComponents(components: AddressComponent[]): {
 
 /**
  * Query Jurisdiction table to find the best matching jurisdiction code.
- * Priority: state-level (e.g., US-NY) → country-level (e.g., US) → WHO
+ * Priority: city-level (e.g., US-NY-New York) → state-level (e.g., US-NY)
+ *           → country-level (e.g., US) → WHO
  */
-async function resolveJurisdiction(country: string, state: string): Promise<string> {
+async function resolveJurisdiction(country: string, state: string, city: string): Promise<string> {
   if (!JURISDICTION_TABLE_NAME) return 'WHO';
 
-  const stateCode = `${country}-${state}`;
+  // Try city-level jurisdiction first (e.g., US-NY-New York)
+  if (city) {
+    const cityCode = `${country}-${state}-${city}`;
+    const cityResult = await queryJurisdictionByCode(cityCode);
+    if (cityResult) return cityCode;
+  }
 
-  // Try state-level jurisdiction first
+  // Try state-level jurisdiction (e.g., US-NY)
+  const stateCode = `${country}-${state}`;
   const stateResult = await queryJurisdictionByCode(stateCode);
   if (stateResult) return stateCode;
 
-  // Try country-level jurisdiction
+  // Try country-level jurisdiction (e.g., US)
   const countryResult = await queryJurisdictionByCode(country);
   if (countryResult) return country;
 
@@ -436,7 +443,7 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
 
     // Step 3: Resolve jurisdiction
     const jurisdictionCode = existing?.jurisdictionCode
-      || await resolveJurisdiction(country, state);
+      || await resolveJurisdiction(country, state, city);
 
     // Step 4: Create Location if new
     const isNew = !existing;
