@@ -33,7 +33,7 @@ import {
 import { useLocationObservations } from "@/hooks/useLocationObservations"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import { getJurisdictionForState } from "@/utils/jurisdiction"
+import { useContaminants } from "@/context/ContaminantsContext"
 import { getCategoryIcon, getStatusColorKey } from "@/utils/observations"
 
 interface LocationObservationsScreenProps extends AppStackScreenProps<"LocationObservations"> {}
@@ -98,8 +98,9 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
   function LocationObservationsScreen(props) {
     const { navigation, route } = props
     const { city, state, country } = route.params
+    const { getJurisdictionForLocation } = useContaminants()
     const jurisdictionCode =
-      route.params.jurisdictionCode ?? getJurisdictionForState(state, country)
+      route.params.jurisdictionCode ?? getJurisdictionForLocation(state, country)?.code ?? "WHO"
     const { theme } = useAppTheme()
 
     const { observations, isLoading, error, isOffline, refresh, worstStatus, alertCount } =

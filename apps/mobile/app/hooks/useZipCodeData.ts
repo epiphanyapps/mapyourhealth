@@ -21,7 +21,7 @@ import {
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
-import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
+// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 import { detectPostalCodeRegion } from "@/utils/postalCode"
 import { load, save, remove } from "@/utils/storage"
 
@@ -135,7 +135,12 @@ export function clearCachedZipCodeData(zipCode: string): void {
  * Hook to fetch zip code safety data with caching support
  */
 export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
-  const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
+  const {
+    contaminants,
+    getThreshold,
+    getJurisdictionForLocation,
+    isLoading: defsLoading,
+  } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -214,7 +219,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
     if (measurements.length > 0) {
       const { cityName, state } = getCityStateForZipCode(zipCode)
       const country = detectPostalCodeRegion(zipCode) || "US"
-      const jurisdictionCode = getJurisdictionForPostalCode(zipCode, state, country)
+      const jurisdictionCode = getJurisdictionForLocation(state, country)?.code || "WHO"
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: ZipCodeData = { zipCode, cityName, state, stats }
       setCachedData(zipCode, newData)

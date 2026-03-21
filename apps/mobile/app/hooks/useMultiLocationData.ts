@@ -13,7 +13,7 @@ import { type ZipCodeData, type ZipCodeStat, type StatStatus } from "@/data/type
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
-import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
+// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 import { detectPostalCodeRegion } from "@/utils/postalCode"
 
 interface UseMultiLocationDataResult {
@@ -49,7 +49,12 @@ function getWorseStatus(a: StatStatus, b: StatStatus): StatStatus {
 export function useMultiLocationData(
   selectedCity: SelectedCity | null,
 ): UseMultiLocationDataResult {
-  const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
+  const {
+    contaminants,
+    getThreshold,
+    getJurisdictionForLocation,
+    isLoading: defsLoading,
+  } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -153,13 +158,9 @@ export function useMultiLocationData(
 
       if (totalMeasurements === 0) return null
 
-      const firstPostalCode = postalCodes[0]
-      const country = detectPostalCodeRegion(firstPostalCode) || "US"
-      const jurisdictionCode = getJurisdictionForPostalCode(
-        firstPostalCode,
-        selectedCity.state,
-        country,
-      )
+      const country = detectPostalCodeRegion(postalCodes[0]) || "US"
+      const jurisdictionCode =
+        getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"
 
       const aggregatedStats = aggregateMeasurements(allMeasurements, jurisdictionCode)
 
