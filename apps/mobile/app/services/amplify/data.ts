@@ -849,13 +849,29 @@ export async function resolveLocationByPlaceId(
   sessionToken?: string,
 ): Promise<ResolveLocationResponse> {
   const client = await getPublicClient()
-  const { data, errors } = await client.mutations.resolveLocation({
-    placeId,
-    sessionToken,
-  })
 
-  if (errors) {
-    console.error("Error resolving location:", errors)
+  // Try the new resolveLocation mutation first
+  try {
+    if (typeof client.mutations.resolveLocation === "function") {
+      const { data, errors } = await client.mutations.resolveLocation({
+        placeId,
+        sessionToken,
+      })
+
+      if (errors) {
+        console.error("Error resolving location:", errors)
+        // Fall through to fallback
+      } else if (data) {
+        return data as ResolveLocationResponse
+      }
+    }
+  } catch (e) {
+    console.warn("resolveLocation mutation not available, using fallback:", e)
+  }
+
+  // Fallback: use existing getPlaceDetails (works before backend is deployed)
+  const details = await getPlaceDetails(placeId, sessionToken)
+  if (!details) {
     return {
       city: "",
       state: "",
@@ -863,23 +879,23 @@ export async function resolveLocationByPlaceId(
       jurisdictionCode: "WHO",
       hasData: false,
       isNew: false,
-      error: errors.map((e: { message: string }) => e.message).join(", "),
+      error: "Could not resolve place details",
     }
   }
 
-  if (!data) {
-    return {
-      city: "",
-      state: "",
-      country: "",
-      jurisdictionCode: "WHO",
-      hasData: false,
-      isNew: false,
-      error: "No data returned",
-    }
-  }
+  const city = details.city || ""
+  const state = details.state || ""
+  const country = details.country || ""
+  const jurisdictionCode = state && country ? `${country}-${state}` : country || "WHO"
 
-  return data as ResolveLocationResponse
+  return {
+    city,
+    state,
+    country,
+    jurisdictionCode,
+    hasData: false,
+    isNew: false,
+  }
 }
 
 // =============================================================================
