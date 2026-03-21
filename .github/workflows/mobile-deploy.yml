@@ -1,6 +1,10 @@
 name: Mobile Web Deploy
 
 on:
+  push:
+    branches:
+      - main
+      - staging
   workflow_dispatch:
 
 jobs:
