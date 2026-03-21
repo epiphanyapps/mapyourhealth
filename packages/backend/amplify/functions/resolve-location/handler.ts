@@ -161,7 +161,7 @@ function parseAddressComponents(components: AddressComponent[]): {
 } {
   const find = (type: string) => components.find((c) => c.types.includes(type));
 
-  const localityComp = find('locality') || find('sublocality') || find('administrative_area_level_3');
+  const localityComp = find('locality') || find('neighborhood') || find('sublocality') || find('administrative_area_level_3');
   const stateComp = find('administrative_area_level_1');
   const countryComp = find('country');
   const countyComp = find('administrative_area_level_2');
