@@ -17,6 +17,7 @@ import { processNotifications } from './functions/process-notifications/resource
 import { onLocationMeasurementUpdate } from './functions/on-location-measurement-update/resource';
 import { requestMagicLink } from './functions/request-magic-link/resource';
 import { placesAutocomplete } from './functions/places-autocomplete/resource';
+import { resolveLocation } from './functions/resolve-location/resource';
 import { deleteAccount } from './functions/delete-account/resource';
 // import { storage } from './storage/resource';
 
@@ -34,6 +35,7 @@ const backend = defineBackend({
   onLocationMeasurementUpdate,
   requestMagicLink,
   placesAutocomplete,
+  resolveLocation,
   deleteAccount,
   // storage,
 });
@@ -324,6 +326,64 @@ const placesCachePolicy = new Policy(placesAutocompleteStack, 'PlacesCacheDynamo
   ],
 });
 backend.placesAutocomplete.resources.lambda.role?.attachInlinePolicy(placesCachePolicy);
+
+// ============================================
+// Resolve Location Lambda Setup
+// ============================================
+
+// Get DynamoDB tables for location resolution
+const locationTable = backend.data.resources.tables['Location'];
+const jurisdictionTable = backend.data.resources.tables['Jurisdiction'];
+
+// Get the resolveLocation Lambda function and its stack
+const resolveLocationLambda = backend.resolveLocation.resources.lambda as LambdaFunction;
+const resolveLocationStack = Stack.of(resolveLocationLambda);
+
+// Set environment variables for table names
+resolveLocationLambda.addEnvironment('CACHE_TABLE_NAME', placesCacheTable.tableName);
+resolveLocationLambda.addEnvironment('LOCATION_TABLE_NAME', locationTable.tableName);
+resolveLocationLambda.addEnvironment('JURISDICTION_TABLE_NAME', jurisdictionTable.tableName);
+resolveLocationLambda.addEnvironment('LOCATION_MEASUREMENT_TABLE_NAME', locationMeasurementTable.tableName);
+
+// Grant resolveLocation function permissions for DynamoDB tables
+const resolveLocationDynamoPolicy = new Policy(resolveLocationStack, 'ResolveLocationDynamoPolicy', {
+  statements: [
+    // PlacesCache: read/write for caching place details
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:GetItem', 'dynamodb:PutItem'],
+      resources: [placesCacheTable.tableArn],
+    }),
+    // Location: read (query by city index) + write (create new locations)
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:Query', 'dynamodb:PutItem'],
+      resources: [
+        locationTable.tableArn,
+        `${locationTable.tableArn}/index/*`,
+      ],
+    }),
+    // Jurisdiction: read (query by code index)
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:Query'],
+      resources: [
+        jurisdictionTable.tableArn,
+        `${jurisdictionTable.tableArn}/index/*`,
+      ],
+    }),
+    // LocationMeasurement: read (query by city index for data availability check)
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['dynamodb:Query'],
+      resources: [
+        locationMeasurementTable.tableArn,
+        `${locationMeasurementTable.tableArn}/index/*`,
+      ],
+    }),
+  ],
+});
+backend.resolveLocation.resources.lambda.role?.attachInlinePolicy(resolveLocationDynamoPolicy);
 
 // ============================================
 // Delete Account Lambda Setup
