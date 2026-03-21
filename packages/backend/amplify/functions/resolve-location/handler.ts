@@ -18,6 +18,7 @@ import {
   QueryCommand,
 } from '@aws-sdk/client-dynamodb';
 import { unmarshall } from '@aws-sdk/util-dynamodb';
+import { randomUUID } from 'crypto';
 
 const dynamodb = new DynamoDBClient({});
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || '';
@@ -240,18 +241,21 @@ async function findExistingLocation(
       TableName: LOCATION_TABLE_NAME,
       IndexName: 'locationsByCity',
       KeyConditionExpression: 'city = :city',
+      FilterExpression: '#state = :state AND country = :country',
+      ExpressionAttributeNames: {
+        '#state': 'state', // 'state' is a DynamoDB reserved word
+      },
       ExpressionAttributeValues: {
         ':city': { S: city },
+        ':state': { S: state },
+        ':country': { S: country },
       },
+      Limit: 5,
     }));
 
-    if (response.Items) {
-      for (const item of response.Items) {
-        const record = unmarshall(item);
-        if (record.state === state && record.country === country) {
-          return { id: record.id, jurisdictionCode: record.jurisdictionCode };
-        }
-      }
+    if (response.Items && response.Items.length > 0) {
+      const record = unmarshall(response.Items[0]);
+      return { id: record.id, jurisdictionCode: record.jurisdictionCode };
     }
 
     return null;
@@ -277,7 +281,7 @@ async function createLocation(params: {
 
   try {
     const now = new Date().toISOString();
-    const id = `${params.city}-${params.state}-${params.country}`.toLowerCase().replace(/\s+/g, '-');
+    const id = randomUUID();
 
     const item: Record<string, { S: string } | { N: string } | { NULL: true }> = {
       id: { S: id },
@@ -303,24 +307,20 @@ async function createLocation(params: {
     await dynamodb.send(new PutItemCommand({
       TableName: LOCATION_TABLE_NAME,
       Item: item,
-      ConditionExpression: 'attribute_not_exists(id)', // Don't overwrite existing
     }));
 
-    console.log(`Created Location: ${id}`);
-  } catch (error: unknown) {
-    // ConditionalCheckFailedException means record already exists — that's fine
-    if (error && typeof error === 'object' && 'name' in error && error.name === 'ConditionalCheckFailedException') {
-      console.log('Location already exists (race condition), skipping');
-      return;
-    }
+    console.log(`Created Location: ${id} (${params.city}, ${params.state}, ${params.country})`);
+  } catch (error) {
     console.error('Location create error:', error);
   }
 }
 
 /**
- * Check if any LocationMeasurement records exist for a given city.
+ * Check if any LocationMeasurement records exist for a given city+state.
+ * Queries by city GSI then filters by state to avoid cross-state false positives
+ * (e.g., Portland, ME vs Portland, OR).
  */
-async function checkDataAvailability(city: string): Promise<boolean> {
+async function checkDataAvailability(city: string, state: string): Promise<boolean> {
   if (!LOCATION_MEASUREMENT_TABLE_NAME) return false;
 
   try {
@@ -328,10 +328,15 @@ async function checkDataAvailability(city: string): Promise<boolean> {
       TableName: LOCATION_MEASUREMENT_TABLE_NAME,
       IndexName: 'locationMeasurementsByCity',
       KeyConditionExpression: 'city = :city',
+      FilterExpression: '#state = :state',
+      ExpressionAttributeNames: {
+        '#state': 'state', // 'state' is a DynamoDB reserved word
+      },
       ExpressionAttributeValues: {
         ':city': { S: city },
+        ':state': { S: state },
       },
-      Limit: 1,
+      Limit: 10, // Fetch a small batch; filter may discard some
     }));
 
     return (response.Items?.length ?? 0) > 0;
@@ -460,7 +465,9 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
     }
 
     // Step 5: Check data availability
-    const hasData = await checkDataAvailability(city);
+    const hasData = await checkDataAvailability(city, state);
+
+    console.log(`Resolved: ${city}, ${state}, ${country} → jurisdiction=${jurisdictionCode}, hasData=${hasData}, isNew=${isNew}`);
 
     return {
       city,
