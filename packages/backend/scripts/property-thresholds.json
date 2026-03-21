@@ -1,0 +1,28 @@
+[
+  {
+    "propertyId": "radon",
+    "jurisdictionCode": "US",
+    "zoneMapping": {
+      "1": "danger",
+      "2": "warning",
+      "3": "safe"
+    },
+    "status": "active",
+    "notes": "EPA Zone classification based on predicted indoor radon levels"
+  },
+  {
+    "propertyId": "lyme_disease",
+    "jurisdictionCode": "CA-QC",
+    "endemicIsDanger": true,
+    "status": "active",
+    "notes": "Quebec public health endemic zone designation"
+  },
+  {
+    "propertyId": "lyme_disease",
+    "jurisdictionCode": "US",
+    "incidenceWarningThreshold": 10.0,
+    "incidenceDangerThreshold": 50.0,
+    "status": "active",
+    "notes": "Based on CDC incidence categories - Low (<10/100k), Moderate (10-50/100k), High (>50/100k)"
+  }
+]

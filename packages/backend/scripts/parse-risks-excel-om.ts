@@ -93,79 +93,17 @@ interface SeedData {
 // Constants
 // =============================================================================
 
-const OBSERVED_PROPERTIES: SeedObservedProperty[] = [
-  {
-    propertyId: "radon",
-    name: "Radon",
-    nameFr: "Radon",
-    category: "radiation",
-    observationType: "zone",
-    unit: "pCi/L",
-    description:
-      "Radon is a naturally occurring radioactive gas that can accumulate in buildings and is the second leading cause of lung cancer after smoking. The EPA divides the US into three radon zones based on predicted average indoor radon screening levels.",
-    descriptionFr:
-      "Le radon est un gaz radioactif naturel qui peut s'accumuler dans les bâtiments et constitue la deuxième cause de cancer du poumon après le tabagisme.",
-    higherIsBad: true,
-    metadata: {
-      dataSource: "EPA",
-      zoneDescriptions: {
-        "1": "Zone 1 - High potential (predicted average > 4 pCi/L)",
-        "2": "Zone 2 - Moderate potential (predicted average 2-4 pCi/L)",
-        "3": "Zone 3 - Low potential (predicted average < 2 pCi/L)",
-      },
-    },
-  },
-  {
-    propertyId: "lyme_disease",
-    name: "Lyme Disease",
-    nameFr: "Maladie de Lyme",
-    category: "disease",
-    observationType: "endemic",
-    unit: null,
-    description:
-      "Lyme disease is a bacterial infection transmitted through the bite of infected blacklegged ticks. It can cause fever, fatigue, joint pain, and a characteristic skin rash. Early treatment with antibiotics is usually effective.",
-    descriptionFr:
-      "La maladie de Lyme est une infection bactérienne transmise par la piqûre de tiques à pattes noires infectées. Elle peut provoquer de la fièvre, de la fatigue, des douleurs articulaires et une éruption cutanée caractéristique.",
-    higherIsBad: true,
-    metadata: {
-      transmittedBy: "Blacklegged tick (Ixodes scapularis)",
-      causativeAgent: "Borrelia burgdorferi",
-    },
-  },
-]
+/**
+ * Observed properties and thresholds — loaded from standalone JSON files.
+ * Edit the JSON files or use the admin UI to manage.
+ */
+const OBSERVED_PROPERTIES: SeedObservedProperty[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "./observed-properties.json"), "utf-8")
+)
 
-const PROPERTY_THRESHOLDS: SeedPropertyThreshold[] = [
-  // Radon zone mapping for US
-  {
-    propertyId: "radon",
-    jurisdictionCode: "US",
-    zoneMapping: {
-      "1": "danger",
-      "2": "warning",
-      "3": "safe",
-    },
-    status: "active",
-    notes: "EPA Zone classification based on predicted indoor radon levels",
-  },
-  // Lyme endemic mapping for Quebec
-  {
-    propertyId: "lyme_disease",
-    jurisdictionCode: "CA-QC",
-    endemicIsDanger: true,
-    status: "active",
-    notes: "Quebec public health endemic zone designation",
-  },
-  // Lyme incidence mapping for US (based on CDC categories)
-  {
-    propertyId: "lyme_disease",
-    jurisdictionCode: "US",
-    incidenceWarningThreshold: 10.0,
-    incidenceDangerThreshold: 50.0,
-    status: "active",
-    notes:
-      "Based on CDC incidence categories - Low (<10/100k), Moderate (10-50/100k), High (>50/100k)",
-  },
-]
+const PROPERTY_THRESHOLDS: SeedPropertyThreshold[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "./property-thresholds.json"), "utf-8")
+)
 
 // US State name to code mapping
 const US_STATE_CODES: Record<string, string> = {

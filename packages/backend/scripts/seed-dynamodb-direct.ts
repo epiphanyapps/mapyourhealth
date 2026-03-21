@@ -9,6 +9,8 @@ import { DynamoDBDocumentClient, PutCommand, ScanCommand, DeleteCommand } from "
 import { randomUUID } from "crypto";
 import seedData from "./seed-data.json";
 import locationData from "./seed-locations.json";
+import observedPropertiesData from "./observed-properties.json";
+import propertyThresholdsData from "./property-thresholds.json";
 
 const REGION = "ca-central-1";
 const TABLE_SUFFIX = "uusoeozunzdy5biliji7vxbjcy-NONE";
@@ -18,6 +20,8 @@ const TABLES = {
   Contaminant: `Contaminant-${TABLE_SUFFIX}`,
   ContaminantThreshold: `ContaminantThreshold-${TABLE_SUFFIX}`,
   Location: `Location-${TABLE_SUFFIX}`,
+  ObservedProperty: `ObservedProperty-${TABLE_SUFFIX}`,
+  PropertyThreshold: `PropertyThreshold-${TABLE_SUFFIX}`,
 };
 
 const client = new DynamoDBClient({ region: REGION });
@@ -214,6 +218,115 @@ async function seedLocations(locations: SeedLocation[]) {
   console.log(`\nLocations: ${created} created, ${errors} errors`);
 }
 
+interface SeedObservedProperty {
+  propertyId: string;
+  name: string;
+  nameFr?: string | null;
+  category: string;
+  observationType: string;
+  unit?: string | null;
+  description?: string | null;
+  descriptionFr?: string | null;
+  higherIsBad?: boolean;
+  metadata?: Record<string, unknown> | null;
+}
+
+interface SeedPropertyThreshold {
+  propertyId: string;
+  jurisdictionCode: string;
+  limitValue?: number | null;
+  warningValue?: number | null;
+  zoneMapping?: Record<string, string> | null;
+  endemicIsDanger?: boolean | null;
+  incidenceWarningThreshold?: number | null;
+  incidenceDangerThreshold?: number | null;
+  status: string;
+  notes?: string | null;
+}
+
+async function seedObservedProperties(properties: SeedObservedProperty[]) {
+  console.log(`\nSeeding ${properties.length} observed properties...`);
+  let created = 0;
+  let errors = 0;
+
+  for (const property of properties) {
+    try {
+      const now = new Date().toISOString();
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLES.ObservedProperty,
+          Item: {
+            id: randomUUID(),
+            __typename: "ObservedProperty",
+            propertyId: property.propertyId,
+            name: property.name,
+            nameFr: property.nameFr ?? null,
+            category: property.category,
+            observationType: property.observationType,
+            unit: property.unit ?? null,
+            description: property.description ?? null,
+            descriptionFr: property.descriptionFr ?? null,
+            higherIsBad: property.higherIsBad ?? true,
+            metadata: property.metadata ? JSON.stringify(property.metadata) : null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        })
+      );
+      created++;
+      process.stdout.write(".");
+    } catch (error) {
+      errors++;
+      console.error(`\nError creating observed property ${property.propertyId}:`, error);
+    }
+  }
+
+  console.log(`\nObserved Properties: ${created} created, ${errors} errors`);
+}
+
+async function seedPropertyThresholds(thresholds: SeedPropertyThreshold[]) {
+  console.log(`\nSeeding ${thresholds.length} property thresholds...`);
+  let created = 0;
+  let errors = 0;
+
+  for (const threshold of thresholds) {
+    try {
+      const now = new Date().toISOString();
+      await docClient.send(
+        new PutCommand({
+          TableName: TABLES.PropertyThreshold,
+          Item: {
+            id: randomUUID(),
+            __typename: "PropertyThreshold",
+            propertyId: threshold.propertyId,
+            jurisdictionCode: threshold.jurisdictionCode,
+            limitValue: threshold.limitValue ?? null,
+            warningValue: threshold.warningValue ?? null,
+            zoneMapping: threshold.zoneMapping ? JSON.stringify(threshold.zoneMapping) : null,
+            endemicIsDanger: threshold.endemicIsDanger ?? null,
+            incidenceWarningThreshold: threshold.incidenceWarningThreshold ?? null,
+            incidenceDangerThreshold: threshold.incidenceDangerThreshold ?? null,
+            status: threshold.status,
+            notes: threshold.notes ?? null,
+            createdAt: now,
+            updatedAt: now,
+          },
+        })
+      );
+      created++;
+      process.stdout.write(".");
+    } catch (error) {
+      errors++;
+      console.error(
+        `\nError creating property threshold ${threshold.propertyId}/${threshold.jurisdictionCode}:`,
+        error
+      );
+    }
+  }
+
+  console.log(`\nProperty Thresholds: ${created} created, ${errors} errors`);
+}
+
 async function clearTable(tableName: string) {
   console.log(`Clearing ${tableName}...`);
   let deleted = 0;
@@ -246,6 +359,8 @@ async function clearTable(tableName: string) {
 
 async function clearExistingData() {
   console.log("\nClearing existing data...");
+  await clearTable(TABLES.PropertyThreshold);
+  await clearTable(TABLES.ObservedProperty);
   await clearTable(TABLES.ContaminantThreshold);
   await clearTable(TABLES.Contaminant);
   await clearTable(TABLES.Jurisdiction);
@@ -259,6 +374,8 @@ async function main() {
   console.log(`  - ${seedData.contaminants.length} contaminants`);
   console.log(`  - ${seedData.thresholds.length} thresholds`);
   console.log(`  - ${locationData.locations.length} locations`);
+  console.log(`  - ${observedPropertiesData.length} observed properties`);
+  console.log(`  - ${propertyThresholdsData.length} property thresholds`);
 
   const args = process.argv.slice(2);
   const shouldClear = args.includes("--clear");
@@ -271,6 +388,8 @@ async function main() {
   await seedContaminants(seedData.contaminants as SeedContaminant[]);
   await seedThresholds(seedData.thresholds as SeedThreshold[]);
   await seedLocations(locationData.locations as SeedLocation[]);
+  await seedObservedProperties(observedPropertiesData as SeedObservedProperty[]);
+  await seedPropertyThresholds(propertyThresholdsData as SeedPropertyThreshold[]);
 
   console.log("\n=== Seeding complete ===");
 }

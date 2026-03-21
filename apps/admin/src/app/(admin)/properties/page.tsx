@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   OBSERVED_PROPERTY_CATEGORIES,
@@ -203,6 +203,31 @@ export default function PropertiesPage() {
     }
   };
 
+  const handleExport = () => {
+    const exportData = properties.map((p) => ({
+      propertyId: p.propertyId,
+      name: p.name,
+      nameFr: p.nameFr || null,
+      category: p.category,
+      observationType: p.observationType,
+      unit: p.unit || null,
+      description: p.description || null,
+      descriptionFr: p.descriptionFr || null,
+      higherIsBad: p.higherIsBad ?? true,
+      metadata: p.metadata || null,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "observed-properties.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported observed-properties.json");
+  };
+
   // Filter properties
   const filteredProperties = properties.filter((p) => {
     if (filterCategory !== "all" && p.category !== filterCategory) return false;
@@ -221,14 +246,23 @@ export default function PropertiesPage() {
             Manage what can be measured or observed
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Property
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={properties.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export JSON
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Property
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
                 {editingProperty ? "Edit Property" : "Create Property"}
@@ -396,8 +430,9 @@ export default function PropertiesPage() {
                 )}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}
