@@ -7,8 +7,9 @@
  * - UserSubscription, NotificationLog, HazardReport, HealthRecord, WarningBanner
  */
 
-import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, ScanCommand, DeleteCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBClient, BatchWriteItemCommand } from "@aws-sdk/client-dynamodb";
+import { DynamoDBDocumentClient, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { marshall } from "@aws-sdk/util-dynamodb";
 
 const REGION = "ca-central-1";
 const TABLE_SUFFIX = process.env.TABLE_SUFFIX || "uusoeozunzdy5biliji7vxbjcy-NONE";
@@ -45,15 +46,23 @@ async function clearTable(tableName: string): Promise<number> {
         })
       );
 
-      for (const item of result.Items || []) {
-        await docClient.send(
-          new DeleteCommand({
-            TableName: fullName,
-            Key: { id: item.id },
+      const items = result.Items || [];
+      // Batch delete in chunks of 25 (DynamoDB limit)
+      for (let i = 0; i < items.length; i += 25) {
+        const chunk = items.slice(i, i + 25);
+        await client.send(
+          new BatchWriteItemCommand({
+            RequestItems: {
+              [fullName]: chunk.map((item) => ({
+                DeleteRequest: {
+                  Key: { id: { S: item.id } },
+                },
+              })),
+            },
           })
         );
-        deleted++;
-        if (deleted % 100 === 0) process.stdout.write(".");
+        deleted += chunk.length;
+        process.stdout.write(".");
       }
 
       lastKey = result.LastEvaluatedKey;

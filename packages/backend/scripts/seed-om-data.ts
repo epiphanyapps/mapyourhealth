@@ -226,32 +226,41 @@ async function seedLocationObservations(
 
     process.stdout.write(`\n  Batch ${batchNum}/${totalBatches}: `)
 
-    for (const obs of batch) {
-      try {
-        await client.models.LocationObservation.create({
-          city: obs.city,
-          state: obs.state,
-          country: obs.country,
-          county: obs.county,
-          propertyId: obs.propertyId,
-          numericValue: obs.numericValue,
-          zoneValue: obs.zoneValue,
-          endemicValue: obs.endemicValue,
-          incidenceValue: obs.incidenceValue,
-          binaryValue: obs.binaryValue,
-          observedAt: obs.observedAt,
-          validUntil: obs.validUntil,
-          source: obs.source,
-          sourceUrl: obs.sourceUrl,
-          notes: obs.notes,
-          rawData: obs.rawData ? JSON.stringify(obs.rawData) : null,
-        })
-        created++
-        process.stdout.write(".")
-      } catch (error) {
-        errors++
-        console.error(`\nError creating observation ${obs.city}/${obs.propertyId}:`, error)
+    // Process concurrently within each batch (10 at a time to avoid throttling)
+    const CONCURRENCY = 10
+    for (let j = 0; j < batch.length; j += CONCURRENCY) {
+      const concurrent = batch.slice(j, j + CONCURRENCY)
+      const results = await Promise.allSettled(
+        concurrent.map((obs) =>
+          client.models.LocationObservation.create({
+            city: obs.city,
+            state: obs.state,
+            country: obs.country,
+            county: obs.county,
+            propertyId: obs.propertyId,
+            numericValue: obs.numericValue,
+            zoneValue: obs.zoneValue,
+            endemicValue: obs.endemicValue,
+            incidenceValue: obs.incidenceValue,
+            binaryValue: obs.binaryValue,
+            observedAt: obs.observedAt,
+            validUntil: obs.validUntil,
+            source: obs.source,
+            sourceUrl: obs.sourceUrl,
+            notes: obs.notes,
+            rawData: obs.rawData ? JSON.stringify(obs.rawData) : null,
+          })
+        )
+      )
+      for (const result of results) {
+        if (result.status === "fulfilled") {
+          created++
+        } else {
+          errors++
+          console.error(`\nError creating observation:`, result.reason)
+        }
       }
+      process.stdout.write(".")
     }
   }
 
@@ -265,6 +274,8 @@ async function seedLocationObservations(
 async function clearExistingData() {
   console.log("\nClearing existing O&M data...")
 
+  const CONCURRENCY = 10
+
   // Clear location observations
   let nextToken: string | null | undefined = undefined
   let totalObservations = 0
@@ -273,12 +284,16 @@ async function clearExistingData() {
       limit: 1000,
       nextToken,
     })
-    for (const obs of result.data) {
-      await client.models.LocationObservation.delete({ id: obs.id })
-      totalObservations++
+    const items = result.data
+    for (let i = 0; i < items.length; i += CONCURRENCY) {
+      const chunk = items.slice(i, i + CONCURRENCY)
+      await Promise.allSettled(
+        chunk.map((obs) => client.models.LocationObservation.delete({ id: obs.id }))
+      )
+      totalObservations += chunk.length
     }
     nextToken = result.nextToken
-    if (result.data.length > 0) {
+    if (items.length > 0) {
       process.stdout.write(".")
     }
   } while (nextToken)
@@ -286,16 +301,16 @@ async function clearExistingData() {
 
   // Clear property thresholds
   const thresholds = await client.models.PropertyThreshold.list({ limit: 1000 })
-  for (const threshold of thresholds.data) {
-    await client.models.PropertyThreshold.delete({ id: threshold.id })
-  }
+  await Promise.allSettled(
+    thresholds.data.map((t) => client.models.PropertyThreshold.delete({ id: t.id }))
+  )
   console.log(`Deleted ${thresholds.data.length} property thresholds`)
 
   // Clear observed properties
   const properties = await client.models.ObservedProperty.list({ limit: 1000 })
-  for (const property of properties.data) {
-    await client.models.ObservedProperty.delete({ id: property.id })
-  }
+  await Promise.allSettled(
+    properties.data.map((p) => client.models.ObservedProperty.delete({ id: p.id }))
+  )
   console.log(`Deleted ${properties.data.length} observed properties`)
 }
 
@@ -311,6 +326,7 @@ async function main() {
   const jsonPath = jsonIndex !== -1 && args[jsonIndex + 1] ? args[jsonIndex + 1] : null
   const shouldClear = args.includes("--clear")
   const dryRun = args.includes("--dry-run")
+  const observationsOnly = args.includes("--observations-only")
 
   if (!jsonPath) {
     console.error("Usage: npx tsx scripts/seed-om-data.ts --json <path-to-json> [--clear] [--dry-run]")
@@ -349,8 +365,10 @@ async function main() {
     await clearExistingData()
   }
 
-  await seedObservedProperties(seedData.observedProperties, dryRun)
-  await seedPropertyThresholds(seedData.propertyThresholds, dryRun)
+  if (!observationsOnly) {
+    await seedObservedProperties(seedData.observedProperties, dryRun)
+    await seedPropertyThresholds(seedData.propertyThresholds, dryRun)
+  }
   await seedLocationObservations(seedData.locationObservations, dryRun)
 
   console.log("\n=== Seeding complete ===")
