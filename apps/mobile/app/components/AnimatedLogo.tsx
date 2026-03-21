@@ -26,7 +26,7 @@ export const AnimatedLogo: FC<AnimatedLogoProps> = ({ size = 120, style }) => {
   }, [rotation])
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${rotation.value}deg` }],
+    transform: [{ perspective: 800 }, { rotateY: `${rotation.value}deg` }],
   }))
 
   return (
