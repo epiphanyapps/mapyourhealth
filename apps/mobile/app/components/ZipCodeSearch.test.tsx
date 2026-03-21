@@ -51,13 +51,15 @@ jest.mock("../utils/postalCode", () => ({
   getPostalCodeLabel: jest.fn(() => "zip code"),
 }))
 
-// Mock zip code data lookup
-jest.mock("../data/mock", () => ({
-  getZipCodeDataByCode: jest.fn((code: string) => {
-    const mockData: Record<string, { zipCode: string; cityName: string; state: string }> = {
-      "90210": { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
-      "10001": { zipCode: "10001", cityName: "New York", state: "NY" },
-      "M5V3L9": { zipCode: "M5V3L9", cityName: "Toronto", state: "ON" },
+// Mock zip code metadata lookup
+jest.mock("../data/helpers", () => ({
+  getZipCodeMetadata: jest.fn((code: string) => {
+    const mockData: Record<
+      string,
+      { zipCode: string; city: string; state: string; latitude: number; longitude: number }
+    > = {
+      "90210": { zipCode: "90210", city: "Beverly Hills", state: "CA", latitude: 34, longitude: -118 },
+      "10001": { zipCode: "10001", city: "New York", state: "NY", latitude: 40, longitude: -73 },
     }
     return mockData[code] || null
   }),
@@ -182,8 +184,8 @@ describe("ZipCodeSearch", () => {
       expect(mockOnSelectionChange).toHaveBeenCalledWith([
         {
           zipCode: "M5V3L9",
-          cityName: "Toronto",
-          state: "ON",
+          cityName: "Unknown",
+          state: "",
         },
       ])
     })

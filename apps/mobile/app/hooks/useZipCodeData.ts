@@ -11,7 +11,7 @@ import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import { getMockLocationData, getZipCodeMetadata } from "@/data/helpers"
+import { getZipCodeMetadata } from "@/data/helpers"
 import {
   type ZipCodeData,
   type ZipCodeStat,
@@ -81,16 +81,13 @@ const CANADIAN_POSTAL_PREFIX_TO_PROVINCE: Record<string, string> = {
 }
 
 /**
- * Look up city/state from bundled metadata or mock data as fallback.
+ * Look up city/state from bundled metadata.
  */
 function getCityStateForZipCode(zipCode: string): { cityName: string; state: string } {
   const normalized = zipCode.trim().toUpperCase()
 
   const metadata = getZipCodeMetadata(zipCode)
   if (metadata) return { cityName: metadata.city, state: metadata.state }
-
-  const mockData = getMockLocationData(zipCode)
-  if (mockData) return { cityName: mockData.city, state: mockData.state }
 
   const canadianPattern = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
   if (canadianPattern.test(normalized)) {
@@ -196,7 +193,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // If offline, use MMKV cache (or mock data in dev only)
+    // If offline, use MMKV cache
     if (isOffline) {
       const cached = getCachedData(zipCode)
       if (cached) {
@@ -206,29 +203,6 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
           isCachedData: true,
           lastUpdated: cached.cachedAt,
           warning: null,
-        }
-      }
-      if (__DEV__) {
-        const mockData = getMockLocationData(zipCode)
-        if (mockData) {
-          const legacyData: ZipCodeData = {
-            zipCode: mockData.city,
-            cityName: mockData.city,
-            state: mockData.state,
-            stats: mockData.measurements.map((m) => ({
-              statId: m.contaminantId,
-              value: m.value,
-              status: m.status,
-              lastUpdated: m.measuredAt,
-            })),
-          }
-          return {
-            zipData: legacyData,
-            isMockData: true,
-            isCachedData: false,
-            lastUpdated: null,
-            warning: "You're offline - showing sample data",
-          }
         }
       }
       throw new Error("You're offline and no cached data is available")
@@ -253,32 +227,8 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // No data from backend - clear stale cache (may contain old mock-derived data)
+    // No data from backend - clear stale cache
     clearCachedZipCodeData(zipCode)
-
-    if (__DEV__) {
-      const mockData = getMockLocationData(zipCode)
-      if (mockData) {
-        const legacyData: ZipCodeData = {
-          zipCode: mockData.city,
-          cityName: mockData.city,
-          state: mockData.state,
-          stats: mockData.measurements.map((m) => ({
-            statId: m.contaminantId,
-            value: m.value,
-            status: m.status,
-            lastUpdated: m.measuredAt,
-          })),
-        }
-        return {
-          zipData: legacyData,
-          isMockData: true,
-          isCachedData: false,
-          lastUpdated: null,
-          warning: null,
-        }
-      }
-    }
 
     return {
       zipData: null,

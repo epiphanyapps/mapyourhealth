@@ -19,7 +19,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
-import { getZipCodeDataByCode } from "@/data/mock"
+import { getZipCodeMetadata } from "@/data/helpers"
 import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
 import { isValidPostalCode, normalizePostalCode, getPostalCodeLabel } from "@/utils/postalCode"
@@ -105,29 +105,16 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
         return
       }
 
-      // Look up postal code data (from mock data for now)
-      const zipData = getZipCodeDataByCode(normalized)
-      if (zipData) {
-        onSelectionChange([
-          ...selectedZipCodes,
-          {
-            zipCode: zipData.zipCode,
-            cityName: zipData.cityName,
-            state: zipData.state,
-          },
-        ])
-      } else {
-        // For postal codes not in mock data, add with unknown city
-        // In production, this would call an API to validate and get city info
-        onSelectionChange([
-          ...selectedZipCodes,
-          {
-            zipCode: normalized,
-            cityName: "Unknown",
-            state: "",
-          },
-        ])
-      }
+      // Look up postal code metadata for city/state info
+      const metadata = getZipCodeMetadata(normalized)
+      onSelectionChange([
+        ...selectedZipCodes,
+        {
+          zipCode: normalized,
+          cityName: metadata?.city ?? "Unknown",
+          state: metadata?.state ?? "",
+        },
+      ])
 
       setInputValue("")
     },

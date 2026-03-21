@@ -1,12 +1,23 @@
 import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
 
-import { getAlertStats } from "@/data/helpers"
+import { useContaminants } from "@/context/ContaminantsContext"
 import { getHazardCategoriesByStatCategory, getRecommendationsForHazards } from "@/data/mock"
-import type { ZipCodeData } from "@/data/types/safety"
+import { type ContaminantCategory, StatCategory, type ZipCodeData } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
 import { ProductRecommendationCard } from "./ProductRecommendationCard"
 import { Text } from "./Text"
+
+/** Maps a ContaminantCategory to the corresponding StatCategory for hazard lookup. */
+const CONTAMINANT_TO_STAT_CATEGORY: Record<ContaminantCategory, StatCategory> = {
+  fertilizer: StatCategory.water,
+  pesticide: StatCategory.water,
+  radioactive: StatCategory.water,
+  disinfectant: StatCategory.water,
+  inorganic: StatCategory.water,
+  organic: StatCategory.water,
+  microbiological: StatCategory.water,
+}
 
 export interface RecommendationsSectionProps {
   /**
@@ -31,22 +42,32 @@ export interface RecommendationsSectionProps {
 export function RecommendationsSection(props: RecommendationsSectionProps) {
   const { zipData, style } = props
   const { theme } = useAppTheme()
+  const { contaminantMap } = useContaminants()
 
   // Get all danger/warning stats
-  const alertStats = getAlertStats(zipData)
+  const alertStats = zipData.stats.filter(
+    (stat) => stat.status === "danger" || stat.status === "warning",
+  )
 
   if (alertStats.length === 0) {
     return null // No alerts, no recommendations needed
   }
 
-  // Get unique categories from alert stats
-  const alertCategories = [
-    ...new Set(alertStats.filter((a) => a.definition).map((a) => a.definition.category)),
+  // Get unique StatCategory values from alert stats using contaminant definitions
+  const alertStatCategories = [
+    ...new Set(
+      alertStats
+        .map((stat) => {
+          const cc = contaminantMap.get(stat.statId)?.category
+          return cc ? CONTAMINANT_TO_STAT_CATEGORY[cc] : undefined
+        })
+        .filter((category): category is StatCategory => !!category),
+    ),
   ]
 
   // Get hazard category IDs for these stat categories
   const hazardCategoryIds: string[] = []
-  for (const category of alertCategories) {
+  for (const category of alertStatCategories) {
     const hazards = getHazardCategoriesByStatCategory(category)
     hazardCategoryIds.push(...hazards.map((h) => h.id))
   }
