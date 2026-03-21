@@ -1,5 +1,6 @@
 import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { placesAutocomplete } from "../functions/places-autocomplete/resource";
+import { resolveLocation } from "../functions/resolve-location/resource";
 import { deleteAccount } from "../functions/delete-account/resource";
 
 /**
@@ -38,6 +39,22 @@ const schema = a.schema({
     error: a.string(),
   }),
 
+  /**
+   * ResolveLocationResponse - Response from resolveLocation mutation
+   */
+  ResolveLocationResponse: a.customType({
+    city: a.string().required(),
+    state: a.string().required(),
+    country: a.string().required(),
+    county: a.string(),
+    jurisdictionCode: a.string().required(),
+    latitude: a.float(),
+    longitude: a.float(),
+    hasData: a.boolean().required(),
+    isNew: a.boolean().required(),
+    error: a.string(),
+  }),
+
   // =========================================================================
   // Custom Queries
   // =========================================================================
@@ -55,6 +72,20 @@ const schema = a.schema({
     .returns(a.ref("PlacesAutocompleteResponse"))
     .authorization((allow) => [allow.guest(), allow.authenticated()])
     .handler(a.handler.function(placesAutocomplete)),
+
+  /**
+   * resolveLocation - Resolves a Google Places placeId to a location
+   * Auto-assigns jurisdiction and caches in Location table
+   */
+  resolveLocation: a
+    .mutation()
+    .arguments({
+      placeId: a.string().required(),
+      sessionToken: a.string(),
+    })
+    .returns(a.ref("ResolveLocationResponse"))
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(resolveLocation)),
 
   /**
    * deleteAccountData - Deletes all user-owned data from DynamoDB
