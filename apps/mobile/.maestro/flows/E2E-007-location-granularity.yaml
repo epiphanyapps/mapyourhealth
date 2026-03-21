@@ -1,9 +1,10 @@
 # flow: E2E-007 Location Granularity (#62)
 # intent:
 #   Verify city-level location display (no zip code UI):
-#   1. Search by city name
-#   2. Verify city, state display format
-#   3. Verify no zip code elements in UI
+#   1. Search by city name via Google Places autocomplete
+#   2. Select from suggestions (Enter key alone is not supported)
+#   3. Verify city, state display format
+#   4. Verify no zip code elements in UI
 
 appId: ${MAESTRO_APP_ID}
 onFlowStart:
@@ -23,14 +24,23 @@ onFlowStart:
     optional: true
 
 # ========================================
-# Part 2: Search by City Name
+# Part 2: Search by City Name (US - Beverly Hills)
 # ========================================
 - tapOn:
     text: "Search city or.*"
     label: "Tap on search bar"
 
 - inputText: "Beverly Hills"
-- pressKey: Enter
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select Beverly Hills from autocomplete suggestions
+- tapOn:
+    text: ".*Beverly Hills.*CA.*"
+    index: 0
+    label: "Select Beverly Hills from autocomplete"
 
 - waitForAnimationToEnd
 - extendedWaitUntil:
@@ -45,21 +55,24 @@ onFlowStart:
     text: "Beverly Hills.*CA"
     label: "Location displays in city, state format"
 
-# Verify country context is shown
-- assertVisible:
-    text: "United States"
-    optional: true
-    label: "Country context is displayed"
-
 # ========================================
-# Part 4: Search for Canadian City
+# Part 4: Search for Canadian City (Montreal)
 # ========================================
 - tapOn:
-    text: "Search city or.*"
+    text: "Beverly Hills.*CA"
     label: "Tap search bar again"
 
 - inputText: "Montreal"
-- pressKey: Enter
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select Montreal from autocomplete suggestions
+- tapOn:
+    text: ".*Montreal.*QC.*Canada.*"
+    index: 0
+    label: "Select Montreal from autocomplete"
 
 - waitForAnimationToEnd
 - extendedWaitUntil:
@@ -70,8 +83,3 @@ onFlowStart:
 - assertVisible:
     text: "Montreal.*QC"
     label: "Canadian city displays in city, province format"
-
-- assertVisible:
-    text: "Canada"
-    optional: true
-    label: "Canada country context is displayed"

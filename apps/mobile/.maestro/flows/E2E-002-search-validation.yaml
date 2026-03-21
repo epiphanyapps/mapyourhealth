@@ -1,9 +1,9 @@
 # flow: E2E-002 Search Validation
 # intent:
-#   Validate city autocomplete search functionality.
-#   Tests that users can search for cities and select from autocomplete.
+#   Validate Google Places autocomplete search functionality.
+#   Tests that users can search for cities via Google Places and select from autocomplete.
 #
-# NOTE: Direct postal code entry (type + Enter) is not supported.
+# NOTE: All searches go through Google Places API backend proxy.
 # Users must select from autocomplete suggestions.
 
 appId: ${MAESTRO_APP_ID}
@@ -18,10 +18,11 @@ appId: ${MAESTRO_APP_ID}
     timeout: 5000
 
 # ========================================
-# Test: City Autocomplete Search (Montreal)
+# Test: Google Places Autocomplete Search (Montreal)
 # ========================================
-# Tests the city-level autocomplete flow - user types city name,
-# selects from suggestions, and data loads for that city.
+# Tests the Google Places autocomplete flow - user types city name,
+# gets suggestions from Google Places API, selects one, and the
+# location resolves to city/state/country.
 
 - assertVisible:
     text: "Search city or location..."
@@ -33,15 +34,14 @@ appId: ${MAESTRO_APP_ID}
 
 - inputText: "Montreal"
 
-# Wait for autocomplete suggestions
+# Wait for Google Places autocomplete suggestions
 - waitForAnimationToEnd:
-    timeout: 3000
+    timeout: 5000
 
-# Select from autocomplete (city-level suggestion)
-# Use index: 1 to skip the search field text and tap the dropdown
+# Select Montreal from autocomplete (Google Places returns full description)
 - tapOn:
-    text: ".*Montreal.*"
-    index: 1
+    text: ".*Montreal.*QC.*Canada.*"
+    index: 0
     label: "Select Montreal from autocomplete"
 
 - waitForAnimationToEnd:
