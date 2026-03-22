@@ -235,8 +235,17 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
       }
     }
 
-    // No data from backend - clear stale cache
-    clearCachedZipCodeData(zipCode)
+    // No data from backend - keep cache as fallback for offline use
+    const cached = getCachedData(zipCode)
+    if (cached) {
+      return {
+        zipData: cached.data,
+        isMockData: false,
+        isCachedData: true,
+        lastUpdated: cached.cachedAt,
+        warning: null,
+      }
+    }
 
     return {
       zipData: null,

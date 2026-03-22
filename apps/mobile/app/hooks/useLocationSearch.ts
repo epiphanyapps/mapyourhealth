@@ -274,8 +274,9 @@ export function useLocationSearch(): UseLocationSearchResult {
     return []
   }, [])
 
-  // Cleanup timeout on unmount to prevent memory leak
+  // Reset session token on mount and cleanup timeout on unmount
   useEffect(() => {
+    sessionTokenRef.current = generateSessionToken()
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
