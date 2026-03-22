@@ -480,6 +480,128 @@ When multiple PRs touch overlapping files, merge in dependency order:
 
 After each merge to `main`, CI auto-deploys. Wait for deployment to complete before merging the next PR if they share backend dependencies.
 
+## Known Fallback Values (Tech Debt)
+
+The codebase contains numerous fallback/default values that can silently hide bugs. These are documented here for awareness and future cleanup.
+
+### 1. Jurisdiction Fallbacks → `"WHO"`
+
+When a location's jurisdiction cannot be determined, the system silently falls back to WHO thresholds. This can mask missing jurisdiction data.
+
+| File | Line | Expression |
+|------|------|------------|
+| `apps/mobile/app/screens/LocationObservationsScreen.tsx` | 103 | `route.params.jurisdictionCode ?? getJurisdictionForLocation(...)?.code ?? "WHO"` |
+| `apps/mobile/app/screens/CategoryDetailScreen.tsx` | 88 | `localJurisdiction?.code ?? "WHO"` |
+| `apps/mobile/app/screens/DashboardScreen.tsx` | 191 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
+| `apps/mobile/app/hooks/useZipCodeData.ts` | 222 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
+| `apps/mobile/app/hooks/useMultiLocationData.ts` | 163 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
+| `packages/backend/scripts/parse-risks-excel.ts` | 425–459 | `JURISDICTION_FALLBACK` map + `\|\| "WHO"` |
+
+### 2. Warning Ratio Default → `0.8`
+
+When `warningRatio` is null/undefined, the system assumes 80%. This could misrepresent warning thresholds for contaminants that were never explicitly configured.
+
+| File | Line | Expression |
+|------|------|------------|
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 103 | `amplify.warningRatio ?? 0.8` |
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 306 | `threshold.warningRatio ?? 0.8` |
+| `apps/mobile/app/hooks/useMultiLocationData.ts` | 70 | `threshold.warningRatio ?? 0.8` |
+| `apps/mobile/app/hooks/useZipCodeData.ts` | 159 | `threshold.warningRatio ?? 0.8` |
+| `apps/mobile/app/data/types/safety.ts` | 489 | `threshold.warningRatio ?? 0.8` |
+| `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 62 | `threshold.warningRatio ?? 0.8` |
+| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 81 | `threshold.warningRatio ?? 0.8` |
+| `apps/admin/scripts/seed-data.ts` | 569 | `t.warningRatio \|\| 0.8` |
+| `packages/backend/amplify/data/resource.ts` | 227 | `a.float().default(0.8)` (schema default) |
+
+### 3. `higherIsBad` Default → `true`
+
+Assumes higher contaminant values are always dangerous. Incorrect for beneficial metrics or properties where lower is worse.
+
+| File | Line | Expression |
+|------|------|------------|
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 91, 295 | `amplify.higherIsBad ?? true` |
+| `apps/mobile/app/hooks/useMultiLocationData.ts` | 65, 98 | `contaminant?.higherIsBad ?? true` |
+| `apps/mobile/app/hooks/useZipCodeData.ts` | 154 | `contaminant?.higherIsBad ?? true` |
+| `apps/mobile/app/hooks/useLocationObservations.ts` | 120 | `prop.higherIsBad ?? true` |
+| `apps/mobile/app/screens/StatTrendScreen.tsx` | 100 | `definition?.higherIsBad ?? true` |
+| `apps/mobile/app/screens/DashboardScreen.tsx` | 220 | `contaminant?.higherIsBad ?? true` |
+| `apps/admin/src/app/(admin)/stats/page.tsx` | 131 | `contaminant.higherIsBad ?? true` |
+| `apps/admin/src/app/(admin)/properties/page.tsx` | 137, 216 | `property.higherIsBad ?? true` |
+| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 583, 591, 690 | `?.higherIsBad ?? true` |
+| `packages/backend/scripts/seed-om-data.ts` | 151 | `property.higherIsBad ?? true` |
+| `packages/backend/scripts/seed-dynamodb-direct.ts` | 235 | `p.higherIsBad ?? true` |
+
+### 4. Mock/Offline Data Fallbacks
+
+When backend API calls fail, the mobile app silently serves mock data. The `isMock` flag is set but not always surfaced to the user.
+
+| File | Line | Description |
+|------|------|-------------|
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 138, 153, 168 | Falls back to `mockContaminants`, `mockThresholds`, `mockJurisdictions` |
+| `apps/mobile/app/context/CategoriesContext.tsx` | ~120 | Falls back to `mockCategories`, `mockSubCategories` |
+| `apps/mobile/app/data/mock/index.ts` | — | Source of all mock fallback data |
+| `apps/mobile/app/data/mock/categories.ts` | — | Hardcoded category fallback data |
+
+### 5. Hardcoded Category Display Fallbacks
+
+Multiple files define their own hardcoded category display names, icons, and colors. These can diverge from backend data.
+
+| File | Constant | Values |
+|------|----------|--------|
+| `apps/mobile/app/components/CategoryIcon.tsx` | `FALLBACK_ICONS` | `water → "water"`, `air → "weather-cloudy"`, `health → "heart"`, `disaster → "fire"` |
+| `apps/mobile/app/components/CategoryIcon.tsx` | `CATEGORY_COLORS` | `water → "#3B82F6"`, `air → "#8B5CF6"`, `health → "#EF4444"`, `disaster → "#F97316"` |
+| `apps/mobile/app/components/StatCategoryCard.tsx` | `CATEGORY_DISPLAY_NAMES` | `water → "Tap Water Quality"`, `air → "Air Pollution"`, etc. |
+| `apps/mobile/app/screens/CompareScreen.tsx` | `CATEGORY_DISPLAY_NAMES` (local copy) | `water → "Water Quality"` (different from StatCategoryCard!) |
+| `apps/mobile/app/components/HazardReportForm.tsx` | `FALLBACK_CATEGORY_OPTIONS` | Only `water` and `air` hardcoded |
+| `apps/mobile/app/context/CategoriesContext.tsx` | 241, 250 | `category?.color ?? "#6B7280"`, `category?.icon ?? "help-circle"` |
+
+### 6. Notification Defaults
+
+The notification system fills in defaults when data is missing, which can produce misleading alerts.
+
+| File | Line | Expression | Default |
+|------|------|------------|---------|
+| `process-notifications/handler.ts` | 149 | `alertLevel === 'info' ? 'safe' : alertLevel \|\| 'warning'` | `'warning'` |
+| `process-notifications/handler.ts` | 212 | `city \|\| cityName \|\| postalCode \|\| 'your area'` | `'your area'` |
+| `process-notifications/handler.ts` | 220 | `alertLevel \|\| 'info'` | `'info'` |
+| `process-notifications/handler.ts` | 306 | `event.contaminantId \|\| 'water-quality'` | `'water-quality'` |
+| `process-notifications/handler.ts` | 307 | `event.contaminantName \|\| 'Water Quality'` | `'Water Quality'` |
+| `process-notifications/handler.ts` | 310–312 | `event.oldStatus \|\| 'safe'`, `event.newStatus \|\| 'warning'`, `event.currentValue \|\| 0` | `'safe'`, `'warning'`, `0` |
+
+### 7. Status Defaults
+
+Missing status values default to the safest option, potentially hiding data integrity issues.
+
+| File | Line | Expression | Default |
+|------|------|------------|---------|
+| `apps/mobile/app/screens/StatTrendScreen.tsx` | 105 | `stat?.status ?? "safe"` | `"safe"` |
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 104 | `amplify.status ?? "regulated"` | `"regulated"` |
+| `apps/admin/src/app/(admin)/reports/page.tsx` | 264, 330 | `report.status \|\| "pending"` | `"pending"` |
+
+### 8. Lambda Environment Variable Fallbacks
+
+Lambda functions fall back to empty strings for missing env vars, causing silent failures instead of clear errors.
+
+| File | Line | Variable | Default |
+|------|------|----------|---------|
+| `resolve-location/handler.ts` | 24–28 | `GOOGLE_PLACES_API_KEY`, `CACHE_TABLE_NAME`, `LOCATION_TABLE_NAME`, `JURISDICTION_TABLE_NAME`, `LOCATION_MEASUREMENT_TABLE_NAME` | `''` |
+| `places-autocomplete/handler.ts` | 16–17 | `CACHE_TABLE_NAME`, `GOOGLE_PLACES_API_KEY` | `''` |
+| `request-magic-link/handler.ts` | 26–27 | `FROM_EMAIL`, `APP_URL` | `'noreply@mapyourhealth.info'`, `'mapyourhealth://'` |
+| `request-magic-link/rate-limiter.ts` | 16 | `RATE_LIMIT_TABLE_NAME` | `'MagicLinkRateLimit'` |
+| `send-email-alert/handler.ts` | 183 | `SES_SENDER_EMAIL` | `'alerts@mapyourhealth.info'` |
+| `send-notifications/handler.ts` | 135 | `channelId` | `'default'` |
+
+### 9. Location String Defaults
+
+Missing location data is replaced with generic strings instead of surfacing the error.
+
+| File | Line | Expression | Default |
+|------|------|------------|---------|
+| `apps/mobile/app/screens/LocationObservationsScreen.tsx` | 134 | `city \|\| state \|\| "Unknown Location"` | `"Unknown Location"` |
+| `apps/mobile/app/screens/CategoryDetailScreen.tsx` | 140–143 | `cityName \|\| state \|\| "Unknown Location"` | `"Unknown Location"` |
+| `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 133 | `m.city ?? "Unknown"` | `"Unknown"` |
+| `apps/mobile/app/screens/CompareScreen.tsx` | 76–87 | Multi-level fallback chain | `"Unknown Location"` |
+
 ## Deployment
 
 **All deployments are triggered by pushing to the appropriate git branch.** There is no manual deploy command — Amplify auto-builds and deploys on push.
