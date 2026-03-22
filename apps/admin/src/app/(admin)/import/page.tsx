@@ -473,6 +473,7 @@ export default function ImportPage() {
           toast.info("Subscribers will be notified automatically");
         }
         setPreviewData([]);
+        setSilentImport(false);
       } else {
         toast.warning(
           `Imported ${result.success} rows, ${result.failed} failed`,

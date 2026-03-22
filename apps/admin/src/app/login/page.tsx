@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Amplify } from "aws-amplify";
 import {
   signIn,
   signOut,
@@ -12,10 +11,7 @@ import {
   confirmResetPassword,
   type ResetPasswordOutput,
 } from "aws-amplify/auth";
-import outputs from "../../../amplify_outputs.json";
-
-// Configure Amplify
-Amplify.configure(outputs, { ssr: true });
+// Amplify is configured in auth-provider.tsx
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
