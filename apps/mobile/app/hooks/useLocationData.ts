@@ -11,7 +11,6 @@ import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import { getZipCodeMetadata } from "@/data/helpers"
 import {
   type ZipCodeData,
   type ZipCodeStat,
@@ -21,8 +20,6 @@ import {
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
-// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
-import { detectPostalCodeRegion } from "@/utils/postalCode"
 import { load, save, remove } from "@/utils/storage"
 
 /** Cache key prefix for location stats */
@@ -54,49 +51,6 @@ interface UseLocationDataResult {
   isOffline: boolean
   /** Refresh data from the backend */
   refresh: () => Promise<void>
-}
-
-/**
- * Canadian postal code first-letter to province mapping.
- */
-const CANADIAN_POSTAL_PREFIX_TO_PROVINCE: Record<string, string> = {
-  A: "NL",
-  B: "NS",
-  C: "PE",
-  E: "NB",
-  G: "QC",
-  H: "QC",
-  J: "QC",
-  K: "ON",
-  L: "ON",
-  M: "ON",
-  N: "ON",
-  P: "ON",
-  R: "MB",
-  S: "SK",
-  T: "AB",
-  V: "BC",
-  X: "NT",
-  Y: "YT",
-}
-
-/**
- * Look up city/state from bundled metadata.
- */
-function getCityStateForZipCode(zipCode: string): { cityName: string; state: string } {
-  const normalized = zipCode.trim().toUpperCase()
-
-  const metadata = getZipCodeMetadata(zipCode)
-  if (metadata) return { cityName: metadata.city, state: metadata.state }
-
-  const canadianPattern = /^[A-Za-z]\d[A-Za-z][ -]?\d[A-Za-z]\d$/
-  if (canadianPattern.test(normalized)) {
-    const firstLetter = normalized.charAt(0).toUpperCase()
-    const province = CANADIAN_POSTAL_PREFIX_TO_PROVINCE[firstLetter]
-    if (province) return { cityName: "", state: province }
-  }
-
-  return { cityName: "", state: "" }
 }
 
 /**
@@ -254,7 +208,7 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
       lastUpdated: null,
       warning: null,
     }
-  }, [zipCode, isOffline, mapMeasurementToLegacyStat])
+  }, [zipCode, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
 
   const query = useQuery({
     queryKey: queryKeys.measurements.byLocation(zipCode),

@@ -7,17 +7,15 @@
 
 import { act, renderHook, waitFor } from "@testing-library/react-native"
 
+const mockGetWarningBanners = jest.fn()
+
 // Mock the data service
 jest.mock("../services/amplify/data", () => ({
-  getWarningBanners: jest.fn(),
+  getWarningBanners: (...args) => mockGetWarningBanners(...args),
 }))
 
 // eslint-disable-next-line import/first
 import { useWarningBanners } from "./useWarningBanners"
-// eslint-disable-next-line import/first
-import { getWarningBanners } from "../services/amplify/data"
-
-const mockGetWarningBanners = getWarningBanners as jest.MockedFunction<typeof getWarningBanners>
 
 function createBanner(overrides = {}) {
   return {
@@ -407,7 +405,7 @@ describe("useWarningBanners", () => {
       const goodBanner = createBanner({ id: "good-global" })
       const badBanner = createBanner({
         id: "bad-city",
-        city: true as unknown as string,
+        city: true,
         state: null,
         country: null,
       })
@@ -429,10 +427,10 @@ describe("useWarningBanners", () => {
       // boolean true does not have .toLowerCase(). This is a known limitation.
       // A production fix would add typeof checks in the filter.
       expect(() => {
-        // Simulate what the filter does with bad data
-        const val = badBanner.city as unknown as boolean
+        // Simulate what the filter does with bad data — boolean has no toLowerCase()
+        const val = badBanner.city
         if (val) {
-          ;(val as unknown as string).toLowerCase()
+          val.toLowerCase()
         }
       }).toThrow()
     })
@@ -442,7 +440,7 @@ describe("useWarningBanners", () => {
       const badBanner = createBanner({
         id: "bad-state",
         city: null,
-        state: true as unknown as string,
+        state: true,
         country: null,
       })
       mockGetWarningBanners.mockResolvedValue([goodBanner])
@@ -459,9 +457,9 @@ describe("useWarningBanners", () => {
 
       // Verify that bad data would cause a TypeError
       expect(() => {
-        const val = badBanner.state as unknown as boolean
+        const val = badBanner.state
         if (val) {
-          ;(val as unknown as string).toLowerCase()
+          val.toLowerCase()
         }
       }).toThrow()
     })

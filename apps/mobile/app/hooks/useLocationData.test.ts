@@ -5,14 +5,16 @@
  * offline caching, and edge cases (empty data, no city).
  */
 
+import { createElement } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { renderHook, waitFor } from "@testing-library/react-native"
-import React from "react"
 
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
+const mockGetLocationMeasurements = jest.fn()
+
 jest.mock("../services/amplify/data", () => ({
-  getLocationMeasurements: jest.fn(),
+  getLocationMeasurements: (...args) => mockGetLocationMeasurements(...args),
 }))
 
 const mockGetThreshold = jest.fn()
@@ -39,28 +41,13 @@ const mockLoad = jest.fn()
 const mockSave = jest.fn()
 const mockRemove = jest.fn()
 jest.mock("../utils/storage", () => ({
-  load: (...args: unknown[]) => mockLoad(...args),
-  save: (...args: unknown[]) => mockSave(...args),
-  remove: (...args: unknown[]) => mockRemove(...args),
-}))
-
-jest.mock("../data/helpers", () => ({
-  getZipCodeMetadata: jest.fn(() => null),
-  getMockLocationData: jest.fn(() => null),
-}))
-
-jest.mock("../utils/postalCode", () => ({
-  detectPostalCodeRegion: jest.fn(() => null),
+  load: (...args) => mockLoad(...args),
+  save: (...args) => mockSave(...args),
+  remove: (...args) => mockRemove(...args),
 }))
 
 // eslint-disable-next-line import/first
 import { useLocationData } from "./useLocationData"
-// eslint-disable-next-line import/first
-import { getLocationMeasurements } from "../services/amplify/data"
-
-const mockGetLocationMeasurements = getLocationMeasurements as jest.MockedFunction<
-  typeof getLocationMeasurements
->
 
 // ── Test data ────────────────────────────────────────────────────────────────
 
@@ -110,7 +97,7 @@ const whoThreshold = {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-let queryClient: QueryClient
+let queryClient
 
 function createWrapper() {
   queryClient = new QueryClient({
@@ -119,8 +106,8 @@ function createWrapper() {
     },
   })
 
-  return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(QueryClientProvider, { client: queryClient }, children)
+  return function Wrapper({ children }) {
+    return createElement(QueryClientProvider, { client: queryClient }, children)
   }
 }
 
@@ -152,7 +139,7 @@ describe("useLocationData", () => {
 
   describe("jurisdiction resolution", () => {
     it("extracts state/country from first measurement and resolves jurisdiction", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(caQcThreshold)
 
@@ -171,9 +158,9 @@ describe("useLocationData", () => {
     })
 
     it("falls back to WHO when jurisdiction not found", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([newYorkMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([newYorkMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue(undefined)
-      mockGetThreshold.mockImplementation((_contId: string, jCode: string) => {
+      mockGetThreshold.mockImplementation((_contId, jCode) => {
         if (jCode === "WHO") return whoThreshold
         return null
       })
@@ -193,7 +180,7 @@ describe("useLocationData", () => {
 
   describe("measurement to stat mapping", () => {
     it("maps measurement to danger status when value >= limit", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(caQcThreshold)
 
@@ -218,7 +205,7 @@ describe("useLocationData", () => {
         ...montrealMeasurement,
         value: 650, // 650 >= 800 * 0.8 (640) but < 800
       }
-      mockGetLocationMeasurements.mockResolvedValue([warningMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([warningMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(caQcThreshold)
 
@@ -238,7 +225,7 @@ describe("useLocationData", () => {
         ...montrealMeasurement,
         value: 500, // 500 < 800 * 0.8 (640)
       }
-      mockGetLocationMeasurements.mockResolvedValue([safeMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([safeMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(caQcThreshold)
 
@@ -254,7 +241,7 @@ describe("useLocationData", () => {
     })
 
     it("defaults to safe when no threshold is available", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(null)
 
@@ -283,7 +270,7 @@ describe("useLocationData", () => {
         cachedAt: Date.now(),
       }
       mockLoad.mockReturnValue(cachedData)
-      mockGetLocationMeasurements.mockResolvedValue([] as never)
+      mockGetLocationMeasurements.mockResolvedValue([])
 
       const { result } = renderHook(() => useLocationData("Montreal"), {
         wrapper: createWrapper(),
@@ -298,7 +285,7 @@ describe("useLocationData", () => {
     })
 
     it("saves fetched data to cache", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement] as never)
+      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(caQcThreshold)
 
@@ -367,7 +354,7 @@ describe("useLocationData", () => {
 
   describe("empty measurements", () => {
     it("returns null zipData when API returns empty array and no cache", async () => {
-      mockGetLocationMeasurements.mockResolvedValue([] as never)
+      mockGetLocationMeasurements.mockResolvedValue([])
       mockLoad.mockReturnValue(null)
 
       const { result } = renderHook(() => useLocationData("UnknownCity"), {
