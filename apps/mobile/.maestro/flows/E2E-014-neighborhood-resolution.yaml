@@ -64,10 +64,10 @@ onFlowStart:
 # ========================================
 - runFlow:
     when:
-      visible: "Tap Water Quality"
+      visible: "Water Quality"
     commands:
       - assertVisible:
-          text: "Tap Water Quality"
+          text: "Water Quality"
           label: "Water Quality data is available for Beverly Hills"
 
 - runFlow:

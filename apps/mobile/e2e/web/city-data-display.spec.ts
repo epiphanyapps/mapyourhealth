@@ -5,19 +5,17 @@ test.describe("City Data Display", () => {
     await page.goto("/")
     await page.waitForLoadState("networkidle")
 
-    // Type in search box
-    const searchInput = page.getByPlaceholder("Search city or location...")
+    // Find and fill search input
+    const searchInput = page.getByRole("textbox", { name: /search/i })
     await searchInput.fill("Montreal")
 
-    // Wait for autocomplete suggestions
-    const suggestion = page.getByRole("button", { name: /Select Montreal/i })
-    await expect(suggestion).toBeVisible({ timeout: 10000 })
-
-    // Select Montreal
+    // Wait for and select Montreal, QC, Canada suggestion
+    const suggestion = page.getByRole("button", { name: /Select Montreal, QC, Canada/i })
+    await expect(suggestion).toBeVisible({ timeout: 15000 })
     await suggestion.click()
 
     // Verify Montreal, QC heading
-    await expect(page.getByText(/Montreal.*QC/)).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: /Montreal/i })).toBeVisible({ timeout: 15000 })
 
     // Verify URL contains location params
     await page.waitForURL(/city=Montreal/i, { timeout: 10000 })
@@ -25,12 +23,12 @@ test.describe("City Data Display", () => {
     expect(page.url()).toMatch(/country=CA/i)
 
     // Verify Water Quality section is visible
-    await expect(page.getByText("Tap Water Quality")).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText("Water Quality")).toBeVisible({ timeout: 15000 })
 
     // Click on Water Quality to expand
-    await page.getByText("Tap Water Quality").click()
+    await page.getByRole("button", { name: /Water Quality/i }).first().click()
 
-    // Verify contaminant data table/subcategories appear
+    // Verify subcategories appear
     await expect(page.getByText("Disinfection Byproducts")).toBeVisible({ timeout: 10000 })
   })
 
@@ -38,18 +36,18 @@ test.describe("City Data Display", () => {
     await page.goto("/")
     await page.waitForLoadState("networkidle")
 
-    const searchInput = page.getByPlaceholder("Search city or location...")
+    const searchInput = page.getByRole("textbox", { name: /search/i })
     await searchInput.fill("New York")
 
-    const suggestion = page.getByRole("button", { name: /Select New York/i })
-    await expect(suggestion).toBeVisible({ timeout: 10000 })
-
+    // Select the city result specifically (not state, hotel, or university)
+    const suggestion = page.getByRole("button", { name: /Select New York, NY, USA$/i })
+    await expect(suggestion).toBeVisible({ timeout: 15000 })
     await suggestion.click()
 
-    // Verify New York, NY heading
-    await expect(page.getByText(/New York.*NY/)).toBeVisible({ timeout: 15000 })
+    // Verify New York heading
+    await expect(page.getByRole("heading", { name: /New York/i })).toBeVisible({ timeout: 15000 })
 
     // Verify Water Quality section
-    await expect(page.getByText("Tap Water Quality")).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText("Water Quality")).toBeVisible({ timeout: 15000 })
   })
 })

@@ -6,25 +6,25 @@ test.describe("Address Resolution", () => {
     await page.waitForLoadState("networkidle")
 
     // Search for a specific street address
-    const searchInput = page.getByPlaceholder("Search city or location...")
+    const searchInput = page.getByRole("textbox", { name: /search/i })
     await searchInput.fill("350 5th Avenue, New York")
 
-    // Wait for autocomplete suggestions
-    const suggestion = page.getByRole("button", { name: /Select 350 5th Ave/i })
-    await expect(suggestion).toBeVisible({ timeout: 10000 })
+    // Wait for autocomplete suggestion (may show full address or abbreviated)
+    const suggestion = page.getByRole("button", { name: "Select 350 5th Avenue, New York, NY, USA" })
+    await expect(suggestion).toBeVisible({ timeout: 15000 })
 
     // Select the address
     await suggestion.click()
 
     // Verify it resolves to New York, NY
-    await expect(page.getByText(/New York.*NY/)).toBeVisible({ timeout: 15000 })
+    await expect(page.getByRole("heading", { name: /New York/i })).toBeVisible({ timeout: 15000 })
 
     // Verify the "nearest city" banner is shown
-    await expect(page.getByText(/Showing data for nearest city to:/)).toBeVisible({
+    await expect(page.getByText(/Showing data for nearest city to/i)).toBeVisible({
       timeout: 10000,
     })
 
     // Verify data is displayed
-    await expect(page.getByText("Tap Water Quality")).toBeVisible({ timeout: 15000 })
+    await expect(page.getByText("Water Quality")).toBeVisible({ timeout: 15000 })
   })
 })

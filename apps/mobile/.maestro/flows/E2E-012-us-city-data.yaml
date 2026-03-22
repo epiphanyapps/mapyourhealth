@@ -59,18 +59,18 @@ onFlowStart:
 # Step 3: Verify Water Quality category
 # ========================================
 - extendedWaitUntil:
-    visible: "Tap Water Quality"
+    visible: "Water Quality"
     timeout: 10000
 
 - assertVisible:
-    text: "Tap Water Quality"
-    label: "Tap Water Quality category is visible"
+    text: "Water Quality"
+    label: "Water Quality category is visible"
 
 # ========================================
-# Step 4: Tap Water Quality → verify data
+# Step 4: Water Quality → verify data
 # ========================================
 - tapOn:
-    text: "Tap Water Quality"
+    text: "Water Quality"
     label: "Tap on Water Quality category"
 
 - waitForAnimationToEnd:

@@ -65,9 +65,9 @@ onFlowStart:
 # Step 4: Verify data is displayed
 # ========================================
 - extendedWaitUntil:
-    visible: "Tap Water Quality"
+    visible: "Water Quality"
     timeout: 10000
 
 - assertVisible:
-    text: "Tap Water Quality"
+    text: "Water Quality"
     label: "Water Quality data is available for resolved city"
