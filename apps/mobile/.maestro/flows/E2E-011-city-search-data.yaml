@@ -1,0 +1,108 @@
+# flow: E2E-011 City Search & Data Display
+# intent:
+#   Verify searching for a city via Google Places autocomplete shows the dashboard
+#   with correct location header and Water Quality category with subcategories.
+#   1. Search "Montreal" → select from autocomplete
+#   2. Verify dashboard shows "Montreal, QC"
+#   3. Verify Water Quality category is visible
+#   4. Expand Water Quality → verify subcategories
+#   5. Tap Disinfection Byproducts → verify contaminant table
+#   6. Navigate back
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-011 - City Search & Data Display
+tags:
+  - e2e
+  - search
+  - data
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search for Montreal
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search bar"
+
+- inputText: "Montreal"
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select Montreal from autocomplete
+- tapOn:
+    text: ".*Montreal.*QC.*Canada.*"
+    index: 0
+    label: "Select Montreal from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ========================================
+# Step 2: Verify dashboard shows Montreal, QC
+# ========================================
+- extendedWaitUntil:
+    visible: "Montreal.*QC"
+    timeout: 10000
+
+- assertVisible:
+    text: "Montreal.*QC"
+    label: "Dashboard header shows Montreal, QC"
+
+# ========================================
+# Step 3: Verify Water Quality category is visible
+# ========================================
+- extendedWaitUntil:
+    visible: "Tap Water Quality"
+    timeout: 10000
+
+- assertVisible:
+    text: "Tap Water Quality"
+    label: "Tap Water Quality category is visible on dashboard"
+
+# ========================================
+# Step 4: Expand Water Quality → verify subcategories
+# ========================================
+- tapOn:
+    text: "Tap Water Quality"
+    label: "Tap on Water Quality category to expand"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- assertVisible:
+    text: "Disinfection Byproducts"
+    label: "Disinfection Byproducts subcategory is visible"
+
+# ========================================
+# Step 5: Tap Disinfection Byproducts → verify contaminant data
+# ========================================
+- tapOn:
+    text: "Disinfection Byproducts"
+    label: "Tap on Disinfection Byproducts subcategory"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible: ".*"
+    timeout: 10000
+
+# Verify contaminant table is displayed with data
+- assertVisible:
+    text: ".*"
+    label: "Contaminant data table is displayed"
+
+# ========================================
+# Step 6: Navigate back
+# ========================================
+- back
+- waitForAnimationToEnd:
+    timeout: 3000

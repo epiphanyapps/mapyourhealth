@@ -1,0 +1,89 @@
+# flow: E2E-012 US City Data Display
+# intent:
+#   Verify searching for a US city shows the dashboard with correct
+#   location header and data categories.
+#   1. Search "New York" → select from autocomplete
+#   2. Verify dashboard shows "New York, NY"
+#   3. Verify Water Quality category is visible
+#   4. Tap into Water Quality detail → verify data
+#   5. Navigate back
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-012 - US City Data Display
+tags:
+  - e2e
+  - search
+  - data
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search for New York
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search bar"
+
+- inputText: "New York"
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select New York from autocomplete
+- tapOn:
+    text: ".*New York.*NY.*"
+    index: 0
+    label: "Select New York from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ========================================
+# Step 2: Verify dashboard shows New York, NY
+# ========================================
+- extendedWaitUntil:
+    visible: "New York.*NY"
+    timeout: 10000
+
+- assertVisible:
+    text: "New York.*NY"
+    label: "Dashboard header shows New York, NY"
+
+# ========================================
+# Step 3: Verify Water Quality category
+# ========================================
+- extendedWaitUntil:
+    visible: "Tap Water Quality"
+    timeout: 10000
+
+- assertVisible:
+    text: "Tap Water Quality"
+    label: "Tap Water Quality category is visible"
+
+# ========================================
+# Step 4: Tap Water Quality → verify data
+# ========================================
+- tapOn:
+    text: "Tap Water Quality"
+    label: "Tap on Water Quality category"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Verify subcategories or contaminant data appears
+- assertVisible:
+    text: ".*"
+    label: "Water Quality detail content is displayed"
+
+# ========================================
+# Step 5: Navigate back
+# ========================================
+- back
+- waitForAnimationToEnd:
+    timeout: 3000

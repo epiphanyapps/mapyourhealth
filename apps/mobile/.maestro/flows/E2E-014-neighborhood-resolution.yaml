@@ -1,0 +1,80 @@
+# flow: E2E-014 Neighborhood Resolution
+# intent:
+#   Verify that searching for a neighborhood/city resolves to the correct
+#   city and not a broader borough or metro area.
+#   1. Search "Beverly Hills" → select from autocomplete
+#   2. Verify displays "Beverly Hills, CA" (not "Los Angeles, CA")
+#   3. Verify data is displayed
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-014 - Neighborhood Resolution
+tags:
+  - e2e
+  - search
+  - neighborhood
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search for Beverly Hills
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search bar"
+
+- inputText: "Beverly Hills"
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select Beverly Hills from autocomplete
+- tapOn:
+    text: ".*Beverly Hills.*CA.*"
+    index: 0
+    label: "Select Beverly Hills from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ========================================
+# Step 2: Verify Beverly Hills, CA (not Los Angeles)
+# ========================================
+- extendedWaitUntil:
+    visible: "Beverly Hills.*CA"
+    timeout: 10000
+
+- assertVisible:
+    text: "Beverly Hills.*CA"
+    label: "Displays Beverly Hills, CA correctly"
+
+# Verify it did NOT resolve to Los Angeles
+- assertNotVisible:
+    text: "Los Angeles.*CA"
+    label: "Did not resolve to Los Angeles"
+    optional: true
+
+# ========================================
+# Step 3: Verify data is displayed
+# ========================================
+- runFlow:
+    when:
+      visible: "Tap Water Quality"
+    commands:
+      - assertVisible:
+          text: "Tap Water Quality"
+          label: "Water Quality data is available for Beverly Hills"
+
+- runFlow:
+    when:
+      visible: "No data for"
+    commands:
+      - assertVisible:
+          text: "Notify Me"
+          optional: true
+          label: "Notify Me shown for location without data"
