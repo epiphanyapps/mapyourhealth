@@ -2,7 +2,7 @@
  * Process Notifications Lambda Handler
  *
  * Orchestrates notification delivery:
- * 1. Queries subscribers for the affected postal code
+ * 1. Queries subscribers for the affected city
  * 2. Evaluates each subscriber's preferences
  * 3. Invokes send-email-alert and/or send-notifications
  * 4. Logs notification delivery to NotificationLog
@@ -37,11 +37,9 @@ type TriggerType = 'data_update' | 'data_available' | 'status_change' | 'manual_
 type NotificationStatus = 'danger' | 'warning' | 'safe'
 
 interface ProcessNotificationsEvent {
-  /** Postal code that was updated (legacy, prefer city/state/country) */
-  postalCode?: string
   /** City name */
-  city?: string
-  /** State/province */
+  city: string
+  /** State/province code */
   state?: string
   /** Country code */
   country?: string
@@ -49,8 +47,6 @@ interface ProcessNotificationsEvent {
   triggerType: TriggerType
   /** Whether this was manually triggered by admin */
   adminTriggered?: boolean
-  /** City name for display (legacy, now uses city field) */
-  cityName?: string
   /** Contaminant that changed (if applicable) */
   contaminantId?: string
   contaminantName?: string
@@ -76,8 +72,9 @@ interface ProcessNotificationsResult {
 interface Subscription {
   id: string
   owner: string // Cognito user ID
-  postalCode: string
-  cityName?: string
+  city: string
+  state?: string
+  country?: string
   enablePush: boolean
   enableEmail: boolean
   alertOnDanger: boolean
@@ -103,15 +100,6 @@ async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
 
   const result = await dynamoClient.send(command)
   return (result.Items || []).map((item) => unmarshall(item) as Subscription)
-}
-
-/**
- * Query subscriptions by postal code using GSI (legacy support)
- */
-async function getSubscriptionsByPostalCode(postalCode: string): Promise<Subscription[]> {
-  // For legacy compatibility, try to use city-based query
-  // The postalCode field may actually contain city names
-  return getSubscriptionsByCity(postalCode)
 }
 
 /**
@@ -208,8 +196,8 @@ function buildNotificationContent(event: ProcessNotificationsEvent): {
   title: string
   body: string
 } {
-  const { triggerType, postalCode, city, cityName, contaminantName, newStatus, alertLevel, customMessage } = event
-  const location = city || cityName || postalCode || 'your area'
+  const { triggerType, city, contaminantName, newStatus, alertLevel, customMessage } = event
+  const location = city || 'your area'
 
   if (triggerType === 'manual_alert') {
     const alertLabels = {
@@ -256,7 +244,9 @@ function buildNotificationContent(event: ProcessNotificationsEvent): {
 async function logNotification(
   subscriptionId: string,
   userId: string,
-  postalCode: string,
+  city: string,
+  state: string,
+  country: string,
   type: 'push' | 'email',
   status: 'sent' | 'failed',
   title: string,
@@ -269,9 +259,12 @@ async function logNotification(
 
   const item = {
     id: { S: id },
+    __typename: { S: 'NotificationLog' },
     subscriptionId: { S: subscriptionId },
     userId: { S: userId },
-    postalCode: { S: postalCode },
+    city: { S: city },
+    state: { S: state },
+    country: { S: country },
     type: { S: type },
     status: { S: status },
     title: { S: title },
@@ -305,8 +298,9 @@ async function sendEmailNotification(
   const payload = {
     statId: event.contaminantId || 'water-quality',
     statName: event.contaminantName || 'Water Quality',
-    zipCode: event.postalCode,
-    cityName: event.cityName,
+    city: event.city,
+    state: event.state || '',
+    country: event.country || '',
     oldStatus: event.oldStatus || 'safe',
     newStatus: event.newStatus || 'warning',
     currentValue: event.currentValue || 0,
@@ -378,28 +372,26 @@ async function sendPushNotifications(
 export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsResult> = async (
   event
 ) => {
-  const { city, postalCode, triggerType } = event
+  const { city, state, country, triggerType } = event
   const errors: string[] = []
   let emailsSent = 0
   let pushSent = 0
 
-  // Use city if provided, otherwise fall back to postalCode
-  const locationKey = city || postalCode
-  if (!locationKey) {
-    console.error('No city or postalCode provided in event')
+  if (!city) {
+    console.error('No city provided in event')
     return {
       success: false,
       subscribersNotified: 0,
       emailsSent: 0,
       pushSent: 0,
-      errors: ['No city or postalCode provided'],
+      errors: ['No city provided'],
     }
   }
 
-  console.log(`Processing notifications for ${locationKey} (trigger: ${triggerType})`)
+  console.log(`Processing notifications for ${city}, ${state || ''}, ${country || ''} (trigger: ${triggerType})`)
 
   // Get all subscribers for this city
-  const subscriptions = await getSubscriptionsByCity(locationKey)
+  const subscriptions = await getSubscriptionsByCity(city)
   console.log(`Found ${subscriptions.length} subscribers`)
 
   if (subscriptions.length === 0) {
@@ -416,7 +408,9 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
   const { title, body } = buildNotificationContent(event)
   const deepLinkData = {
     screen: 'Dashboard',
-    postalCode,
+    city,
+    state: state || '',
+    country: country || '',
     contaminantId: event.contaminantId,
   }
 
@@ -465,7 +459,9 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
       await logNotification(
         subscription.id,
         subscription.owner,
-        locationKey,
+        city,
+        state || '',
+        country || '',
         'email',
         emailResult.success ? 'sent' : 'failed',
         title,
@@ -489,7 +485,9 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
       await logNotification(
         subscription.id,
         subscription.owner,
-        locationKey,
+        city,
+        state || '',
+        country || '',
         'push',
         failed ? 'failed' : 'sent',
         title,

@@ -102,8 +102,8 @@ export const handler: DynamoDBStreamHandler = async (event) => {
     } catch (error) {
       console.error(`Error processing record ${record.eventID}:`, error)
       // Add to failures for retry
-      if (record.dynamodb?.SequenceNumber) {
-        batchItemFailures.push({ itemIdentifier: record.dynamodb.SequenceNumber })
+      if (record.eventID) {
+        batchItemFailures.push({ itemIdentifier: record.eventID })
       }
     }
   }

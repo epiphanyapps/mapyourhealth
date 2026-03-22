@@ -100,7 +100,7 @@ async function queryNotificationLogsByUserId(
   do {
     const command = new QueryCommand({
       TableName: tableName,
-      IndexName: 'userIdIndex',
+      IndexName: 'notificationLogsByUserId',
       KeyConditionExpression: 'userId = :userId',
       ExpressionAttributeValues: {
         ':userId': { S: userId },

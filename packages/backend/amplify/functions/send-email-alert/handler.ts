@@ -16,10 +16,12 @@ interface EmailAlertEvent {
   statId: string
   /** Human-readable stat name */
   statName: string
-  /** The zip code affected */
-  zipCode: string
-  /** City name for display */
-  cityName?: string
+  /** City name */
+  city: string
+  /** State/province code */
+  state?: string
+  /** Country code */
+  country?: string
   /** Previous status before change */
   oldStatus: 'danger' | 'warning' | 'safe'
   /** New status after change */
@@ -43,7 +45,7 @@ interface EmailAlertResult {
  * Generate HTML email content for safety alert
  */
 function generateEmailHtml(event: EmailAlertEvent): string {
-  const { statName, zipCode, cityName, oldStatus, newStatus, currentValue, unit } = event
+  const { statName, city, state, oldStatus, newStatus, currentValue, unit } = event
 
   const statusColors = {
     danger: '#DC2626',
@@ -57,7 +59,7 @@ function generateEmailHtml(event: EmailAlertEvent): string {
     safe: 'SAFE',
   }
 
-  const locationDisplay = cityName ? `${cityName} (${zipCode})` : zipCode
+  const locationDisplay = state ? `${city}, ${state}` : city
 
   return `
 <!DOCTYPE html>
@@ -139,7 +141,7 @@ function generateEmailHtml(event: EmailAlertEvent): string {
  * Generate plain text email content for safety alert
  */
 function generateEmailText(event: EmailAlertEvent): string {
-  const { statName, zipCode, cityName, oldStatus, newStatus, currentValue, unit } = event
+  const { statName, city, state, oldStatus, newStatus, currentValue, unit } = event
 
   const statusLabels = {
     danger: 'DANGER',
@@ -147,7 +149,7 @@ function generateEmailText(event: EmailAlertEvent): string {
     safe: 'SAFE',
   }
 
-  const locationDisplay = cityName ? `${cityName} (${zipCode})` : zipCode
+  const locationDisplay = state ? `${city}, ${state}` : city
 
   return `
 SAFETY ALERT - MapYourHealth
@@ -175,7 +177,7 @@ To unsubscribe, update your notification preferences in the MapYourHealth app.
  * @returns Result with count of sent emails and any errors
  */
 export const handler: Handler<EmailAlertEvent, EmailAlertResult> = async (event) => {
-  const { statId, statName, zipCode, newStatus, subscriberEmails } = event
+  const { statId, statName, city, state, newStatus, subscriberEmails } = event
   const errors: string[] = []
   let sentCount = 0
   let failedCount = 0
@@ -183,7 +185,7 @@ export const handler: Handler<EmailAlertEvent, EmailAlertResult> = async (event)
   const senderEmail = process.env.SES_SENDER_EMAIL || 'alerts@mapyourhealth.info'
 
   console.log(
-    `Sending email alerts for stat ${statId} (${statName}) in zip ${zipCode} ` +
+    `Sending email alerts for stat ${statId} (${statName}) in ${city}, ${state || ''} ` +
       `to ${subscriberEmails.length} subscribers`
   )
 
@@ -204,9 +206,8 @@ export const handler: Handler<EmailAlertEvent, EmailAlertResult> = async (event)
     safe: 'SAFE',
   }
 
-  const subject = `[${statusLabels[newStatus]}] Safety Alert: ${statName} in ${
-    event.cityName || zipCode
-  }`
+  const locationDisplay = state ? `${city}, ${state}` : city
+  const subject = `[${statusLabels[newStatus]}] Safety Alert: ${statName} in ${locationDisplay}`
   const htmlBody = generateEmailHtml(event)
   const textBody = generateEmailText(event)
 
