@@ -217,11 +217,14 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
     const measurements = await getLocationMeasurements(zipCode)
 
     if (measurements.length > 0) {
-      const { cityName, state } = getCityStateForZipCode(zipCode)
-      const country = detectPostalCodeRegion(zipCode) || ""
+      // Extract state/country from API response (measurements have full location data)
+      const firstMeasurement = measurements[0]
+      const cityName = firstMeasurement.city ?? zipCode
+      const state = firstMeasurement.state ?? ""
+      const country = firstMeasurement.country ?? ""
       const jurisdictionCode = getJurisdictionForLocation(state, country)?.code || "WHO"
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
-      const newData: ZipCodeData = { zipCode, cityName, state, stats }
+      const newData: ZipCodeData = { zipCode, cityName, state, country, stats }
       setCachedData(zipCode, newData)
       return {
         zipData: newData,

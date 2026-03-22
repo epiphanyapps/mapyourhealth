@@ -418,6 +418,7 @@ export interface ZipCodeData {
   zipCode: string
   cityName: string
   state: string
+  country: string
   stats: ZipCodeStat[]
 }
 

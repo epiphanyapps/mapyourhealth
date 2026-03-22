@@ -158,7 +158,9 @@ export function useMultiLocationData(
 
       if (totalMeasurements === 0) return null
 
-      const country = detectPostalCodeRegion(postalCodes[0]) || ""
+      // Get country from first measurement or postal code detection fallback
+      const firstMeasurement = allMeasurements[0]
+      const country = firstMeasurement?.country ?? detectPostalCodeRegion(postalCodes[0]) ?? ""
       const jurisdictionCode =
         getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"
 
@@ -168,6 +170,7 @@ export function useMultiLocationData(
         zipCode: postalCodes.join(", "),
         cityName: selectedCity.city,
         state: selectedCity.state,
+        country,
         stats: aggregatedStats,
       }
     },

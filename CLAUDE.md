@@ -138,6 +138,44 @@ npm run build        # Build for production
 npm run test:e2e     # Run Playwright tests
 ```
 
+## Location Data Architecture & Known Nuances
+
+The app migrated from zip/postal code-based lookups to **city-based lookups** using Google Places API. Legacy naming persists in the codebase.
+
+### Data Flow
+
+1. **PlacesSearchBar** → user searches → Google Places API (via backend proxy) returns predictions
+2. **resolvePlace(placeId)** → backend mutation resolves place to `{ city, state, country, jurisdictionCode }`
+3. **Navigation** carries `{ city, state, country }` as route params
+4. **useZipCodeData(city)** fetches `LocationMeasurement` records by city name from DynamoDB
+5. **API response** includes `state` and `country` on each measurement — these are used for jurisdiction resolution
+6. **CategoryDetailScreen** displays contaminant table with WHO and LOCAL threshold columns
+
+### Jurisdiction Resolution
+
+`getJurisdictionForLocation(state, country)` in `ContaminantsContext` tries:
+1. `{country}-{state}` (e.g., `CA-QC`) → exact match
+2. `{country}` (e.g., `CA`) → country-level fallback
+3. `WHO` → global fallback
+
+Seeded jurisdictions with state-specific thresholds: `CA-QC`, `CA-ON`, `CA-BC`, `CA-AB`, `US-NY`, `US-CA`, `US-TX`, `US-FL`, `US-IL`, `US-WA`, `US-GA`, `US-AZ`, `US-CO`, `US-MA`. Other states fall back to country-level or WHO.
+
+### Legacy Patterns (Tech Debt)
+
+| Pattern | Location | Status |
+|---------|----------|--------|
+| `useZipCodeData` hook name | `hooks/useZipCodeData.ts` | Takes city names, not zip codes |
+| `ZipCodeData` / `ZipCodeStat` types | `data/types/safety.ts` | Still primary types, marked @deprecated |
+| `getCityStateForZipCode()` | `hooks/useZipCodeData.ts` | Bundled US zip metadata, unused for city lookups |
+| `detectPostalCodeRegion()` | `utils/postalCode.ts` | Postal code pattern matching, fails for city names |
+| `CANADIAN_POSTAL_PREFIX_TO_PROVINCE` | `hooks/useZipCodeData.ts` | Hardcoded postal prefix map |
+| Query key `byPostalCode` | `hooks/useZipCodeData.ts` | Used with city names |
+| `getZipCodeStats()` | `services/amplify/data.ts` | Deprecated alias for `getLocationMeasurements()` |
+
+### Important: ZipCodeData includes `country`
+
+The `ZipCodeData` type includes a `country` field populated from API measurement responses. This is critical for correct jurisdiction resolution. The `state` and `country` values come from the `LocationMeasurement` records in DynamoDB, not from postal code parsing.
+
 ## Backend (`packages/backend`)
 
 **Stack:** AWS Amplify Gen2, CDK, TypeScript
