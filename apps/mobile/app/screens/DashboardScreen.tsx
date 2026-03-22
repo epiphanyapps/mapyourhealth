@@ -24,7 +24,6 @@ import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { ProfileMenu } from "@/components/ProfileMenu"
-import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
@@ -941,9 +940,6 @@ View details: ${shareUrl}`
           }
         />
       </View>
-
-      {/* Recommendations Section */}
-      {zipData && <RecommendationsSection zipData={zipData} />}
 
       {/* Report Hazard Button */}
       <Pressable
