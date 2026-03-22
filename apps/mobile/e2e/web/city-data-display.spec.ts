@@ -26,7 +26,10 @@ test.describe("City Data Display", () => {
     await expect(page.getByText("Water Quality")).toBeVisible({ timeout: 15000 })
 
     // Click on Water Quality to expand
-    await page.getByRole("button", { name: /Water Quality/i }).first().click()
+    await page
+      .getByRole("button", { name: /Water Quality/i })
+      .first()
+      .click()
 
     // Verify subcategories appear
     await expect(page.getByText("Disinfection Byproducts")).toBeVisible({ timeout: 10000 })

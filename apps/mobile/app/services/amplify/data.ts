@@ -791,7 +791,6 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
   return getContaminants()
 }
 
-
 // =============================================================================
 // Location Resolution (Backend Proxy)
 // =============================================================================

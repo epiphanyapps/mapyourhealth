@@ -31,8 +31,7 @@ export const queryKeys = {
   // ── Measurements / Location data ──
   measurements: {
     all: ["measurements"] as const,
-    byLocation: (city: string) =>
-      [...queryKeys.measurements.all, "location", city] as const,
+    byLocation: (city: string) => [...queryKeys.measurements.all, "location", city] as const,
     byCity: (city: string, state: string) =>
       [...queryKeys.measurements.all, "city", city, state] as const,
     multiLocation: (cities: string[]) =>

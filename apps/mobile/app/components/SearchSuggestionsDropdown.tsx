@@ -385,7 +385,9 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
       {error ? (
         renderError()
       ) : isLoading && suggestions.length === 0 ? (
-        renderLoadingSkeletons()
+        <View style={$emptyContainer}>
+          <ActivityIndicator size="small" />
+        </View>
       ) : (
         <FlatList
           data={suggestions}

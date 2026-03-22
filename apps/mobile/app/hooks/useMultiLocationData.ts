@@ -159,7 +159,7 @@ export function useMultiLocationData(
       if (totalMeasurements === 0) return null
 
       // Get country from first measurement or postal code detection fallback
-      const firstMeasurement = allMeasurements[0]
+      const firstMeasurement = allMeasurements[0]?.measurements?.[0]
       const country = firstMeasurement?.country ?? detectPostalCodeRegion(postalCodes[0]) ?? ""
       const jurisdictionCode =
         getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"

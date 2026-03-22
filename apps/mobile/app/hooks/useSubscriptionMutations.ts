@@ -33,7 +33,7 @@ export function useCreateSubscription() {
       country: string
       options?: CreateSubscriptionOptions
     }) => {
-      return createUserSubscription(city, state, country, options)
+      return createUserSubscription(city, state, country, undefined, options)
     },
     onMutate: async ({ city, state, country }) => {
       await qc.cancelQueries({ queryKey: queryKeys.subscriptions.list() })

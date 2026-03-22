@@ -25,6 +25,7 @@ import { ObservationCard } from "@/components/ObservationCard"
 import { Screen } from "@/components/Screen"
 import { StatusIndicator } from "@/components/StatusIndicator"
 import { Text } from "@/components/Text"
+import { useContaminants } from "@/context/ContaminantsContext"
 import {
   type ObservedPropertyCategory,
   type ObservationWithStatus,
@@ -33,7 +34,6 @@ import {
 import { useLocationObservations } from "@/hooks/useLocationObservations"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import { useContaminants } from "@/context/ContaminantsContext"
 import { getCategoryIcon, getStatusColorKey } from "@/utils/observations"
 
 interface LocationObservationsScreenProps extends AppStackScreenProps<"LocationObservations"> {}

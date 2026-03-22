@@ -10,7 +10,9 @@ test.describe("Address Resolution", () => {
     await searchInput.fill("350 5th Avenue, New York")
 
     // Wait for autocomplete suggestion (may show full address or abbreviated)
-    const suggestion = page.getByRole("button", { name: "Select 350 5th Avenue, New York, NY, USA" })
+    const suggestion = page.getByRole("button", {
+      name: "Select 350 5th Avenue, New York, NY, USA",
+    })
     await expect(suggestion).toBeVisible({ timeout: 15000 })
 
     // Select the address

@@ -131,6 +131,12 @@ const es: Translations = {
     },
   },
 
+  warningBanner: {
+    critical: "CRITICAL ALERT",
+    warning: "SPECIAL WARNING",
+    info: "NOTICE",
+  },
+
   ...demoEs,
 }
 

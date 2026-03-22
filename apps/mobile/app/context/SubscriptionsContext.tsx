@@ -94,7 +94,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       if (!isAuthenticated) {
         throw new Error("Must be authenticated to add subscription")
       }
-      return createUserSubscription(city, state, country, options)
+      return createUserSubscription(city, state, country, undefined, options)
     },
     onMutate: async ({ city, state, country }) => {
       await queryClientInstance.cancelQueries({ queryKey: queryKeys.subscriptions.list() })

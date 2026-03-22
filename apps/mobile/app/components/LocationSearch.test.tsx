@@ -58,7 +58,13 @@ jest.mock("../data/helpers", () => ({
       string,
       { zipCode: string; city: string; state: string; latitude: number; longitude: number }
     > = {
-      "90210": { zipCode: "90210", city: "Beverly Hills", state: "CA", latitude: 34, longitude: -118 },
+      "90210": {
+        zipCode: "90210",
+        city: "Beverly Hills",
+        state: "CA",
+        latitude: 34,
+        longitude: -118,
+      },
       "10001": { zipCode: "10001", city: "New York", state: "NY", latitude: 40, longitude: -73 },
     }
     return mockData[code] || null
