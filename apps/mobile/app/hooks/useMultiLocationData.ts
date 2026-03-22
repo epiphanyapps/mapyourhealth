@@ -158,7 +158,7 @@ export function useMultiLocationData(
 
       if (totalMeasurements === 0) return null
 
-      const country = detectPostalCodeRegion(postalCodes[0]) || "US"
+      const country = detectPostalCodeRegion(postalCodes[0]) || ""
       const jurisdictionCode =
         getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"
 

@@ -47,7 +47,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { category, city, state, country, subCategoryId } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
-  const { getWHOThreshold, getThreshold, jurisdictionMap } = useContaminants()
+  const { getWHOThreshold, getThreshold, getJurisdictionForLocation } = useContaminants()
   const { getCategoryName, getCategoryColor } = useCategories()
 
   // Fetch data for the passed city from Amplify (with caching and offline support)
@@ -84,8 +84,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const categoryColor = getCategoryColor(categoryId) ?? CATEGORY_COLORS[category] ?? "#6B7280"
 
   // Get jurisdiction name for display
-  const localJurisdictionCode = zipData?.state ? `US-${zipData.state}` : "US"
-  const localJurisdiction = jurisdictionMap.get(localJurisdictionCode) || jurisdictionMap.get("US")
+  const localJurisdiction = getJurisdictionForLocation(zipData?.state ?? state ?? "", country ?? "")
+  const localJurisdictionCode = localJurisdiction?.code ?? "WHO"
   const localJurisdictionName =
     localJurisdiction?.name?.toUpperCase() || zipData?.state?.toUpperCase() || "LOCAL"
 

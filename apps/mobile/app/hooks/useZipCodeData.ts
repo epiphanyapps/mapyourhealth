@@ -218,7 +218,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
 
     if (measurements.length > 0) {
       const { cityName, state } = getCityStateForZipCode(zipCode)
-      const country = detectPostalCodeRegion(zipCode) || "US"
+      const country = detectPostalCodeRegion(zipCode) || ""
       const jurisdictionCode = getJurisdictionForLocation(state, country)?.code || "WHO"
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: ZipCodeData = { zipCode, cityName, state, stats }

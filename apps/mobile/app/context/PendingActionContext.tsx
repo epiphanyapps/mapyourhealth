@@ -58,7 +58,7 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
       switch (pendingAction.type) {
         case "follow_location": {
           const { city, state, country } = pendingAction.payload
-          await createUserSubscription(city || "", state || "", country || "US")
+          await createUserSubscription(city || "", state || "", country || "")
           clearPendingAction()
           return true
         }
@@ -70,7 +70,7 @@ export const PendingActionProvider: FC<PropsWithChildren<PendingActionProviderPr
         }
         case "notify_when_available": {
           const { city, state, country } = pendingAction.payload
-          await createUserSubscription(city || "", state || "", country || "US", undefined, {
+          await createUserSubscription(city || "", state || "", country || "", undefined, {
             notifyWhenDataAvailable: true,
           })
           clearPendingAction()

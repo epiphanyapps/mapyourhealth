@@ -142,7 +142,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       return {
         city: route.params.city,
         state: route.params.state,
-        country: route.params.country || "US",
+        country: route.params.country || "",
         searchedAddress: route.params.address,
       }
     }
@@ -287,7 +287,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "US" } }],
+          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "" } }],
         }),
       )
     }
@@ -879,7 +879,7 @@ View details: ${shareUrl}`
                 category: mapToStatCategory(priorityAlert.definition.category),
                 city: currentLocation?.city || "",
                 state: currentLocation?.state || "",
-                country: currentLocation?.country || "US",
+                country: currentLocation?.country || "",
               })
             }}
           />
@@ -901,7 +901,7 @@ View details: ${shareUrl}`
                   category,
                   city: currentLocation?.city || "",
                   state: currentLocation?.state || "",
-                  country: currentLocation?.country || "US",
+                  country: currentLocation?.country || "",
                   subCategoryId,
                 })
               }}
@@ -919,12 +919,12 @@ View details: ${shareUrl}`
             const jurisdictionCode =
               getJurisdictionForLocation(
                 currentLocation?.state || "",
-                currentLocation?.country || "US",
+                currentLocation?.country || "",
               )?.code || "WHO"
             navigation.navigate("LocationObservations", {
               city: currentLocation?.city || "",
               state: currentLocation?.state || "",
-              country: currentLocation?.country || "US",
+              country: currentLocation?.country || "",
               jurisdictionCode,
             })
           }}
