@@ -2,7 +2,7 @@ import { StyleProp, TextStyle, View, ViewStyle } from "react-native"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import { getHazardCategoriesByStatCategory, getRecommendationsForHazards } from "@/data/mock"
-import { type ContaminantCategory, StatCategory, type ZipCodeData } from "@/data/types/safety"
+import { type ContaminantCategory, StatCategory, type CityData } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
 import { ProductRecommendationCard } from "./ProductRecommendationCard"
@@ -23,7 +23,7 @@ export interface RecommendationsSectionProps {
   /**
    * The zip code data to analyze for hazards
    */
-  zipData: ZipCodeData
+  cityData: CityData
   /**
    * Optional style override for the container
    */
@@ -37,15 +37,15 @@ export interface RecommendationsSectionProps {
  * Only renders if there are matching recommendations for the hazards.
  *
  * @example
- * <RecommendationsSection zipData={zipCodeData} />
+ * <RecommendationsSection cityData={zipCodeData} />
  */
 export function RecommendationsSection(props: RecommendationsSectionProps) {
-  const { zipData, style } = props
+  const { cityData, style } = props
   const { theme } = useAppTheme()
   const { contaminantMap } = useContaminants()
 
   // Get all danger/warning stats
-  const alertStats = zipData.stats.filter(
+  const alertStats = cityData.stats.filter(
     (stat) => stat.status === "danger" || stat.status === "warning",
   )
 

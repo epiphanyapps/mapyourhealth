@@ -2,7 +2,7 @@ import { View, ViewStyle, TextStyle, Pressable } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
-import type { ZipCodeStat } from "@/data/types/safety"
+import type { CityStat } from "@/data/types/safety"
 
 /**
  * Warning banner background color (amber/yellow)
@@ -31,7 +31,7 @@ export interface WarningBannerProps {
   /**
    * The stat value data
    */
-  stat: ZipCodeStat
+  stat: CityStat
   /**
    * Callback when "Full Report" is pressed
    */

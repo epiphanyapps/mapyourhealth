@@ -20,7 +20,7 @@ import { Text } from "@/components/Text"
 import { useCategories } from "@/context/CategoriesContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { getZipCodeMetadata } from "@/data/helpers"
-import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
+import { StatCategory, StatStatus, CityData } from "@/data/types/safety"
 import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -48,16 +48,16 @@ const ALL_CATEGORIES = [StatCategory.water, StatCategory.air]
  * Returns a score from 0-100 where 100 is safest
  */
 function calculateSafetyScore(
-  zipData: ZipCodeData | null,
+  cityData: CityData | null,
   statDefinitions: { id: string; category: string }[],
 ): number {
-  if (!zipData) return 0
+  if (!cityData) return 0
 
   let totalScore = 0
   let categoryCount = 0
 
   for (const category of ALL_CATEGORIES) {
-    const status = getWorstStatusForCategory(zipData, category, statDefinitions)
+    const status = getWorstStatusForCategory(cityData, category, statDefinitions)
     categoryCount++
     if (status === "safe") {
       totalScore += 100
@@ -73,12 +73,12 @@ function calculateSafetyScore(
 /**
  * Get the location display name for a zip code
  */
-function getLocationName(zipCode: string, zipData: ZipCodeData | null): string {
-  if (zipData?.cityName && zipData.state) {
-    return `${zipData.cityName}, ${zipData.state}`
+function getLocationName(zipCode: string, cityData: CityData | null): string {
+  if (cityData?.cityName && cityData.state) {
+    return `${cityData.cityName}, ${cityData.state}`
   }
-  if (zipData?.cityName) {
-    return zipData.cityName
+  if (cityData?.cityName) {
+    return cityData.cityName
   }
   const metadata = getZipCodeMetadata(zipCode)
   if (metadata) {
@@ -102,76 +102,76 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
   const { getCategoryName } = useCategories()
 
   // State for zip code inputs
-  const [zipCode1, setZipCode1] = useState("")
-  const [zipCode2, setZipCode2] = useState("")
-  const [activeZip1, setActiveZip1] = useState<string | null>(null)
-  const [activeZip2, setActiveZip2] = useState<string | null>(null)
+  const [city1, setCity1] = useState("")
+  const [city2, setCity2] = useState("")
+  const [activeCity1, setActiveCity1] = useState<string | null>(null)
+  const [activeCity2, setActiveCity2] = useState<string | null>(null)
 
   // Fetch data for both zip codes (only when submitted)
   const {
-    zipData: zipData1,
+    cityData: cityData1,
     isLoading: isLoading1,
     error: error1,
-  } = useLocationData(activeZip1 ?? "")
+  } = useLocationData(activeCity1 ?? "")
   const {
-    zipData: zipData2,
+    cityData: cityData2,
     isLoading: isLoading2,
     error: error2,
-  } = useLocationData(activeZip2 ?? "")
+  } = useLocationData(activeCity2 ?? "")
 
   // Handle search for zip code 1
   const handleSearch1 = useCallback(() => {
-    const trimmed = zipCode1.trim()
+    const trimmed = city1.trim()
     if (isValidPostalCode(trimmed)) {
-      setActiveZip1(normalizePostalCode(trimmed))
+      setActiveCity1(normalizePostalCode(trimmed))
     }
-  }, [zipCode1])
+  }, [city1])
 
   // Handle search for zip code 2
   const handleSearch2 = useCallback(() => {
-    const trimmed = zipCode2.trim()
+    const trimmed = city2.trim()
     if (isValidPostalCode(trimmed)) {
-      setActiveZip2(normalizePostalCode(trimmed))
+      setActiveCity2(normalizePostalCode(trimmed))
     }
-  }, [zipCode2])
+  }, [city2])
 
   // Calculate safety scores
-  const score1 = activeZip1 ? calculateSafetyScore(zipData1, statDefinitions) : null
-  const score2 = activeZip2 ? calculateSafetyScore(zipData2, statDefinitions) : null
+  const score1 = activeCity1 ? calculateSafetyScore(cityData1, statDefinitions) : null
+  const score2 = activeCity2 ? calculateSafetyScore(cityData2, statDefinitions) : null
 
   // Determine which zip code is safer for each category
-  const getCategorySaferZip = (category: StatCategory): "zip1" | "zip2" | "equal" | null => {
-    if (!zipData1 || !zipData2) return null
+  const getCategorySaferCity = (category: StatCategory): "city1" | "city2" | "equal" | null => {
+    if (!cityData1 || !cityData2) return null
 
-    const status1 = getWorstStatusForCategory(zipData1, category, statDefinitions)
-    const status2 = getWorstStatusForCategory(zipData2, category, statDefinitions)
+    const status1 = getWorstStatusForCategory(cityData1, category, statDefinitions)
+    const status2 = getWorstStatusForCategory(cityData2, category, statDefinitions)
 
     // Rank statuses: safe > warning > danger (higher is better)
     const statusRank: Record<StatStatus, number> = { safe: 2, warning: 1, danger: 0 }
     const rank1 = statusRank[status1]
     const rank2 = statusRank[status2]
 
-    if (rank1 > rank2) return "zip1"
-    if (rank2 > rank1) return "zip2"
+    if (rank1 > rank2) return "city1"
+    if (rank2 > rank1) return "city2"
     return "equal"
   }
 
   // Get the status for a category
   const getStatusForCategory = (
-    zipData: ZipCodeData | null,
+    cityData: CityData | null,
     category: StatCategory,
   ): StatStatus => {
-    if (!zipData) return "safe"
-    return getWorstStatusForCategory(zipData, category, statDefinitions)
+    if (!cityData) return "safe"
+    return getWorstStatusForCategory(cityData, category, statDefinitions)
   }
 
   // Get background color for winner highlight
   const getHighlightColor = (
-    saferZip: "zip1" | "zip2" | "equal" | null,
+    saferZip: "city1" | "city2" | "equal" | null,
     isZip1: boolean,
   ): string | undefined => {
     if (saferZip === null || saferZip === "equal") return undefined
-    if ((saferZip === "zip1" && isZip1) || (saferZip === "zip2" && !isZip1)) {
+    if ((saferZip === "city1" && isZip1) || (saferZip === "city2" && !isZip1)) {
       return "rgba(16, 185, 129, 0.1)" // Light green for safer
     }
     return undefined
@@ -357,12 +357,12 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
 
   // Render status indicator with text
   const renderStatusCell = (
-    zipData: ZipCodeData | null,
+    cityData: CityData | null,
     category: StatCategory,
-    saferZip: "zip1" | "zip2" | "equal" | null,
+    saferZip: "city1" | "city2" | "equal" | null,
     isZip1: boolean,
   ) => {
-    if (!zipData) {
+    if (!cityData) {
       return (
         <View style={$statusCell}>
           <Text style={{ color: theme.colors.textDim }}>-</Text>
@@ -370,7 +370,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
       )
     }
 
-    const status = getStatusForCategory(zipData, category)
+    const status = getStatusForCategory(cityData, category)
     const highlightColor = getHighlightColor(saferZip, isZip1)
     const statusColor =
       status === "danger" ? "#DC2626" : status === "warning" ? "#F59E0B" : "#10B981"
@@ -384,8 +384,8 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
   }
 
   // Check if we have any data to compare
-  const hasData = (activeZip1 && zipData1) || (activeZip2 && zipData2)
-  const hasBothData = activeZip1 && activeZip2 && zipData1 && zipData2
+  const hasData = (activeCity1 && cityData1) || (activeCity2 && cityData2)
+  const hasBothData = activeCity1 && activeCity2 && cityData1 && cityData2
 
   return (
     <Screen preset="fixed" safeAreaEdges={["top"]} style={$container}>
@@ -405,8 +405,8 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
             style={$input}
             placeholder="Enter postal code (e.g., 90210 or M5V 3L9)"
             placeholderTextColor={theme.colors.textDim}
-            value={zipCode1}
-            onChangeText={setZipCode1}
+            value={city1}
+            onChangeText={setCity1}
             keyboardType="default"
             maxLength={7}
             autoCapitalize="characters"
@@ -416,12 +416,12 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
           <Pressable
             style={$searchButton}
             onPress={handleSearch1}
-            disabled={!isValidPostalCode(zipCode1.trim())}
+            disabled={!isValidPostalCode(city1.trim())}
           >
             <MaterialCommunityIcons name="magnify" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
-        {error1 && activeZip1 && <Text style={$errorText}>{error1}</Text>}
+        {error1 && activeCity1 && <Text style={$errorText}>{error1}</Text>}
 
         {/* Zip Code 2 Input */}
         <Text style={$inputLabel}>Second Zip Code</Text>
@@ -436,8 +436,8 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
             style={$input}
             placeholder="Enter postal code (e.g., 10001 or K1A 0B1)"
             placeholderTextColor={theme.colors.textDim}
-            value={zipCode2}
-            onChangeText={setZipCode2}
+            value={city2}
+            onChangeText={setCity2}
             keyboardType="default"
             maxLength={7}
             autoCapitalize="characters"
@@ -447,12 +447,12 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
           <Pressable
             style={$searchButton}
             onPress={handleSearch2}
-            disabled={!isValidPostalCode(zipCode2.trim())}
+            disabled={!isValidPostalCode(city2.trim())}
           >
             <MaterialCommunityIcons name="magnify" size={20} color="#FFFFFF" />
           </Pressable>
         </View>
-        {error2 && activeZip2 && <Text style={$errorText}>{error2}</Text>}
+        {error2 && activeCity2 && <Text style={$errorText}>{error2}</Text>}
 
         {/* Loading states */}
         {(isLoading1 || isLoading2) && (
@@ -481,33 +481,33 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
             {/* Header row with zip code labels */}
             <View style={$comparisonHeader}>
               <View style={$headerColumn}>
-                <Text style={$headerText}>{activeZip1 || "-"}</Text>
+                <Text style={$headerText}>{activeCity1 || "-"}</Text>
                 <Text style={$locationText}>
-                  {activeZip1 ? getLocationName(activeZip1, zipData1) : ""}
+                  {activeCity1 ? getLocationName(activeCity1, cityData1) : ""}
                 </Text>
               </View>
               <View style={{ width: 80 }} />
               <View style={$headerColumn}>
-                <Text style={$headerText}>{activeZip2 || "-"}</Text>
+                <Text style={$headerText}>{activeCity2 || "-"}</Text>
                 <Text style={$locationText}>
-                  {activeZip2 ? getLocationName(activeZip2, zipData2) : ""}
+                  {activeCity2 ? getLocationName(activeCity2, cityData2) : ""}
                 </Text>
               </View>
             </View>
 
             {/* Category rows */}
             {ALL_CATEGORIES.map((category) => {
-              const saferZip = getCategorySaferZip(category)
+              const saferZip = getCategorySaferCity(category)
               return (
                 <View key={category} style={$categoryRow}>
-                  {renderStatusCell(zipData1, category, saferZip, true)}
+                  {renderStatusCell(cityData1, category, saferZip, true)}
                   <View style={$categoryCenter}>
                     <CategoryIcon category={category} size={24} color={CATEGORY_COLORS[category]} />
                     <Text style={$categoryName}>
                       {getCategoryName(String(category)) || CATEGORY_DISPLAY_NAMES[category]}
                     </Text>
                   </View>
-                  {renderStatusCell(zipData2, category, saferZip, false)}
+                  {renderStatusCell(cityData2, category, saferZip, false)}
                 </View>
               )
             })}
@@ -528,10 +528,10 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
                     },
                 ]}
               >
-                {activeZip1 ? (
+                {activeCity1 ? (
                   <>
                     <Text style={$scoreValue}>{score1 ?? "-"}</Text>
-                    <Text style={$scoreLabel}>{activeZip1}</Text>
+                    <Text style={$scoreLabel}>{activeCity1}</Text>
                     {hasBothData && score1 !== null && score2 !== null && score1 > score2 && (
                       <View style={$winnerBadge}>
                         <Text style={$winnerText}>Safer</Text>
@@ -561,10 +561,10 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
                     },
                 ]}
               >
-                {activeZip2 ? (
+                {activeCity2 ? (
                   <>
                     <Text style={$scoreValue}>{score2 ?? "-"}</Text>
-                    <Text style={$scoreLabel}>{activeZip2}</Text>
+                    <Text style={$scoreLabel}>{activeCity2}</Text>
                     {hasBothData && score1 !== null && score2 !== null && score2 > score1 && (
                       <View style={$winnerBadge}>
                         <Text style={$winnerText}>Safer</Text>

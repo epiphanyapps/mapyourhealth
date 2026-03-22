@@ -778,9 +778,6 @@ export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
 /** @deprecated Use AmplifyContaminant instead */
 export type StatDefinition = Schema["Contaminant"]["type"]
 
-/** @deprecated Use AmplifyLocationMeasurement instead */
-export type ZipCodeStat = Schema["LocationMeasurement"]["type"]
-
 /** @deprecated Use AmplifyUserSubscription instead */
 
 /** @deprecated Use AmplifyHazardReport instead */

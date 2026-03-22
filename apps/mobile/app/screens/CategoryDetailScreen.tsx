@@ -51,7 +51,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { getCategoryName, getCategoryColor } = useCategories()
 
   // Fetch data for the passed city from Amplify (with caching and offline support)
-  const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
+  const { cityData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
     useLocationData(city)
 
   // State for pull-to-refresh
@@ -72,8 +72,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   // Get risk stats for this category (only warning/danger, no safe stats)
   const stats = useMemo(
-    () => (zipData ? getRiskStatsForCategory(zipData, category, statDefinitions) : []),
-    [zipData, category, statDefinitions],
+    () => (cityData ? getRiskStatsForCategory(cityData, category, statDefinitions) : []),
+    [cityData, category, statDefinitions],
   )
 
   // Get category display info - try dynamic first, then fallback to hardcoded
@@ -84,10 +84,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const categoryColor = getCategoryColor(categoryId) ?? CATEGORY_COLORS[category] ?? "#6B7280"
 
   // Get jurisdiction name for display
-  const localJurisdiction = getJurisdictionForLocation(zipData?.state ?? state ?? "", country ?? "")
+  const localJurisdiction = getJurisdictionForLocation(cityData?.state ?? state ?? "", country ?? "")
   const localJurisdictionCode = localJurisdiction?.code ?? "WHO"
   const localJurisdictionName =
-    localJurisdiction?.name?.toUpperCase() || zipData?.state?.toUpperCase() || "LOCAL"
+    localJurisdiction?.name?.toUpperCase() || cityData?.state?.toUpperCase() || "LOCAL"
 
   // Build table rows for water category
   const tableRows: ContaminantTableRow[] = useMemo(() => {
@@ -127,7 +127,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   // Handle Share button press - share category-specific risk data
   const handleShare = useCallback(async () => {
-    if (!zipData) return
+    if (!cityData) return
 
     // Build risk details for this category (only warning/danger stats)
     const riskDetails = stats
@@ -138,9 +138,9 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
       .join("\n")
 
     const locationName =
-      zipData.cityName && zipData.state
-        ? `${zipData.cityName}, ${zipData.state}`
-        : zipData.cityName || zipData.state || "Unknown Location"
+      cityData.cityName && cityData.state
+        ? `${cityData.cityName}, ${cityData.state}`
+        : cityData.cityName || cityData.state || "Unknown Location"
 
     const shareUrl = `https://app.mapyourhealth.info/location/${encodeURIComponent(city)}/${encodeURIComponent(state)}/${encodeURIComponent(country)}/category/${encodeURIComponent(category)}`
 
@@ -153,13 +153,13 @@ View details: ${shareUrl}`
     try {
       await Share.share({
         message: shareMessage,
-        title: `${categoryName} Risk Report - ${zipData.zipCode}`,
+        title: `${categoryName} Risk Report - ${cityData.city}`,
       })
     } catch (error) {
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, stats, categoryName, city, state, country, category])
+  }, [cityData, stats, categoryName, city, state, country, category])
 
   // Custom share button component for header
   const ShareButton = (
@@ -354,7 +354,7 @@ View details: ${shareUrl}`
   }
 
   // Error state (only if no fallback data)
-  if (error && !zipData) {
+  if (error && !cityData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]}>
         <Header
@@ -381,7 +381,7 @@ View details: ${shareUrl}`
   }
 
   // No data state - location exists but no measurements available yet
-  if (!zipData) {
+  if (!cityData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]}>
         <Header

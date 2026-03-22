@@ -394,7 +394,7 @@ export interface StatDefinition {
 /**
  * @deprecated Use LocationMeasurement instead
  */
-export interface ZipCodeStat {
+export interface CityStat {
   statId: string
   value: number
   status: StatStatus
@@ -414,12 +414,12 @@ export interface StatHistoryEntry {
 /**
  * @deprecated Use LocationData instead
  */
-export interface ZipCodeData {
-  zipCode: string
+export interface CityData {
+  city: string
   cityName: string
   state: string
   country: string
-  stats: ZipCodeStat[]
+  stats: CityStat[]
 }
 
 /**

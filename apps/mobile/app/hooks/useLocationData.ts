@@ -12,8 +12,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import {
-  type ZipCodeData,
-  type ZipCodeStat,
+  type CityData,
+  type CityStat,
   type StatStatus,
   StatCategory,
 } from "@/data/types/safety"
@@ -30,13 +30,13 @@ const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
 
 /** Interface for cached data structure */
 interface CachedLocationData {
-  data: ZipCodeData
+  data: CityData
   cachedAt: number
 }
 
 interface UseLocationDataResult {
   /** The zip code data, or null if loading/error */
-  zipData: ZipCodeData | null
+  cityData: CityData | null
   /** Whether data is currently being fetched */
   isLoading: boolean
   /** Error message if fetch failed */
@@ -56,8 +56,8 @@ interface UseLocationDataResult {
 /**
  * Get cached data for a zip code from MMKV storage.
  */
-function getCachedData(zipCode: string): CachedLocationData | null {
-  const cacheKey = `${CACHE_KEY_PREFIX}${zipCode}`
+function getCachedData(city: string): CachedLocationData | null {
+  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
   const cached = load<CachedLocationData>(cacheKey)
 
   if (!cached) return null
@@ -73,22 +73,22 @@ function getCachedData(zipCode: string): CachedLocationData | null {
 /**
  * Save zip code data to MMKV cache with timestamp.
  */
-function setCachedData(zipCode: string, data: ZipCodeData): void {
-  const cacheKey = `${CACHE_KEY_PREFIX}${zipCode}`
+function setCachedData(city: string, data: CityData): void {
+  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
   save(cacheKey, { data, cachedAt: Date.now() })
 }
 
 /**
  * Clear cached data for a specific zip code.
  */
-export function clearCachedLocationData(zipCode: string): void {
-  remove(`${CACHE_KEY_PREFIX}${zipCode}`)
+export function clearCachedLocationData(city: string): void {
+  remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
 /**
  * Hook to fetch zip code safety data with caching support
  */
-export function useLocationData(zipCode: string): UseLocationDataResult {
+export function useLocationData(city: string): UseLocationDataResult {
   const {
     contaminants,
     getThreshold,
@@ -99,10 +99,10 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
   const qc = useQueryClient()
 
   /**
-   * Maps new LocationMeasurement to legacy ZipCodeStat format
+   * Maps new LocationMeasurement to legacy CityStat format
    */
   const mapMeasurementToLegacyStat = useCallback(
-    (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): ZipCodeStat => {
+    (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): CityStat => {
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
       const threshold = getThreshold(measurement.contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
@@ -133,18 +133,18 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
   )
 
   /**
-   * Core query function that fetches measurements and builds ZipCodeData
+   * Core query function that fetches measurements and builds CityData
    */
   const queryFn = useCallback(async (): Promise<{
-    zipData: ZipCodeData | null
+    cityData: CityData | null
     isMockData: boolean
     isCachedData: boolean
     lastUpdated: number | null
     warning: string | null
   }> => {
-    if (!zipCode) {
+    if (!city) {
       return {
-        zipData: null,
+        cityData: null,
         isMockData: false,
         isCachedData: false,
         lastUpdated: null,
@@ -154,10 +154,10 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
 
     // If offline, use MMKV cache
     if (isOffline) {
-      const cached = getCachedData(zipCode)
+      const cached = getCachedData(city)
       if (cached) {
         return {
-          zipData: cached.data,
+          cityData: cached.data,
           isMockData: false,
           isCachedData: true,
           lastUpdated: cached.cachedAt,
@@ -168,20 +168,20 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
     }
 
     // Online: fetch from API
-    const measurements = await getLocationMeasurements(zipCode)
+    const measurements = await getLocationMeasurements(city)
 
     if (measurements.length > 0) {
       // Extract state/country from API response (measurements have full location data)
       const firstMeasurement = measurements[0]
-      const cityName = firstMeasurement.city ?? zipCode
+      const cityName = firstMeasurement.city ?? city
       const state = firstMeasurement.state ?? ""
       const country = firstMeasurement.country ?? ""
       const jurisdictionCode = getJurisdictionForLocation(state, country)?.code || "WHO"
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
-      const newData: ZipCodeData = { zipCode, cityName, state, country, stats }
-      setCachedData(zipCode, newData)
+      const newData: CityData = { city, cityName, state, country, stats }
+      setCachedData(city, newData)
       return {
-        zipData: newData,
+        cityData: newData,
         isMockData: false,
         isCachedData: false,
         lastUpdated: Date.now(),
@@ -190,10 +190,10 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
     }
 
     // No data from backend - keep cache as fallback for offline use
-    const cached = getCachedData(zipCode)
+    const cached = getCachedData(city)
     if (cached) {
       return {
-        zipData: cached.data,
+        cityData: cached.data,
         isMockData: false,
         isCachedData: true,
         lastUpdated: cached.cachedAt,
@@ -202,26 +202,26 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
     }
 
     return {
-      zipData: null,
+      cityData: null,
       isMockData: false,
       isCachedData: false,
       lastUpdated: null,
       warning: null,
     }
-  }, [zipCode, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
+  }, [city, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
 
   const query = useQuery({
-    queryKey: queryKeys.measurements.byLocation(zipCode),
+    queryKey: queryKeys.measurements.byLocation(city),
     queryFn,
-    enabled: !!zipCode && !defsLoading,
+    enabled: !!city && !defsLoading,
     staleTime: 5 * 60 * 1000,
     // Use MMKV cached data as initialData if available
     initialData: () => {
-      if (!zipCode) return undefined
-      const cached = getCachedData(zipCode)
+      if (!city) return undefined
+      const cached = getCachedData(city)
       if (cached) {
         return {
-          zipData: cached.data,
+          cityData: cached.data,
           isMockData: false,
           isCachedData: true,
           lastUpdated: cached.cachedAt,
@@ -236,14 +236,14 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
   const result = query.data
 
   const refresh = useCallback(async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(zipCode) })
-  }, [qc, zipCode])
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(city) })
+  }, [qc, city])
 
   // Determine error: use query error or warning from the result
   const error = query.error?.message ?? result?.warning ?? null
 
   return {
-    zipData: result?.zipData ?? null,
+    cityData: result?.cityData ?? null,
     isLoading: query.isLoading || defsLoading || !networkReady,
     error,
     isMockData: result?.isMockData ?? false,
@@ -260,7 +260,7 @@ export function useLocationData(zipCode: string): UseLocationDataResult {
  * Helper to get the worst status for a category from zip code data
  */
 export function getWorstStatusForCategory(
-  zipData: ZipCodeData,
+  cityData: CityData,
   category: StatCategory,
   statDefinitions: { id: string; category: string }[],
 ): StatStatus {
@@ -287,7 +287,7 @@ export function getWorstStatusForCategory(
       .map((def) => def.id),
   )
 
-  const categoryStats = zipData.stats.filter((stat) => categoryStatIds.has(stat.statId))
+  const categoryStats = cityData.stats.filter((stat) => categoryStatIds.has(stat.statId))
 
   if (categoryStats.length === 0) return "safe"
   if (categoryStats.some((stat) => stat.status === "danger")) return "danger"
@@ -309,10 +309,10 @@ interface GenericDefinition {
  * Helper to get stats for a specific category with their definitions
  */
 export function getStatsForCategory(
-  zipData: ZipCodeData,
+  cityData: CityData,
   category: StatCategory,
   statDefinitions: GenericDefinition[],
-): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
+): Array<{ stat: CityStat; definition: GenericDefinition }> {
   const isWaterCategory = category === StatCategory.water
   const contaminantCategories = [
     "fertilizer",
@@ -331,7 +331,7 @@ export function getStatsForCategory(
   })
   const categoryStatIds = new Set(categoryDefs.map((def) => def.id))
 
-  return zipData.stats
+  return cityData.stats
     .filter((stat) => categoryStatIds.has(stat.statId))
     .map((stat) => ({
       stat,
@@ -344,12 +344,12 @@ export function getStatsForCategory(
  * Helper to get all danger and warning stats from zip code data
  */
 export function getAlertStats(
-  zipData: ZipCodeData,
+  cityData: CityData,
   statDefinitions: GenericDefinition[],
-): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
+): Array<{ stat: CityStat; definition: GenericDefinition }> {
   const defMap = new Map(statDefinitions.map((def) => [def.id, def]))
 
-  return zipData.stats
+  return cityData.stats
     .filter((stat) => stat.status === "danger" || stat.status === "warning")
     .map((stat) => ({
       stat,
@@ -362,11 +362,11 @@ export function getAlertStats(
  * Helper to get only risk stats (danger/warning) for a specific category.
  */
 export function getRiskStatsForCategory(
-  zipData: ZipCodeData,
+  cityData: CityData,
   category: StatCategory,
   statDefinitions: GenericDefinition[],
-): Array<{ stat: ZipCodeStat; definition: GenericDefinition }> {
-  return getStatsForCategory(zipData, category, statDefinitions).filter(
+): Array<{ stat: CityStat; definition: GenericDefinition }> {
+  return getStatsForCategory(cityData, category, statDefinitions).filter(
     ({ stat }) => stat.status === "danger" || stat.status === "warning",
   )
 }
