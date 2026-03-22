@@ -6,7 +6,7 @@
  * showing the default zip code on the dashboard.
  */
 
-import { createContext, FC, PropsWithChildren, useCallback, useContext } from "react"
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { queryKeys } from "@/lib/queryKeys"
@@ -67,6 +67,13 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
     enabled: !authLoading && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   })
+
+  // Clear subscription cache on logout to prevent showing previous user's data
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      queryClientInstance.removeQueries({ queryKey: queryKeys.subscriptions.list() })
+    }
+  }, [authLoading, isAuthenticated, queryClientInstance])
 
   const isLoading = authLoading || (isAuthenticated && queryLoading)
   const error = queryError ? "Failed to load subscriptions" : null
