@@ -782,7 +782,6 @@ export type StatDefinition = Schema["Contaminant"]["type"]
 export type ZipCodeStat = Schema["LocationMeasurement"]["type"]
 
 /** @deprecated Use AmplifyUserSubscription instead */
-export type ZipCodeSubscription = Schema["UserSubscription"]["type"]
 
 /** @deprecated Use AmplifyHazardReport instead */
 export type HazardReport = Schema["HazardReport"]["type"]
@@ -792,32 +791,6 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
   return getContaminants()
 }
 
-/** @deprecated Use getLocationMeasurements instead */
-export async function getZipCodeStats(city: string): Promise<AmplifyLocationMeasurement[]> {
-  return getLocationMeasurements(city)
-}
-
-/** @deprecated Use createUserSubscription instead */
-export async function createZipCodeSubscription(
-  city: string,
-  state: string,
-  country: string,
-  options?: { notifyWhenDataAvailable?: boolean },
-): Promise<AmplifyUserSubscription> {
-  return createUserSubscription(city, state, country, undefined, {
-    notifyWhenDataAvailable: options?.notifyWhenDataAvailable,
-  })
-}
-
-/** @deprecated Use deleteUserSubscription instead */
-export async function deleteZipCodeSubscription(id: string): Promise<void> {
-  return deleteUserSubscription(id)
-}
-
-/** @deprecated Use getUserSubscriptions instead */
-export async function getUserZipCodeSubscriptions(): Promise<AmplifyUserSubscription[]> {
-  return getUserSubscriptions()
-}
 
 // =============================================================================
 // Location Resolution (Backend Proxy)

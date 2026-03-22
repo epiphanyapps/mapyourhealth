@@ -11,7 +11,7 @@ import { Text } from "@/components/Text"
 import { TrendChart, calculateTrendDirection } from "@/components/TrendChart"
 import { useContaminants } from "@/context/ContaminantsContext"
 import type { StatStatus, TrendDirection } from "@/data/types/safety"
-import { useZipCodeData } from "@/hooks/useZipCodeData"
+import { useLocationData } from "@/hooks/useLocationData"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -91,7 +91,7 @@ export function StatTrendScreen() {
   const { statId, city, state, country } = route.params
 
   // Fetch data for this location (uses React Query caching — likely already cached from CategoryDetail)
-  const { zipData, isLoading } = useZipCodeData(city)
+  const { zipData, isLoading } = useLocationData(city)
 
   // Look up the contaminant definition
   const definition = contaminantMap.get(statId)

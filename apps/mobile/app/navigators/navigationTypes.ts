@@ -27,7 +27,7 @@ export type AppStackParamList = {
   MagicLink: undefined
   MagicLinkSent: { email: string }
   MagicLinkVerify: { email: string; token: string }
-  OnboardingZipCodes: undefined
+  OnboardingLocations: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: { city?: string; state?: string; country?: string; address?: string } | undefined
   CategoryDetail: {

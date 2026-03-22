@@ -1,5 +1,5 @@
 /**
- * ZipCodeSearch
+ * LocationSearch
  *
  * A component for searching and selecting zip codes.
  * Features text input, "Use my location" geolocation, and removable chips for selections.
@@ -24,21 +24,21 @@ import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
 import { isValidPostalCode, normalizePostalCode, getPostalCodeLabel } from "@/utils/postalCode"
 
-export interface ZipCodeSelection {
+export interface LocationSelection {
   zipCode: string
   cityName: string
   state: string
 }
 
-export interface ZipCodeSearchProps {
+export interface LocationSearchProps {
   /**
    * Currently selected zip codes
    */
-  selectedZipCodes: ZipCodeSelection[]
+  selectedZipCodes: LocationSelection[]
   /**
    * Callback when selections change
    */
-  onSelectionChange: (selections: ZipCodeSelection[]) => void
+  onSelectionChange: (selections: LocationSelection[]) => void
   /**
    * Maximum number of zip codes that can be selected
    * @default 10
@@ -52,17 +52,17 @@ export interface ZipCodeSearchProps {
 }
 
 /**
- * ZipCodeSearch component allows users to search for zip codes by entering them
+ * LocationSearch component allows users to search for zip codes by entering them
  * or using their current location. Selected zip codes are displayed as removable chips.
  *
  * @example
- * <ZipCodeSearch
+ * <LocationSearch
  *   selectedZipCodes={selections}
  *   onSelectionChange={setSelections}
  *   maxSelections={10}
  * />
  */
-export function ZipCodeSearch(props: ZipCodeSearchProps) {
+export function LocationSearch(props: LocationSearchProps) {
   const {
     selectedZipCodes,
     onSelectionChange,

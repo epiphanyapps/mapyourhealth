@@ -22,7 +22,7 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { MagicLinkScreen } from "@/screens/MagicLinkScreen"
 import { MagicLinkSentScreen } from "@/screens/MagicLinkSentScreen"
 import { MagicLinkVerifyScreen } from "@/screens/MagicLinkVerifyScreen"
-import { OnboardingZipCodesScreen } from "@/screens/OnboardingZipCodesScreen"
+import { OnboardingLocationsScreen } from "@/screens/OnboardingLocationsScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
 import { ReportScreen } from "@/screens/ReportScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
@@ -76,7 +76,7 @@ const AppStack = () => {
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
       <Stack.Screen name="Compare" component={CompareScreen} />
-      <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
+      <Stack.Screen name="OnboardingLocations" component={OnboardingLocationsScreen} />
       <Stack.Screen name="Report" component={ReportScreen} />
       <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />

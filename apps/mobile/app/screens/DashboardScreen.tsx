@@ -37,7 +37,7 @@ import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
-import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
+import { useLocationData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 // jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
@@ -150,7 +150,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }, [route.params?.city, route.params?.state, route.params?.country, route.params?.address])
 
   // Fetch data for current location from Amplify (with caching and offline support)
-  const locationData = useZipCodeData(currentLocation?.city || "")
+  const locationData = useLocationData(currentLocation?.city || "")
 
   const {
     zipData,

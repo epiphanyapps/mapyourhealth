@@ -69,7 +69,7 @@ const config = {
     Signup: "signup",
     ConfirmSignup: "confirm-signup",
     ForgotPassword: "forgot-password",
-    OnboardingZipCodes: "onboarding",
+    OnboardingLocations: "onboarding",
     Report: "report",
     SubscriptionsSettings: "subscriptions",
     Profile: "profile",

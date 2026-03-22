@@ -1,11 +1,11 @@
 /**
- * Tests for ZipCodeSearch component
+ * Tests for LocationSearch component
  */
 
 import { NavigationContainer } from "@react-navigation/native"
 import { fireEvent, render, waitFor } from "@testing-library/react-native"
 
-import { ZipCodeSearch, ZipCodeSelection } from "./ZipCodeSearch"
+import { LocationSearch, LocationSelection } from "./LocationSearch"
 import { ThemeProvider } from "../theme/context"
 
 // Mock expo-font (required by @expo-google-fonts)
@@ -94,7 +94,7 @@ function TestWrapper({ children }: { children: React.ReactNode }) {
   )
 }
 
-describe("ZipCodeSearch", () => {
+describe("LocationSearch", () => {
   const mockOnSelectionChange = jest.fn()
 
   beforeEach(() => {
@@ -107,7 +107,7 @@ describe("ZipCodeSearch", () => {
     it("renders with default placeholder", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -117,7 +117,7 @@ describe("ZipCodeSearch", () => {
     it("renders with custom placeholder", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={[]}
             onSelectionChange={mockOnSelectionChange}
             placeholder="Type your postal code..."
@@ -131,7 +131,7 @@ describe("ZipCodeSearch", () => {
     it("renders My Location button", () => {
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -141,7 +141,7 @@ describe("ZipCodeSearch", () => {
     it("renders search icon", () => {
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -153,7 +153,7 @@ describe("ZipCodeSearch", () => {
     it("adds valid US zip code on submit", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -173,7 +173,7 @@ describe("ZipCodeSearch", () => {
     it("adds valid Canadian postal code on submit", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -193,7 +193,7 @@ describe("ZipCodeSearch", () => {
     it("clears input after successful addition", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -207,7 +207,7 @@ describe("ZipCodeSearch", () => {
     it("handles unknown zip codes with placeholder city", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -229,7 +229,7 @@ describe("ZipCodeSearch", () => {
     it("shows error for invalid postal code (too short)", () => {
       const { getByPlaceholderText, getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -242,13 +242,13 @@ describe("ZipCodeSearch", () => {
     })
 
     it("shows error for duplicate zip code", () => {
-      const existingSelections: ZipCodeSelection[] = [
+      const existingSelections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
       ]
 
       const { getByPlaceholderText, getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={existingSelections}
             onSelectionChange={mockOnSelectionChange}
           />
@@ -264,7 +264,7 @@ describe("ZipCodeSearch", () => {
     })
 
     it("shows error when max selections reached", () => {
-      const maxSelections: ZipCodeSelection[] = Array.from({ length: 10 }, (_, i) => ({
+      const maxSelections: LocationSelection[] = Array.from({ length: 10 }, (_, i) => ({
         zipCode: `9000${i}`,
         cityName: `City ${i}`,
         state: "CA",
@@ -272,7 +272,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByPlaceholderText, getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={maxSelections}
             onSelectionChange={mockOnSelectionChange}
             maxSelections={10}
@@ -291,7 +291,7 @@ describe("ZipCodeSearch", () => {
     it("does not trigger selection change for empty input", () => {
       const { getByPlaceholderText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -306,14 +306,14 @@ describe("ZipCodeSearch", () => {
 
   describe("chip display", () => {
     it("displays selected zip codes as chips", () => {
-      const selections: ZipCodeSelection[] = [
+      const selections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
         { zipCode: "10001", cityName: "New York", state: "NY" },
       ]
 
       const { getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -324,14 +324,14 @@ describe("ZipCodeSearch", () => {
     })
 
     it("shows selection count", () => {
-      const selections: ZipCodeSelection[] = [
+      const selections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
         { zipCode: "10001", cityName: "New York", state: "NY" },
       ]
 
       const { getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={selections}
             onSelectionChange={mockOnSelectionChange}
             maxSelections={10}
@@ -343,11 +343,11 @@ describe("ZipCodeSearch", () => {
     })
 
     it("does not show city subtext for Unknown cities", () => {
-      const selections: ZipCodeSelection[] = [{ zipCode: "99999", cityName: "Unknown", state: "" }]
+      const selections: LocationSelection[] = [{ zipCode: "99999", cityName: "Unknown", state: "" }]
 
       const { getByText, queryByText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -358,14 +358,14 @@ describe("ZipCodeSearch", () => {
 
   describe("chip removal", () => {
     it("removes zip code when chip close button is pressed", () => {
-      const selections: ZipCodeSelection[] = [
+      const selections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
         { zipCode: "10001", cityName: "New York", state: "NY" },
       ]
 
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={selections} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -383,7 +383,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -409,7 +409,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -427,7 +427,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByLabelText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -441,7 +441,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
+          <LocationSearch selectedZipCodes={[]} onSelectionChange={mockOnSelectionChange} />
         </TestWrapper>,
       )
 
@@ -451,7 +451,7 @@ describe("ZipCodeSearch", () => {
 
   describe("custom maxSelections", () => {
     it("respects custom maxSelections value", () => {
-      const selections: ZipCodeSelection[] = [
+      const selections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
         { zipCode: "10001", cityName: "New York", state: "NY" },
         { zipCode: "33139", cityName: "Miami Beach", state: "FL" },
@@ -459,7 +459,7 @@ describe("ZipCodeSearch", () => {
 
       const { getByPlaceholderText, getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={selections}
             onSelectionChange={mockOnSelectionChange}
             maxSelections={3}
@@ -475,13 +475,13 @@ describe("ZipCodeSearch", () => {
     })
 
     it("shows correct count for custom maxSelections", () => {
-      const selections: ZipCodeSelection[] = [
+      const selections: LocationSelection[] = [
         { zipCode: "90210", cityName: "Beverly Hills", state: "CA" },
       ]
 
       const { getByText } = render(
         <TestWrapper>
-          <ZipCodeSearch
+          <LocationSearch
             selectedZipCodes={selections}
             onSelectionChange={mockOnSelectionChange}
             maxSelections={5}

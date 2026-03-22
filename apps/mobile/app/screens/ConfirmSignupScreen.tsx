@@ -85,10 +85,10 @@ export const ConfirmSignupScreen: FC<ConfirmSignupScreenProps> = ({ route, navig
           // Navigate back to Dashboard if we had a pending action
           navigation.navigate("Dashboard")
         } else {
-          // Navigate new users to onboarding to select zip codes
+          // Navigate new users to onboarding to select locations
           navigation.reset({
             index: 0,
-            routes: [{ name: "OnboardingZipCodes" }],
+            routes: [{ name: "OnboardingLocations" }],
           })
         }
       } catch {

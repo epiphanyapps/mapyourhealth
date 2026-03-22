@@ -15,7 +15,7 @@ import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
-import { createZipCodeSubscription } from "@/services/amplify/data"
+import { createUserSubscription } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
 
@@ -25,9 +25,9 @@ interface LocationSelection {
   country: string
 }
 
-interface OnboardingZipCodesScreenProps extends AppStackScreenProps<"OnboardingZipCodes"> {}
+interface OnboardingLocationsScreenProps extends AppStackScreenProps<"OnboardingLocations"> {}
 
-export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ navigation }) => {
+export const OnboardingLocationsScreen: FC<OnboardingLocationsScreenProps> = ({ navigation }) => {
   const [selectedLocations, setSelectedLocations] = useState<LocationSelection[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState("")
@@ -70,7 +70,7 @@ export const OnboardingZipCodesScreen: FC<OnboardingZipCodesScreenProps> = ({ na
 
     try {
       const promises = selectedLocations.map((selection) =>
-        createZipCodeSubscription(selection.city, selection.state, selection.country),
+        createUserSubscription(selection.city, selection.state, selection.country),
       )
 
       await Promise.all(promises)

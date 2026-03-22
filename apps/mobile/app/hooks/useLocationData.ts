@@ -1,5 +1,5 @@
 /**
- * useZipCodeData Hook
+ * useLocationData Hook
  *
  * Fetches zip code safety data from the Amplify backend via React Query.
  * Includes loading/error states, offline support, and falls back to cached/mock data.
@@ -25,19 +25,19 @@ import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/
 import { detectPostalCodeRegion } from "@/utils/postalCode"
 import { load, save, remove } from "@/utils/storage"
 
-/** Cache key prefix for zip code stats */
-const CACHE_KEY_PREFIX = "zipcode_stats_"
+/** Cache key prefix for location stats */
+const CACHE_KEY_PREFIX = "location_stats_"
 
 /** Cache duration in milliseconds (24 hours) */
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
 
 /** Interface for cached data structure */
-interface CachedZipCodeData {
+interface CachedLocationData {
   data: ZipCodeData
   cachedAt: number
 }
 
-interface UseZipCodeDataResult {
+interface UseLocationDataResult {
   /** The zip code data, or null if loading/error */
   zipData: ZipCodeData | null
   /** Whether data is currently being fetched */
@@ -102,9 +102,9 @@ function getCityStateForZipCode(zipCode: string): { cityName: string; state: str
 /**
  * Get cached data for a zip code from MMKV storage.
  */
-function getCachedData(zipCode: string): CachedZipCodeData | null {
+function getCachedData(zipCode: string): CachedLocationData | null {
   const cacheKey = `${CACHE_KEY_PREFIX}${zipCode}`
-  const cached = load<CachedZipCodeData>(cacheKey)
+  const cached = load<CachedLocationData>(cacheKey)
 
   if (!cached) return null
 
@@ -127,14 +127,14 @@ function setCachedData(zipCode: string, data: ZipCodeData): void {
 /**
  * Clear cached data for a specific zip code.
  */
-export function clearCachedZipCodeData(zipCode: string): void {
+export function clearCachedLocationData(zipCode: string): void {
   remove(`${CACHE_KEY_PREFIX}${zipCode}`)
 }
 
 /**
  * Hook to fetch zip code safety data with caching support
  */
-export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
+export function useLocationData(zipCode: string): UseLocationDataResult {
   const {
     contaminants,
     getThreshold,
@@ -257,7 +257,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
   }, [zipCode, isOffline, mapMeasurementToLegacyStat])
 
   const query = useQuery({
-    queryKey: queryKeys.measurements.byPostalCode(zipCode),
+    queryKey: queryKeys.measurements.byLocation(zipCode),
     queryFn,
     enabled: !!zipCode && !defsLoading,
     staleTime: 5 * 60 * 1000,
@@ -282,7 +282,7 @@ export function useZipCodeData(zipCode: string): UseZipCodeDataResult {
   const result = query.data
 
   const refresh = useCallback(async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.measurements.byPostalCode(zipCode) })
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(zipCode) })
   }, [qc, zipCode])
 
   // Determine error: use query error or warning from the result

@@ -21,7 +21,7 @@ import { useCategories } from "@/context/CategoriesContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { getZipCodeMetadata } from "@/data/helpers"
 import { StatCategory, StatStatus, ZipCodeData } from "@/data/types/safety"
-import { useZipCodeData, getWorstStatusForCategory } from "@/hooks/useZipCodeData"
+import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import { isValidPostalCode, normalizePostalCode } from "@/utils/postalCode"
@@ -112,12 +112,12 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
     zipData: zipData1,
     isLoading: isLoading1,
     error: error1,
-  } = useZipCodeData(activeZip1 ?? "")
+  } = useLocationData(activeZip1 ?? "")
   const {
     zipData: zipData2,
     isLoading: isLoading2,
     error: error2,
-  } = useZipCodeData(activeZip2 ?? "")
+  } = useLocationData(activeZip2 ?? "")
 
   // Handle search for zip code 1
   const handleSearch1 = useCallback(() => {

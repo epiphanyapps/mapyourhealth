@@ -28,7 +28,7 @@ import { useContaminants } from "@/context/ContaminantsContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
-import { useZipCodeData, getRiskStatsForCategory } from "@/hooks/useZipCodeData"
+import { useLocationData, getRiskStatsForCategory } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -52,7 +52,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
   // Fetch data for the passed city from Amplify (with caching and offline support)
   const { zipData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
-    useZipCodeData(city)
+    useLocationData(city)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
