@@ -377,6 +377,7 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
 
   if (missingVars.length > 0) {
     console.error(`Missing required env vars: ${missingVars.join(', ')}`);
+
     return {
       city: '',
       state: '',

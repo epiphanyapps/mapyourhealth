@@ -6,14 +6,13 @@
  */
 
 import { FC } from "react"
-import { Image, ImageStyle, TextStyle, View, ViewStyle } from "react-native"
+import { TextStyle, View, ViewStyle } from "react-native"
 
+import { AnimatedLogo } from "@/components/AnimatedLogo"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
-
-const appLogo = require("@assets/images/logo.png")
 
 interface ComingSoonScreenProps {}
 
@@ -23,7 +22,7 @@ export const ComingSoonScreen: FC<ComingSoonScreenProps> = function ComingSoonSc
   return (
     <Screen preset="fixed" safeAreaEdges={["top", "bottom"]} contentContainerStyle={themed($root)}>
       <View style={themed($topSection)}>
-        <Image source={appLogo} style={themed($logo)} resizeMode="contain" />
+        <AnimatedLogo size={140} style={themed($logo)} />
         <Text tx="comingSoonScreen:heading" preset="heading" style={themed($heading)} />
         <Text tx="comingSoonScreen:preparing" style={themed($preparing)} size="md" />
       </View>
@@ -48,9 +47,7 @@ const $topSection: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   paddingTop: spacing.xxl,
 })
 
-const $logo: ThemedStyle<ImageStyle> = ({ spacing }) => ({
-  width: 120,
-  height: 120,
+const $logo: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   marginBottom: spacing.lg,
 })
 
