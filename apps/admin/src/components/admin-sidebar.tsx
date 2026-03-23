@@ -36,6 +36,7 @@ import {
   Activity,
   Gauge,
   Eye,
+  Settings,
 } from "lucide-react";
 
 const menuItems = [
@@ -98,6 +99,11 @@ const menuItems = [
     title: "Guide",
     url: "/guide",
     icon: BookOpen,
+  },
+  {
+    title: "Settings",
+    url: "/settings",
+    icon: Settings,
   },
 ];
 

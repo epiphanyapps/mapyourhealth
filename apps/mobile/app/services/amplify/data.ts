@@ -789,6 +789,42 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
 }
 
 // =============================================================================
+// App Configuration
+// =============================================================================
+
+export type AmplifyAppConfig = Schema["AppConfig"]["type"]
+
+/**
+ * Fetch app config by key using GSI
+ */
+export async function getAppConfig(
+  configKey: string,
+): Promise<AmplifyAppConfig | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.AppConfig.listAppConfigByConfigKey({
+    configKey,
+  })
+  if (errors) {
+    console.error("Error fetching app config:", errors)
+    return null
+  }
+  return data[0] ?? null
+}
+
+/**
+ * Fetch all app config entries
+ */
+export async function getAllAppConfig(): Promise<AmplifyAppConfig[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.AppConfig.list({ limit: 100 })
+  if (errors) {
+    console.error("Error fetching app configs:", errors)
+    return []
+  }
+  return data
+}
+
+// =============================================================================
 // Location Resolution (Backend Proxy)
 // =============================================================================
 

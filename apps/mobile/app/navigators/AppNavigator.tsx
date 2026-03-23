@@ -11,6 +11,8 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
+import { useAppConfig } from "@/hooks/useAppConfig"
+import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
@@ -46,18 +48,25 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
   const { isLoading, isAuthenticated } = useAuth()
+  const { isEnabled: comingSoonGateEnabled, isLoading: configLoading } =
+    useAppConfig("comingSoonGate")
 
   const {
     theme: { colors },
   } = useAppTheme()
 
-  // Show loading screen while checking auth state
-  if (isLoading) {
+  // Show loading screen while checking auth state or config
+  if (isLoading || configLoading) {
     return (
       <View style={[$loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.tint} />
       </View>
     )
+  }
+
+  // Coming Soon gate: show gate screen for unauthenticated users when enabled by admin
+  if (comingSoonGateEnabled && !isAuthenticated) {
+    return <ComingSoonScreen />
   }
 
   return (

@@ -430,6 +430,26 @@ const schema = a.schema({
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ]),
 
+  /**
+   * AppConfig - Admin-manageable application configuration
+   * Used for feature flags, gate toggles, and app-wide settings
+   * Public read, admin write
+   */
+  AppConfig: a
+    .model({
+      configKey: a.string().required(),
+      isEnabled: a.boolean().default(false),
+      value: a.string(), // JSON string for flexible config data
+      description: a.string(),
+      updatedBy: a.string(),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("configKey")]),
+
   // =========================================================================
   // Observations & Measurements (O&M) Data Model
   // Flexible system for tracking various environmental/health properties
