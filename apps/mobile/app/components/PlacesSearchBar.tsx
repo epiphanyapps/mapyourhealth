@@ -2,10 +2,12 @@
  * PlacesSearchBar
  *
  * A search bar component for city and location search.
+ * Uses Google Places API as the primary search mechanism.
  *
  * Features:
- * - City/state/county autocomplete search
+ * - Google Places autocomplete via backend proxy
  * - Location button for GPS-based lookup
+ * - Resolves places to city/state/country with jurisdiction and data availability
  */
 
 import { useCallback, useState } from "react"
@@ -85,9 +87,6 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   // Track whether user is actively editing (to hide selected location display)
   const [isEditing, setIsEditing] = useState(false)
-  // Track state drill-down mode: when a state is selected, show its cities
-  const [selectedStateName, setSelectedStateName] = useState<string | null>(null)
-  const [stateCities, setStateCities] = useState<SearchSuggestion[]>([])
 
   // Display value: show input when editing, otherwise show selected location
   const displayValue = isEditing
@@ -96,18 +95,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       ? `${selectedLocation.city}, ${selectedLocation.state}`
       : ""
 
-  const {
-    suggestions,
-    isSearching,
-    search,
-    clearSuggestions,
-    resolveAddressToNearestCity,
-    getCitiesForState,
-    error,
-  } = useLocationSearch()
-
-  // Determine which suggestions to show: state cities or normal search results
-  const activeSuggestions = selectedStateName ? stateCities : suggestions
+  const { suggestions, isSearching, search, clearSuggestions, resolvePlace, error } =
+    useLocationSearch()
 
   /**
    * Handle text input changes
@@ -116,11 +105,6 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     (text: string) => {
       setIsEditing(true)
       setInputValue(text)
-      // Exit state drill-down mode when user types
-      if (selectedStateName) {
-        setSelectedStateName(null)
-        setStateCities([])
-      }
       if (text.trim().length >= 2) {
         setShowSuggestions(true)
         search(text)
@@ -129,51 +113,22 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         clearSuggestions()
       }
     },
-    [search, clearSuggestions, selectedStateName],
+    [search, clearSuggestions],
   )
-
-  /**
-   * Handle back button press in state drill-down mode
-   */
-  const handleStateBackPress = useCallback(() => {
-    setSelectedStateName(null)
-    setStateCities([])
-    // Restore normal search suggestions if there's input
-    if (inputValue.trim().length >= 2) {
-      search(inputValue)
-    }
-  }, [inputValue, search])
 
   const handleSuggestionSelect = useCallback(
     async (suggestion: SearchSuggestion) => {
-      // When a state is selected, show its cities instead of navigating
-      if (suggestion.type === "state" && suggestion.state) {
-        const cities = getCitiesForState(suggestion.state)
-        setSelectedStateName(suggestion.displayText)
-        setStateCities(cities)
-        setShowSuggestions(true)
-        clearSuggestions()
-        return
-      }
-
       setShowSuggestions(false)
       clearSuggestions()
-      setSelectedStateName(null)
-      setStateCities([])
       // Exit editing mode - the selected location will be shown via displayValue
       setIsEditing(false)
       setInputValue("")
 
-      if (suggestion.type === "address" && suggestion.placeId) {
-        // Use placeId to resolve address to nearest city in our database
-        const nearest = await resolveAddressToNearestCity(suggestion.placeId)
-        if (nearest) {
-          // Use the actual city/state from Google (e.g., "Bayville, NY") for display,
-          // falling back to the nearest DB city if address_components weren't available
-          const displayCity = nearest.actualCity || nearest.city
-          const displayState = nearest.actualState || nearest.state
-          const displayCountry = nearest.actualCountry || nearest.country
-          onLocationSelect(displayCity, displayState, displayCountry, suggestion.displayText)
+      if (suggestion.placeId) {
+        // Resolve the Google Places result to city/state/country
+        const resolved = await resolvePlace(suggestion.placeId)
+        if (resolved) {
+          onLocationSelect(resolved.city, resolved.state, resolved.country, suggestion.displayText)
         } else {
           // Resolution failed — re-enter editing so user can retry
           setIsEditing(true)
@@ -182,14 +137,15 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         return
       }
 
+      // Fallback for suggestions that already have city/state/country
       if (suggestion.city && suggestion.state && suggestion.country) {
         onLocationSelect(suggestion.city, suggestion.state, suggestion.country)
       } else if (suggestion.state && suggestion.country) {
-        // State-level selection - use state as city placeholder
+        // State-level selection
         onLocationSelect("", suggestion.state, suggestion.country)
       }
     },
-    [onLocationSelect, clearSuggestions, resolveAddressToNearestCity, getCitiesForState],
+    [onLocationSelect, clearSuggestions, resolvePlace],
   )
 
   /**
@@ -208,8 +164,6 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const handleDismiss = useCallback(() => {
     setShowSuggestions(false)
     clearSuggestions()
-    setSelectedStateName(null)
-    setStateCities([])
   }, [clearSuggestions])
 
   // Styles
@@ -313,14 +267,12 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         )}
       </View>
       <SearchSuggestionsDropdown
-        suggestions={activeSuggestions}
-        visible={showSuggestions || !!selectedStateName}
+        suggestions={suggestions}
+        visible={showSuggestions}
         onSelect={handleSuggestionSelect}
         onDismiss={handleDismiss}
-        isLoading={isSearching && !selectedStateName}
-        error={selectedStateName ? null : error}
-        headerText={selectedStateName ? `Cities in ${selectedStateName}` : null}
-        onBackPress={handleStateBackPress}
+        isLoading={isSearching}
+        error={error}
       />
     </View>
   )

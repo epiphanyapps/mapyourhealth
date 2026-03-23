@@ -778,12 +778,6 @@ export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
 /** @deprecated Use AmplifyContaminant instead */
 export type StatDefinition = Schema["Contaminant"]["type"]
 
-/** @deprecated Use AmplifyLocationMeasurement instead */
-export type ZipCodeStat = Schema["LocationMeasurement"]["type"]
-
-/** @deprecated Use AmplifyUserSubscription instead */
-export type ZipCodeSubscription = Schema["UserSubscription"]["type"]
-
 /** @deprecated Use AmplifyHazardReport instead */
 export type HazardReport = Schema["HazardReport"]["type"]
 
@@ -792,31 +786,117 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
   return getContaminants()
 }
 
-/** @deprecated Use getLocationMeasurements instead */
-export async function getZipCodeStats(city: string): Promise<AmplifyLocationMeasurement[]> {
-  return getLocationMeasurements(city)
-}
+// =============================================================================
+// App Configuration
+// =============================================================================
 
-/** @deprecated Use createUserSubscription instead */
-export async function createZipCodeSubscription(
-  city: string,
-  state: string,
-  country: string,
-  options?: { notifyWhenDataAvailable?: boolean },
-): Promise<AmplifyUserSubscription> {
-  return createUserSubscription(city, state, country, undefined, {
-    notifyWhenDataAvailable: options?.notifyWhenDataAvailable,
+export type AmplifyAppConfig = Schema["AppConfig"]["type"]
+
+/**
+ * Fetch app config by key using GSI
+ */
+export async function getAppConfig(configKey: string): Promise<AmplifyAppConfig | null> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.AppConfig.listAppConfigByConfigKey({
+    configKey,
   })
+  if (errors) {
+    console.error("Error fetching app config:", errors)
+    return null
+  }
+  return data[0] ?? null
 }
 
-/** @deprecated Use deleteUserSubscription instead */
-export async function deleteZipCodeSubscription(id: string): Promise<void> {
-  return deleteUserSubscription(id)
+/**
+ * Fetch all app config entries
+ */
+export async function getAllAppConfig(): Promise<AmplifyAppConfig[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.AppConfig.list({ limit: 100 })
+  if (errors) {
+    console.error("Error fetching app configs:", errors)
+    return []
+  }
+  return data
 }
 
-/** @deprecated Use getUserSubscriptions instead */
-export async function getUserZipCodeSubscriptions(): Promise<AmplifyUserSubscription[]> {
-  return getUserSubscriptions()
+// =============================================================================
+// Location Resolution (Backend Proxy)
+// =============================================================================
+
+/**
+ * Response from resolveLocation mutation
+ */
+export interface ResolveLocationResponse {
+  city: string
+  state: string
+  country: string
+  county?: string | null
+  jurisdictionCode: string
+  latitude?: number | null
+  longitude?: number | null
+  hasData: boolean
+  isNew: boolean
+  error?: string | null
+}
+
+/**
+ * Resolve a Google Places placeId to a city/state/country with jurisdiction assignment.
+ * Auto-creates a Location record in DynamoDB if one doesn't exist.
+ * Returns data availability status.
+ */
+export async function resolveLocationByPlaceId(
+  placeId: string,
+  sessionToken?: string,
+): Promise<ResolveLocationResponse> {
+  const client = await getPublicClient()
+
+  // Try the new resolveLocation mutation first
+  try {
+    if (typeof client.mutations.resolveLocation === "function") {
+      const { data, errors } = await client.mutations.resolveLocation({
+        placeId,
+        sessionToken,
+      })
+
+      if (errors) {
+        console.error("Error resolving location:", errors)
+        // Fall through to fallback
+      } else if (data) {
+        return data as ResolveLocationResponse
+      }
+    }
+  } catch (e) {
+    console.warn("resolveLocation mutation not available, using fallback:", e)
+  }
+
+  // Fallback: use existing getPlaceDetails (works before backend is deployed)
+  const details = await getPlaceDetails(placeId, sessionToken)
+  if (!details) {
+    return {
+      city: "",
+      state: "",
+      country: "",
+      jurisdictionCode: "WHO",
+      hasData: false,
+      isNew: false,
+      error: "Could not resolve place details",
+    }
+  }
+
+  const city = details.city || ""
+  const state = details.state || ""
+  const country = details.country || ""
+  const jurisdictionCode = state && country ? `${country}-${state}` : country || "WHO"
+
+  return {
+    city,
+    state,
+    country,
+    jurisdictionCode,
+    hasData: false,
+    isNew: false,
+  }
 }
 
 // =============================================================================

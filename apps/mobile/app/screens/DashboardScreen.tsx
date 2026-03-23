@@ -24,7 +24,6 @@ import { LocationHeader } from "@/components/LocationHeader"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { ProfileMenu } from "@/components/ProfileMenu"
-import { RecommendationsSection } from "@/components/RecommendationsSection"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
@@ -37,11 +36,11 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
+import { useLocationData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
-import { useZipCodeData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useZipCodeData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
-import { getJurisdictionForState } from "@/utils/jurisdiction"
+// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 // postalCode utilities removed - using city-level granularity
 
 /** Orange color for WHO-only exceedances */
@@ -89,7 +88,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
-  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
+    useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const { getLocationZipCode, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
@@ -142,7 +142,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       return {
         city: route.params.city,
         state: route.params.state,
-        country: route.params.country || "US",
+        country: route.params.country || "",
         searchedAddress: route.params.address,
       }
     }
@@ -150,10 +150,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   }, [route.params?.city, route.params?.state, route.params?.country, route.params?.address])
 
   // Fetch data for current location from Amplify (with caching and offline support)
-  const locationData = useZipCodeData(currentLocation?.city || "")
+  const locationData = useLocationData(currentLocation?.city || "")
 
   const {
-    zipData,
+    cityData,
     isLoading,
     error,
     isMockData = false,
@@ -179,29 +179,29 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Get the worst status for each category
   const getStatusForCategory = useCallback(
     (category: StatCategory) => {
-      if (!zipData) return "safe" as const
-      return getWorstStatusForCategory(zipData, category, statDefinitions)
+      if (!cityData) return "safe" as const
+      return getWorstStatusForCategory(cityData, category, statDefinitions)
     },
-    [zipData, statDefinitions],
+    [cityData, statDefinitions],
   )
 
   // Determine the jurisdiction code for the current location
   const currentJurisdictionCode = useMemo(() => {
     if (!currentLocation) return "WHO"
-    return getJurisdictionForState(currentLocation.state, currentLocation.country)
-  }, [currentLocation])
+    return getJurisdictionForLocation(currentLocation.state, currentLocation.country)?.code || "WHO"
+  }, [currentLocation, getJurisdictionForLocation])
 
   // Get sub-category status with WHO-vs-national color coding
   const getSubCategoryStatusForCategory = useCallback(
     (subCategoryId: string): SubCategoryStatusResult => {
-      if (!zipData) return { status: "safe" }
+      if (!cityData) return { status: "safe" }
 
       // Find contaminants that belong to this sub-category
       const subCategoryContaminants = contaminants.filter((c) => c.category === subCategoryId)
       const subCategoryContaminantIds = new Set(subCategoryContaminants.map((c) => c.id))
 
       // Filter measurements for this sub-category
-      const relevantStats = zipData.stats.filter((stat) =>
+      const relevantStats = cityData.stats.filter((stat) =>
         subCategoryContaminantIds.has(stat.statId),
       )
 
@@ -259,7 +259,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
       return { status: "safe" }
     },
-    [zipData, contaminants, getThreshold, getWHOThreshold, currentJurisdictionCode],
+    [cityData, contaminants, getThreshold, getWHOThreshold, currentJurisdictionCode],
   )
 
   // Categories to display (water and air only - health and disaster removed per issue #126)
@@ -287,7 +287,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "US" } }],
+          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "" } }],
         }),
       )
     }
@@ -390,7 +390,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   // Handle Share button press - share risk data (only categories with risks)
   const handleShare = useCallback(async () => {
-    if (!zipData) return
+    if (!cityData) return
 
     // Build risk summary - only include categories with warning or danger status
     const categoryRisks = categories
@@ -426,7 +426,7 @@ View details: ${shareUrl}`
       // User cancelled or share failed - no need to show error
       console.log("Share cancelled or failed:", error)
     }
-  }, [zipData, categories, getStatusForCategory, getCategoryDisplayName, currentLocation])
+  }, [cityData, categories, getStatusForCategory, getCategoryDisplayName, currentLocation])
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
@@ -525,7 +525,7 @@ View details: ${shareUrl}`
   }
 
   // Get alert stats (danger/warning) for the warning banner
-  const alertStats = zipData ? getAlertStats(zipData, statDefinitions) : []
+  const alertStats = cityData ? getAlertStats(cityData, statDefinitions) : []
   // Show the first danger stat, or first warning if no danger
   const priorityAlert = alertStats.find((a) => a.stat.status === "danger") ?? alertStats[0]
 
@@ -624,7 +624,7 @@ View details: ${shareUrl}`
   }
 
   // Error state with retry
-  if (error && !zipData) {
+  if (error && !cityData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
         <NavHeader
@@ -672,7 +672,7 @@ View details: ${shareUrl}`
   }
 
   // No data state - zip code exists but no safety data available yet
-  if (!zipData) {
+  if (!cityData) {
     return (
       <Screen preset="scroll" safeAreaEdges={["top"]} contentContainerStyle={$contentContainer}>
         <NavHeader
@@ -879,7 +879,7 @@ View details: ${shareUrl}`
                 category: mapToStatCategory(priorityAlert.definition.category),
                 city: currentLocation?.city || "",
                 state: currentLocation?.state || "",
-                country: currentLocation?.country || "US",
+                country: currentLocation?.country || "",
               })
             }}
           />
@@ -901,7 +901,7 @@ View details: ${shareUrl}`
                   category,
                   city: currentLocation?.city || "",
                   state: currentLocation?.state || "",
-                  country: currentLocation?.country || "US",
+                  country: currentLocation?.country || "",
                   subCategoryId,
                 })
               }}
@@ -916,14 +916,15 @@ View details: ${shareUrl}`
           heading="Environmental Health"
           content="View radon zones, disease endemic status, and other environmental health observations for this area."
           onPress={() => {
-            const jurisdictionCode = getJurisdictionForState(
-              currentLocation?.state || "",
-              currentLocation?.country || "US",
-            )
+            const jurisdictionCode =
+              getJurisdictionForLocation(
+                currentLocation?.state || "",
+                currentLocation?.country || "",
+              )?.code || "WHO"
             navigation.navigate("LocationObservations", {
               city: currentLocation?.city || "",
               state: currentLocation?.state || "",
-              country: currentLocation?.country || "US",
+              country: currentLocation?.country || "",
               jurisdictionCode,
             })
           }}
@@ -939,9 +940,6 @@ View details: ${shareUrl}`
           }
         />
       </View>
-
-      {/* Recommendations Section */}
-      {zipData && <RecommendationsSection zipData={zipData} />}
 
       {/* Report Hazard Button */}
       <Pressable

@@ -131,6 +131,12 @@ const fr: Translations = {
     },
   },
 
+  warningBanner: {
+    critical: "ALERTE CRITIQUE",
+    warning: "AVERTISSEMENT",
+    info: "AVIS",
+  },
+
   ...demoFr,
 }
 

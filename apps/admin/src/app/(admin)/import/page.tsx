@@ -83,9 +83,9 @@ const CSV_TEMPLATES: Record<
 > = {
   water: {
     example: `city,state,country,contaminantId,value,source
-Beverly Hills,CA,US,nitrate,12500,EPA
-Beverly Hills,CA,US,lead,8.2,Local Lab
-New York,NY,US,arsenic,5.5,EPA`,
+Beverly Hills,CA,US,nitrate,8500,EPA
+Beverly Hills,CA,US,lead,4.2,Local Lab
+New York,NY,US,arsenic,3.1,EPA`,
     fields: [
       "city",
       "state",
@@ -97,9 +97,9 @@ New York,NY,US,arsenic,5.5,EPA`,
   },
   air: {
     example: `city,state,country,contaminantId,value,source
-Beverly Hills,CA,US,radon,4.2,EPA
-New York,NY,US,radon,2.1,State Survey
-Montreal,QC,CA,radon,3.8,Health Canada`,
+Beverly Hills,CA,US,radon,2.8,EPA
+New York,NY,US,radon,1.5,State Survey
+Montreal,QC,CA,radon,3.2,Health Canada`,
     fields: [
       "city",
       "state",
@@ -473,6 +473,7 @@ export default function ImportPage() {
           toast.info("Subscribers will be notified automatically");
         }
         setPreviewData([]);
+        setSilentImport(false);
       } else {
         toast.warning(
           `Imported ${result.success} rows, ${result.failed} failed`,

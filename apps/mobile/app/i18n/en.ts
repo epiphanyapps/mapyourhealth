@@ -128,6 +128,12 @@ const en = {
     },
   },
 
+  warningBanner: {
+    critical: "CRITICAL ALERT",
+    warning: "SPECIAL WARNING",
+    info: "NOTICE",
+  },
+
   ...demoEn,
 }
 

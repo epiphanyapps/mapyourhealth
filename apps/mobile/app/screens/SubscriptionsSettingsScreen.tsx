@@ -25,10 +25,10 @@ import { SubscriptionCard } from "@/components/SubscriptionCard"
 import { Text } from "@/components/Text"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import {
-  getUserZipCodeSubscriptions,
-  createZipCodeSubscription,
-  deleteZipCodeSubscription,
-  ZipCodeSubscription,
+  getUserSubscriptions,
+  createUserSubscription,
+  deleteUserSubscription,
+  type AmplifyUserSubscription,
 } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import type { ThemedStyle } from "@/theme/types"
@@ -40,7 +40,7 @@ interface SubscriptionsSettingsScreenProps extends AppStackScreenProps<"Subscrip
 export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> = ({
   navigation,
 }) => {
-  const [subscriptions, setSubscriptions] = useState<ZipCodeSubscription[]>([])
+  const [subscriptions, setSubscriptions] = useState<AmplifyUserSubscription[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -59,7 +59,7 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
     setIsLoading(true)
     setError("")
     try {
-      const data = await getUserZipCodeSubscriptions()
+      const data = await getUserSubscriptions()
       setSubscriptions(data)
     } catch (err) {
       console.error("Error loading subscriptions:", err)
@@ -79,7 +79,7 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
   const handleDelete = useCallback(async (id: string) => {
     setDeletingId(id)
     try {
-      await deleteZipCodeSubscription(id)
+      await deleteUserSubscription(id)
       setSubscriptions((prev) => prev.filter((s) => s.id !== id))
     } catch (err) {
       console.error("Error deleting subscription:", err)
@@ -117,7 +117,7 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
     setIsSaving(true)
     try {
       const promises = newSelections.map((selection) =>
-        createZipCodeSubscription(selection.city, selection.state, selection.country),
+        createUserSubscription(selection.city, selection.state, selection.country),
       )
       const newSubs = await Promise.all(promises)
       setSubscriptions((prev) => [...prev, ...newSubs])
@@ -208,7 +208,7 @@ export const SubscriptionsSettingsScreen: FC<SubscriptionsSettingsScreenProps> =
     flex: 1,
   }
 
-  const renderSubscription = ({ item }: { item: ZipCodeSubscription }) => (
+  const renderSubscription = ({ item }: { item: AmplifyUserSubscription }) => (
     <SubscriptionCard
       city={item.city}
       state={item.state}

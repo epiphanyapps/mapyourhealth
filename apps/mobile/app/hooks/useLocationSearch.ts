@@ -1,21 +1,22 @@
 /**
  * useLocationSearch Hook
  *
- * Provides city/state/county search with autocomplete suggestions.
- * Uses React Query to fetch all locations once on mount, then performs client-side filtering.
- * Google Places autocomplete is proxied through the backend to keep API keys secure.
+ * Provides location search with autocomplete suggestions powered by Google Places API.
+ * All queries are routed through the backend proxy to keep API keys secure.
+ * When a location is selected, it is resolved via the resolveLocation mutation which:
+ * - Extracts city/state/country from Google Places address_components
+ * - Auto-assigns jurisdiction from the Jurisdiction table
+ * - Caches the location in DynamoDB
+ * - Checks data availability
  */
 
-import { useState, useCallback, useRef, useMemo, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useState, useCallback, useRef, useEffect } from "react"
 
 import { SearchSuggestion } from "@/data/types/safety"
-import { queryKeys } from "@/lib/queryKeys"
 import {
-  getAllLocations,
-  AmplifyLocation,
   getPlacesAutocomplete,
-  getPlaceDetails,
+  resolveLocationByPlaceId,
+  ResolveLocationResponse,
 } from "@/services/amplify/data"
 
 /** Debounce delay for search in milliseconds */
@@ -30,47 +31,19 @@ const MAX_SUGGESTIONS = 10
 /** Timeout for network requests in milliseconds */
 const FETCH_TIMEOUT_MS = 10000
 
-/** Haversine distance in km between two lat/lng points */
-function haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371
-  const dLat = ((lat2 - lat1) * Math.PI) / 180
-  const dLon = ((lon2 - lon1) * Math.PI) / 180
-  const a =
-    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-    Math.cos((lat1 * Math.PI) / 180) *
-      Math.cos((lat2 * Math.PI) / 180) *
-      Math.sin(dLon / 2) *
-      Math.sin(dLon / 2)
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
-  return R * c
-}
-
-/** Check if a query looks like an address (contains numbers or is long-ish) */
-function looksLikeAddress(query: string): boolean {
-  return /\d/.test(query) || query.length > 20
-}
-
 /** Generate a unique session token for Google Places API billing optimization */
 function generateSessionToken(): string {
   return `${Date.now()}-${Math.random().toString(36).substring(2, 15)}`
 }
 
-interface GroupedLocation {
+export interface ResolvedLocation {
   city: string
   state: string
   country: string
-  county?: string
-}
-
-interface NearestCityResult {
-  city: string
-  state: string
-  country: string
-  county?: string
-  distanceKm: number
-  actualCity?: string
-  actualState?: string
-  actualCountry?: string
+  county?: string | null
+  jurisdictionCode: string
+  hasData: boolean
+  isNew: boolean
 }
 
 interface UseLocationSearchResult {
@@ -78,33 +51,50 @@ interface UseLocationSearchResult {
   suggestions: SearchSuggestion[]
   /** Whether a search is in progress */
   isSearching: boolean
-  /** Whether locations are still loading */
+  /** Whether locations are still loading (kept for backward compat, always false) */
   isLoading: boolean
-  /** Error message if locations failed to load */
+  /** Error message if search failed */
   error: string | null
   /** Trigger a search with the given query */
   search: (query: string) => void
   /** Clear all suggestions */
   clearSuggestions: () => void
-  /** Resolve a Google Places suggestion to the nearest city in our database */
-  resolveAddressToNearestCity: (placeId: string) => Promise<NearestCityResult | null>
-  /** Get city suggestions for a given state code */
+  /** Resolve a Google Places placeId to a location with jurisdiction and data availability */
+  resolvePlace: (placeId: string) => Promise<ResolvedLocation | null>
+  /**
+   * @deprecated No longer supported — Google Places is the primary search.
+   * Returns empty array for backward compatibility.
+   */
   getCitiesForState: (stateCode: string) => SearchSuggestion[]
+  /**
+   * @deprecated Use resolvePlace instead.
+   * Kept for backward compatibility — delegates to resolvePlace internally.
+   */
+  resolveAddressToNearestCity: (placeId: string) => Promise<{
+    city: string
+    state: string
+    country: string
+    county?: string
+    distanceKm: number
+    actualCity?: string
+    actualState?: string
+    actualCountry?: string
+  } | null>
 }
 
 /**
- * Hook to search locations with autocomplete
+ * Hook to search locations with Google Places autocomplete
  *
  * @returns Search state and functions
  *
  * @example
- * const { suggestions, isSearching, search, clearSuggestions } = useLocationSearch()
+ * const { suggestions, isSearching, search, clearSuggestions, resolvePlace } = useLocationSearch()
  *
  * // On text change
  * search(text)
  *
  * // On selection
- * clearSuggestions()
+ * const resolved = await resolvePlace(suggestion.placeId)
  */
 export function useLocationSearch(): UseLocationSearchResult {
   const [suggestions, setSuggestions] = useState<SearchSuggestion[]>([])
@@ -115,96 +105,6 @@ export function useLocationSearch(): UseLocationSearchResult {
   const sessionTokenRef = useRef<string>(generateSessionToken())
   // Track request ID to ignore stale errors from previous searches
   const searchRequestIdRef = useRef<number>(0)
-
-  // Fetch all locations with React Query (cached globally)
-  const {
-    data: locations = [],
-    isLoading,
-    error: queryError,
-  } = useQuery<AmplifyLocation[], Error>({
-    queryKey: queryKeys.locations.list(),
-    queryFn: getAllLocations,
-    staleTime: 60 * 60 * 1000, // 1 hour - locations rarely change
-    gcTime: 24 * 60 * 60 * 1000, // Keep in cache for 24h
-  })
-
-  const error = searchError ?? (queryError ? "Failed to load search data" : null)
-
-  // Group locations by city and state for efficient lookup
-  const groupedByCityState = useMemo(() => {
-    const groups = new Map<string, GroupedLocation>()
-
-    for (const loc of locations) {
-      if (!loc.city || !loc.state) continue
-
-      const key = `${loc.city.toLowerCase()}|${loc.state.toLowerCase()}`
-      if (!groups.has(key)) {
-        groups.set(key, {
-          city: loc.city,
-          state: loc.state,
-          country: loc.country || "US",
-          county: (loc as any).county ?? undefined,
-        })
-      }
-    }
-
-    return Array.from(groups.values())
-  }, [locations])
-
-  // Group locations by state only
-  const groupedByState = useMemo(() => {
-    const groups = new Map<string, { state: string; country: string }>()
-
-    for (const loc of locations) {
-      if (!loc.state) continue
-
-      const key = loc.state.toLowerCase()
-      if (!groups.has(key)) {
-        groups.set(key, {
-          state: loc.state,
-          country: loc.country || "US",
-        })
-      }
-    }
-
-    return Array.from(groups.values())
-  }, [locations])
-
-  // Find the nearest city in our database to a given lat/lng
-  const findNearestCity = useCallback(
-    (lat: number, lng: number): NearestCityResult | null => {
-      let nearest: GroupedLocation | null = null
-      let nearestDist = Infinity
-
-      for (const loc of groupedByCityState) {
-        // We need locations with coordinates from the raw data
-        const rawLoc = locations.find(
-          (l) =>
-            l.city?.toLowerCase() === loc.city.toLowerCase() &&
-            l.state?.toLowerCase() === loc.state.toLowerCase(),
-        )
-        const locLat = rawLoc?.latitude ?? (rawLoc as any)?.lat
-        const locLng = rawLoc?.longitude ?? (rawLoc as any)?.lng
-        if (locLat == null || locLng == null) continue
-
-        const dist = haversineDistance(lat, lng, locLat, locLng)
-        if (dist < nearestDist) {
-          nearestDist = dist
-          nearest = loc
-        }
-      }
-
-      if (!nearest) return null
-      return {
-        city: nearest.city,
-        state: nearest.state,
-        country: nearest.country,
-        county: nearest.county,
-        distanceKm: nearestDist,
-      }
-    },
-    [groupedByCityState, locations],
-  )
 
   // Fetch Google Places autocomplete suggestions via backend proxy
   const fetchPlacesSuggestions = useCallback(
@@ -229,15 +129,14 @@ export function useLocationSearch(): UseLocationSearchResult {
 
         if (data.status !== "OK" || !data.predictions) return []
 
-        return data.predictions.slice(0, 5).map((prediction) => ({
+        return data.predictions.slice(0, MAX_SUGGESTIONS).map((prediction) => ({
           type: "address" as const,
           displayText: prediction.main_text || prediction.description,
-          secondaryText: prediction.secondary_text || "Google Places result",
+          secondaryText: prediction.secondary_text || "",
           placeId: prediction.place_id,
         }))
       } catch (err) {
         console.error("[Places] Error:", err)
-        // Only set error if this is still the current request (not stale)
         if (err instanceof Error && err.message === "timeout") {
           if (requestId === searchRequestIdRef.current) {
             setSearchError("Search is taking too long. Please try again.")
@@ -249,38 +148,7 @@ export function useLocationSearch(): UseLocationSearchResult {
     [],
   )
 
-  // Resolve a Google Places placeId to the nearest city in our database via backend proxy
-  const resolveAddressToNearestCity = useCallback(
-    async (placeId: string): Promise<NearestCityResult | null> => {
-      try {
-        const location = await getPlaceDetails(placeId, sessionTokenRef.current)
-
-        if (!location) return null
-
-        const { lat, lng } = location
-        const nearest = findNearestCity(lat, lng)
-
-        // Regenerate session token after completing a search session
-        sessionTokenRef.current = generateSessionToken()
-
-        if (!nearest) return null
-
-        // Attach the actual city/state/country from Google Places address_components
-        return {
-          ...nearest,
-          actualCity: location.city,
-          actualState: location.state,
-          actualCountry: location.country,
-        }
-      } catch (error) {
-        console.error("[Places] Error resolving address:", error)
-        return null
-      }
-    },
-    [findNearestCity],
-  )
-
-  // Perform the actual search (local + optional Google Places fallback)
+  // Perform the search — Google Places is the primary (and only) search mechanism
   const performSearch = useCallback(
     async (query: string) => {
       const trimmedQuery = query.trim()
@@ -300,91 +168,19 @@ export function useLocationSearch(): UseLocationSearchResult {
       setSearchError(null)
 
       try {
-        const results: SearchSuggestion[] = []
-        const queryLower = trimmedQuery.toLowerCase()
+        const results = await fetchPlacesSuggestions(trimmedQuery, currentRequestId)
 
-        // Search cities (partial match at start of city name)
-        const matchingCities = groupedByCityState.filter((group) =>
-          group.city.toLowerCase().startsWith(queryLower),
-        )
-
-        // Sort by relevance (exact matches first, then alphabetically)
-        matchingCities.sort((a, b) => {
-          const aExact = a.city.toLowerCase() === queryLower
-          const bExact = b.city.toLowerCase() === queryLower
-          if (aExact && !bExact) return -1
-          if (!aExact && bExact) return 1
-          return a.city.localeCompare(b.city)
-        })
-
-        for (const city of matchingCities.slice(0, MAX_SUGGESTIONS)) {
-          results.push({
-            type: "city",
-            displayText: `${city.city}, ${city.state}`,
-            secondaryText: city.county
-              ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
-              : city.country === "CA"
-                ? "Canada"
-                : "United States",
-            city: city.city,
-            state: city.state,
-            country: city.country,
-            county: city.county,
-          })
+        // Only update if this is still the current request
+        if (currentRequestId === searchRequestIdRef.current) {
+          setSuggestions(results)
         }
-
-        // Search states (if we have room for more suggestions)
-        if (results.length < MAX_SUGGESTIONS) {
-          const matchingStates = groupedByState.filter(
-            (group) =>
-              group.state.toLowerCase().startsWith(queryLower) ||
-              group.state.toLowerCase() === queryLower,
-          )
-
-          matchingStates.sort((a, b) => {
-            const aExact = a.state.toLowerCase() === queryLower
-            const bExact = b.state.toLowerCase() === queryLower
-            if (aExact && !bExact) return -1
-            if (!aExact && bExact) return 1
-            return a.state.localeCompare(b.state)
-          })
-
-          for (const state of matchingStates.slice(0, MAX_SUGGESTIONS - results.length)) {
-            const alreadyHasStateCity = results.some(
-              (r) => r.type === "city" && r.state === state.state,
-            )
-            if (alreadyHasStateCity) continue
-
-            results.push({
-              type: "state",
-              displayText: state.state,
-              secondaryText: state.country === "CA" ? "Canada" : "United States",
-              state: state.state,
-              country: state.country,
-            })
-          }
-        }
-
-        // If few local results and query looks like an address, try Google Places
-        console.log(
-          "[Search] results:",
-          results.length,
-          "looksLikeAddress:",
-          looksLikeAddress(trimmedQuery),
-        )
-        if (results.length < 3 && looksLikeAddress(trimmedQuery)) {
-          console.log("[Search] Triggering Google Places search for:", trimmedQuery)
-          const placesResults = await fetchPlacesSuggestions(trimmedQuery, currentRequestId)
-          const remaining = MAX_SUGGESTIONS - results.length
-          results.push(...placesResults.slice(0, remaining))
-        }
-
-        setSuggestions(results.slice(0, MAX_SUGGESTIONS))
       } finally {
-        setIsSearching(false)
+        if (currentRequestId === searchRequestIdRef.current) {
+          setIsSearching(false)
+        }
       }
     },
-    [groupedByCityState, groupedByState, fetchPlacesSuggestions],
+    [fetchPlacesSuggestions],
   )
 
   // Debounced search function
@@ -422,33 +218,65 @@ export function useLocationSearch(): UseLocationSearchResult {
     }
   }, [])
 
-  // Get all cities for a given state code
-  const getCitiesForState = useCallback(
-    (stateCode: string): SearchSuggestion[] => {
-      const stateLower = stateCode.toLowerCase()
-      const cities = groupedByCityState
-        .filter((group) => group.state.toLowerCase() === stateLower)
-        .sort((a, b) => a.city.localeCompare(b.city))
+  // Resolve a Google Places placeId via the resolveLocation mutation
+  const resolvePlace = useCallback(async (placeId: string): Promise<ResolvedLocation | null> => {
+    try {
+      const result: ResolveLocationResponse = await resolveLocationByPlaceId(
+        placeId,
+        sessionTokenRef.current,
+      )
 
-      return cities.map((city) => ({
-        type: "city" as const,
-        displayText: `${city.city}, ${city.state}`,
-        secondaryText: city.county
-          ? `${city.county}, ${city.country === "CA" ? "Canada" : "United States"}`
-          : city.country === "CA"
-            ? "Canada"
-            : "United States",
-        city: city.city,
-        state: city.state,
-        country: city.country,
-        county: city.county,
-      }))
+      // Regenerate session token after completing a search session
+      sessionTokenRef.current = generateSessionToken()
+
+      if (result.error || !result.city || !result.state || !result.country) {
+        console.error("[Places] Error resolving location:", result.error)
+        return null
+      }
+
+      return {
+        city: result.city,
+        state: result.state,
+        country: result.country,
+        county: result.county,
+        jurisdictionCode: result.jurisdictionCode,
+        hasData: result.hasData,
+        isNew: result.isNew,
+      }
+    } catch (error) {
+      console.error("[Places] Error resolving place:", error)
+      return null
+    }
+  }, [])
+
+  // Backward-compatible wrapper: delegates to resolvePlace
+  const resolveAddressToNearestCity = useCallback(
+    async (placeId: string) => {
+      const resolved = await resolvePlace(placeId)
+      if (!resolved) return null
+
+      return {
+        city: resolved.city,
+        state: resolved.state,
+        country: resolved.country,
+        county: resolved.county ?? undefined,
+        distanceKm: 0,
+        actualCity: resolved.city,
+        actualState: resolved.state,
+        actualCountry: resolved.country,
+      }
     },
-    [groupedByCityState],
+    [resolvePlace],
   )
 
-  // Cleanup timeout on unmount to prevent memory leak
+  // Deprecated: no longer have a static list to drill into
+  const getCitiesForState = useCallback((): SearchSuggestion[] => {
+    return []
+  }, [])
+
+  // Reset session token on mount and cleanup timeout on unmount
   useEffect(() => {
+    sessionTokenRef.current = generateSessionToken()
     return () => {
       if (searchTimeoutRef.current) {
         clearTimeout(searchTimeoutRef.current)
@@ -459,10 +287,11 @@ export function useLocationSearch(): UseLocationSearchResult {
   return {
     suggestions,
     isSearching,
-    isLoading,
-    error,
+    isLoading: false,
+    error: searchError,
     search,
     clearSuggestions,
+    resolvePlace,
     resolveAddressToNearestCity,
     getCitiesForState,
   }

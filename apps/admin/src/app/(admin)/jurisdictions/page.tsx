@@ -39,7 +39,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 
 type Jurisdiction = Schema["Jurisdiction"]["type"];
@@ -180,17 +180,27 @@ export default function JurisdictionsPage() {
     }
   };
 
-  // Group jurisdictions by country (currently unused, kept for future grouping feature)
-  const _jurisdictionsByCountry = jurisdictions.reduce(
-    (acc, j) => {
-      const country = j.country;
-      if (!acc[country]) acc[country] = [];
-      acc[country].push(j);
-      return acc;
-    },
-    {} as Record<string, Jurisdiction[]>,
-  );
-  void _jurisdictionsByCountry;
+  const handleExport = () => {
+    const exportData = jurisdictions.map((j) => ({
+      code: j.code,
+      name: j.name,
+      nameFr: j.nameFr || null,
+      country: j.country,
+      region: j.region || null,
+      parentCode: j.parentCode || null,
+      isDefault: j.isDefault ?? false,
+    }));
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "jurisdictions.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported jurisdictions.json");
+  };
 
   return (
     <div className="space-y-6">
@@ -201,13 +211,22 @@ export default function JurisdictionsPage() {
             Manage regulatory jurisdictions for threshold comparisons
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Jurisdiction
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={jurisdictions.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export JSON
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Jurisdiction
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>
@@ -360,7 +379,8 @@ export default function JurisdictionsPage() {
               </Button>
             </DialogFooter>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
 
       <Card>

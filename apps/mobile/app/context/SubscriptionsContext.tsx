@@ -6,25 +6,25 @@
  * showing the default zip code on the dashboard.
  */
 
-import { createContext, FC, PropsWithChildren, useCallback, useContext } from "react"
+import { createContext, FC, PropsWithChildren, useCallback, useContext, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { queryKeys } from "@/lib/queryKeys"
 import {
-  getUserZipCodeSubscriptions,
-  ZipCodeSubscription,
-  createZipCodeSubscription,
-  deleteZipCodeSubscription,
+  getUserSubscriptions,
+  createUserSubscription,
+  deleteUserSubscription,
   CreateSubscriptionOptions,
+  type AmplifyUserSubscription,
 } from "@/services/amplify/data"
 
 import { useAuth } from "./AuthContext"
 
 interface SubscriptionsContextType {
   /** All user subscriptions */
-  subscriptions: ZipCodeSubscription[]
+  subscriptions: AmplifyUserSubscription[]
   /** The primary subscription (first by createdAt) */
-  primarySubscription: ZipCodeSubscription | null
+  primarySubscription: AmplifyUserSubscription | null
   /** Whether subscriptions are still loading */
   isLoading: boolean
   /** Error message if fetch failed */
@@ -56,7 +56,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
   } = useQuery({
     queryKey: queryKeys.subscriptions.list(),
     queryFn: async () => {
-      const subs = await getUserZipCodeSubscriptions()
+      const subs = await getUserSubscriptions()
       // Sort by createdAt to ensure consistent primary subscription
       return subs.sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime()
@@ -67,6 +67,13 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
     enabled: !authLoading && isAuthenticated,
     staleTime: 5 * 60 * 1000,
   })
+
+  // Clear subscription cache on logout to prevent showing previous user's data
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      queryClientInstance.removeQueries({ queryKey: queryKeys.subscriptions.list() })
+    }
+  }, [authLoading, isAuthenticated, queryClientInstance])
 
   const isLoading = authLoading || (isAuthenticated && queryLoading)
   const error = queryError ? "Failed to load subscriptions" : null
@@ -87,16 +94,16 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       if (!isAuthenticated) {
         throw new Error("Must be authenticated to add subscription")
       }
-      return createZipCodeSubscription(city, state, country, options)
+      return createUserSubscription(city, state, country, undefined, options)
     },
     onMutate: async ({ city, state, country }) => {
       await queryClientInstance.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
-      const previous = queryClientInstance.getQueryData<ZipCodeSubscription[]>(
+      const previous = queryClientInstance.getQueryData<AmplifyUserSubscription[]>(
         queryKeys.subscriptions.list(),
       )
 
       // Optimistically add a temporary subscription
-      const tempSub: ZipCodeSubscription = {
+      const tempSub: AmplifyUserSubscription = {
         id: `temp-${Date.now()}`,
         city,
         state,
@@ -104,7 +111,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      queryClientInstance.setQueryData<ZipCodeSubscription[]>(
+      queryClientInstance.setQueryData<AmplifyUserSubscription[]>(
         queryKeys.subscriptions.list(),
         (old) => (old ? [...old, tempSub] : [tempSub]),
       )
@@ -112,7 +119,7 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
     },
     onSuccess: (newSub) => {
       // Replace temp subscription with real one
-      queryClientInstance.setQueryData<ZipCodeSubscription[]>(
+      queryClientInstance.setQueryData<AmplifyUserSubscription[]>(
         queryKeys.subscriptions.list(),
         (old) => (old ? old.map((s) => (s.id.startsWith("temp-") ? newSub : s)) : [newSub]),
       )
@@ -131,15 +138,15 @@ export const SubscriptionsProvider: FC<PropsWithChildren> = ({ children }) => {
       if (!isAuthenticated) {
         throw new Error("Must be authenticated to remove subscription")
       }
-      await deleteZipCodeSubscription(id)
+      await deleteUserSubscription(id)
       return id
     },
     onMutate: async (id) => {
       await queryClientInstance.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
-      const previous = queryClientInstance.getQueryData<ZipCodeSubscription[]>(
+      const previous = queryClientInstance.getQueryData<AmplifyUserSubscription[]>(
         queryKeys.subscriptions.list(),
       )
-      queryClientInstance.setQueryData<ZipCodeSubscription[]>(
+      queryClientInstance.setQueryData<AmplifyUserSubscription[]>(
         queryKeys.subscriptions.list(),
         (old) => (old ? old.filter((s) => s.id !== id) : []),
       )

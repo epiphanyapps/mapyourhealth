@@ -116,172 +116,12 @@ const CATEGORY_MAP: Record<string, string> = {
 };
 
 /**
- * Jurisdictions configuration
+ * Jurisdictions — loaded from standalone JSON file.
+ * Edit jurisdictions.json or use the admin UI to manage.
  */
-const JURISDICTIONS: SeedJurisdiction[] = [
-  {
-    code: "WHO",
-    name: "World Health Organization",
-    nameFr: "Organisation mondiale de la Santé",
-    country: "INTL",
-    region: null,
-    parentCode: null,
-    isDefault: true,
-  },
-  {
-    code: "EU",
-    name: "European Union",
-    nameFr: "Union européenne",
-    country: "EU",
-    region: null,
-    parentCode: "WHO",
-    isDefault: false,
-  },
-  {
-    code: "US",
-    name: "United States (Federal)",
-    nameFr: "États-Unis (Fédéral)",
-    country: "US",
-    region: null,
-    parentCode: "WHO",
-    isDefault: false,
-  },
-  {
-    code: "CA",
-    name: "Canada (Federal)",
-    nameFr: "Canada (Fédéral)",
-    country: "CA",
-    region: null,
-    parentCode: "WHO",
-    isDefault: false,
-  },
-  {
-    code: "US-NY",
-    name: "New York State",
-    nameFr: "État de New York",
-    country: "US",
-    region: "NY",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-CA",
-    name: "California",
-    nameFr: "Californie",
-    country: "US",
-    region: "CA",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-TX",
-    name: "Texas",
-    nameFr: "Texas",
-    country: "US",
-    region: "TX",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-FL",
-    name: "Florida",
-    nameFr: "Floride",
-    country: "US",
-    region: "FL",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-IL",
-    name: "Illinois",
-    nameFr: "Illinois",
-    country: "US",
-    region: "IL",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-WA",
-    name: "Washington",
-    nameFr: "Washington",
-    country: "US",
-    region: "WA",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-GA",
-    name: "Georgia",
-    nameFr: "Géorgie",
-    country: "US",
-    region: "GA",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-AZ",
-    name: "Arizona",
-    nameFr: "Arizona",
-    country: "US",
-    region: "AZ",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-CO",
-    name: "Colorado",
-    nameFr: "Colorado",
-    country: "US",
-    region: "CO",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "US-MA",
-    name: "Massachusetts",
-    nameFr: "Massachusetts",
-    country: "US",
-    region: "MA",
-    parentCode: "US",
-    isDefault: false,
-  },
-  {
-    code: "CA-QC",
-    name: "Quebec",
-    nameFr: "Québec",
-    country: "CA",
-    region: "QC",
-    parentCode: "CA",
-    isDefault: false,
-  },
-  {
-    code: "CA-ON",
-    name: "Ontario",
-    nameFr: "Ontario",
-    country: "CA",
-    region: "ON",
-    parentCode: "CA",
-    isDefault: false,
-  },
-  {
-    code: "CA-BC",
-    name: "British Columbia",
-    nameFr: "Colombie-Britannique",
-    country: "CA",
-    region: "BC",
-    parentCode: "CA",
-    isDefault: false,
-  },
-  {
-    code: "CA-AB",
-    name: "Alberta",
-    nameFr: "Alberta",
-    country: "CA",
-    region: "AB",
-    parentCode: "CA",
-    isDefault: false,
-  },
-];
+const JURISDICTIONS: SeedJurisdiction[] = JSON.parse(
+  fs.readFileSync(path.resolve(__dirname, "./jurisdictions.json"), "utf-8")
+);
 
 // =============================================================================
 // Helper Functions
@@ -550,12 +390,119 @@ function parseExcel(filePath: string): SeedData {
 }
 
 // =============================================================================
+// Measurement Generation
+// =============================================================================
+
+interface SeedMeasurement {
+  city: string;
+  state: string;
+  country: string;
+  contaminantId: string;
+  value: number;
+  measuredAt: string;
+  source: string;
+  sourceUrl: string | null;
+  notes: string | null;
+  silentImport: boolean;
+}
+
+/**
+ * Map jurisdiction codes to data source labels
+ */
+const SOURCE_MAP: Record<string, { source: string; sourceUrl: string | null }> = {
+  "WHO": { source: "WHO", sourceUrl: "https://www.who.int/teams/environment-climate-change-and-health/water-sanitation-and-health/water-safety-and-quality/drinking-water-quality-guidelines" },
+  "CA-QC": { source: "MELCC", sourceUrl: "https://www.environnement.gouv.qc.ca/eau/potable/brochure/index.htm" },
+  "US-NY": { source: "NY DEC", sourceUrl: "https://www.health.ny.gov/environmental/water/drinking/" },
+  "US-CA": { source: "CA SWRCB", sourceUrl: "https://www.waterboards.ca.gov/drinking_water/" },
+  "US-TX": { source: "TCEQ", sourceUrl: "https://www.tceq.texas.gov/drinkingwater" },
+  "US-FL": { source: "FL DEP", sourceUrl: "https://floridadep.gov/water" },
+  "EU": { source: "EU", sourceUrl: "https://environment.ec.europa.eu/topics/water/drinking-water_en" },
+};
+
+/**
+ * For jurisdictions without their own threshold data, map to fallback jurisdiction
+ */
+const JURISDICTION_FALLBACK: Record<string, string> = {
+  "CA-ON": "WHO",
+  "CA-BC": "WHO",
+  "CA-AB": "WHO",
+  "US-IL": "WHO",
+  "US-WA": "WHO",
+  "US-CO": "WHO",
+  "US-GA": "WHO",
+  "US-MA": "WHO",
+  "US-AZ": "WHO",
+};
+
+function generateMeasurements(seedData: SeedData): SeedMeasurement[] {
+  const locationsPath = path.resolve(__dirname, "./seed-locations.json");
+  const locationsFile = JSON.parse(fs.readFileSync(locationsPath, "utf-8"));
+  const locations: SeedLocation[] = locationsFile.locations;
+
+  // Build threshold lookup: jurisdictionCode -> contaminantId -> threshold
+  const thresholdLookup = new Map<string, Map<string, SeedThreshold>>();
+  for (const t of seedData.thresholds) {
+    if (!thresholdLookup.has(t.jurisdictionCode)) {
+      thresholdLookup.set(t.jurisdictionCode, new Map());
+    }
+    thresholdLookup.get(t.jurisdictionCode)!.set(t.contaminantId, t);
+  }
+
+  const measurements: SeedMeasurement[] = [];
+  const measuredAt = new Date().toISOString();
+
+  for (const location of locations) {
+    // Find thresholds: try location's jurisdiction first, then fallback
+    const jurisdictionCode = location.jurisdictionCode;
+    const effectiveCode = thresholdLookup.has(jurisdictionCode)
+      ? jurisdictionCode
+      : JURISDICTION_FALLBACK[jurisdictionCode] || "WHO";
+
+    const jurisdictionThresholds = thresholdLookup.get(effectiveCode);
+    if (!jurisdictionThresholds) continue;
+
+    const sourceInfo = SOURCE_MAP[effectiveCode] || { source: effectiveCode, sourceUrl: null };
+
+    for (const [contaminantId, threshold] of jurisdictionThresholds) {
+      // Only create measurements for regulated contaminants with numeric limits
+      if (threshold.status !== "regulated" || threshold.limitValue === null) continue;
+
+      measurements.push({
+        city: location.city,
+        state: location.state,
+        country: location.country,
+        contaminantId,
+        value: threshold.limitValue,
+        measuredAt,
+        source: sourceInfo.source,
+        sourceUrl: sourceInfo.sourceUrl,
+        notes: `Seed data: ${effectiveCode} regulatory limit value`,
+        silentImport: true,
+      });
+    }
+  }
+
+  return measurements;
+}
+
+interface SeedLocation {
+  city: string;
+  county?: string | null;
+  state: string;
+  country: string;
+  jurisdictionCode: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+// =============================================================================
 // Main
 // =============================================================================
 
 function main() {
   const excelPath = path.resolve(__dirname, "../../../Risks.xlsx");
   const outputPath = path.resolve(__dirname, "./seed-data.json");
+  const measurementsOutputPath = path.resolve(__dirname, "./seed-measurements.json");
 
   console.log("=== MapYourHealth Risks Excel Parser ===\n");
 
@@ -566,11 +513,17 @@ function main() {
     fs.writeFileSync(outputPath, JSON.stringify(seedData, null, 2));
     console.log(`\nSeed data written to: ${outputPath}`);
 
+    // Generate and write measurements
+    const measurements = generateMeasurements(seedData);
+    fs.writeFileSync(measurementsOutputPath, JSON.stringify({ measurements }, null, 2));
+    console.log(`Measurements written to: ${measurementsOutputPath}`);
+
     // Summary
     console.log("\n=== Summary ===");
     console.log(`Jurisdictions: ${seedData.jurisdictions.length}`);
     console.log(`Contaminants: ${seedData.contaminants.length}`);
     console.log(`Thresholds: ${seedData.thresholds.length}`);
+    console.log(`Measurements: ${measurements.length}`);
 
     // Category breakdown
     const categoryCount: Record<string, number> = {};
@@ -594,6 +547,19 @@ function main() {
       (a, b) => b[1] - a[1]
     )) {
       console.log(`  ${status}: ${count}`);
+    }
+
+    // Measurements per city
+    const cityCount: Record<string, number> = {};
+    for (const m of measurements) {
+      const key = `${m.city}, ${m.state}`;
+      cityCount[key] = (cityCount[key] || 0) + 1;
+    }
+    console.log("\nMeasurements per location:");
+    for (const [city, count] of Object.entries(cityCount).sort(
+      (a, b) => b[1] - a[1]
+    )) {
+      console.log(`  ${city}: ${count}`);
     }
   } catch (error) {
     console.error("Error:", error);

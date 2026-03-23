@@ -125,6 +125,12 @@ const ar: Translations = {
     },
   },
 
+  warningBanner: {
+    critical: "CRITICAL ALERT",
+    warning: "SPECIAL WARNING",
+    info: "NOTICE",
+  },
+
   ...demoAr,
 }
 

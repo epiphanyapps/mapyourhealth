@@ -62,7 +62,7 @@ export default function GuidePage() {
     "state": "CA",
     "country": "US",
     "contaminantId": "lead",
-    "value": 8.2,
+    "value": 4.2,
     "source": "EPA Report 2026"
   }
 ]`}</code>

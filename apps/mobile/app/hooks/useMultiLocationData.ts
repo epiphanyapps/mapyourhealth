@@ -9,16 +9,15 @@ import { useCallback, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import { type ZipCodeData, type ZipCodeStat, type StatStatus } from "@/data/types/safety"
+import { type CityData, type CityStat, type StatStatus } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
-import { getJurisdictionForPostalCode } from "@/utils/jurisdiction"
-import { detectPostalCodeRegion } from "@/utils/postalCode"
+// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 
 interface UseMultiLocationDataResult {
   /** The aggregated zip code data, or null if loading/error */
-  zipData: ZipCodeData | null
+  cityData: CityData | null
   /** Whether data is currently being fetched */
   isLoading: boolean
   /** Error message if fetch failed */
@@ -32,7 +31,7 @@ interface UseMultiLocationDataResult {
 interface SelectedCity {
   city: string
   state: string
-  postalCodes: string[]
+  cities: string[]
 }
 
 /**
@@ -49,7 +48,12 @@ function getWorseStatus(a: StatStatus, b: StatStatus): StatStatus {
 export function useMultiLocationData(
   selectedCity: SelectedCity | null,
 ): UseMultiLocationDataResult {
-  const { contaminants, getThreshold, isLoading: defsLoading } = useContaminants()
+  const {
+    contaminants,
+    getThreshold,
+    getJurisdictionForLocation,
+    isLoading: defsLoading,
+  } = useContaminants()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -79,9 +83,9 @@ export function useMultiLocationData(
 
   const aggregateMeasurements = useCallback(
     (
-      allMeasurements: { postalCode: string; measurements: AmplifyLocationMeasurement[] }[],
+      allMeasurements: { cityName: string; measurements: AmplifyLocationMeasurement[] }[],
       jurisdictionCode: string,
-    ): ZipCodeStat[] => {
+    ): CityStat[] => {
       const byContaminant = new Map<
         string,
         { value: number; measuredAt: string; status: StatStatus }
@@ -127,12 +131,12 @@ export function useMultiLocationData(
     [contaminants, calculateStatus],
   )
 
-  const postalCodes = useMemo(() => selectedCity?.postalCodes ?? [], [selectedCity])
+  const cities = useMemo(() => selectedCity?.cities ?? [], [selectedCity])
 
   const query = useQuery({
-    queryKey: queryKeys.measurements.multiLocation(postalCodes),
-    queryFn: async (): Promise<ZipCodeData | null> => {
-      if (!selectedCity || postalCodes.length === 0) return null
+    queryKey: queryKeys.measurements.multiLocation(cities),
+    queryFn: async (): Promise<CityData | null> => {
+      if (!selectedCity || cities.length === 0) return null
 
       if (isOffline) {
         throw new Error("You're offline - cannot fetch city data")
@@ -140,9 +144,9 @@ export function useMultiLocationData(
 
       // Fetch measurements for all postal codes in parallel
       const allMeasurements = await Promise.all(
-        postalCodes.map(async (postalCode) => {
-          const measurements = await getLocationMeasurements(postalCode)
-          return { postalCode, measurements }
+        cities.map(async (cityName) => {
+          const measurements = await getLocationMeasurements(cityName)
+          return { cityName, measurements }
         }),
       )
 
@@ -153,32 +157,31 @@ export function useMultiLocationData(
 
       if (totalMeasurements === 0) return null
 
-      const firstPostalCode = postalCodes[0]
-      const country = detectPostalCodeRegion(firstPostalCode) || "US"
-      const jurisdictionCode = getJurisdictionForPostalCode(
-        firstPostalCode,
-        selectedCity.state,
-        country,
-      )
+      // Get country from first measurement or postal code detection fallback
+      const firstMeasurement = allMeasurements[0]?.measurements?.[0]
+      const country = firstMeasurement?.country ?? ""
+      const jurisdictionCode =
+        getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"
 
       const aggregatedStats = aggregateMeasurements(allMeasurements, jurisdictionCode)
 
       return {
-        zipCode: postalCodes.join(", "),
+        city: cities.join(", "),
         cityName: selectedCity.city,
         state: selectedCity.state,
+        country,
         stats: aggregatedStats,
       }
     },
-    enabled: !!selectedCity && postalCodes.length > 0 && !defsLoading && !isOffline,
+    enabled: !!selectedCity && cities.length > 0 && !defsLoading && !isOffline,
   })
 
   const refresh = useCallback(async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.measurements.multiLocation(postalCodes) })
-  }, [qc, postalCodes])
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.multiLocation(cities) })
+  }, [qc, cities])
 
   return {
-    zipData: query.data ?? null,
+    cityData: query.data ?? null,
     isLoading: query.isLoading || defsLoading || !networkReady,
     error: query.error?.message ?? null,
     isOffline,

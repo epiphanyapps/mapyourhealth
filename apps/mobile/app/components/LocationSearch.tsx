@@ -1,5 +1,5 @@
 /**
- * ZipCodeSearch
+ * LocationSearch
  *
  * A component for searching and selecting zip codes.
  * Features text input, "Use my location" geolocation, and removable chips for selections.
@@ -19,26 +19,26 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { Text } from "@/components/Text"
-import { getZipCodeDataByCode } from "@/data/mock"
+import { getZipCodeMetadata } from "@/data/helpers"
 import { useLocation } from "@/hooks/useLocation"
 import { useAppTheme } from "@/theme/context"
 import { isValidPostalCode, normalizePostalCode, getPostalCodeLabel } from "@/utils/postalCode"
 
-export interface ZipCodeSelection {
+export interface LocationSelection {
   zipCode: string
   cityName: string
   state: string
 }
 
-export interface ZipCodeSearchProps {
+export interface LocationSearchProps {
   /**
    * Currently selected zip codes
    */
-  selectedZipCodes: ZipCodeSelection[]
+  selectedZipCodes: LocationSelection[]
   /**
    * Callback when selections change
    */
-  onSelectionChange: (selections: ZipCodeSelection[]) => void
+  onSelectionChange: (selections: LocationSelection[]) => void
   /**
    * Maximum number of zip codes that can be selected
    * @default 10
@@ -52,17 +52,17 @@ export interface ZipCodeSearchProps {
 }
 
 /**
- * ZipCodeSearch component allows users to search for zip codes by entering them
+ * LocationSearch component allows users to search for zip codes by entering them
  * or using their current location. Selected zip codes are displayed as removable chips.
  *
  * @example
- * <ZipCodeSearch
+ * <LocationSearch
  *   selectedZipCodes={selections}
  *   onSelectionChange={setSelections}
  *   maxSelections={10}
  * />
  */
-export function ZipCodeSearch(props: ZipCodeSearchProps) {
+export function LocationSearch(props: LocationSearchProps) {
   const {
     selectedZipCodes,
     onSelectionChange,
@@ -105,29 +105,16 @@ export function ZipCodeSearch(props: ZipCodeSearchProps) {
         return
       }
 
-      // Look up postal code data (from mock data for now)
-      const zipData = getZipCodeDataByCode(normalized)
-      if (zipData) {
-        onSelectionChange([
-          ...selectedZipCodes,
-          {
-            zipCode: zipData.zipCode,
-            cityName: zipData.cityName,
-            state: zipData.state,
-          },
-        ])
-      } else {
-        // For postal codes not in mock data, add with unknown city
-        // In production, this would call an API to validate and get city info
-        onSelectionChange([
-          ...selectedZipCodes,
-          {
-            zipCode: normalized,
-            cityName: "Unknown",
-            state: "",
-          },
-        ])
-      }
+      // Look up postal code metadata for city/state info
+      const metadata = getZipCodeMetadata(normalized)
+      onSelectionChange([
+        ...selectedZipCodes,
+        {
+          zipCode: normalized,
+          cityName: metadata?.city ?? "Unknown",
+          state: metadata?.state ?? "",
+        },
+      ])
 
       setInputValue("")
     },

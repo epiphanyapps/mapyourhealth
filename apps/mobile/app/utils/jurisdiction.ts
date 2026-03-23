@@ -91,7 +91,7 @@ export function getJurisdictionForPostalCode(
   country?: string,
 ): string {
   // If country not provided, detect from postal code format
-  const detectedCountry = country || detectPostalCodeRegion(postalCode) || "US"
+  const detectedCountry = country || detectPostalCodeRegion(postalCode) || ""
 
   // If state is provided, use state-based lookup
   if (state) {

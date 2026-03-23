@@ -8,9 +8,9 @@ onFlowStart:
   - runFlow: ../shared/_OnFlowStart.yaml
 ---
 
-# E2E-009: Test autocomplete search and selection
-# Verifies that typing in the search box shows suggestions
-# and tapping a suggestion navigates to that location
+# E2E-009: Test Google Places autocomplete search and selection
+# Verifies that typing in the search box shows Google Places suggestions
+# and tapping a suggestion resolves the location and navigates to dashboard
 
 # Wait for dashboard to load
 - waitForAnimationToEnd
@@ -21,31 +21,51 @@ onFlowStart:
     label: "Tap on search input field"
 
 # Type partial search query
-- inputText: "new y"
+- inputText: "new york"
 
-# Wait for autocomplete suggestions to appear
-- waitForAnimationToEnd
+# Wait for Google Places autocomplete suggestions to appear
+- waitForAnimationToEnd:
+    timeout: 5000
 
-# Verify the suggestion appears (accessibility label is "Select New York, NY")
+# Verify a New York suggestion appears from Google Places
+# Google Places returns descriptions like "New York, NY, USA"
 - assertVisible:
-    text: "Select New York, NY"
+    text: ".*New York.*NY.*"
     label: "New York suggestion is visible"
 
 # Tap on the autocomplete suggestion
 - tapOn:
-    text: "Select New York, NY"
+    text: ".*New York.*NY.*"
+    index: 0
     label: "Tap on New York suggestion"
 
-# Wait for navigation
-- waitForAnimationToEnd
+# Wait for location resolution and navigation
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible: "New York.*NY"
+    timeout: 10000
 
 # Verify we navigated to New York dashboard
 - assertVisible:
-    text: "New York, NY"
+    text: "New York.*NY"
     label: "Navigated to New York dashboard"
 
-# Verify dashboard content loaded (safety categories visible)
-- assertVisible:
-    text: "Tap Water Quality, status:"
-    optional: true
-    label: "Safety categories are displayed"
+# Verify dashboard content loaded (either data or no-data state)
+- runFlow:
+    when:
+      visible: "No data for"
+    commands:
+      - assertVisible:
+          text: "Notify Me"
+          optional: true
+          label: "Notify Me shown for location without data"
+- runFlow:
+    when:
+      visible: "Tap Water Quality"
+    commands:
+      - assertVisible:
+          text: "Tap Water Quality.*"
+          optional: true
+          label: "Safety categories are displayed"

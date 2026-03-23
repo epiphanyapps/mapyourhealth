@@ -11,6 +11,7 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
 import { useAuth } from "@/context/AuthContext"
+import { useAppConfig } from "@/hooks/useAppConfig"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
 import { CompareScreen } from "@/screens/CompareScreen"
@@ -23,7 +24,7 @@ import { LoginScreen } from "@/screens/LoginScreen"
 import { MagicLinkScreen } from "@/screens/MagicLinkScreen"
 import { MagicLinkSentScreen } from "@/screens/MagicLinkSentScreen"
 import { MagicLinkVerifyScreen } from "@/screens/MagicLinkVerifyScreen"
-import { OnboardingZipCodesScreen } from "@/screens/OnboardingZipCodesScreen"
+import { OnboardingLocationsScreen } from "@/screens/OnboardingLocationsScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
 import { ReportScreen } from "@/screens/ReportScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
@@ -47,13 +48,15 @@ const Stack = createNativeStackNavigator<AppStackParamList>()
 
 const AppStack = () => {
   const { isLoading, isAuthenticated } = useAuth()
+  const { isEnabled: comingSoonGateEnabled, isLoading: configLoading } =
+    useAppConfig("comingSoonGate")
 
   const {
     theme: { colors },
   } = useAppTheme()
 
-  // Show loading screen while checking auth state
-  if (isLoading) {
+  // Show loading screen while checking auth state or config
+  if (isLoading || configLoading) {
     return (
       <View style={[$loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color={colors.tint} />
@@ -61,8 +64,8 @@ const AppStack = () => {
     )
   }
 
-  // Gate: unauthenticated users see ComingSoon directly
-  if (!isAuthenticated) {
+  // Coming Soon gate: show gate screen for unauthenticated users when enabled by admin
+  if (comingSoonGateEnabled && !isAuthenticated) {
     return <ComingSoonScreen />
   }
 
@@ -75,14 +78,14 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName="Dashboard"
+      initialRouteName={isAuthenticated ? "Dashboard" : "Welcome"}
     >
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
       <Stack.Screen name="Compare" component={CompareScreen} />
-      <Stack.Screen name="OnboardingZipCodes" component={OnboardingZipCodesScreen} />
+      <Stack.Screen name="OnboardingLocations" component={OnboardingLocationsScreen} />
       <Stack.Screen name="Report" component={ReportScreen} />
       <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
       <Stack.Screen name="Profile" component={ProfileScreen} />

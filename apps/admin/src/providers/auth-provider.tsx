@@ -5,10 +5,8 @@ import { Amplify } from "aws-amplify";
 import { getCurrentUser, fetchAuthSession, signOut } from "aws-amplify/auth";
 import outputs from "../../amplify_outputs.json";
 
-// Configure Amplify in AuthProvider to ensure it's ready before auth checks
-console.log("=== AUTH PROVIDER: Configuring Amplify ===");
+// Configure Amplify once at module load
 Amplify.configure(outputs, { ssr: true });
-console.log("=== AUTH PROVIDER: Amplify configured ===");
 
 interface User {
   userId: string;
@@ -33,19 +31,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
 
   const checkUser = async () => {
-    console.log("=== AUTH PROVIDER: checkUser starting ===");
     try {
       const currentUser = await getCurrentUser();
-      console.log("=== AUTH PROVIDER: currentUser ===", currentUser);
       const session = await fetchAuthSession();
-      console.log("=== AUTH PROVIDER: session ===", session);
 
       // Get groups from the ID token
       const groups =
         (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) ||
         [];
       const isAdmin = groups.includes("admin");
-      console.log("=== AUTH PROVIDER: groups ===", groups, "isAdmin:", isAdmin);
 
       setUser({
         userId: currentUser.userId,
@@ -53,13 +47,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: currentUser.signInDetails?.loginId,
         isAdmin,
       });
-      console.log("=== AUTH PROVIDER: user set successfully ===");
-    } catch (error) {
-      console.log("=== AUTH PROVIDER: checkUser error ===", error);
+    } catch {
       setUser(null);
     } finally {
       setIsLoading(false);
-      console.log("=== AUTH PROVIDER: checkUser complete, isLoading=false ===");
     }
   };
 

@@ -11,7 +11,7 @@ import { Text } from "@/components/Text"
 import { TrendChart, calculateTrendDirection } from "@/components/TrendChart"
 import { useContaminants } from "@/context/ContaminantsContext"
 import type { StatStatus, TrendDirection } from "@/data/types/safety"
-import { useZipCodeData } from "@/hooks/useZipCodeData"
+import { useLocationData } from "@/hooks/useLocationData"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 
@@ -91,7 +91,7 @@ export function StatTrendScreen() {
   const { statId, city, state, country } = route.params
 
   // Fetch data for this location (uses React Query caching — likely already cached from CategoryDetail)
-  const { zipData, isLoading } = useZipCodeData(city)
+  const { cityData, isLoading } = useLocationData(city)
 
   // Look up the contaminant definition
   const definition = contaminantMap.get(statId)
@@ -100,7 +100,7 @@ export function StatTrendScreen() {
   const higherIsBad = definition?.higherIsBad ?? true
 
   // Find this stat in the zip data
-  const stat = zipData?.stats.find((s) => s.statId === statId)
+  const stat = cityData?.stats.find((s) => s.statId === statId)
   const currentValue = stat?.value ?? 0
   const currentStatus = stat?.status ?? "safe"
   const history = useMemo(() => stat?.history ?? [], [stat?.history])
@@ -221,7 +221,7 @@ export function StatTrendScreen() {
   )
 
   // Loading state
-  if (isLoading && !zipData) {
+  if (isLoading && !cityData) {
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]}>
         <Header title={statName} leftIcon="back" onLeftPress={() => navigation.goBack()} />

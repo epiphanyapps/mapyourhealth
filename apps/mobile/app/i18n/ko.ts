@@ -128,6 +128,12 @@ const ko: Translations = {
     },
   },
 
+  warningBanner: {
+    critical: "CRITICAL ALERT",
+    warning: "SPECIAL WARNING",
+    info: "NOTICE",
+  },
+
   ...demoKo,
 }
 

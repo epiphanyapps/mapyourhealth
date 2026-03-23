@@ -27,7 +27,7 @@ export type AppStackParamList = {
   MagicLink: undefined
   MagicLinkSent: { email: string }
   MagicLinkVerify: { email: string; token: string }
-  OnboardingZipCodes: undefined
+  OnboardingLocations: undefined
   Demo: NavigatorScreenParams<DemoTabParamList>
   Dashboard: { city?: string; state?: string; country?: string; address?: string } | undefined
   CategoryDetail: {
@@ -53,7 +53,6 @@ export type AppStackParamList = {
     country: string
     jurisdictionCode?: string
   }
-  ComingSoon: undefined
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }

@@ -1,0 +1,73 @@
+# flow: E2E-013 Address Resolves to City
+# intent:
+#   Verify that searching for a specific street address resolves to the
+#   nearest city and shows the "Showing data for nearest city to:" banner.
+#   1. Search "350 5th Avenue, New York" → select address
+#   2. Verify resolves to "New York, NY"
+#   3. Verify "Showing data for nearest city to:" message
+#   4. Verify data is displayed
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-013 - Address Resolves to City
+tags:
+  - e2e
+  - search
+  - address
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search for a specific address
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap on search bar"
+
+- inputText: "350 5th Avenue, New York"
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# Select the address from autocomplete
+- tapOn:
+    text: ".*350 5th Ave.*New York.*"
+    index: 0
+    label: "Select 350 5th Avenue address from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ========================================
+# Step 2: Verify resolves to New York, NY
+# ========================================
+- extendedWaitUntil:
+    visible: "New York.*NY"
+    timeout: 10000
+
+- assertVisible:
+    text: "New York.*NY"
+    label: "Address resolved to New York, NY"
+
+# ========================================
+# Step 3: Verify "Showing data for nearest city to:" banner
+# ========================================
+- assertVisible:
+    text: "Showing data for nearest city to:.*"
+    label: "Nearest city banner is displayed for address search"
+
+# ========================================
+# Step 4: Verify data is displayed
+# ========================================
+- extendedWaitUntil:
+    visible: "Water Quality"
+    timeout: 10000
+
+- assertVisible:
+    text: "Water Quality"
+    label: "Water Quality data is available for resolved city"

@@ -40,7 +40,7 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
 import {
   PROPERTY_THRESHOLD_STATUS_OPTIONS,
@@ -271,6 +271,36 @@ export default function PropertyThresholdsPage() {
     ? getProperty(formData.propertyId)
     : null;
 
+  const handleExport = () => {
+    const exportData = thresholds.map((t) => {
+      const entry: Record<string, unknown> = {
+        propertyId: t.propertyId,
+        jurisdictionCode: t.jurisdictionCode,
+        status: t.status,
+      };
+      if (t.limitValue != null) entry.limitValue = t.limitValue;
+      if (t.warningValue != null) entry.warningValue = t.warningValue;
+      if (t.zoneMapping) entry.zoneMapping = t.zoneMapping;
+      if (t.endemicIsDanger != null) entry.endemicIsDanger = t.endemicIsDanger;
+      if (t.incidenceWarningThreshold != null)
+        entry.incidenceWarningThreshold = t.incidenceWarningThreshold;
+      if (t.incidenceDangerThreshold != null)
+        entry.incidenceDangerThreshold = t.incidenceDangerThreshold;
+      if (t.notes) entry.notes = t.notes;
+      return entry;
+    });
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "property-thresholds.json";
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success("Exported property-thresholds.json");
+  };
+
   // Filter thresholds
   const filteredThresholds = thresholds.filter((t) => {
     if (filterProperty !== "all" && t.propertyId !== filterProperty)
@@ -291,14 +321,23 @@ export default function PropertyThresholdsPage() {
             Manage jurisdiction-specific thresholds for observed properties
           </p>
         </div>
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Add Threshold
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[600px]">
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={thresholds.length === 0}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export JSON
+          </Button>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button onClick={openCreateDialog}>
+                <Plus className="mr-2 h-4 w-4" />
+                Add Threshold
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
               <DialogTitle>
                 {editingThreshold ? "Edit Threshold" : "Create Threshold"}
@@ -536,8 +575,9 @@ export default function PropertyThresholdsPage() {
                 )}
               </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {/* Filters */}

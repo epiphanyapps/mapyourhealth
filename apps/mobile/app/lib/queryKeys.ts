@@ -28,15 +28,14 @@ export const queryKeys = {
     list: () => [...queryKeys.locations.all, "list"] as const,
   },
 
-  // ── Measurements / Zip-code data ──
+  // ── Measurements / Location data ──
   measurements: {
     all: ["measurements"] as const,
-    byPostalCode: (postalCode: string) =>
-      [...queryKeys.measurements.all, "postalCode", postalCode] as const,
+    byLocation: (city: string) => [...queryKeys.measurements.all, "location", city] as const,
     byCity: (city: string, state: string) =>
       [...queryKeys.measurements.all, "city", city, state] as const,
-    multiLocation: (postalCodes: string[]) =>
-      [...queryKeys.measurements.all, "multi", ...postalCodes.sort()] as const,
+    multiLocation: (cities: string[]) =>
+      [...queryKeys.measurements.all, "multi", ...cities.sort()] as const,
   },
 
   // ── Subscriptions ──

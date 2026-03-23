@@ -5,9 +5,9 @@
  * Shows city, state, and postal code suggestions with icons.
  */
 
-import { useCallback, useEffect, useMemo, useRef } from "react"
+import { useCallback, useMemo } from "react"
 import {
-  Animated,
+  ActivityIndicator,
   View,
   FlatList,
   ScrollView,
@@ -39,79 +39,6 @@ interface SearchSuggestionsDropdownProps {
   headerText?: string | null
   /** Callback when back button in header is pressed */
   onBackPress?: () => void
-}
-
-/**
- * Skeleton loader row with animated pulse
- */
-function SkeletonRow({
-  theme,
-  opacity,
-}: {
-  theme: ReturnType<typeof useAppTheme>["theme"]
-  opacity: Animated.Value
-}) {
-  const $row: ViewStyle = {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.border,
-  }
-  const $circle: ViewStyle = {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: theme.colors.palette.neutral200,
-    marginRight: 12,
-  }
-  const $lineShort: ViewStyle = {
-    height: 14,
-    width: "60%" as unknown as number,
-    borderRadius: 4,
-    backgroundColor: theme.colors.palette.neutral200,
-    marginBottom: 6,
-  }
-  const $lineLong: ViewStyle = {
-    height: 10,
-    width: "40%" as unknown as number,
-    borderRadius: 4,
-    backgroundColor: theme.colors.palette.neutral200,
-  }
-  const $textContainer: ViewStyle = {
-    flex: 1,
-  }
-
-  return (
-    <Animated.View style={[$row, { opacity }]} accessibilityElementsHidden>
-      <View style={$circle} />
-      <View style={$textContainer}>
-        <View style={$lineShort} />
-        <View style={$lineLong} />
-      </View>
-    </Animated.View>
-  )
-}
-
-/**
- * Animated pulse value for skeleton loaders
- */
-function usePulseAnimation() {
-  const opacity = useRef(new Animated.Value(0.4)).current
-
-  useEffect(() => {
-    const animation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(opacity, { toValue: 1, duration: 800, useNativeDriver: true }),
-        Animated.timing(opacity, { toValue: 0.4, duration: 800, useNativeDriver: true }),
-      ]),
-    )
-    animation.start()
-    return () => animation.stop()
-  }, [opacity])
-
-  return opacity
 }
 
 /**
@@ -230,7 +157,6 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     onBackPress,
   } = props
   const { theme } = useAppTheme()
-  const pulseOpacity = usePulseAnimation()
 
   const headerStyles = useMemo(
     () => ({
@@ -393,12 +319,25 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     )
   }
 
-  const renderLoadingSkeletons = () => (
-    <>
-      {[0, 1, 2].map((i) => (
-        <SkeletonRow key={`skeleton-${i}`} theme={theme} opacity={pulseOpacity} />
-      ))}
-    </>
+  const $loadingContainer: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 20,
+    paddingHorizontal: 16,
+    gap: 10,
+  }
+
+  const $loadingText: TextStyle = {
+    fontSize: 14,
+    color: theme.colors.textDim,
+  }
+
+  const renderLoading = () => (
+    <View style={$loadingContainer}>
+      <ActivityIndicator size="small" color={theme.colors.tint} />
+      <Text style={$loadingText}>Searching...</Text>
+    </View>
   )
 
   const renderError = () => (
@@ -420,7 +359,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
           {error ? (
             renderError()
           ) : isLoading && suggestions.length === 0 ? (
-            renderLoadingSkeletons()
+            renderLoading()
           ) : suggestions.length === 0 ? (
             <View style={$emptyContainer}>
               <Text style={$emptyText}>No locations found</Text>
@@ -446,7 +385,9 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
       {error ? (
         renderError()
       ) : isLoading && suggestions.length === 0 ? (
-        renderLoadingSkeletons()
+        <View style={$emptyContainer}>
+          <ActivityIndicator size="small" />
+        </View>
       ) : (
         <FlatList
           data={suggestions}

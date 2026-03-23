@@ -9,10 +9,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { queryKeys } from "@/lib/queryKeys"
 import {
-  createZipCodeSubscription,
-  deleteZipCodeSubscription,
+  createUserSubscription,
+  deleteUserSubscription,
   CreateSubscriptionOptions,
-  ZipCodeSubscription,
+  AmplifyUserSubscription,
 } from "@/services/amplify/data"
 
 /**
@@ -33,14 +33,14 @@ export function useCreateSubscription() {
       country: string
       options?: CreateSubscriptionOptions
     }) => {
-      return createZipCodeSubscription(city, state, country, options)
+      return createUserSubscription(city, state, country, undefined, options)
     },
     onMutate: async ({ city, state, country }) => {
       await qc.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
-      const previous = qc.getQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list())
+      const previous = qc.getQueryData<AmplifyUserSubscription[]>(queryKeys.subscriptions.list())
 
       // Optimistically add a temporary subscription
-      const tempSub: ZipCodeSubscription = {
+      const tempSub: AmplifyUserSubscription = {
         id: `temp-${Date.now()}`,
         city,
         state,
@@ -48,14 +48,14 @@ export function useCreateSubscription() {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       }
-      qc.setQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list(), (old) =>
+      qc.setQueryData<AmplifyUserSubscription[]>(queryKeys.subscriptions.list(), (old) =>
         old ? [...old, tempSub] : [tempSub],
       )
       return { previous }
     },
     onSuccess: (newSub) => {
       // Replace temp subscription with real one
-      qc.setQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list(), (old) =>
+      qc.setQueryData<AmplifyUserSubscription[]>(queryKeys.subscriptions.list(), (old) =>
         old ? old.map((s) => (s.id.startsWith("temp-") ? newSub : s)) : [newSub],
       )
     },
@@ -76,13 +76,13 @@ export function useDeleteSubscription() {
 
   return useMutation({
     mutationFn: async (id: string) => {
-      await deleteZipCodeSubscription(id)
+      await deleteUserSubscription(id)
       return id
     },
     onMutate: async (id) => {
       await qc.cancelQueries({ queryKey: queryKeys.subscriptions.list() })
-      const previous = qc.getQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list())
-      qc.setQueryData<ZipCodeSubscription[]>(queryKeys.subscriptions.list(), (old) =>
+      const previous = qc.getQueryData<AmplifyUserSubscription[]>(queryKeys.subscriptions.list())
+      qc.setQueryData<AmplifyUserSubscription[]>(queryKeys.subscriptions.list(), (old) =>
         old ? old.filter((s) => s.id !== id) : [],
       )
       return { previous }
