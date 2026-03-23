@@ -14,7 +14,6 @@ import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
 // jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
-import { detectPostalCodeRegion } from "@/utils/postalCode"
 
 interface UseMultiLocationDataResult {
   /** The aggregated zip code data, or null if loading/error */
@@ -160,7 +159,7 @@ export function useMultiLocationData(
 
       // Get country from first measurement or postal code detection fallback
       const firstMeasurement = allMeasurements[0]?.measurements?.[0]
-      const country = firstMeasurement?.country ?? detectPostalCodeRegion(cities[0]) ?? ""
+      const country = firstMeasurement?.country ?? ""
       const jurisdictionCode =
         getJurisdictionForLocation(selectedCity.state, country)?.code || "WHO"
 

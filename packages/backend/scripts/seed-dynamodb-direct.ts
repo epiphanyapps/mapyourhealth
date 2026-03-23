@@ -47,7 +47,7 @@ async function batchPutItems(
   for (let i = 0; i < items.length; i += 25) {
     const chunk = items.slice(i, i + 25);
     try {
-      await client.send(
+      const response = await client.send(
         new BatchWriteItemCommand({
           RequestItems: {
             [tableName]: chunk.map((item) => ({
@@ -56,7 +56,26 @@ async function batchPutItems(
           },
         })
       );
-      created += chunk.length;
+
+      // Retry unprocessed items with exponential backoff
+      let unprocessed = response.UnprocessedItems;
+      let retryCount = 0;
+      const MAX_RETRIES = 3;
+      while (unprocessed && Object.keys(unprocessed).length > 0 && retryCount < MAX_RETRIES) {
+        retryCount++;
+        await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 100));
+        const retryResponse = await client.send(
+          new BatchWriteItemCommand({ RequestItems: unprocessed })
+        );
+        unprocessed = retryResponse.UnprocessedItems;
+      }
+
+      const unprocessedCount = unprocessed?.[tableName]?.length ?? 0;
+      created += chunk.length - unprocessedCount;
+      if (unprocessedCount > 0) {
+        errors += unprocessedCount;
+        console.error(`\n${unprocessedCount} items failed after ${MAX_RETRIES} retries`);
+      }
       process.stdout.write(".");
     } catch (error) {
       errors += chunk.length;

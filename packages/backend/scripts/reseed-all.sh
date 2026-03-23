@@ -13,7 +13,8 @@ cd "$SCRIPT_DIR/.."
 if [ -z "$COGNITO_EMAIL" ] || [ -z "$COGNITO_PASSWORD" ]; then
   echo "ERROR: COGNITO_EMAIL and COGNITO_PASSWORD must be set for AppSync seeding (steps 4 & 5)."
   echo ""
-  echo "Usage: COGNITO_EMAIL=seed@mapyourhealth.info COGNITO_PASSWORD=SeedAdmin2026! bash scripts/reseed-all.sh"
+  echo "Usage: COGNITO_EMAIL=<email> COGNITO_PASSWORD=<password> bash scripts/reseed-all.sh"
+  echo "See CLAUDE.md for seed admin credentials."
   exit 1
 fi
 

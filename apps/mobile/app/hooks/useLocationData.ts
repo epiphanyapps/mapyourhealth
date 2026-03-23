@@ -1,10 +1,8 @@
 /**
  * useLocationData Hook
  *
- * Fetches zip code safety data from the Amplify backend via React Query.
- * Includes loading/error states, offline support, and falls back to cached/mock data.
- *
- * @deprecated This hook uses the legacy data format. Consider using useLocationData for new code.
+ * Fetches city safety data from the Amplify backend via React Query.
+ * Includes loading/error states, offline support, and falls back to cached data.
  */
 
 import { useCallback } from "react"
@@ -30,7 +28,7 @@ interface CachedLocationData {
 }
 
 interface UseLocationDataResult {
-  /** The zip code data, or null if loading/error */
+  /** The city data, or null if loading/error */
   cityData: CityData | null
   /** Whether data is currently being fetched */
   isLoading: boolean
@@ -49,7 +47,7 @@ interface UseLocationDataResult {
 }
 
 /**
- * Get cached data for a zip code from MMKV storage.
+ * Get cached data for a city from MMKV storage.
  */
 function getCachedData(city: string): CachedLocationData | null {
   const cacheKey = `${CACHE_KEY_PREFIX}${city}`
@@ -66,7 +64,7 @@ function getCachedData(city: string): CachedLocationData | null {
 }
 
 /**
- * Save zip code data to MMKV cache with timestamp.
+ * Save city data to MMKV cache with timestamp.
  */
 function setCachedData(city: string, data: CityData): void {
   const cacheKey = `${CACHE_KEY_PREFIX}${city}`
@@ -74,14 +72,14 @@ function setCachedData(city: string, data: CityData): void {
 }
 
 /**
- * Clear cached data for a specific zip code.
+ * Clear cached data for a specific city.
  */
 export function clearCachedLocationData(city: string): void {
   remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
 /**
- * Hook to fetch zip code safety data with caching support
+ * Hook to fetch city safety data with caching support
  */
 export function useLocationData(city: string): UseLocationDataResult {
   const {
@@ -252,7 +250,7 @@ export function useLocationData(city: string): UseLocationDataResult {
 // ── Pure helper functions (unchanged) ────────────────────────────────────────
 
 /**
- * Helper to get the worst status for a category from zip code data
+ * Helper to get the worst status for a category from city data
  */
 export function getWorstStatusForCategory(
   cityData: CityData,
@@ -336,7 +334,7 @@ export function getStatsForCategory(
 }
 
 /**
- * Helper to get all danger and warning stats from zip code data
+ * Helper to get all danger and warning stats from city data
  */
 export function getAlertStats(
   cityData: CityData,

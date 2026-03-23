@@ -125,13 +125,13 @@ describe("useLocationData", () => {
   })
 
   describe("initial state", () => {
-    it("returns null zipData when no city provided", async () => {
+    it("returns null cityData when no city provided", async () => {
       const { result } = renderHook(() => useLocationData(""), {
         wrapper: createWrapper(),
       })
 
-      // Query is disabled when zipCode is empty, so zipData stays null
-      expect(result.current.zipData).toBeNull()
+      // Query is disabled when city is empty, so cityData stays null
+      expect(result.current.cityData).toBeNull()
       expect(result.current.isMockData).toBe(false)
       expect(result.current.isCachedData).toBe(false)
     })
@@ -148,13 +148,13 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
       expect(mockGetJurisdictionForLocation).toHaveBeenCalledWith("QC", "CA")
-      expect(result.current.zipData!.state).toBe("QC")
-      expect(result.current.zipData!.country).toBe("CA")
-      expect(result.current.zipData!.cityName).toBe("Montreal")
+      expect(result.current.cityData!.state).toBe("QC")
+      expect(result.current.cityData!.country).toBe("CA")
+      expect(result.current.cityData!.cityName).toBe("Montreal")
     })
 
     it("falls back to WHO when jurisdiction not found", async () => {
@@ -170,7 +170,7 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
       // getThreshold should have been called with WHO fallback
@@ -189,10 +189,10 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
-      const stat = result.current.zipData!.stats[0]
+      const stat = result.current.cityData!.stats[0]
       expect(stat.statId).toBe("chlorite")
       expect(stat.value).toBe(800)
       // value (800) >= limit (800) => danger
@@ -214,10 +214,10 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
-      expect(result.current.zipData!.stats[0].status).toBe("warning")
+      expect(result.current.cityData!.stats[0].status).toBe("warning")
     })
 
     it("maps measurement to safe status when value < warningThreshold", async () => {
@@ -234,10 +234,10 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
-      expect(result.current.zipData!.stats[0].status).toBe("safe")
+      expect(result.current.cityData!.stats[0].status).toBe("safe")
     })
 
     it("defaults to safe when no threshold is available", async () => {
@@ -250,10 +250,10 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
-      expect(result.current.zipData!.stats[0].status).toBe("safe")
+      expect(result.current.cityData!.stats[0].status).toBe("safe")
     })
   })
 
@@ -261,7 +261,7 @@ describe("useLocationData", () => {
     it("returns cached data when online API returns empty measurements", async () => {
       const cachedData = {
         data: {
-          zipCode: "Montreal",
+          city: "Montreal",
           cityName: "Montreal",
           state: "QC",
           country: "CA",
@@ -277,11 +277,11 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
       expect(result.current.isCachedData).toBe(true)
-      expect(result.current.zipData!.cityName).toBe("Montreal")
+      expect(result.current.cityData!.cityName).toBe("Montreal")
     })
 
     it("saves fetched data to cache", async () => {
@@ -294,7 +294,7 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
       expect(mockSave).toHaveBeenCalledWith(
@@ -312,7 +312,7 @@ describe("useLocationData", () => {
       mockIsOffline = true
       const cachedData = {
         data: {
-          zipCode: "Montreal",
+          city: "Montreal",
           cityName: "Montreal",
           state: "QC",
           country: "CA",
@@ -327,7 +327,7 @@ describe("useLocationData", () => {
       })
 
       await waitFor(() => {
-        expect(result.current.zipData).not.toBeNull()
+        expect(result.current.cityData).not.toBeNull()
       })
 
       expect(result.current.isCachedData).toBe(true)
@@ -348,12 +348,12 @@ describe("useLocationData", () => {
       })
 
       expect(result.current.error).toContain("offline")
-      expect(result.current.zipData).toBeNull()
+      expect(result.current.cityData).toBeNull()
     })
   })
 
   describe("empty measurements", () => {
-    it("returns null zipData when API returns empty array and no cache", async () => {
+    it("returns null cityData when API returns empty array and no cache", async () => {
       mockGetLocationMeasurements.mockResolvedValue([])
       mockLoad.mockReturnValue(null)
 
@@ -365,7 +365,7 @@ describe("useLocationData", () => {
         expect(result.current.isLoading).toBe(false)
       })
 
-      expect(result.current.zipData).toBeNull()
+      expect(result.current.cityData).toBeNull()
       expect(result.current.isMockData).toBe(false)
     })
   })

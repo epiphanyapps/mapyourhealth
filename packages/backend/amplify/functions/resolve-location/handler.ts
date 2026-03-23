@@ -250,7 +250,7 @@ async function findExistingLocation(
         ':state': { S: state },
         ':country': { S: country },
       },
-      Limit: 5,
+      Limit: 50, // Higher limit to avoid false negatives from Limit+FilterExpression interaction
     }));
 
     if (response.Items && response.Items.length > 0) {
@@ -304,6 +304,9 @@ async function createLocation(params: {
       item.longitude = { N: params.longitude.toString() };
     }
 
+    // No ConditionExpression: concurrent requests may create duplicates, which is
+    // accepted as benign — findExistingLocation returns any match, and duplicate
+    // Location records don't affect data correctness.
     await dynamodb.send(new PutItemCommand({
       TableName: LOCATION_TABLE_NAME,
       Item: item,
@@ -336,10 +339,10 @@ async function checkDataAvailability(city: string, state: string): Promise<boole
         ':city': { S: city },
         ':state': { S: state },
       },
-      Limit: 10, // Fetch a small batch; filter may discard some
+      Select: 'COUNT', // Count matching items without returning data
     }));
 
-    return (response.Items?.length ?? 0) > 0;
+    return (response.Count ?? 0) > 0;
   } catch (error) {
     console.error('Data availability check error:', error);
     return false;
@@ -365,7 +368,15 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
     };
   }
 
-  if (!GOOGLE_PLACES_API_KEY) {
+  const missingVars = [
+    ['GOOGLE_PLACES_API_KEY', GOOGLE_PLACES_API_KEY],
+    ['LOCATION_TABLE_NAME', LOCATION_TABLE_NAME],
+    ['JURISDICTION_TABLE_NAME', JURISDICTION_TABLE_NAME],
+    ['LOCATION_MEASUREMENT_TABLE_NAME', LOCATION_MEASUREMENT_TABLE_NAME],
+  ].filter(([, value]) => !value).map(([key]) => key);
+
+  if (missingVars.length > 0) {
+    console.error(`Missing required env vars: ${missingVars.join(', ')}`);
     return {
       city: '',
       state: '',

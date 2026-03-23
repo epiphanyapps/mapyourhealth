@@ -50,7 +50,7 @@ async function clearTable(tableName: string): Promise<number> {
       // Batch delete in chunks of 25 (DynamoDB limit)
       for (let i = 0; i < items.length; i += 25) {
         const chunk = items.slice(i, i + 25);
-        await client.send(
+        const response = await client.send(
           new BatchWriteItemCommand({
             RequestItems: {
               [fullName]: chunk.map((item) => ({
@@ -61,7 +61,25 @@ async function clearTable(tableName: string): Promise<number> {
             },
           })
         );
-        deleted += chunk.length;
+
+        // Retry unprocessed items with exponential backoff
+        let unprocessed = response.UnprocessedItems;
+        let retryCount = 0;
+        const MAX_RETRIES = 3;
+        while (unprocessed && Object.keys(unprocessed).length > 0 && retryCount < MAX_RETRIES) {
+          retryCount++;
+          await new Promise((r) => setTimeout(r, Math.pow(2, retryCount) * 100));
+          const retryResponse = await client.send(
+            new BatchWriteItemCommand({ RequestItems: unprocessed })
+          );
+          unprocessed = retryResponse.UnprocessedItems;
+        }
+
+        const unprocessedCount = unprocessed?.[fullName]?.length ?? 0;
+        deleted += chunk.length - unprocessedCount;
+        if (unprocessedCount > 0) {
+          console.error(`\n${unprocessedCount} items failed to delete after ${MAX_RETRIES} retries`);
+        }
         process.stdout.write(".");
       }
 

@@ -778,8 +778,6 @@ export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
 /** @deprecated Use AmplifyContaminant instead */
 export type StatDefinition = Schema["Contaminant"]["type"]
 
-/** @deprecated Use AmplifyUserSubscription instead */
-
 /** @deprecated Use AmplifyHazardReport instead */
 export type HazardReport = Schema["HazardReport"]["type"]
 
@@ -797,9 +795,7 @@ export type AmplifyAppConfig = Schema["AppConfig"]["type"]
 /**
  * Fetch app config by key using GSI
  */
-export async function getAppConfig(
-  configKey: string,
-): Promise<AmplifyAppConfig | null> {
+export async function getAppConfig(configKey: string): Promise<AmplifyAppConfig | null> {
   const client = await getPublicClient()
   const { data, errors } = await client.models.AppConfig.listAppConfigByConfigKey({
     configKey,
