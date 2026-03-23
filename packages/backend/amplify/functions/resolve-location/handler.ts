@@ -356,7 +356,7 @@ async function checkDataAvailability(city: string, state: string): Promise<boole
 export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = async (event) => {
   const { placeId, sessionToken } = event.arguments;
 
-  if (!placeId) {
+  if (!placeId || typeof placeId !== 'string' || placeId.length > 300) {
     return {
       city: '',
       state: '',
@@ -364,7 +364,7 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
       jurisdictionCode: 'WHO',
       hasData: false,
       isNew: false,
-      error: 'placeId is required',
+      error: 'placeId is required and must be a valid string',
     };
   }
 

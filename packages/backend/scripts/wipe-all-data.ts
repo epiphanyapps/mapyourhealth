@@ -98,9 +98,27 @@ async function clearTable(tableName: string): Promise<number> {
   return deleted;
 }
 
+async function confirm(message: string): Promise<boolean> {
+  const readline = await import("readline");
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  return new Promise((resolve) => {
+    rl.question(`${message} (y/N): `, (answer) => {
+      rl.close();
+      resolve(answer.trim().toLowerCase() === "y");
+    });
+  });
+}
+
 async function main() {
   console.log("=== MapYourHealth: Wipe All Data Tables ===");
-  console.log(`Table suffix: ${TABLE_SUFFIX}\n`);
+  console.log(`Table suffix: ${TABLE_SUFFIX}`);
+  console.log(`Tables to wipe: ${TABLES_TO_WIPE.join(", ")}\n`);
+
+  const confirmed = await confirm("Are you sure you want to delete all data in the above tables?");
+  if (!confirmed) {
+    console.log("Aborted.");
+    process.exit(0);
+  }
 
   let totalDeleted = 0;
 
