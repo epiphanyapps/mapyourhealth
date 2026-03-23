@@ -84,7 +84,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const categoryColor = getCategoryColor(categoryId) ?? CATEGORY_COLORS[category] ?? "#6B7280"
 
   // Get jurisdiction name for display
-  const localJurisdiction = getJurisdictionForLocation(cityData?.state ?? state ?? "", country ?? "")
+  const localJurisdiction = getJurisdictionForLocation(
+    cityData?.state ?? state ?? "",
+    country ?? "",
+  )
   const localJurisdictionCode = localJurisdiction?.code ?? "WHO"
   const localJurisdictionName =
     localJurisdiction?.name?.toUpperCase() || cityData?.state?.toUpperCase() || "LOCAL"

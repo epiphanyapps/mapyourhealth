@@ -157,10 +157,7 @@ export const CompareScreen: FC<CompareScreenProps> = function CompareScreen({ na
   }
 
   // Get the status for a category
-  const getStatusForCategory = (
-    cityData: CityData | null,
-    category: StatCategory,
-  ): StatStatus => {
+  const getStatusForCategory = (cityData: CityData | null, category: StatCategory): StatStatus => {
     if (!cityData) return "safe"
     return getWorstStatusForCategory(cityData, category, statDefinitions)
   }

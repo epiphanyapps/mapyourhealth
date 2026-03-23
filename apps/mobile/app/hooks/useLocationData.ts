@@ -11,12 +11,7 @@ import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import {
-  type CityData,
-  type CityStat,
-  type StatStatus,
-  StatCategory,
-} from "@/data/types/safety"
+import { type CityData, type CityStat, type StatStatus, StatCategory } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { queryKeys } from "@/lib/queryKeys"
 import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
