@@ -2,6 +2,7 @@ import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
 import { placesAutocomplete } from "../functions/places-autocomplete/resource";
 import { resolveLocation } from "../functions/resolve-location/resource";
 import { deleteAccount } from "../functions/delete-account/resource";
+import { manageData } from "../functions/manage-data/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -55,6 +56,18 @@ const schema = a.schema({
     error: a.string(),
   }),
 
+  /**
+   * ManageDataResponse - Response from manageData mutation
+   */
+  ManageDataResponse: a.customType({
+    success: a.boolean().required(),
+    action: a.string().required(),
+    details: a.string().required(),
+    tablesAffected: a.json(),
+    recordCount: a.integer().required(),
+    error: a.string(),
+  }),
+
   // =========================================================================
   // Custom Queries
   // =========================================================================
@@ -102,6 +115,19 @@ const schema = a.schema({
     )
     .authorization((allow) => [allow.authenticated()])
     .handler(a.handler.function(deleteAccount)),
+
+  /**
+   * manageData - Admin-only wipe and reseed operations for reference data tables
+   * Never touches user data (UserSubscription, NotificationLog, etc.)
+   */
+  manageData: a
+    .mutation()
+    .arguments({
+      action: a.enum(["wipeContaminants", "wipeLocations", "wipeAll", "reseedAll"]),
+    })
+    .returns(a.ref("ManageDataResponse"))
+    .authorization((allow) => [allow.group("admin")])
+    .handler(a.handler.function(manageData)),
 
   // Existing health tracking model
   HealthRecord: a
