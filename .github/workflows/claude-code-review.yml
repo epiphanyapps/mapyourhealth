@@ -46,7 +46,7 @@ jobs:
         with:
           github-token: ${{ github.token }}
           script: |
-            const { data: user } = await github.rest.users.getAuthenticated();
+            const runUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const { data: comments } = await github.rest.pulls.listReviewComments({
               owner: context.repo.owner,
@@ -57,12 +57,11 @@ jobs:
               direction: 'desc',
             });
 
-            const recentComment = comments.find(c => c.user.login === user.login);
-            const hasFindings = !!recentComment;
+            const hasFindings = comments.length > 0;
 
             const body = hasFindings
-              ? `**Claude Code Review** completed with inline comments.\n\n_Review posted by \`${user.login}\` (run [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}))_`
-              : `**Claude Code Review** completed — no issues found.\n\n_Review posted by \`${user.login}\` (run [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}))_`;
+              ? `**Claude Code Review** completed with inline comments.\n\n_Run [#${context.runNumber}](${runUrl})_`
+              : `**Claude Code Review** completed — no issues found.\n\n_Run [#${context.runNumber}](${runUrl})_`;
 
             await github.rest.issues.createComment({
               owner: context.repo.owner,
