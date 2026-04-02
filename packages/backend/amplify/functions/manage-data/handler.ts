@@ -153,7 +153,8 @@ async function batchPutItems(
       const unprocessedCount = unprocessed?.[tableName]?.length ?? 0;
       created += chunk.length - unprocessedCount;
       if (unprocessedCount > 0) errors += unprocessedCount;
-    } catch {
+    } catch (err) {
+      console.error(`BatchWrite failed for ${tableName} (chunk ${i}-${i + chunk.length}):`, err);
       errors += chunk.length;
     }
   }

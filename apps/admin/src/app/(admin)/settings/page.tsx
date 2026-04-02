@@ -181,7 +181,19 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error(`Error during ${action}:`, err);
-      toast.error("Operation failed unexpectedly");
+      const isTimeout =
+        err instanceof Error &&
+        (err.message.includes("timeout") ||
+          err.message.includes("Network") ||
+          err.name === "TimeoutError");
+      if (isTimeout && (action === "reseedAll" || action === "wipeAll")) {
+        toast.warning(
+          "The request timed out, but the operation is likely still running in the background. Check the data in a few minutes.",
+          { duration: 10000 },
+        );
+      } else {
+        toast.error("Operation failed unexpectedly");
+      }
     } finally {
       setActiveAction(null);
     }
