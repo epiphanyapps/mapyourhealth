@@ -349,7 +349,20 @@ function buildSubCategoryItems(subCategories: typeof categoriesData.subCategorie
   }));
 }
 
-function buildLocationObservationItems(observations: typeof omData.locationObservations) {
+interface SeedLocationObservation {
+  city: string;
+  state: string;
+  country: string;
+  county?: string | null;
+  propertyId: string;
+  zoneValue?: string | null;
+  observedAt: string;
+  source?: string | null;
+  sourceUrl?: string | null;
+  rawData?: Record<string, unknown> | null;
+}
+
+function buildLocationObservationItems(observations: SeedLocationObservation[]) {
   const now = new Date().toISOString();
   return observations.map((o) => ({
     id: randomUUID(),
@@ -406,7 +419,7 @@ async function seedAllTables(): Promise<{ seeded: number; errors: number }> {
     { table: 'LocationMeasurement', items: buildMeasurementItems(measurementsData.measurements), label: 'Measurements' },
     { table: 'Category', items: buildCategoryItems(categoriesData.categories), label: 'Categories' },
     { table: 'SubCategory', items: buildSubCategoryItems(categoriesData.subCategories), label: 'SubCategories' },
-    { table: 'LocationObservation', items: buildLocationObservationItems(omData.locationObservations), label: 'Location Observations' },
+    { table: 'LocationObservation', items: buildLocationObservationItems(omData.locationObservations as SeedLocationObservation[]), label: 'Location Observations' },
   ];
 
   for (const op of seedOps) {
