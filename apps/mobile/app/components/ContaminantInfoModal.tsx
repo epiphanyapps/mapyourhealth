@@ -1,12 +1,11 @@
-import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native"
+import { Modal, Pressable, ScrollView, View } from "react-native"
 import { Divider, IconButton } from "react-native-paper"
 
 import { getContaminantHealthEffects } from "@/data/contaminantHealthEffects"
 import { useAppTheme } from "@/theme/context"
 
+import { infoModalStyles as styles } from "./infoModalStyles"
 import { Text } from "./Text"
-
-const OVERLAY_COLOR = "rgba(0, 0, 0, 0.5)"
 
 interface ContaminantInfoModalProps {
   contaminantId: string
@@ -22,8 +21,6 @@ export function ContaminantInfoModal({
   const { theme } = useAppTheme()
   const healthEffects = getContaminantHealthEffects(contaminantId)
 
-  if (!healthEffects) return null
-
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
       <Pressable style={styles.overlay} onPress={onClose}>
@@ -32,30 +29,44 @@ export function ContaminantInfoModal({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>{healthEffects.name}</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>
+              {healthEffects?.name ?? contaminantId}
+            </Text>
             <IconButton icon="close" size={24} onPress={onClose} />
           </View>
 
           <Divider />
 
           <ScrollView style={styles.content}>
-            <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>
-                Health Concerns
-              </Text>
-              <Text style={[styles.body, { color: theme.colors.text }]}>
-                {healthEffects.description}
-              </Text>
-            </View>
-
-            {healthEffects.references && healthEffects.references.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>References</Text>
-                {healthEffects.references.map((ref, index) => (
-                  <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
-                    {"• " + ref}
+            {healthEffects ? (
+              <>
+                <View style={styles.section}>
+                  <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>
+                    Health Concerns
                   </Text>
-                ))}
+                  <Text style={[styles.body, { color: theme.colors.text }]}>
+                    {healthEffects.description}
+                  </Text>
+                </View>
+
+                {healthEffects.references && healthEffects.references.length > 0 && (
+                  <View style={styles.section}>
+                    <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>
+                      References
+                    </Text>
+                    {healthEffects.references.map((ref, index) => (
+                      <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
+                        {"• " + ref}
+                      </Text>
+                    ))}
+                  </View>
+                )}
+              </>
+            ) : (
+              <View style={styles.section}>
+                <Text style={[styles.body, { color: theme.colors.text }]}>
+                  No health information available for this contaminant.
+                </Text>
               </View>
             )}
           </ScrollView>
@@ -64,48 +75,3 @@ export function ContaminantInfoModal({
     </Modal>
   )
 }
-
-const styles = StyleSheet.create({
-  body: {
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  container: {
-    borderRadius: 12,
-    margin: 20,
-    maxHeight: "80%",
-    padding: 0,
-  },
-  content: {
-    padding: 20,
-  },
-  header: {
-    alignItems: "center",
-    flexDirection: "row",
-    justifyContent: "space-between",
-    padding: 20,
-  },
-  listItem: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
-  overlay: {
-    alignItems: "center",
-    backgroundColor: OVERLAY_COLOR,
-    flex: 1,
-    justifyContent: "center",
-  },
-  section: {
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
-  },
-  title: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "600",
-  },
-})

@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 /**
  * Auto-generated from seed-data.json by generate-health-effects.ts
  * Do not edit manually. Re-run the script to update:

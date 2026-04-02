@@ -24,11 +24,13 @@ export function ContaminantInfoButton({ contaminantId }: ContaminantInfoButtonPr
         <MaterialCommunityIcons name="information" size={14} color={theme.colors.tint} />
       </TouchableOpacity>
 
-      <ContaminantInfoModal
-        contaminantId={contaminantId}
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
+      {modalVisible && (
+        <ContaminantInfoModal
+          contaminantId={contaminantId}
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+        />
+      )}
     </>
   )
 }

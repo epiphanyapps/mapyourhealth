@@ -28,12 +28,14 @@ export function CategoryInfoButton({ name, description }: CategoryInfoButtonProp
         <MaterialCommunityIcons name="information" size={14} color={theme.colors.tint} />
       </TouchableOpacity>
 
-      <CategoryInfoModal
-        name={name}
-        description={description}
-        visible={modalVisible}
-        onClose={() => setModalVisible(false)}
-      />
+      {modalVisible && (
+        <CategoryInfoModal
+          name={name}
+          description={description}
+          visible={modalVisible}
+          onClose={() => setModalVisible(false)}
+        />
+      )}
     </>
   )
 }

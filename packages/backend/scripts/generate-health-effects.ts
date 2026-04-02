@@ -82,8 +82,7 @@ function main() {
   // Serialize the data as JSON, then wrap in TypeScript
   const jsonData = JSON.stringify(effects, null, 2);
 
-  const output = `/* eslint-disable prettier/prettier */
-/**
+  const output = `/**
  * Auto-generated from seed-data.json by generate-health-effects.ts
  * Do not edit manually. Re-run the script to update:
  *   cd packages/backend && npx tsx scripts/generate-health-effects.ts
@@ -118,8 +117,8 @@ export function hasHealthEffectsData(contaminantId: string): boolean {
       cwd: path.join(__dirname, "..", "..", "..", "apps", "mobile"),
       stdio: "inherit",
     });
-  } catch {
-    console.warn("Warning: prettier formatting failed, file saved without formatting");
+  } catch (e) {
+    console.warn("Warning: prettier formatting failed, file saved without formatting", e);
   }
 
   console.log(
