@@ -14,7 +14,6 @@ import { useAuth } from "@/context/AuthContext"
 import { useAppConfig } from "@/hooks/useAppConfig"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
 import { ComingSoonScreen } from "@/screens/ComingSoonScreen"
-import { CompareScreen } from "@/screens/CompareScreen"
 import { ConfirmSignupScreen } from "@/screens/ConfirmSignupScreen"
 import { DashboardScreen } from "@/screens/DashboardScreen"
 import { ErrorBoundary } from "@/screens/ErrorScreen/ErrorBoundary"
@@ -84,7 +83,6 @@ const AppStack = () => {
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
-      <Stack.Screen name="Compare" component={CompareScreen} />
       <Stack.Screen name="OnboardingLocations" component={OnboardingLocationsScreen} />
       <Stack.Screen name="Report" component={ReportScreen} />
       <Stack.Screen name="SubscriptionsSettings" component={SubscriptionsSettingsScreen} />
@@ -187,7 +185,6 @@ const linking: LinkingOptions<AppStackParamList> = {
           address: (address: string) => encodeURIComponent(address),
         },
       },
-      Compare: "compare",
       Login: "login",
       Signup: "signup",
     },

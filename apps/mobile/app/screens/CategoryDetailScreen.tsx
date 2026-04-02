@@ -181,7 +181,8 @@ View details: ${shareUrl}`
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
-    paddingBottom: 24,
+    paddingBottom: 48, // Increased bottom padding for better scrolling experience on mobile
+    minHeight: "100%", // Ensures content can scroll even on shorter screens
   }
 
   const $categoryHeader: ViewStyle = {

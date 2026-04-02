@@ -79,6 +79,67 @@ interface PlaceDetailsResult {
 }
 
 /**
+ * Sort Google Places predictions to prioritize main cities over neighborhoods and sub-locations
+ * 
+ * Priority ranking:
+ * 1. Main administrative areas (locality, administrative_area_level_1/2)
+ * 2. Secondary administrative areas (sublocality_level_1) 
+ * 3. Lower-level areas (sublocality_level_2+, neighborhoods)
+ * 4. Establishments and points of interest
+ * 
+ * Within each tier, sort alphabetically by main text
+ */
+function sortPlacesPredictions(predictions: GooglePrediction[]): GooglePrediction[] {
+  return predictions.sort((a, b) => {
+    const scoreA = getPlacePriorityScore(a);
+    const scoreB = getPlacePriorityScore(b);
+    
+    // Higher scores come first
+    if (scoreA !== scoreB) {
+      return scoreB - scoreA;
+    }
+    
+    // Same priority - sort alphabetically by main text
+    const textA = a.structured_formatting?.main_text || a.description || '';
+    const textB = b.structured_formatting?.main_text || b.description || '';
+    return textA.localeCompare(textB);
+  });
+}
+
+/**
+ * Calculate priority score for a place prediction
+ * Higher scores = higher priority in search results
+ */
+function getPlacePriorityScore(prediction: GooglePrediction): number {
+  const types = prediction.types || [];
+  
+  // Tier 1: Main administrative areas (highest priority)
+  if (types.includes('locality')) return 100; // Main cities
+  if (types.includes('administrative_area_level_1')) return 95; // States/provinces  
+  if (types.includes('administrative_area_level_2')) return 90; // Counties
+  if (types.includes('administrative_area_level_3')) return 85; // Administrative divisions
+  
+  // Tier 2: Secondary administrative areas
+  if (types.includes('sublocality_level_1')) return 80; // Major neighborhoods/districts
+  if (types.includes('sublocality')) return 75; // Neighborhoods (generic)
+  
+  // Tier 3: Lower-level areas  
+  if (types.includes('sublocality_level_2')) return 70; // Sub-neighborhoods
+  if (types.includes('sublocality_level_3')) return 65; // Minor subdivisions
+  if (types.includes('sublocality_level_4')) return 60; // Very minor subdivisions
+  if (types.includes('sublocality_level_5')) return 55; // Smallest subdivisions
+  if (types.includes('neighborhood')) return 50; // Neighborhood boundaries
+  
+  // Tier 4: Establishments and POIs (lowest priority for location search)
+  if (types.includes('establishment')) return 30;
+  if (types.includes('point_of_interest')) return 25;
+  if (types.includes('premise')) return 20;
+  
+  // Default: medium-low priority for unknown types
+  return 40;
+}
+
+/**
  * Get cached result from DynamoDB
  */
 async function getCachedResult(cacheKey: string): Promise<PlacesAutocompleteResult | PlaceDetailsResult | null> {
@@ -299,20 +360,32 @@ export const handler: Handler<PlacesAutocompleteEvent, PlacesAutocompleteResult 
   // Check cache first
   const cached = await getCachedResult(cacheKey);
   if (cached) {
-    return cached as PlacesAutocompleteResult;
+    const cachedResult = cached as PlacesAutocompleteResult;
+    // Apply sorting to cached results in case they were cached before sorting was implemented
+    if (cachedResult.predictions && cachedResult.predictions.length > 0) {
+      cachedResult.predictions = sortPlacesPredictions(cachedResult.predictions);
+    }
+    return cachedResult;
   }
 
   try {
     const data = await fetchPlacesAutocomplete(query, sessionToken);
 
-    // Cache successful results
+    // Sort predictions for better user experience (main cities first)
+    let sortedPredictions = data.predictions;
+    if (data.status === 'OK' && data.predictions && data.predictions.length > 0) {
+      sortedPredictions = sortPlacesPredictions(data.predictions);
+      console.log(`Sorted ${sortedPredictions.length} predictions for query: "${query}"`);
+    }
+
+    // Cache successful results (with original data to maintain API contract)
     if (data.status === 'OK') {
       await cacheResult(cacheKey, data);
     }
 
     return {
       status: data.status,
-      predictions: data.predictions,
+      predictions: sortedPredictions,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error';

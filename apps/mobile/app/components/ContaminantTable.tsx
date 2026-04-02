@@ -48,7 +48,8 @@ export function ContaminantTable(props: ContaminantTableProps) {
     borderRadius: 8,
     borderWidth: 1,
     borderColor: theme.colors.palette.neutral200,
-    overflow: "hidden",
+    // Removed overflow: "hidden" to allow full content to be scrollable
+    // The parent ScrollView will handle scrolling behavior
   }
 
   const $headerRow: ViewStyle = {
@@ -82,9 +83,10 @@ export function ContaminantTable(props: ContaminantTableProps) {
   }
 
   const $cell: ViewStyle = {
-    paddingVertical: 12,
-    paddingHorizontal: 8,
+    paddingVertical: 14, // Increased for better mobile touch targets
+    paddingHorizontal: 10, // Increased for better spacing on mobile
     justifyContent: "center",
+    minHeight: 44, // Ensure minimum touch target size for accessibility
   }
 
   const $nameCell: ViewStyle = {
