@@ -91,7 +91,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
     useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
-  const { getLocationZipCode, isLocating } = useLocation()
+  const { getLocationFromGPS, isLocating } = useLocation()
   const { getCategoryName } = useCategories()
   const { banners: adminBanners } = useWarningBanners({
     city: route.params?.city,
@@ -280,18 +280,25 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
-    const zipCode = await getLocationZipCode()
-    if (zipCode) {
-      // GPS returns a zip code, but we treat it as a city lookup
-      // TODO: Reverse geocode to city/state instead
+    const location = await getLocationFromGPS()
+    if (location) {
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
-          routes: [{ name: "Dashboard", params: { city: zipCode, state: "", country: "" } }],
+          routes: [
+            {
+              name: "Dashboard",
+              params: {
+                city: location.city,
+                state: location.state,
+                country: location.country,
+              },
+            },
+          ],
         }),
       )
     }
-  }, [getLocationZipCode, navigation])
+  }, [getLocationFromGPS, navigation])
 
   // Handle Follow button press - auth gated
   const handleFollow = useCallback(async () => {

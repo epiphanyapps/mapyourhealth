@@ -899,6 +899,44 @@ export async function resolveLocationByPlaceId(
   }
 }
 
+/**
+ * Resolve a location from GPS coordinates via the backend.
+ * Uses Google Geocoding API server-side to reverse geocode, then resolves jurisdiction.
+ */
+export async function resolveLocationByCoords(
+  latitude: number,
+  longitude: number,
+): Promise<ResolveLocationResponse> {
+  const client = await getPublicClient()
+
+  try {
+    if (typeof client.mutations.resolveLocation === "function") {
+      const { data, errors } = await client.mutations.resolveLocation({
+        latitude,
+        longitude,
+      })
+
+      if (errors) {
+        console.error("Error resolving location by coords:", errors)
+      } else if (data) {
+        return data as ResolveLocationResponse
+      }
+    }
+  } catch (e) {
+    console.warn("resolveLocation by coords failed:", e)
+  }
+
+  return {
+    city: "",
+    state: "",
+    country: "",
+    jurisdictionCode: "WHO",
+    hasData: false,
+    isNew: false,
+    error: "Could not resolve location from coordinates",
+  }
+}
+
 // =============================================================================
 // Places Autocomplete (Backend Proxy)
 // =============================================================================

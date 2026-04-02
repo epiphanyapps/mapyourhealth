@@ -1,22 +1,31 @@
 /**
  * useLocation Hook
  *
- * A reusable hook for getting zip code from device GPS location.
+ * A reusable hook for getting city/state/country from device GPS location.
  * Handles permissions, position fetching, and reverse geocoding.
+ *
+ * On native: uses expo-location's reverseGeocodeAsync
+ * On web: falls back to backend reverse geocoding (expo-location doesn't support it on web)
  */
 
 import { useState, useCallback } from "react"
-import { Alert } from "react-native"
+import { Alert, Platform } from "react-native"
 import * as Location from "expo-location"
 
-import { normalizePostalCode } from "@/utils/postalCode"
+import { resolveLocationByCoords } from "@/services/amplify/data"
+
+export interface LocationResult {
+  city: string
+  state: string
+  country: string
+}
 
 export interface UseLocationResult {
   /**
-   * Async function to get zip code from current GPS location
-   * Returns the zip code string, or null if failed
+   * Async function to get city/state/country from current GPS location
+   * Returns the location result, or null if failed
    */
-  getLocationZipCode: () => Promise<string | null>
+  getLocationFromGPS: () => Promise<LocationResult | null>
   /**
    * Whether location is currently being fetched
    */
@@ -31,16 +40,27 @@ export interface UseLocationResult {
   clearError: () => void
 }
 
+const LOCATION_TIMEOUT_MS = 15000
+
+function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
+    ),
+  ])
+}
+
 /**
- * Hook for getting zip code from device GPS location.
+ * Hook for getting city/state/country from device GPS location.
  *
  * @example
- * const { getLocationZipCode, isLocating, error } = useLocation()
+ * const { getLocationFromGPS, isLocating, error } = useLocation()
  *
  * const handleLocationPress = async () => {
- *   const zipCode = await getLocationZipCode()
- *   if (zipCode) {
- *     setCurrentZipCode(zipCode)
+ *   const location = await getLocationFromGPS()
+ *   if (location) {
+ *     navigateTo(location.city, location.state, location.country)
  *   }
  * }
  */
@@ -52,8 +72,8 @@ export function useLocation(): UseLocationResult {
     setError("")
   }, [])
 
-  const getLocationZipCode = useCallback(async (): Promise<string | null> => {
-    console.log("=== useLocation: Starting getLocationZipCode ===")
+  const getLocationFromGPS = useCallback(async (): Promise<LocationResult | null> => {
+    console.log("=== useLocation: Starting getLocationFromGPS ===")
     setError("")
     setIsLocating(true)
 
@@ -71,52 +91,64 @@ export function useLocation(): UseLocationResult {
         return null
       }
 
-      // Get current location
+      // Get current location with timeout
       console.log("useLocation: Getting current position...")
-      const location = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      })
+      const location = await withTimeout(
+        Location.getCurrentPositionAsync({
+          accuracy: Location.Accuracy.Balanced,
+        }),
+        LOCATION_TIMEOUT_MS,
+        "Getting GPS position",
+      )
       console.log("useLocation: Got position:", location.coords.latitude, location.coords.longitude)
 
-      // Reverse geocode to get address/zip code
-      console.log("useLocation: Reverse geocoding...")
-      const [address] = await Location.reverseGeocodeAsync({
-        latitude: location.coords.latitude,
-        longitude: location.coords.longitude,
-      })
-      console.log("useLocation: Geocode result:", JSON.stringify(address, null, 2))
+      const { latitude, longitude } = location.coords
 
-      if (address?.postalCode) {
-        const normalized = normalizePostalCode(address.postalCode)
-        console.log(
-          "useLocation: Found postal code:",
-          address.postalCode,
-          "-> normalized:",
-          normalized,
-        )
-        return normalized
-      } else {
-        // No postal code - common in ~40 countries (Ireland pre-2015, many African nations, etc.)
-        console.log("useLocation: No postal code in address")
-        const locationDesc = [address?.city, address?.region, address?.country]
-          .filter(Boolean)
-          .join(", ")
+      // Try native reverse geocoding first (works on iOS/Android, throws on web)
+      if (Platform.OS !== "web") {
+        try {
+          console.log("useLocation: Reverse geocoding (native)...")
+          const [address] = await Location.reverseGeocodeAsync({ latitude, longitude })
+          console.log("useLocation: Geocode result:", JSON.stringify(address, null, 2))
 
-        if (locationDesc) {
-          // Show helpful message with detected location
-          Alert.alert(
-            "Postal Code Not Available",
-            `We detected you're in ${locationDesc}, but couldn't find a postal code for this area.\n\nPlease enter a postal code manually to search.`,
-            [{ text: "OK" }],
-          )
-        } else {
-          setError("Could not determine postal code from your location")
+          if (address?.city && address?.region && address?.isoCountryCode) {
+            return {
+              city: address.city,
+              state: address.region,
+              country: address.isoCountryCode,
+            }
+          }
+        } catch (geocodeErr) {
+          console.warn("useLocation: Native reverse geocode failed:", geocodeErr)
         }
+      }
+
+      // Fallback: use backend reverse geocoding (required on web, fallback on native)
+      console.log("useLocation: Using backend reverse geocoding...")
+      const resolved = await resolveLocationByCoords(latitude, longitude)
+
+      if (resolved.error || !resolved.city) {
+        Alert.alert(
+          "Location Not Found",
+          "We could not determine your city from your GPS location. Please search for your city manually.",
+          [{ text: "OK" }],
+        )
         return null
+      }
+
+      return {
+        city: resolved.city,
+        state: resolved.state,
+        country: resolved.country,
       }
     } catch (err) {
       console.error("useLocation: Error:", err)
-      setError("Failed to get your location. Please try again.")
+      const message = err instanceof Error ? err.message : "Unknown error"
+      if (message.includes("timed out")) {
+        setError("Location request timed out. Please try again.")
+      } else {
+        setError("Failed to get your location. Please try again.")
+      }
       return null
     } finally {
       console.log("=== useLocation: Finished ===")
@@ -125,7 +157,7 @@ export function useLocation(): UseLocationResult {
   }, [])
 
   return {
-    getLocationZipCode,
+    getLocationFromGPS,
     isLocating,
     error,
     clearError,
