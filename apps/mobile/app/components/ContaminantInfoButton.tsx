@@ -1,6 +1,5 @@
 import { useState } from "react"
 import { StyleSheet, TouchableOpacity } from "react-native"
-
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { useAppTheme } from "@/theme/context"
@@ -19,10 +18,10 @@ export function ContaminantInfoButton({ contaminantId }: ContaminantInfoButtonPr
     <>
       <TouchableOpacity
         onPress={() => setModalVisible(true)}
-        style={[styles.button, { backgroundColor: theme.colors.primary + "20" }]}
+        style={[styles.button, { backgroundColor: theme.colors.tint + "20" }]}
         accessibilityLabel={`Health effects for ${contaminantId}`}
       >
-        <MaterialCommunityIcons name="information" size={14} color={theme.colors.primary} />
+        <MaterialCommunityIcons name="information" size={14} color={theme.colors.tint} />
       </TouchableOpacity>
 
       <ContaminantInfoModal
@@ -36,12 +35,12 @@ export function ContaminantInfoButton({ contaminantId }: ContaminantInfoButtonPr
 
 const styles = StyleSheet.create({
   button: {
+    alignItems: "center",
+    borderRadius: 12,
+    height: 24,
+    justifyContent: "center",
     marginLeft: 6,
     padding: 4,
-    borderRadius: 12,
     width: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
   },
 })

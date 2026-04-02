@@ -1,12 +1,12 @@
 import { View, ViewStyle, TextStyle } from "react-native"
 
+import { hasHealthEffectsData } from "@/data/contaminantHealthEffects"
 import type { StatStatus } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
-import { hasHealthEffectsData } from "@/data/contaminantHealthEffects"
 
+import { ContaminantInfoButton } from "./ContaminantInfoButton"
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
-import { ContaminantInfoButton } from "./ContaminantInfoButton"
 
 export interface ContaminantTableRow {
   /** Contaminant name */
@@ -98,6 +98,11 @@ export function ContaminantTable(props: ContaminantTableProps) {
     flex: 2,
   }
 
+  const $nameCellRow: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+  }
+
   const $valueCell: ViewStyle = {
     ...$cell,
     flex: 1.5,
@@ -154,7 +159,7 @@ export function ContaminantTable(props: ContaminantTableProps) {
       {/* Data Rows */}
       {rows.map((row, index) => (
         <View key={row.name} style={[$row, index === rows.length - 1 && $lastRow]}>
-          <View style={[$nameCell, { flexDirection: "row", alignItems: "center" }]}>
+          <View style={[$nameCell, $nameCellRow]}>
             <Text style={$cellText}>{row.name}</Text>
             {row.contaminantId && hasHealthEffectsData(row.contaminantId) && (
               <ContaminantInfoButton contaminantId={row.contaminantId} />

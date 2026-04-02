@@ -184,7 +184,7 @@ export default function PollutionSourcesPage() {
           sourceId: `PS_${Date.now()}`, // Generate unique ID
           reportedAt: new Date().toISOString(),
           reportedBy: "admin", // TODO: Use actual user ID
-        } as any);
+        } as Record<string, unknown>);
         
         if (result.errors) {
           throw new Error("Failed to create source");

@@ -1,8 +1,10 @@
-import { ScrollView, View } from "react-native"
-import { Modal, Portal, IconButton, Divider } from "react-native-paper"
-import { useAppTheme } from "@/theme/context"
-import { Text } from "./Text"
+import { ScrollView, StyleSheet, View } from "react-native"
+import { Divider, IconButton, Modal, Portal } from "react-native-paper"
+
 import { getContaminantHealthEffects } from "@/data/contaminantHealthEffects"
+import { useAppTheme } from "@/theme/context"
+
+import { Text } from "./Text"
 
 interface ContaminantInfoModalProps {
   contaminantId: string
@@ -10,8 +12,12 @@ interface ContaminantInfoModalProps {
   onClose: () => void
 }
 
-export function ContaminantInfoModal({ contaminantId, visible, onClose }: ContaminantInfoModalProps) {
-  const { colors } = useAppTheme()
+export function ContaminantInfoModal({
+  contaminantId,
+  visible,
+  onClose,
+}: ContaminantInfoModalProps) {
+  const { theme } = useAppTheme()
   const healthEffects = getContaminantHealthEffects(contaminantId)
 
   if (!healthEffects) return null
@@ -21,41 +27,37 @@ export function ContaminantInfoModal({ contaminantId, visible, onClose }: Contam
       <Modal
         visible={visible}
         onDismiss={onClose}
-        contentContainerStyle={{
-          backgroundColor: colors.surface,
-          margin: 20,
-          borderRadius: 12,
-          padding: 0,
-          maxHeight: "80%",
-        }}
+        contentContainerStyle={[styles.container, { backgroundColor: theme.colors.background }]}
       >
-        <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20 }}>
-          <Text style={{ fontSize: 18, fontWeight: "600", flex: 1 }}>{healthEffects.name}</Text>
+        <View style={styles.header}>
+          <Text style={[styles.title, { color: theme.colors.text }]}>{healthEffects.name}</Text>
           <IconButton icon="close" size={24} onPress={onClose} />
         </View>
-        
+
         <Divider />
-        
-        <ScrollView style={{ padding: 20 }}>
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 14, lineHeight: 20 }}>{healthEffects.description}</Text>
+
+        <ScrollView style={styles.content}>
+          <View style={styles.section}>
+            <Text style={[styles.body, { color: theme.colors.text }]}>
+              {healthEffects.description}
+            </Text>
           </View>
 
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 8, color: colors.primary }}>
-              Health Effects
-            </Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>Health Effects</Text>
             {healthEffects.healthEffects.map((effect, index) => (
-              <Text key={index} style={{ fontSize: 14, marginBottom: 4 }}>• {effect}</Text>
+              <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
+                {"• " + effect}
+              </Text>
             ))}
           </View>
 
-          <View style={{ marginBottom: 16 }}>
-            <Text style={{ fontSize: 16, fontWeight: "600", marginBottom: 8, color: colors.primary }}>
-              Common Sources
-            </Text>
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>Common Sources</Text>
             {healthEffects.sources.map((source, index) => (
-              <Text key={index} style={{ fontSize: 14, marginBottom: 4 }}>• {source}</Text>
+              <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
+                {"• " + source}
+              </Text>
             ))}
           </View>
         </ScrollView>
@@ -63,3 +65,42 @@ export function ContaminantInfoModal({ contaminantId, visible, onClose }: Contam
     </Portal>
   )
 }
+
+const styles = StyleSheet.create({
+  body: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  container: {
+    borderRadius: 12,
+    margin: 20,
+    maxHeight: "80%",
+    padding: 0,
+  },
+  content: {
+    padding: 20,
+  },
+  header: {
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "space-between",
+    padding: 20,
+  },
+  listItem: {
+    fontSize: 14,
+    marginBottom: 4,
+  },
+  section: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 8,
+  },
+  title: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: "600",
+  },
+})

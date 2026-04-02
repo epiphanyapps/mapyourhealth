@@ -449,7 +449,7 @@ export default function PollutionSourceMap({
       )}
 
       {/* Source Details Panel */}
-      <Sheet open={!!selectedSource} onOpenChange={() => onSourceSelect(null as any)}>
+      <Sheet open={!!selectedSource} onOpenChange={() => onSourceSelect(null)}>
         <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="flex items-center gap-2">
@@ -485,7 +485,7 @@ export default function PollutionSourceMap({
                   <Label htmlFor="sourceType">Source Type *</Label>
                   <Select
                     value={watch("sourceType")}
-                    onValueChange={(value) => setValue("sourceType", value as any)}
+                    onValueChange={(value) => setValue("sourceType", value)}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -693,7 +693,7 @@ export default function PollutionSourceMap({
                     <Label htmlFor="severityLevel">Severity Level *</Label>
                     <Select
                       value={watch("severityLevel")}
-                      onValueChange={(value) => setValue("severityLevel", value as any)}
+                      onValueChange={(value) => setValue("severityLevel", value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -711,7 +711,7 @@ export default function PollutionSourceMap({
                     <Label htmlFor="status">Status *</Label>
                     <Select
                       value={watch("status")}
-                      onValueChange={(value) => setValue("status", value as any)}
+                      onValueChange={(value) => setValue("status", value)}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -760,7 +760,7 @@ export default function PollutionSourceMap({
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => onSourceSelect(null as any)}
+                    onClick={() => onSourceSelect(null)}
                     disabled={isSaving}
                   >
                     Cancel

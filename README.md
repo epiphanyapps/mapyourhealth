@@ -30,37 +30,6 @@ A health monitoring platform focused on water quality and environmental contamin
 | **Testing** | Jest (unit), Maestro (mobile E2E), Playwright (web E2E) |
 | **CI/CD** | GitHub Actions, AWS Amplify Hosting |
 
-## Data Sources & Content
-
-MapYourHealth integrates multiple environmental and health data sources to provide comprehensive monitoring capabilities:
-
-### Water Quality Data
-- **172+ Contaminant Types** — Complete catalog of water contaminants with safety thresholds
-- **Jurisdiction Coverage** — WHO, US states, Canadian provinces, EU regulatory standards
-- **Real-time Measurements** — Location-specific contaminant level monitoring
-- **Threshold Comparisons** — Multi-jurisdiction safety limit analysis
-
-### Geographic Data
-- **Location Services** — Google Places API integration for US, Canada city search
-- **Coordinate Mapping** — City/county to regulatory jurisdiction mapping
-- **Future Enhancement** — International location expansion planned (Issue #176)
-
-### Environmental Monitoring
-- **Air Quality** — Atmospheric pollutant tracking and alerts
-- **Radiation Levels** — Environmental radiation monitoring
-- **Disease Incidence** — Public health trend tracking
-- **Pollution Sources** — Industrial/environmental contamination mapping (planned - Issues #178, #182)
-
-### Data Integrity
-- **No Risk Files** — Pollution source data confirmed not present in risks.xlsx or similar risk assessment files
-- **Validated Sources** — All data sources verified for regulatory compliance and scientific accuracy
-- **Regular Updates** — Continuous monitoring and data refresh processes
-
-### Content Management
-- **Admin Portal** — Internal dashboard for data input and management (Issue #180)
-- **Multi-language** — English and French content support
-- **Health Explanations** — User-friendly contaminant explanations and health effects (Issue #175)
-
 ## Monorepo Structure
 
 ```text
