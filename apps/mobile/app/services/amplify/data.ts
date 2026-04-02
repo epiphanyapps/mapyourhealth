@@ -925,7 +925,7 @@ export async function resolveLocationByCoords(
           jurisdictionCode: "WHO",
           hasData: false,
           isNew: false,
-          error: errors.map((e) => e.message).join("; "),
+          error: errors.map((e: { message: string }) => e.message).join("; "),
         }
       }
 
