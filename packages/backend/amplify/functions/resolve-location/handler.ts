@@ -169,7 +169,6 @@ async function reverseGeocodeByCoords(
 ): Promise<AddressComponent[] | null> {
   const params = new URLSearchParams({
     latlng: `${lat},${lng}`,
-    result_type: 'locality',
     key: GOOGLE_PLACES_API_KEY,
   });
 
@@ -185,21 +184,6 @@ async function reverseGeocodeByCoords(
 
   if (data.status === 'OK' && data.results?.length) {
     return data.results[0].address_components || [];
-  }
-
-  // If locality filter returns nothing, retry without it
-  const fallbackParams = new URLSearchParams({
-    latlng: `${lat},${lng}`,
-    key: GOOGLE_PLACES_API_KEY,
-  });
-  const fallbackUrl = `https://maps.googleapis.com/maps/api/geocode/json?${fallbackParams}`;
-  const fallbackResponse = await fetch(fallbackUrl);
-  if (!fallbackResponse.ok) {
-    throw new Error(`Google Geocoding API fallback error: ${fallbackResponse.status}`);
-  }
-  const fallbackData = (await fallbackResponse.json()) as GeocodingResponse;
-  if (fallbackData.status === 'OK' && fallbackData.results?.length) {
-    return fallbackData.results[0].address_components || [];
   }
 
   return null;

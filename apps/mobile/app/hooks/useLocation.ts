@@ -43,11 +43,12 @@ export interface UseLocationResult {
 const LOCATION_TIMEOUT_MS = 15000
 
 function withTimeout<T>(promise: Promise<T>, ms: number, label: string): Promise<T> {
+  let timeoutId: ReturnType<typeof setTimeout>
   return Promise.race([
-    promise,
-    new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms),
-    ),
+    promise.finally(() => clearTimeout(timeoutId)),
+    new Promise<never>((_, reject) => {
+      timeoutId = setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)
+    }),
   ])
 }
 
