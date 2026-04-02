@@ -24,6 +24,7 @@ import observedPropertiesData from '../../../scripts/observed-properties.json';
 import propertyThresholdsData from '../../../scripts/property-thresholds.json';
 import measurementsData from '../../../scripts/seed-measurements.json';
 import categoriesData from '../../../scripts/seed-data-categories.json';
+// @ts-ignore — gitignored file, resolved by esbuild at deploy time
 import omData from '../../../scripts/seed-om-data.json';
 
 const dynamodb = new DynamoDBClient({});
