@@ -39,6 +39,36 @@ jobs:
           plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
           plugins: 'code-review@claude-code-plugins'
           prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'
-          # See https://github.com/anthropics/claude-code-action/blob/main/docs/usage.md
-          # or https://code.claude.com/docs/en/cli-reference for available options
+
+      - name: Post review summary
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Get the authenticated user
+            const { data: user } = await github.rest.users.getAuthenticated();
+
+            // Check if any review comments were posted by this workflow
+            const { data: comments } = await github.rest.pulls.listReviewComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.payload.pull_request.number,
+              per_page: 1,
+              sort: 'created',
+              direction: 'desc',
+            });
+
+            const recentComment = comments.find(c => c.user.login === user.login);
+            const hasFindings = !!recentComment;
+
+            const body = hasFindings
+              ? `**Claude Code Review** completed with inline comments.\n\n_Review posted by \`${user.login}\` (run [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}))_`
+              : `**Claude Code Review** completed — no issues found.\n\n_Review posted by \`${user.login}\` (run [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}))_`;
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.pull_request.number,
+              body,
+            });
 
