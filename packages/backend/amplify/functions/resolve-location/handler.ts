@@ -1,8 +1,8 @@
 /**
  * Resolve Location Lambda Handler
  *
- * Given a Google Places placeId:
- * 1. Fetches place details (coordinates + address components)
+ * Given a Google Places placeId OR GPS coordinates:
+ * 1. Fetches place details / reverse geocodes coordinates
  * 2. Extracts city/state/country/county
  * 3. Auto-assigns jurisdiction by querying the Jurisdiction table
  * 4. Creates a Location record if one doesn't exist
@@ -31,8 +31,10 @@ const CACHE_TTL_SECONDS = 86400; // 24 hours for location data (changes rarely)
 
 interface ResolveLocationEvent {
   arguments: {
-    placeId: string;
+    placeId?: string;
     sessionToken?: string;
+    latitude?: number;
+    longitude?: number;
   };
 }
 
@@ -66,6 +68,14 @@ interface PlaceDetailsResponse {
     };
     address_components?: AddressComponent[];
   };
+  error_message?: string;
+}
+
+interface GeocodingResponse {
+  status: string;
+  results?: Array<{
+    address_components?: AddressComponent[];
+  }>;
   error_message?: string;
 }
 
@@ -125,7 +135,7 @@ async function cachePlaceDetails(placeId: string, data: CachedPlaceDetails): Pro
 }
 
 // ============================================
-// Google Places API
+// Google APIs
 // ============================================
 
 async function fetchPlaceDetails(
@@ -151,6 +161,32 @@ async function fetchPlaceDetails(
   }
 
   return response.json() as Promise<PlaceDetailsResponse>;
+}
+
+async function reverseGeocodeByCoords(
+  lat: number,
+  lng: number,
+): Promise<AddressComponent[] | null> {
+  const params = new URLSearchParams({
+    latlng: `${lat},${lng}`,
+    key: GOOGLE_PLACES_API_KEY,
+  });
+
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?${params}`;
+  console.log(`Reverse geocoding: ${lat}, ${lng}`);
+
+  const response = await fetch(url);
+  if (!response.ok) {
+    throw new Error(`Google Geocoding API error: ${response.status}`);
+  }
+
+  const data = (await response.json()) as GeocodingResponse;
+
+  if (data.status === 'OK' && data.results?.length) {
+    return data.results[0].address_components || [];
+  }
+
+  return null;
 }
 
 function parseAddressComponents(components: AddressComponent[]): {
@@ -354,9 +390,12 @@ async function checkDataAvailability(city: string, state: string): Promise<boole
 // ============================================
 
 export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = async (event) => {
-  const { placeId, sessionToken } = event.arguments;
+  const { placeId, sessionToken, latitude, longitude } = event.arguments;
 
-  if (!placeId || typeof placeId !== 'string' || placeId.length > 300) {
+  const hasPlaceId = placeId && typeof placeId === 'string' && placeId.length <= 300;
+  const hasCoords = typeof latitude === 'number' && typeof longitude === 'number';
+
+  if (!hasPlaceId && !hasCoords) {
     return {
       city: '',
       state: '',
@@ -364,7 +403,7 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
       jurisdictionCode: 'WHO',
       hasData: false,
       isNew: false,
-      error: 'placeId is required and must be a valid string',
+      error: 'Either placeId or latitude+longitude is required',
     };
   }
 
@@ -390,7 +429,7 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
   }
 
   try {
-    // Step 1: Get place details (from cache or Google API)
+    // Step 1: Get location details (from placeId or coordinates)
     let lat: number | undefined;
     let lng: number | undefined;
     let city: string | undefined;
@@ -398,49 +437,97 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
     let country: string | undefined;
     let county: string | undefined;
 
-    const cached = await getCachedPlaceDetails(placeId);
-    if (cached && cached.city && cached.state && cached.country) {
-      lat = cached.lat;
-      lng = cached.lng;
-      city = cached.city;
-      state = cached.state;
-      country = cached.country;
-      county = cached.county;
-      console.log(`Cache hit for place details: ${placeId}`);
-    } else {
-      const details = await fetchPlaceDetails(placeId, sessionToken);
+    if (hasCoords && !hasPlaceId) {
+      // Resolve from GPS coordinates — check cache first, then Google Geocoding API
+      const coordsCacheKey = `coords:${latitude!.toFixed(3)},${longitude!.toFixed(3)}`;
+      const cachedCoords = await getCachedPlaceDetails(coordsCacheKey);
+      if (cachedCoords && cachedCoords.city && cachedCoords.state && cachedCoords.country) {
+        lat = cachedCoords.lat;
+        lng = cachedCoords.lng;
+        city = cachedCoords.city;
+        state = cachedCoords.state;
+        country = cachedCoords.country;
+        county = cachedCoords.county;
+        console.log(`Cache hit for coords: ${coordsCacheKey}`);
+      } else {
+        const components = await reverseGeocodeByCoords(latitude!, longitude!);
+        if (!components) {
+          return {
+            city: '',
+            state: '',
+            country: '',
+            jurisdictionCode: 'WHO',
+            hasData: false,
+            isNew: false,
+            error: 'Could not reverse geocode coordinates',
+          };
+        }
 
-      if (details.status !== 'OK' || !details.result) {
-        return {
-          city: '',
-          state: '',
-          country: '',
-          jurisdictionCode: 'WHO',
-          hasData: false,
-          isNew: false,
-          error: details.error_message || `Place details failed: ${details.status}`,
-        };
+        const parsed = parseAddressComponents(components);
+        lat = latitude;
+        lng = longitude;
+        city = parsed.city;
+        state = parsed.state;
+        country = parsed.country;
+        county = parsed.county;
+
+        // Cache for future requests (rounded to ~100m precision)
+        await cachePlaceDetails(coordsCacheKey, {
+          status: 'OK',
+          lat,
+          lng,
+          city,
+          state,
+          country,
+          county,
+        });
       }
+    } else if (hasPlaceId) {
+      // Resolve from Google Places placeId
+      const cached = await getCachedPlaceDetails(placeId!);
+      if (cached && cached.city && cached.state && cached.country) {
+        lat = cached.lat;
+        lng = cached.lng;
+        city = cached.city;
+        state = cached.state;
+        country = cached.country;
+        county = cached.county;
+        console.log(`Cache hit for place details: ${placeId}`);
+      } else {
+        const details = await fetchPlaceDetails(placeId!, sessionToken);
 
-      const components = details.result.address_components || [];
-      const parsed = parseAddressComponents(components);
-      lat = details.result.geometry?.location?.lat;
-      lng = details.result.geometry?.location?.lng;
-      city = parsed.city;
-      state = parsed.state;
-      country = parsed.country;
-      county = parsed.county;
+        if (details.status !== 'OK' || !details.result) {
+          return {
+            city: '',
+            state: '',
+            country: '',
+            jurisdictionCode: 'WHO',
+            hasData: false,
+            isNew: false,
+            error: details.error_message || `Place details failed: ${details.status}`,
+          };
+        }
 
-      // Cache for future requests
-      await cachePlaceDetails(placeId, {
-        status: 'OK',
-        lat,
-        lng,
-        city,
-        state,
-        country,
-        county,
-      });
+        const components = details.result.address_components || [];
+        const parsed = parseAddressComponents(components);
+        lat = details.result.geometry?.location?.lat;
+        lng = details.result.geometry?.location?.lng;
+        city = parsed.city;
+        state = parsed.state;
+        country = parsed.country;
+        county = parsed.county;
+
+        // Cache for future requests
+        await cachePlaceDetails(placeId!, {
+          status: 'OK',
+          lat,
+          lng,
+          city,
+          state,
+          country,
+          county,
+        });
+      }
     }
 
     if (!city || !state || !country) {
