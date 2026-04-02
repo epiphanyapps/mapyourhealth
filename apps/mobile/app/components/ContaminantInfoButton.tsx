@@ -1,65 +1,47 @@
 import { useState } from "react"
-import { TouchableOpacity, ViewStyle } from "react-native"
+import { StyleSheet, TouchableOpacity } from "react-native"
+
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { useAppTheme } from "@/theme/context"
+
 import { ContaminantInfoModal } from "./ContaminantInfoModal"
 
 interface ContaminantInfoButtonProps {
   contaminantId: string
-  /** Optional style override */
-  style?: ViewStyle
 }
 
-/**
- * Info button that shows health effects information for a contaminant
- * Only renders if health effects data is available for the contaminant
- */
-export function ContaminantInfoButton({ contaminantId, style }: ContaminantInfoButtonProps) {
+export function ContaminantInfoButton({ contaminantId }: ContaminantInfoButtonProps) {
   const [modalVisible, setModalVisible] = useState(false)
-  const { colors } = useAppTheme()
-
-  const handlePress = () => {
-    setModalVisible(true)
-  }
-
-  const handleCloseModal = () => {
-    setModalVisible(false)
-  }
+  const { theme } = useAppTheme()
 
   return (
     <>
       <TouchableOpacity
-        onPress={handlePress}
-        style={[
-          {
-            marginLeft: 4,
-            padding: 2,
-            borderRadius: 10,
-            backgroundColor: colors.primary + "20", // 20% opacity
-            justifyContent: "center",
-            alignItems: "center",
-            width: 20,
-            height: 20,
-          },
-          style,
-        ]}
-        accessibilityLabel={`Health effects information for ${contaminantId}`}
-        accessibilityRole="button"
-        accessibilityHint="Opens detailed health effects information"
+        onPress={() => setModalVisible(true)}
+        style={[styles.button, { backgroundColor: theme.colors.primary + "20" }]}
+        accessibilityLabel={`Health effects for ${contaminantId}`}
       >
-        <MaterialCommunityIcons
-          name="information"
-          size={12}
-          color={colors.primary}
-        />
+        <MaterialCommunityIcons name="information" size={14} color={theme.colors.primary} />
       </TouchableOpacity>
 
       <ContaminantInfoModal
         contaminantId={contaminantId}
         visible={modalVisible}
-        onClose={handleCloseModal}
+        onClose={() => setModalVisible(false)}
       />
     </>
   )
 }
+
+const styles = StyleSheet.create({
+  button: {
+    marginLeft: 6,
+    padding: 4,
+    borderRadius: 12,
+    width: 24,
+    height: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+})
