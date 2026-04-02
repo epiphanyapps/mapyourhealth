@@ -454,27 +454,50 @@ export const handler: Handler<ResolveLocationEvent, ResolveLocationResult> = asy
     let county: string | undefined;
 
     if (hasCoords && !hasPlaceId) {
-      // Resolve from GPS coordinates via Google Geocoding API
-      const components = await reverseGeocodeByCoords(latitude!, longitude!);
-      if (!components) {
-        return {
-          city: '',
-          state: '',
-          country: '',
-          jurisdictionCode: 'WHO',
-          hasData: false,
-          isNew: false,
-          error: 'Could not reverse geocode coordinates',
-        };
-      }
+      // Resolve from GPS coordinates — check cache first, then Google Geocoding API
+      const coordsCacheKey = `coords:${latitude!.toFixed(3)},${longitude!.toFixed(3)}`;
+      const cachedCoords = await getCachedPlaceDetails(coordsCacheKey);
+      if (cachedCoords && cachedCoords.city && cachedCoords.state && cachedCoords.country) {
+        lat = cachedCoords.lat;
+        lng = cachedCoords.lng;
+        city = cachedCoords.city;
+        state = cachedCoords.state;
+        country = cachedCoords.country;
+        county = cachedCoords.county;
+        console.log(`Cache hit for coords: ${coordsCacheKey}`);
+      } else {
+        const components = await reverseGeocodeByCoords(latitude!, longitude!);
+        if (!components) {
+          return {
+            city: '',
+            state: '',
+            country: '',
+            jurisdictionCode: 'WHO',
+            hasData: false,
+            isNew: false,
+            error: 'Could not reverse geocode coordinates',
+          };
+        }
 
-      const parsed = parseAddressComponents(components);
-      lat = latitude;
-      lng = longitude;
-      city = parsed.city;
-      state = parsed.state;
-      country = parsed.country;
-      county = parsed.county;
+        const parsed = parseAddressComponents(components);
+        lat = latitude;
+        lng = longitude;
+        city = parsed.city;
+        state = parsed.state;
+        country = parsed.country;
+        county = parsed.county;
+
+        // Cache for future requests (rounded to ~100m precision)
+        await cachePlaceDetails(coordsCacheKey, {
+          status: 'OK',
+          lat,
+          lng,
+          city,
+          state,
+          country,
+          county,
+        });
+      }
     } else if (hasPlaceId) {
       // Resolve from Google Places placeId
       const cached = await getCachedPlaceDetails(placeId!);

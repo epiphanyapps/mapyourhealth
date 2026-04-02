@@ -918,12 +918,33 @@ export async function resolveLocationByCoords(
 
       if (errors) {
         console.error("Error resolving location by coords:", errors)
-      } else if (data) {
+        return {
+          city: "",
+          state: "",
+          country: "",
+          jurisdictionCode: "WHO",
+          hasData: false,
+          isNew: false,
+          error: errors.map((e) => e.message).join("; "),
+        }
+      }
+
+      if (data) {
         return data as ResolveLocationResponse
       }
     }
   } catch (e) {
-    console.warn("resolveLocation by coords failed:", e)
+    const message = e instanceof Error ? e.message : "Unknown error"
+    console.error("resolveLocation by coords failed:", message)
+    return {
+      city: "",
+      state: "",
+      country: "",
+      jurisdictionCode: "WHO",
+      hasData: false,
+      isNew: false,
+      error: `Reverse geocoding failed: ${message}`,
+    }
   }
 
   return {
@@ -933,7 +954,7 @@ export async function resolveLocationByCoords(
     jurisdictionCode: "WHO",
     hasData: false,
     isNew: false,
-    error: "Could not resolve location from coordinates",
+    error: "resolveLocation mutation not available",
   }
 }
 
