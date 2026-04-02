@@ -1,28 +1,21 @@
 import { Modal, Pressable, ScrollView, StyleSheet, View } from "react-native"
 import { Divider, IconButton } from "react-native-paper"
 
-import { getContaminantHealthEffects } from "@/data/contaminantHealthEffects"
 import { useAppTheme } from "@/theme/context"
 
 import { Text } from "./Text"
 
 const OVERLAY_COLOR = "rgba(0, 0, 0, 0.5)"
 
-interface ContaminantInfoModalProps {
-  contaminantId: string
+interface CategoryInfoModalProps {
+  name: string
+  description: string
   visible: boolean
   onClose: () => void
 }
 
-export function ContaminantInfoModal({
-  contaminantId,
-  visible,
-  onClose,
-}: ContaminantInfoModalProps) {
+export function CategoryInfoModal({ name, description, visible, onClose }: CategoryInfoModalProps) {
   const { theme } = useAppTheme()
-  const healthEffects = getContaminantHealthEffects(contaminantId)
-
-  if (!healthEffects) return null
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
@@ -32,7 +25,7 @@ export function ContaminantInfoModal({
           onPress={(e) => e.stopPropagation()}
         >
           <View style={styles.header}>
-            <Text style={[styles.title, { color: theme.colors.text }]}>{healthEffects.name}</Text>
+            <Text style={[styles.title, { color: theme.colors.text }]}>{name}</Text>
             <IconButton icon="close" size={24} onPress={onClose} />
           </View>
 
@@ -40,24 +33,8 @@ export function ContaminantInfoModal({
 
           <ScrollView style={styles.content}>
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>
-                Health Concerns
-              </Text>
-              <Text style={[styles.body, { color: theme.colors.text }]}>
-                {healthEffects.description}
-              </Text>
+              <Text style={[styles.body, { color: theme.colors.text }]}>{description}</Text>
             </View>
-
-            {healthEffects.references && healthEffects.references.length > 0 && (
-              <View style={styles.section}>
-                <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>References</Text>
-                {healthEffects.references.map((ref, index) => (
-                  <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
-                    {"• " + ref}
-                  </Text>
-                ))}
-              </View>
-            )}
           </ScrollView>
         </Pressable>
       </Pressable>
@@ -85,10 +62,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     padding: 20,
   },
-  listItem: {
-    fontSize: 14,
-    marginBottom: 4,
-  },
   overlay: {
     alignItems: "center",
     backgroundColor: OVERLAY_COLOR,
@@ -97,11 +70,6 @@ const styles = StyleSheet.create({
   },
   section: {
     marginBottom: 16,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 8,
   },
   title: {
     flex: 1,

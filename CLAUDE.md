@@ -218,6 +218,17 @@ yarn seed            # Seed contaminant data
 yarn fetch:outputs   # Fetch amplify_outputs.json from AWS
 ```
 
+### Contaminant Health Effects Data
+
+The mobile app shows health info modals for each contaminant (issue #175). The data is auto-generated from `seed-data.json` (which is parsed from `Risks.xlsx`).
+
+```bash
+cd packages/backend
+npx tsx scripts/generate-health-effects.ts
+```
+
+This reads `description` and `studies` fields from `seed-data.json` and generates `apps/mobile/app/data/contaminantHealthEffects.ts` with 174 entries. Re-run whenever `seed-data.json` is updated (e.g., after re-parsing `Risks.xlsx`).
+
 ## Automatic Notifications
 
 The system automatically sends push/email notifications when water quality data changes.

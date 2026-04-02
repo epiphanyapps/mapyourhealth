@@ -1,36 +1,1737 @@
+/* eslint-disable prettier/prettier */
+/**
+ * Auto-generated from seed-data.json by generate-health-effects.ts
+ * Do not edit manually. Re-run the script to update:
+ *   cd packages/backend && npx tsx scripts/generate-health-effects.ts
+ */
+
 export interface ContaminantHealthEffect {
   id: string
   name: string
   description: string
-  healthEffects: string[]
-  sources: string[]
+  references?: string[]
 }
 
+// prettier-ignore
 export const CONTAMINANT_HEALTH_EFFECTS: Record<string, ContaminantHealthEffect> = {
-  bendiocarb: {
-    id: "bendiocarb",
-    name: "Bendiocarb",
-    description: "A carbamate insecticide that affects the nervous system.",
-    healthEffects: [
-      "Nausea and vomiting",
-      "Headaches and dizziness",
-      "Nervous system effects",
-      "Potential reproductive issues",
-    ],
-    sources: ["Agricultural pesticide runoff", "Contaminated groundwater", "Industrial waste"],
+  "nitrate": {
+    "id": "nitrate",
+    "name": "Nitrate",
+    "description": "Nitrate is a common nitrogen compound found in fertilizers and agricultural runoff. In drinking water, it poses a health risk primarily to infants, as it can lead to methemoglobinemia or “blue baby syndrome,” a condition that limits oxygen delivery in the blood. Long-term exposure in adults may also be associated with thyroid dysfunction and the formation of carcinogenic nitrosamines. Nitrate is not banned in any country, but its concentration in drinking water is tightly regulated due to these health risks."
   },
-  lead: {
-    id: "lead",
-    name: "Lead",
-    description: "A toxic heavy metal harmful even at low levels.",
-    healthEffects: [
-      "Brain damage and reduced IQ",
-      "Nervous system damage",
-      "High blood pressure",
-      "Kidney damage",
-    ],
-    sources: ["Lead pipes and plumbing", "Lead solder in older pipes", "Brass fixtures"],
+  "nitrite": {
+    "id": "nitrite",
+    "name": "Nitrite",
+    "description": "Nitrite is a nitrogen compound that can enter drinking water through agricultural runoff or the natural breakdown of fertilizers and organic material. Ingesting nitrite can cause methemoglobinemia—a condition that reduces the blood’s ability to carry oxygen, especially dangerous for infants. Long-term exposure may also contribute to thyroid dysfunction and the formation of potentially carcinogenic nitrosamines in the body. Although nitrite is strictly regulated in drinking water, it is not banned in any country."
   },
+  "alachlor": {
+    "id": "alachlor",
+    "name": "Alachlor",
+    "description": "Alachlor is a herbicide used primarily to control weeds in crops like corn and soybeans. It poses health risks because it can affect the liver, kidneys, and eyes, and long-term exposure has been linked to an increased risk of cancer, particularly nasal and stomach tumors in animal studies. The U.S. Environmental Protection Agency (EPA) has classified it as a probable human carcinogen.\n\nDue to these health concerns, alachlor has been banned or withdrawn in over 50 countries, including members of the European Union and Canada.",
+    "references": [
+      "Carson, M. L., & Baker, N. T. (2000). National Water-Quality Assessment Program: Pesticides in Streams and Ground Water. U.S. Geological Survey Circular 1225.",
+      "EPA (U.S. Environmental Protection Agency). (2006). Alachlor: Revised Risk Assessment for the Reregistration Eligibility Decision (RED). Washington, DC: U.S. EPA. Retrieved from https://archive.epa.gov",
+      "Munro, I. C., Renwick, A. G., Danielewska-Nikiel, B., & Kroes, R. (2008). A critical review of the evidence relating to the carcinogenicity of glyphosate and alachlor. Regulatory Toxicology and Pharmacology, 51(1), 37–45. https://doi.org/10.1016/j.yrtph.2008.03.003",
+      "De Roos, A. J., Zahm, S. H., Cantor, K. P., Weisenburger, D. D., Holmes, F. F., Burmeister, L. F., & Blair, A. (2003). Integrative assessment of multiple pesticides as risk factors for non-Hodgkin's lymphoma among men. Occupational and Environmental Medicine, 60(9), E11. https://doi.org/10.1136/oem.60.9.e11",
+      "McDuffie, H. H., Pahwa, P., McLaughlin, J. R., Spinelli, J. J., Fincham, S., Dosman, J. A., ... & Robson, D. (2001). Non-Hodgkin’s lymphoma and specific pesticide exposures in men: Cross-Canada study of pesticides and health. Cancer Epidemiology, Biomarkers & Prevention, 10(11), 1155–1163.",
+      "Hayes, T. B., Case, P., Chui, S., Chung, D., Haeffele, C., Haston, K., ... & Tsui, M. (2006). Pesticide mixtures, endocrine disruption, and amphibian declines: Are we underestimating the impact? Environmental Health Perspectives, 114(Suppl 1), 40–50. https://doi.org/10.1289/ehp.8051",
+      "Gennari, A., & Riu, D. (2001). Concise International Chemical Assessment Document 26: Alachlor. Geneva: World Health Organization. Retrieved from https://www.who.int/ipcs/publications/cicad/en/cicad26.pdf",
+      "Villanueva, C. M., Cantor, K. P., Grimalt, J. O., Malats, N., Silverman, D., Tardon, A., ... & Kogevinas, M. (2006). Bladder cancer and exposure to water disinfection by-products through ingestion, bathing, showering, and swimming in pools. American Journal of Epidemiology, 165(2), 148–156. https://doi.org/10.1093/aje/kwj364"
+    ]
+  },
+  "aldicarb": {
+    "id": "aldicarb",
+    "name": "Aldicarb",
+    "description": "Aldicarb is one of the most toxic pesticides ever used in agriculture. It affects the nervous system by inhibiting cholinesterase, an essential enzyme for normal nerve function. Even low-level exposure can cause symptoms like nausea, dizziness, muscle weakness, and breathing difficulty, while higher doses can lead to severe poisoning and even death. Due to its high toxicity and risks to human health, Aldicarb has been banned in 125 countries.",
+    "references": [
+      "Gallo, M. A., & Lawryk, N. J. (1991). Organic phosphorus pesticides. In W. J. Hayes & E. R. Laws Jr. (Eds.), Handbook of Pesticide Toxicology (Vol. 2, pp. 917–1123). Academic Press.",
+      "EPA (U.S. Environmental Protection Agency). (1999). Toxicological review of aldicarb. Washington, DC: U.S. EPA. Retrieved from https://iris.epa.gov",
+      "WHO (World Health Organization). (1991). Aldicarb: Environmental Health Criteria 121. Geneva: WHO. Retrieved from https://www.who.int/publications/i/item/9241571211",
+      "Ecobichon, D. J. (2001). Toxic effects of pesticides. In C. D. Klaassen (Ed.), Casarett and Doull’s Toxicology: The Basic Science of Poisons (6th ed., pp. 763–810). McGraw-Hill.",
+      "Costa, L. G. (2006). Current issues in organophosphate toxicology. Clinica Chimica Acta, 366(1-2), 1–13. https://doi.org/10.1016/j.cca.2005.10.008",
+      "Hayes, W. J. Jr. (1982). Pesticides Studied in Man. Baltimore: Williams & Wilkins.",
+      "Minton, N. A., & Murray, V. S. G. (1988). A review of aldicarb poisoning in humans. Human Toxicology, 7(3), 155–161. https://doi.org/10.1177/096032718800700305",
+      "California EPA (CalEPA). (2008). Public Health Goal for Aldicarb in Drinking Water. Office of Environmental Health Hazard Assessment. Retrieved from https://oehha.ca.gov"
+    ]
+  },
+  "aldrin-and-dieldrin": {
+    "id": "aldrin-and-dieldrin",
+    "name": "Aldrin and dieldrin",
+    "description": "Aldrin and dieldrin are highly toxic organochlorine pesticides that were widely used in agriculture for decades. They can accumulate in the human body and are known to affect the central nervous system, causing symptoms like headaches, dizziness, nausea, and convulsions even at low levels of exposure. Long-term exposure has been associated with liver damage and potential carcinogenic effects. Because of their persistence in the environment and serious health risks, Aldrin and dieldrin have been banned in 135 countries.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2002). Toxicological Profile for Aldrin/Dieldrin. Atlanta, GA: U.S. Department of Health and Human Services. https://www.atsdr.cdc.gov/toxprofiles/tp1.html",
+      "World Health Organization (WHO). (1989). Environmental Health Criteria 91: Aldrin and Dieldrin. Geneva: WHO. https://www.who.int/publications/i/item/9241542919",
+      "U.S. Environmental Protection Agency (EPA). (2002). Health Effects Support Document for Aldrin and Dieldrin. Washington, DC: EPA Office of Water. https://www.epa.gov/sites/default/files/2016-03/documents/aldrin-dieldrin.pdf",
+      "International Agency for Research on Cancer (IARC). (1974). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 5: Some Organochlorine Pesticides. Lyon: IARC.",
+      "Turusov, V., Rakitsky, V., & Tomatis, L. (2002). Dioxins, PCBs, and organochlorine pesticides as environmental risk factors for breast cancer. Environmental Health Perspectives, 110(3), 419–428. https://doi.org/10.1289/ehp.02110419",
+      "Mnif, W., Hassine, A. I. H., Bouaziz, A., Bartegi, A., Thomas, O., & Roig, B. (2011). Effect of endocrine disruptor pesticides: A review. International Journal of Environmental Research and Public Health, 8(6), 2265–2303. https://doi.org/10.3390/ijerph8062265",
+      "Singh, Z., & Scott, J. G. (1989). Developmental and reproductive toxicity of organochlorine pesticides in humans and animals. Archives of Environmental Contamination and Toxicology, 18(3), 379–389.",
+      "Lindane, HCH, Aldrin, Dieldrin, Endrin, Heptachlor and Chlordane. (2001). In Environmental Health Criteria 216. Geneva: World Health Organization."
+    ]
+  },
+  "atrazine-and-its-chloro-s-triazine-metabolites": {
+    "id": "atrazine-and-its-chloro-s-triazine-metabolites",
+    "name": "Atrazine and its chloro-s-\r\ntriazine metabolites",
+    "description": "Atrazine and its chloro-s-triazine metabolites are herbicides commonly used to control weeds in crops like corn and sugarcane. Atrazine is known to disrupt the endocrine system, potentially interfering with hormone function. Human exposure, especially through contaminated drinking water, has been associated with reproductive issues, developmental problems, and possible links to increased cancer risk. Due to these health concerns and its environmental persistence, Atrazine has been banned in 37 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Drinking Water Health Advisory for Atrazine. Washington, DC: Office of Water. https://www.epa.gov/sites/default/files/2014-09/documents/atrazine.pdf",
+      "Gilliom, R. J. (2007). Pesticides in U.S. streams and groundwater. Environmental Science & Technology, 41(10), 3408–3414. https://doi.org/10.1021/es072531u",
+      "Hayes, T. B., Khoury, V., Narayan, A., Nazir, M., Park, A., Brown, T., ... & Gallipeau, S. (2010). Atrazine induces complete feminization and chemical castration in male African clawed frogs (Xenopus laevis). Proceedings of the National Academy of Sciences, 107(10), 4612–4617. https://doi.org/10.1073/pnas.0909519107",
+      "Sass, J. B., & Colangelo, A. (2006). European Union bans atrazine, while the United States negotiates continued use. International Journal of Occupational and Environmental Health, 12(3), 260–267. https://doi.org/10.1179/oeh.2006.12.3.260",
+      "Cragin, L. A., Kesner, J. S., Bachand, A. M., Barr, D. B., & Louis, G. M. B. (2011). Menstrual cycle characteristics and reproductive hormone levels in women exposed to atrazine in drinking water. Environmental Research, 111(8), 1293–1301. https://doi.org/10.1016/j.envres.2011.09.009",
+      "Fan, W., Yanase, T., Morinaga, H., Gondo, S., Okabe, T., Nomura, M., ... & Nawata, H. (2007). Atrazine-induced aromatase expression is SF-1 dependent: Implications for endocrine disruption in wildlife and reproductive cancers in humans. Environmental Health Perspectives, 115(5), 720–727. https://doi.org/10.1289/ehp.9753",
+      "Swan, S. H. (2006). Prenatal exposure to atrazine and adverse reproductive outcomes: A review of epidemiologic evidence. Environmental Health Perspectives, 114(3), 308–312. https://doi.org/10.1289/ehp.8207",
+      "Cooper, R. L., Stoker, T. E., Tyrey, L., Goldman, J. M., & McElroy, W. K. (2000). Atrazine disrupts the hypothalamic control of pituitary-ovarian function. Toxicological Sciences, 53(2), 297–307. https://doi.org/10.1093/toxsci/53.2.297"
+    ]
+  },
+  "carbofuran": {
+    "id": "carbofuran",
+    "name": "Carbofuran",
+    "description": "Carbofuran is highly toxic to humans, even at very low doses. It can harm the nervous system and poses serious risks if inhaled, swallowed, or absorbed through the skin. Due to these dangers, it has been banned in over 60 countries worldwide.\n\nA 2021 study published in the Journal of Applied Toxicology demonstrated that carbofuran exposure caused significant DNA damage, oxidative stress, and cell death in human endothelial cells, indicating potential vascular toxicity.\n\nAnother case study reported that a worker exposed to carbofuran dust experienced acute symptoms such as weakness, disorientation, and vomiting. Subsequent tests revealed significant DNA damage and cholinesterase inhibition, highlighting the compound's genotoxic effects.\n\nThese studies underscore the severe health risks associated with carbofuran exposure, supporting its ban in numerous countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Carbofuran: Interim Reregistration Eligibility Decision (IRED). Washington, DC: EPA Office of Pesticide Programs. https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Carbofuran in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO. https://www.who.int/water_sanitation_health/dwq/chemicals/carbofuran.pdf",
+      "Gallo, M. A., & Lawryk, N. J. (1991). Organic nitrogen compounds: Carbamates. In W. J. Hayes & E. R. Laws Jr. (Eds.), Handbook of Pesticide Toxicology (Vol. 2, pp. 967–1123). Academic Press.",
+      "Ecobichon, D. J. (2001). Toxic effects of pesticides. In C. D. Klaassen (Ed.), Casarett and Doull’s Toxicology: The Basic Science of Poisons (6th ed., pp. 763–810). McGraw-Hill.",
+      "Hayes, W. J. Jr. (1982). Pesticides Studied in Man. Baltimore: Williams & Wilkins.",
+      "California Environmental Protection Agency (CalEPA). (2005). Public Health Goal for Carbofuran in Drinking Water. Office of Environmental Health Hazard Assessment. https://oehha.ca.gov",
+      "Costa, L. G. (2006). Current issues in organophosphate and carbamate toxicology. Clinica Chimica Acta, 366(1-2), 1–13. https://doi.org/10.1016/j.cca.2005.10.008",
+      "Moser, V. C., & Padilla, S. (1998). Age- and gender-related differences in the time course of carbamate toxicity. Toxicology and Applied Pharmacology, 149(1), 107–117. https://doi.org/10.1006/taap.1998.2350"
+    ]
+  },
+  "chlordane": {
+    "id": "chlordane",
+    "name": "Chlordane",
+    "description": "Chlordane is an organochlorine pesticide formerly used to control termites and pests on crops. It poses serious health risks due to its ability to accumulate in the body and remain in the environment for long periods. Exposure has been linked to nervous system effects, liver damage, and a possible increased risk of cancer. Because of its persistence and toxicity, Chlordane has been banned in 171 countries.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1994). Toxicological Profile for Chlordane. Atlanta, GA: U.S. Department of Health and Human Services. https://www.atsdr.cdc.gov/toxprofiles/tp31.html",
+      "World Health Organization (WHO). (1984). Environmental Health Criteria 34: Chlordane. Geneva: WHO. https://www.who.int/publications/i/item/9241540940",
+      "U.S. Environmental Protection Agency (EPA). (2006). Health Effects Support Document for Chlordane. Washington, DC: Office of Water. https://www.epa.gov",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 79: Some Thyrotropic Agents. Lyon: IARC.",
+      "Turusov, V., Rakitsky, V., & Tomatis, L. (2002). Dioxins, PCBs, and organochlorine pesticides as environmental risk factors for breast cancer. Environmental Health Perspectives, 110(3), 419–428. https://doi.org/10.1289/ehp.02110419",
+      "Mnif, W., Hassine, A. I. H., Bouaziz, A., Bartegi, A., Thomas, O., & Roig, B. (2011). Effect of endocrine disruptor pesticides: A review. International Journal of Environmental Research and Public Health, 8(6), 2265–2303. https://doi.org/10.3390/ijerph8062265",
+      "Griffin, K. W., & Hill, R. H. Jr. (1991). Exposure to chlordane and heptachlor. Archives of Environmental Contamination and Toxicology, 21(4), 518–524. https://doi.org/10.1007/BF01060764",
+      "Kutz, F. W., Strassman, S. C., & Murphy, R. S. (1979). Survey of pesticide residues and their metabolites in human adipose tissue. Pesticide Monitoring Journal, 13(4), 141–143."
+    ]
+  },
+  "chlorotoluron": {
+    "id": "chlorotoluron",
+    "name": "Chlorotoluron",
+    "description": "Chlorotoluron is a herbicide used to control broadleaf and grassy weeds, mainly in cereal crops. It has raised health concerns due to its potential to affect kidney and liver function and its possible endocrine-disrupting effects. Long-term exposure through drinking water or residues in food could pose health risks. Due to these concerns and environmental persistence, Chlorotoluron has been banned in 27 countries.",
+    "references": [
+      "European Food Safety Authority (EFSA). (2017). Peer review of the pesticide risk assessment of the active substance chlorotoluron. EFSA Journal, 15(8), 4956. https://doi.org/10.2903/j.efsa.2017.4956",
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision for Chlorotoluron. Office of Pesticide Programs.",
+      "World Health Organization (WHO). (2003). Chlorotoluron in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO. https://www.who.int/water_sanitation_health/dwq/chemicals/chlorotoluron.pdf",
+      "Commission of the European Communities. (2001). Review report for the active substance chlorotoluron. SANCO/4346/2000 – rev. 3. Directorate-General for Health and Consumer Protection.",
+      "European Chemicals Agency (ECHA). (2022). Chlorotoluron – Substance Information. https://echa.europa.eu/substance-information/-/substanceinfo/100.001.103",
+      "Chiorcea-Paquim, A.-M., & Oliveira-Brett, A. M. (2004). Oxidative DNA damage induced by herbicide chlorotoluron evaluated using a DNA-modified electrode. Bioelectrochemistry, 65(2), 115–121. https://doi.org/10.1016/j.bioelechem.2004.08.002",
+      "Balba, H. M. (2007). Review of herbicide metabolism in plants and soil. Environmental Toxicology and Chemistry, 26(6), 1237–1248. https://doi.org/10.1897/06-355R.1"
+    ]
+  },
+  "chlorpyrifos": {
+    "id": "chlorpyrifos",
+    "name": "Chlorpyrifos",
+    "description": "Chlorpyrifos is a widely used insecticide known to affect the nervous system, particularly in children. It works by inhibiting acetylcholinesterase, an enzyme essential for nerve function. Studies have linked exposure to developmental delays, lower IQ, and behavioral disorders in children, as well as symptoms like headaches, dizziness, and nausea in adults. Due to these significant health risks, Chlorpyrifos has been banned in 39 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2016). Chlorpyrifos: Revised Human Health Risk Assessment for Registration Review. https://www.epa.gov",
+      "Rauh, V. A., Garfinkel, R., Perera, F. P., Andrews, H. F., Hoepner, L., Barr, D. B., & Whyatt, R. W. (2011). Brain anomalies in children exposed prenatally to a common organophosphate pesticide. Proceedings of the National Academy of Sciences, 109(20), 7871–7876. https://doi.org/10.1073/pnas.1203396109",
+      "Bouchard, M. F., Chevrier, J., Harley, K. G., Kogut, K., Vedar, M., Calderon, N., ... & Eskenazi, B. (2011). Prenatal exposure to organophosphate pesticides and IQ in 7-year-old children. Environmental Health Perspectives, 119(8), 1189–1195. https://doi.org/10.1289/ehp.1003185",
+      "Slotkin, T. A. (2004). Chlorpyrifos and other organophosphates: Reproductive and developmental toxicity. Reproductive Toxicology, 18(3), 303–313. https://doi.org/10.1016/j.reprotox.2004.01.008",
+      "National Pesticide Information Center (NPIC). (2010). Chlorpyrifos Technical Fact Sheet. http://npic.orst.edu",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides: A review. International Journal of Environmental Research and Public Health, 8(6), 2265–2303. https://doi.org/10.3390/ijerph8062265",
+      "Eaton, D. L., et al. (2008). Review of the toxicology of chlorpyrifos with an emphasis on human exposure and neurodevelopment. Critical Reviews in Toxicology, 38(S2), 1–125. https://doi.org/10.1080/10408440802272158"
+    ]
+  },
+  "cyanazine": {
+    "id": "cyanazine",
+    "name": "Cyanazine",
+    "description": "Cyanazine is a herbicide formerly used to control broadleaf weeds, especially in cornfields. Health concerns include its potential to cause liver and kidney toxicity, and its possible role as an endocrine disruptor. Some studies have also suggested a link between Cyanazine exposure and increased cancer risk. Due to these risks and environmental persistence, Cyanazine has been banned in 49 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1994). Cyanazine: Reregistration Eligibility Decision (RED). https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Cyanazine in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Agency for Research on Cancer (IARC). (2001). Some Thyrotropic Agents. IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 79.",
+      "U.S. National Library of Medicine. (2021). Cyanazine Hazardous Substances Data Bank (HSDB). https://pubchem.ncbi.nlm.nih.gov",
+      "Stoker, T. E., Robinette, C. L., & Cooper, R. L. (1999). Toxicological profile for cyanazine: Reproductive and developmental effects. Toxicology, 139(1-2), 15–22. https://doi.org/10.1016/S0300-483X(99)00027-2",
+      "Cummings, A. M. (1997). Altered estrogen response following exposure to the herbicide cyanazine. Toxicology Letters, 90(1), 1–9. https://doi.org/10.1016/S0378-4274(96)03811-3",
+      "Gilliom, R. J., et al. (2006). The Quality of Our Nation’s Waters: Pesticides in the Nation’s Streams and Ground Water, 1992–2001. U.S. Geological Survey Circular 1291."
+    ]
+  },
+  "24-d": {
+    "id": "24-d",
+    "name": "2,4-D",
+    "description": "2,4-D (2,4-Dichlorophenoxyacetic acid) is a common herbicide used to control broadleaf weeds in agriculture, forestry, and residential areas. Health concerns include its potential to cause hormonal disruption, liver and kidney damage, and possible links to non-Hodgkin lymphoma with long-term exposure. While still permitted in many countries, 2,4-D has been banned in 9 countries due to health and environmental concerns.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2005). Reregistration Eligibility Decision for 2,4-D. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). 2,4-D in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Agency for Research on Cancer (IARC). (2015). IARC Monographs Volume 113: 2,4-D. https://monographs.iarc.who.int",
+      "ATSDR (Agency for Toxic Substances and Disease Registry). (1998). Toxicological Profile for 2,4-Dichlorophenoxyacetic Acid (2,4-D). https://www.atsdr.cdc.gov",
+      "Garry, V. F., et al. (2001). Biomonitoring results of exposure to 2,4-D and reproductive health effects in pesticide applicators. Environmental Health Perspectives, 109(5), 495–500. https://doi.org/10.1289/ehp.01109495",
+      "Solomon, K. R., et al. (2016). Effects of 2,4-D on hormone levels and reproductive function. Critical Reviews in Toxicology, 46(sup1), 1–50. https://doi.org/10.3109/10408444.2016.1149453",
+      "Gilliom, R. J., et al. (2006). Pesticides in the Nation’s Streams and Ground Water, 1992–2001. U.S. Geological Survey Circular 1291."
+    ]
+  },
+  "24-db": {
+    "id": "24-db",
+    "name": "2,4-DB",
+    "description": "2,4-DB (2,4-Dichlorophenoxybutyric acid) is a herbicide mainly used to control broadleaf weeds in legume crops like alfalfa and soybeans. It is structurally related to 2,4-D and can break down into 2,4-D in the environment or inside the body. Health concerns include potential liver and kidney effects and concerns over developmental toxicity. While less studied than 2,4-D, its similarities raise comparable concerns. 2,4-DB has been banned in 8 countries due to potential health and environmental risks.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1992). Reregistration Eligibility Decision (RED) for 2,4-DB. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Pesticides in Drinking-water: 2,4-D and derivatives. Geneva: WHO.",
+      "ATSDR (Agency for Toxic Substances and Disease Registry). (1998). Toxicological Profile for 2,4-D. https://www.atsdr.cdc.gov",
+      "U.S. National Library of Medicine. (2021). 2,4-DB Hazardous Substances Data Bank (HSDB). https://pubchem.ncbi.nlm.nih.gov",
+      "Munro, I. C., et al. (1992). A comprehensive review of the safety of 2,4-dichlorophenoxyacetic acid (2,4-D). Journal of the American College of Toxicology, 11(5), 559–664. https://doi.org/10.3109/10915819209021220",
+      "Gorzinski, S. J., et al. (1987). Toxicological evaluation of 2,4-DB in rats and dogs. Fundamental and Applied Toxicology, 9(2), 260–268. https://doi.org/10.1016/0272-0590(87)90238-5",
+      "Coady, K. K., et al. (2004). Assessment of the developmental toxicity of 2,4-DB in rats. Toxicological Sciences, 80(2), 276–282. https://doi.org/10.1093/toxsci/kfh181"
+    ]
+  },
+  "12-dibromo-3-chloropropane": {
+    "id": "12-dibromo-3-chloropropane",
+    "name": "1,2-Dibromo-3-chloropropane",
+    "description": "1,2-Dibromo-3-chloropropane (DBCP) is a soil fumigant pesticide once widely used on crops like bananas and pineapples. It poses serious health risks, particularly to the reproductive system, including reduced sperm count and male infertility. It has also been associated with liver and kidney damage, and is classified as a possible human carcinogen. Due to its high toxicity, DBCP has been banned in 47 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2005). Technical Fact Sheet on 1,2-Dibromo-3-chloropropane (DBCP). https://www.epa.gov",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1992). Toxicological Profile for 1,2-Dibromo-3-chloropropane. https://www.atsdr.cdc.gov",
+      "International Agency for Research on Cancer (IARC). (1991). DBCP – IARC Monographs Volume 53: Occupational Exposures in Insecticide Application and Some Pesticides.",
+      "World Health Organization (WHO). (2003). 1,2-Dibromo-3-chloropropane in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Whorton, D., et al. (1977). Infertility in male pesticide workers. The Lancet, 310(8031), 1259–1261. https://doi.org/10.1016/S0140-6736(77)91273-0",
+      "Goldsmith, D. F., et al. (1980). Reproductive hazards of DBCP in humans. Archives of Environmental Health, 35(5), 304–310. https://doi.org/10.1080/00039896.1980.10667575",
+      "Gorzinski, S. J., et al. (1987). Chronic toxicity and oncogenicity of DBCP in rats and mice. Toxicology and Applied Pharmacology, 89(1), 123–135. https://doi.org/10.1016/0041-008X(87)90242-7"
+    ]
+  },
+  "12-dibromoethane": {
+    "id": "12-dibromoethane",
+    "name": "1,2-Dibromoethane",
+    "description": "1,2-Dibromoethane (EDB) is a fumigant and gasoline additive used to control pests in soil and stored products. It is highly toxic and classified as a probable human carcinogen. Health concerns include damage to the liver, lungs, and reproductive system, as well as potential genetic mutations. Even low-level exposure over time can pose serious health risks. Due to these hazards, 1,2-Dibromoethane has been banned in 54 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2017). Technical Fact Sheet – 1,2-Dibromoethane (EDB). https://www.epa.gov",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1992). Toxicological Profile for 1,2-Dibromoethane (EDB). https://www.atsdr.cdc.gov",
+      "International Agency for Research on Cancer (IARC). (1999). 1,2-Dibromoethane. IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 71.",
+      "World Health Organization (WHO). (2003). 1,2-Dibromoethane in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Olson, M. J., et al. (1979). Reproductive effects of 1,2-dibromoethane in male rats. Toxicology and Applied Pharmacology, 47(2), 333–342. https://doi.org/10.1016/0041-008X(79)90210-2",
+      "van Duuren, B. L., et al. (1979). Carcinogenicity of halogenated olefinic and aliphatic hydrocarbons. Journal of the National Cancer Institute, 63(6), 1433–1439.",
+      "Grosse, Y., et al. (2007). Carcinogenicity of chemicals in industrial and agricultural use. The Lancet Oncology, 8(12), 1072–1073. https://doi.org/10.1016/S1470-2045(07)70373-X"
+    ]
+  },
+  "12-dichloropropane": {
+    "id": "12-dichloropropane",
+    "name": "1,2-Dichloropropane",
+    "description": "1,2-Dichloropropane is a chlorinated solvent and fumigant still used in some industrial processes, although its agricultural use has been largely phased out in many countries. It poses significant health risks, including liver and kidney toxicity and respiratory irritation, and is classified as a Group 1 human carcinogen by the International Agency for Research on Cancer (IARC), due to strong links to bile duct cancer. Because of these health hazards, 1,2-Dichloropropane has been banned in 34 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2000). 1,2-Dichloropropane Hazard Summary. https://www.epa.gov",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1992). Toxicological Profile for 1,2-Dichloropropane. https://www.atsdr.cdc.gov",
+      "International Agency for Research on Cancer (IARC). (2014). IARC Monographs Volume 110: 1,2-Dichloropropane. https://monographs.iarc.who.int",
+      "World Health Organization (WHO). (2003). 1,2-Dichloropropane in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "National Toxicology Program (NTP). (1986). Toxicology and Carcinogenesis Studies of 1,2-Dichloropropane in Rats and Mice. Technical Report Series No. 263.",
+      "Kumagai, S., et al. (2013). Occupational cholangiocarcinoma induced by 1,2-dichloropropane. Occupational and Environmental Medicine, 70(7), 508–510. https://doi.org/10.1136/oemed-2012-101295",
+      "Nagano, K., et al. (2006). Carcinogenicity and chronic toxicity of 1,2-dichloropropane in rats and mice. Journal of Occupational Health, 48(6), 469–480. https://doi.org/10.1539/joh.48.469"
+    ]
+  },
+  "13-dichloropropene": {
+    "id": "13-dichloropropene",
+    "name": "1,3-Dichloropropene",
+    "description": "1,3-Dichloropropene is a soil fumigant commonly used in agriculture to control nematodes and other soil pests. It poses significant health risks, including lung and skin irritation, damage to the liver and kidneys, and potential genotoxicity. Long-term exposure has also raised concerns about its carcinogenic potential, leading to its classification as a possible human carcinogen (Group 2B) by IARC. Due to these health risks, 1,3-Dichloropropene has been banned in 30 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1998). Reregistration Eligibility Decision (RED) for 1,3-Dichloropropene. https://www.epa.gov",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1992). Toxicological Profile for 1,3-Dichloropropene. https://www.atsdr.cdc.gov",
+      "International Agency for Research on Cancer (IARC). (1999). 1,3-Dichloropropene. IARC Monographs, Volume 71.",
+      "World Health Organization (WHO). (2003). 1,3-Dichloropropene in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "California Environmental Protection Agency (CalEPA). (1999). Public Health Goal for 1,3-Dichloropropene in Drinking Water. https://oehha.ca.gov",
+      "Stott, W. T., et al. (1984). Toxicological profile of 1,3-dichloropropene. Fundamental and Applied Toxicology, 4(2), 269–277. https://doi.org/10.1016/0272-0590(84)90022-3",
+      "Neudecker, T., & Henschler, D. (1986). Mutagenicity and carcinogenicity of 1,3-dichloropropene. Archives of Toxicology, 59(4), 259–263. https://doi.org/10.1007/BF00316355"
+    ]
+  },
+  "dichlorprop": {
+    "id": "dichlorprop",
+    "name": "Dichlorprop",
+    "description": "Dichlorprop is a selective herbicide used to control broadleaf weeds in cereal crops and grasslands. It poses health concerns primarily related to endocrine disruption and reproductive toxicity, as well as potential impacts on the liver and kidneys with long-term exposure. Although not classified as a known carcinogen, safety concerns regarding chronic exposure have led to regulatory actions. Dichlorprop has been banned in 25 countries due to its potential risks to human health and the environment.",
+    "references": [
+      "World Health Organization (WHO). (2003). Dichlorprop in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2005). Pesticide Fact Sheet – Dichlorprop. https://www.epa.gov",
+      "European Chemicals Agency (ECHA). (2021). Dichlorprop Hazard Assessment. https://echa.europa.eu",
+      "Health Canada. (1991). Priority Substances List Assessment Report – Phenoxy herbicides (including Dichlorprop).",
+      "Munro, I. C., et al. (1992). Safety assessment of phenoxy herbicides. Regulatory Toxicology and Pharmacology, 16(3), 245–260. https://doi.org/10.1016/0273-2300(92)90051-F",
+      "Reuber, M. D. (1983). Carcinogenicity of phenoxy herbicides. Science of the Total Environment, 30, 291–312. https://doi.org/10.1016/0048-9697(83)90238-5",
+      "Côté, I., et al. (1996). Toxicological evaluation of phenoxy herbicides. Journal of Environmental Science and Health Part B, 31(2), 269–312. https://doi.org/10.1080/03601239609372952"
+    ]
+  },
+  "dimethoate": {
+    "id": "dimethoate",
+    "name": "Dimethoate",
+    "description": "Dimethoate is an organophosphate insecticide used to control a wide range of insects on crops like fruits, vegetables, and grains. It poses serious health risks to humans, particularly through neurotoxicity, as it inhibits cholinesterase, an essential enzyme for nervous system function. Exposure can cause symptoms ranging from headaches and nausea to respiratory distress and, in severe cases, death. It has also been linked to developmental and reproductive toxicity. Due to these concerns, Dimethoate has been banned in 42 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision for Dimethoate. https://www.epa.gov",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2003). Toxicological Profile for Organophosphate Compounds (including Dimethoate). https://www.atsdr.cdc.gov",
+      "World Health Organization (WHO). (2003). Dimethoate in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2017). Peer Review of the pesticide risk assessment of Dimethoate. EFSA Journal, 15(6):4866. https://efsa.europa.eu",
+      "USEPA Office of Pesticide Programs. (2000). Human Health Risk Assessment: Dimethoate.",
+      "Khosla, T., et al. (2000). Neurotoxic effects of organophosphate pesticide Dimethoate. Indian Journal of Physiology and Pharmacology, 44(2), 197–204.",
+      "Kalender, S., et al. (2005). Toxic effects of Dimethoate on the reproductive system of male rats. Pesticide Biochemistry and Physiology, 82(2), 124–130. https://doi.org/10.1016/j.pestbp.2005.02.005"
+    ]
+  },
+  "endrin": {
+    "id": "endrin",
+    "name": "Endrin",
+    "description": "Endrin is a highly toxic organochlorine insecticide and rodenticide that was widely used in the past on cotton, grains, and other crops. It poses severe health risks, including damage to the central nervous system, liver toxicity, and convulsions, even at low exposure levels. It is highly persistent in the environment and can accumulate in the food chain, increasing long-term exposure risks. Due to its acute toxicity and environmental persistence, Endrin has been banned in 66 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2002). Technical Factsheet on: Endrin. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Endrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1996). Toxicological Profile for Endrin. https://www.atsdr.cdc.gov",
+      "International Programme on Chemical Safety (IPCS). (1984). Environmental Health Criteria 130: Endrin. Geneva: WHO.",
+      "U.S. Department of Health and Human Services. (2011). Report on Carcinogens, 12th Edition – Endrin.",
+      "Ghosh, R., et al. (1990). Neurotoxic effects of endrin in rodents. Toxicology Letters, 54(2–3), 281–288. https://doi.org/10.1016/0378-4274(90)90244-9",
+      "Singh, A. R., et al. (1986). Toxicity of endrin on liver and kidney functions in rats. Indian Journal of Experimental Biology, 24(2), 85–89."
+    ]
+  },
+  "fenoprop": {
+    "id": "fenoprop",
+    "name": "Fenoprop",
+    "description": "Fenoprop (also known as 2,4,5-TP) is a herbicide used to control woody plants and broadleaf weeds. Health concerns related to Fenoprop include liver and kidney toxicity, potential reproductive harm, and contamination with dioxins during manufacturing—a group of highly toxic compounds linked to cancer and immune system damage. Because of these serious health and environmental risks, Fenoprop has been banned in 41 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1987). Health Advisory for Fenoprop (Silvex). https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Fenoprop in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1995). Toxicological Profile for Phenoxy Herbicides (including Fenoprop). https://www.atsdr.cdc.gov",
+      "IARC Working Group. (1986). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans. Volume 41: Some halogenated hydrocarbons and pesticide exposures. International Agency for Research on Cancer.",
+      "Côté, I., et al. (1996). Toxicological evaluation of phenoxy herbicides and their contaminants. Journal of Environmental Science and Health Part B, 31(2), 269–312. https://doi.org/10.1080/03601239609372952",
+      "Munro, I. C., et al. (1992). Safety assessment of chlorophenoxy herbicides. Regulatory Toxicology and Pharmacology, 16(3), 245–260. https://doi.org/10.1016/0273-2300(92)90051-F",
+      "U.S. Department of Health and Human Services. (2011). Report on Carcinogens, 12th Edition – Silvex (Fenoprop)."
+    ]
+  },
+  "hydroxyatrazine": {
+    "id": "hydroxyatrazine",
+    "name": "Hydroxyatrazine",
+    "description": "Hydroxyatrazine is a major degradation product of atrazine, a widely used herbicide. While less toxic than atrazine itself, hydroxyatrazine can still persist in the environment and contaminate groundwater. There is limited specific toxicological data on hydroxyatrazine, but concerns stem from its structural similarity to atrazine, which is known to affect endocrine function and reproductive health in both animals and potentially humans. Because it is not directly used as a pesticide, hydroxyatrazine is not specifically banned, but its regulation is often linked to restrictions on atrazine, which has been banned in over 40 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision for Atrazine. https://www.epa.gov",
+      "Gojmerac, T., et al. (1996). Reproductive and developmental effects of atrazine and its metabolites. Toxicology Letters, 85(1), 9–17. https://doi.org/10.1016/0378-4274(96)03753-1",
+      "Freeman, J. L., et al. (2005). Endocrine disruption and reproductive effects of hydroxyatrazine. Toxicological Sciences, 86(2), 354–364. https://doi.org/10.1093/toxsci/kfi206",
+      "Hayes, T. B., et al. (2003). Atrazine-induced hermaphroditism in amphibians. Environmental Health Perspectives, 111(4), 568–575. https://doi.org/10.1289/ehp.5932",
+      "Villanueva, C. M., et al. (2005). Health effects of atrazine and its metabolites in drinking water. Occupational and Environmental Medicine, 62(6), 400–405. https://doi.org/10.1136/oem.2004.015651",
+      "Graymore, M., et al. (2001). Review of the effects of atrazine and its metabolites on aquatic organisms. Environment International, 26(7–8), 483–495. https://doi.org/10.1016/S0160-4120(01)00031-X",
+      "Simpkins, J. W., et al. (2011). Potential neurotoxic effects of endocrine-disrupting pesticides. Toxicology and Applied Pharmacology, 256(2), 159–170. https://doi.org/10.1016/j.taap.2011.01.009"
+    ]
+  },
+  "isoproturon": {
+    "id": "isoproturon",
+    "name": "Isoproturon",
+    "description": "Isoproturon is a selective herbicide used primarily on cereal crops to control grass and broadleaf weeds. It poses several health concerns, particularly related to its potential to disrupt hormone function, liver toxicity, and possible carcinogenicity. It has been detected in surface and groundwater, raising concerns about long-term human exposure. Due to its environmental persistence and health risks, Isoproturon has been banned in 27 countries.",
+    "references": [
+      "European Food Safety Authority (EFSA). (2015). Conclusion on the peer review of the pesticide risk assessment of isoproturon. EFSA Journal, 13(1):3983. https://doi.org/10.2903/j.efsa.2015.3983",
+      "World Health Organization (WHO). (2003). Isoproturon in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Chemicals Agency (ECHA). (2021). Isoproturon Substance Evaluation Report. https://echa.europa.eu",
+      "Lemaire, G., et al. (2004). Endocrine disruption potential of phenylurea herbicides including isoproturon. Toxicology and Applied Pharmacology, 196(3), 382–392. https://doi.org/10.1016/j.taap.2004.01.015",
+      "Gray, L. E., et al. (2001). Effects of environmental antiandrogens on male reproductive development. Toxicology and Industrial Health, 17(1), 27–33. https://doi.org/10.1191/0748233701th093oa",
+      "Bolli, R., et al. (1997). Toxicity of isoproturon in subchronic exposure. Toxicology Letters, 90(2–3), 107–116. https://doi.org/10.1016/S0378-4274(96)03815-1",
+      "U.S. EPA (Environmental Protection Agency). (1996). Reregistration Eligibility Decision for Isoproturon (RED)."
+    ]
+  },
+  "lindane": {
+    "id": "lindane",
+    "name": "Lindane",
+    "description": "Lindane is an organochlorine insecticide used in agriculture and pharmaceuticals (notably in lice and scabies treatments). It poses serious health risks including neurotoxicity, immune system suppression, and potential carcinogenicity. Long-term exposure can affect the liver, kidneys, and reproductive system. Due to its toxicity and persistence in the environment, Lindane has been banned in 63 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2002). Technical Factsheet on: Lindane. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Lindane in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2005). Toxicological Profile for Hexachlorocyclohexane (HCH, including Lindane). https://www.atsdr.cdc.gov",
+      "International Agency for Research on Cancer (IARC). (2015). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans. Volume 112: Lindane. Lyon: WHO Press.",
+      "Wetherill, Y. B., et al. (2007). Endocrine-disrupting chemicals and human health. Environmental Health Perspectives, 115(4), 544–551. https://doi.org/10.1289/ehp.8990",
+      "Bhatt, P., et al. (2020). Toxicity, degradation and bioremediation of Lindane. Environmental Pollution, 265, 114853. https://doi.org/10.1016/j.envpol.2020.114853",
+      "Mrema, E. J., et al. (2013). Persistent organochlorines and human health. Environmental Health, 12(1), 26. https://doi.org/10.1186/1476-069X-12-26"
+    ]
+  },
+  "mcpa": {
+    "id": "mcpa",
+    "name": "MCPA",
+    "description": "MCPA (2-methyl-4-chlorophenoxyacetic acid) is a selective herbicide used to control broadleaf weeds in agriculture and lawns. Health concerns with MCPA include potential endocrine disruption, liver and kidney toxicity, and developmental effects from long-term exposure. Though considered less toxic than some older herbicides, MCPA is still monitored for its effects on human health. MCPA has been banned in 8 countries due to these concerns and environmental persistence.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Reregistration Eligibility Decision (RED) for MCPA. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). MCPA in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2001). Toxicological Profile for Phenoxy Herbicides (2,4-D, 2,4,5-T, MCPA, MCPP). https://www.atsdr.cdc.gov",
+      "European Chemicals Agency (ECHA). (2021). MCPA Substance Evaluation Report. https://echa.europa.eu",
+      "Bukowska, B., et al. (2000). Toxic effects of phenoxy herbicides on human cells. Pesticide Biochemistry and Physiology, 66(1), 69–78. https://doi.org/10.1006/pest.1999.2471",
+      "Gorzynik-Debicka, M., et al. (2015). Health effects of environmental exposure to phenoxy herbicides. Annals of Agricultural and Environmental Medicine, 22(3), 503–509. https://doi.org/10.5604/12321966.1167707",
+      "Juhler, R. K., et al. (1999). MCPA in groundwater and human health implications. Science of the Total Environment, 233(1–3), 155–162. https://doi.org/10.1016/S0048-9697(99)00172-3"
+    ]
+  },
+  "mecoprop": {
+    "id": "mecoprop",
+    "name": "Mecoprop",
+    "description": "Mecoprop (also known as MCPP) is a common herbicide used to control broadleaf weeds in lawns, parks, and agriculture. Health concerns associated with Mecoprop include potential endocrine disruption, irritation of the skin and eyes, and possible liver and kidney effects with prolonged exposure. Although considered moderately toxic, it can still pose risks, especially through contaminated water sources. Mecoprop has been banned in 7 countries due to these health and environmental concerns.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Reregistration Eligibility Decision (RED) for Mecoprop (MCPP). https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Mecoprop in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2001). Toxicological Profile for Phenoxy Herbicides (2,4-D, 2,4,5-T, MCPA, MCPP). https://www.atsdr.cdc.gov",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance mecoprop-P. EFSA Journal, 8(8):1683. https://doi.org/10.2903/j.efsa.2010.1683",
+      "Bukowska, B., et al. (2000). Effects of phenoxy herbicides on human erythrocytes and lymphocytes. Pesticide Biochemistry and Physiology, 66(1), 69–78. https://doi.org/10.1006/pest.1999.2471",
+      "Pan-Germany. (2012). Mecoprop (MCPP) – Pesticide properties database. http://sitem.herts.ac.uk/aeru/ppdb/en/"
+    ]
+  },
+  "methoxychlor": {
+    "id": "methoxychlor",
+    "name": "Methoxychlor",
+    "description": "Methoxychlor is an organochlorine pesticide formerly used to control insects on crops, livestock, and pets. It has been linked to endocrine disruption, especially affecting estrogen pathways, and may cause reproductive and developmental toxicity. Long-term exposure can also affect the liver and nervous system. Due to its persistence in the environment and serious health risks, Methoxychlor has been banned in 43 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2001). ToxFAQs for Methoxychlor. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Methoxychlor in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2002). Toxicological Profile for Methoxychlor. https://www.atsdr.cdc.gov",
+      "Cummings, A. M., & Gray, L. E. (1989). Methoxychlor-induced alterations in reproductive function and behavior. Toxicology and Applied Pharmacology, 100(3), 456–464. https://doi.org/10.1016/0041-008X(89)90333-0",
+      "Uzumcu, M., et al. (2004). Reproductive toxicology of methoxychlor in female rats. Biology of Reproduction, 70(6), 1635–1642. https://doi.org/10.1095/biolreprod.103.025411",
+      "Bulger, W. H., & Kupfer, D. (1983). Estrogenic activity of methoxychlor and its metabolites. Science, 221(4611), 677–679. https://doi.org/10.1126/science.6887360",
+      "Gore, A. C. (2008). Developmental exposure to endocrine-disrupting chemicals. Endocrinology, 149(6), 2751–2753. https://doi.org/10.1210/en.2008-0344"
+    ]
+  },
+  "metolachlor": {
+    "id": "metolachlor",
+    "name": "Metolachlor",
+    "description": "Metolachlor is a pre-emergent herbicide widely used to control grasses and broadleaf weeds in crops like corn and soybeans. Health concerns include its potential to cause liver and kidney toxicity, disrupt hormone function, and contribute to developmental and reproductive issues with long-term exposure. It is also classified as a possible human carcinogen by some regulatory bodies. Due to these concerns, Metolachlor has been banned in 11 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1994). Reregistration Eligibility Decision (RED) for Metolachlor. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Metolachlor in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2003). Toxicological Profile for Selected Pesticides Including Metolachlor. https://www.atsdr.cdc.gov",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance S‐metolachlor. EFSA Journal, 8(9):1741. https://doi.org/10.2903/j.efsa.2010.1741",
+      "Greenlee, A. R., et al. (2004). Endocrine-disrupting chemicals and fertility. Trends in Endocrinology & Metabolism, 15(9), 408–414. https://doi.org/10.1016/j.tem.2004.09.004",
+      "Stevens, J. T., & Sumner, D. D. (1991). Metolachlor: A review of its toxicology. Regulatory Toxicology and Pharmacology, 13(3), 213–227. https://doi.org/10.1016/0273-2300(91)90047-X",
+      "Pesticide Properties Database (PPDB). (2022). Metolachlor – A Review of Environmental and Toxicological Data. University of Hertfordshire. http://sitem.herts.ac.uk/aeru/ppdb/en/"
+    ]
+  },
+  "molinate": {
+    "id": "molinate",
+    "name": "Molinate",
+    "description": "Molinate is a thiocarbamate herbicide used mainly in rice cultivation. It has raised health concerns due to its neurotoxic effects, reproductive toxicity, and potential to cause endocrine disruption. Prolonged exposure may impact the nervous and reproductive systems, especially in occupational settings. Because of these risks and its persistence in the environment, Molinate has been banned in 26 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision (RED) for Molinate. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Molinate in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Gray, L. E., et al. (1999). Effects of environmental endocrine disruptors on reproductive development in animals and humans. Reproduction, Fertility and Development, 11(1), 63–73. https://doi.org/10.1071/rd99035",
+      "Swan, S. H., et al. (2003). Semen quality in relation to biomarkers of pesticide exposure. Environmental Health Perspectives, 111(12), 1478–1484. https://doi.org/10.1289/ehp.6417",
+      "Chapman, P. M., et al. (2002). Ecotoxicology of molinate: A review of environmental fate and toxicological data. Chemosphere, 47(7), 849–860. https://doi.org/10.1016/S0045-6535(01)00315-9",
+      "European Commission. (2005). Molinate – Review report for the active substance. Directorate-General for Health and Consumer Protection. https://ec.europa.eu"
+    ]
+  },
+  "pendimethalin": {
+    "id": "pendimethalin",
+    "name": "Pendimethalin",
+    "description": "Pendimethalin is a pre-emergent herbicide commonly used to control annual grasses and broadleaf weeds in crops like soybeans, corn, and vegetables. While it is still widely used, health concerns include potential liver toxicity, thyroid effects, and possible carcinogenicity based on animal studies. Long-term exposure could also lead to endocrine system disruption. Due to these risks, Pendimethalin has been banned in 10 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Reregistration Eligibility Decision (RED) for Pendimethalin. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Pendimethalin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2017). Conclusion on the peer review of the pesticide risk assessment of the active substance pendimethalin. EFSA Journal, 15(7):4900. https://doi.org/10.2903/j.efsa.2017.4900",
+      "International Agency for Research on Cancer (IARC). (2001). Some Thyrotropic Agents, including Pendimethalin. IARC Monographs, Volume 79. https://monographs.iarc.who.int",
+      "Martinez, A., et al. (2008). Endocrine-disrupting effects of commonly used pesticides. Toxicology in Vitro, 22(1), 182–190. https://doi.org/10.1016/j.tiv.2007.08.008",
+      "U.S. National Library of Medicine. (2021). Pendimethalin – Hazardous Substances Data Bank (HSDB). https://pubchem.ncbi.nlm.nih.gov"
+    ]
+  },
+  "simazine": {
+    "id": "simazine",
+    "name": "Simazine",
+    "description": "Simazine is a triazine herbicide used to control broadleaf weeds and grasses in crops, orchards, and non-crop areas. Health concerns include potential endocrine disruption, reproductive and developmental toxicity, and possible links to cancer based on animal studies. Simazine can persist in soil and contaminate groundwater. Due to these risks, Simazine has been banned in 27 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision (RED) for Simazine. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Simazine in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2011). Conclusion on the peer review of the pesticide risk assessment of the active substance simazine. EFSA Journal, 9(2):2032. https://doi.org/10.2903/j.efsa.2011.2032",
+      "Hayes, T. B., et al. (2003). Atrazine-induced hermaphroditism at low exposure levels (relevant to triazine herbicides like simazine). Environmental Health Perspectives, 111(4), 568–575. https://doi.org/10.1289/ehp.5932",
+      "Eldridge, J. C., et al. (1994). The effects of simazine on the endocrine system. Toxicology and Applied Pharmacology, 127(2), 299–308. https://doi.org/10.1006/taap.1994.1145",
+      "CalEPA Office of Environmental Health Hazard Assessment (OEHHA). (2021). Simazine Public Health Goal. https://oehha.ca.gov"
+    ]
+  },
+  "245-t": {
+    "id": "245-t",
+    "name": "2,4,5-T",
+    "description": "2,4,5-T (2,4,5-Trichlorophenoxyacetic acid) is a synthetic herbicide formerly used to control broadleaf weeds and brush. It became notorious as a component of Agent Orange. Health concerns include its contamination with dioxins, which are highly toxic compounds linked to cancer, birth defects, immune system suppression, and reproductive issues. Due to these serious health risks, 2,4,5-T has been banned in 49 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1980). Health and Environmental Effects Profile for 2,4,5-T. https://www.epa.gov",
+      "World Health Organization (WHO). (1989). 2,4,5-T Environmental Health Criteria 29. Geneva: WHO.",
+      "National Research Council (1981). The Effects of Herbicides in South Vietnam, Part B. National Academies Press. https://doi.org/10.17226/18631",
+      "Institute of Medicine. (1994). Veterans and Agent Orange: Health Effects of Herbicides Used in Vietnam. National Academies Press. https://doi.org/10.17226/2141",
+      "Boffetta, P., et al. (1997). Exposure to dioxin and risk of cancer. Environmental Health Perspectives, 105(Suppl 1), 157–167. https://doi.org/10.1289/ehp.97105s1157",
+      "IARC (International Agency for Research on Cancer). (1997). Polychlorinated Dibenzo-para-dioxins and Polychlorinated Dibenzofurans. IARC Monographs Volume 69. https://monographs.iarc.who.int",
+      "Stellman, J. M., et al. (2003). The extent and patterns of usage of Agent Orange and other herbicides in Vietnam. Nature, 422(6933), 681–687. https://doi.org/10.1038/nature01537"
+    ]
+  },
+  "terbuthylazine": {
+    "id": "terbuthylazine",
+    "name": "Terbuthylazine",
+    "description": "Terbuthylazine is a triazine herbicide used primarily to control broadleaf and grassy weeds in crops like corn and sugarcane. Health concerns include potential endocrine disruption, reproductive toxicity, and harm to aquatic life. It is structurally similar to atrazine and simazine, which have raised similar concerns. Due to its health and environmental risks, Terbuthylazine has been banned in 9 countries.",
+    "references": [
+      "European Food Safety Authority (EFSA). (2011). Conclusion on the peer review of the pesticide risk assessment of the active substance terbuthylazine. EFSA Journal, 9(11):2449. https://doi.org/10.2903/j.efsa.2011.2449",
+      "World Health Organization (WHO). (2003). Terbuthylazine in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2006). Terbuthylazine – Pesticide Fact Sheet. https://www.epa.gov",
+      "Renner, R. (2002). Endocrine disruptors: Learning from DDT. Environmental Science & Technology, 36(9), 190A–197A. https://doi.org/10.1021/es022341f",
+      "Šmídová, K., et al. (2015). Reproductive toxicity of terbuthylazine in rats. Interdisciplinary Toxicology, 8(4), 157–163. https://doi.org/10.1515/intox-2015-0022",
+      "Pesticide Properties Database (PPDB). (2022). Terbuthylazine – University of Hertfordshire. http://sitem.herts.ac.uk/aeru/ppdb/en"
+    ]
+  },
+  "trifluralin": {
+    "id": "trifluralin",
+    "name": "Trifluralin",
+    "description": "Trifluralin is a pre-emergent herbicide used to control annual grasses and broadleaf weeds in crops like cotton, soybeans, and vegetables. Health concerns include its potential to disrupt hormone function, cause developmental toxicity, and its classification as a possible human carcinogen. It is also highly toxic to aquatic organisms and persistent in the environment. Due to these risks, Trifluralin has been banned in 36 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Reregistration Eligibility Decision (RED) for Trifluralin. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Trifluralin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance trifluralin. EFSA Journal, 8(6):1637. https://doi.org/10.2903/j.efsa.2010.1637",
+      "International Agency for Research on Cancer (IARC). (1999). Some Chemicals that Cause Tumours of the Kidney or Urinary Bladder in Rodents and Some Other Substances. IARC Monographs, Volume 73. https://monographs.iarc.who.int",
+      "US National Toxicology Program (NTP). (1996). Toxicology and carcinogenesis studies of Trifluralin in rats and mice (feed studies). https://ntp.niehs.nih.gov",
+      "Jin, Y., et al. (2011). Endocrine-disrupting effects of trifluralin in male goldfish. Aquatic Toxicology, 105(3-4), 448–453. https://doi.org/10.1016/j.aquatox.2011.07.008"
+    ]
+  },
+  "bifenthrin": {
+    "id": "bifenthrin",
+    "name": "Bifenthrin",
+    "description": "Bifenthrin is a synthetic insecticide used in farming and homes to control pests. It can affect the nervous system, causing symptoms like dizziness and nausea, and is highly toxic to aquatic life. It may also persist in the environment and contaminate water. Though considered a possible carcinogen, health risks are mainly linked to high or long-term exposure. It is banned or not approved in 32 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2001). Bifenthrin: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2009). Conclusion on the peer review of the pesticide risk assessment of the active substance bifenthrin. EFSA Journal, 7(11):1373. https://doi.org/10.2903/j.efsa.2009.1373",
+      "World Health Organization (WHO). (2003). Bifenthrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Cantalamessa, F. (1993). Acute toxicity of bifenthrin in rats: effects on blood glucose and tissue pyruvate levels. Pharmacological Research, 27(1), 61–66. https://doi.org/10.1006/phrs.1993.1009",
+      "Shafer, T. J., et al. (2005). Neurotoxicity of pyrethroid insecticides. Toxicology and Applied Pharmacology, 207(2 Suppl), 279–286. https://doi.org/10.1016/j.taap.2004.12.009",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "cypermethrin": {
+    "id": "cypermethrin",
+    "name": "Cypermethrin",
+    "description": "Cypermethrin is a synthetic pyrethroid insecticide widely used in agriculture and domestic pest control. While effective against insects, it can pose health risks to humans, particularly through prolonged or high-level exposure. Symptoms of acute exposure may include skin irritation, burning sensations, dizziness, and nausea. Cypermethrin affects the nervous system and may also disrupt endocrine function. It is especially toxic to aquatic organisms and can persist in the environment, raising concerns about water contamination. Although not classified as a confirmed human carcinogen, ongoing research suggests caution is warranted. Cypermethrin has been banned or not authorized for use in 28 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2009). Cypermethrin: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2005). Cypermethrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2013). Conclusion on the peer review of the pesticide risk assessment of the active substance cypermethrin. EFSA Journal, 11(1):3020. https://doi.org/10.2903/j.efsa.2013.3020",
+      "Anand, M., et al. (2012). Cypermethrin toxicity: Male reproductive dysfunction and oxidative stress in rats. Environmental Toxicology and Pharmacology, 33(3), 413–419. https://doi.org/10.1016/j.etap.2012.01.008",
+      "Kale, M., et al. (1999). Alterations in antioxidant enzymes and oxidative damage in rat erythrocytes exposed to cypermethrin. Journal of Environmental Science and Health, Part B, 34(6), 975–986. https://doi.org/10.1080/03601239909373226",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "deltamethrin": {
+    "id": "deltamethrin",
+    "name": "Deltamethrin",
+    "description": "Deltamethrin is a synthetic pyrethroid insecticide commonly used in agriculture, public health, and household pest control. Though effective at killing insects, it poses health risks to humans, particularly through inhalation or skin contact. Short-term exposure can cause symptoms such as tingling, itching, headaches, nausea, and dizziness. In more severe cases or with prolonged exposure, deltamethrin may affect the nervous system and interfere with motor coordination. It is also highly toxic to aquatic life and can accumulate in the environment, raising concerns about ecological impact. While not classified as a proven human carcinogen, precaution is advised. Deltamethrin has been banned or not authorized for use in 26 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Deltamethrin: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2006). Deltamethrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2015). Peer review of the pesticide risk assessment of the active substance deltamethrin. EFSA Journal, 13(11):4287. https://doi.org/10.2903/j.efsa.2015.4287",
+      "Ray, D. E., & Fry, J. R. (2006). A reassessment of the neurotoxicity of pyrethroid insecticides. Pharmacology & Therapeutics, 111(1), 174–193. https://doi.org/10.1016/j.pharmthera.2005.09.002",
+      "Nasuti, C., et al. (2003). Neurotoxic and behavioral effects of a pyrethroid insecticide in mice. Toxicology, 192(3), 193–206. https://doi.org/10.1016/S0300-483X(03)00256-9",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "fenitrothion": {
+    "id": "fenitrothion",
+    "name": "Fenitrothion",
+    "description": "Fenitrothion is an organophosphate insecticide mainly used in agriculture and public health programs to control insects like mosquitoes, flies, and crop pests. It works by disrupting the nervous system of insects, but it can also pose serious health risks to humans. Exposure—especially through inhalation, ingestion, or skin contact—can lead to symptoms such as headaches, sweating, nausea, muscle weakness, and in severe cases, respiratory distress or convulsions due to inhibition of cholinesterase. Long-term exposure may affect neurological and reproductive health. Fenitrothion is also toxic to birds and aquatic life. Due to its health and environmental risks, it has been banned or not authorized for use in 33 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1995). Fenitrothion: Reregistration Eligibility Decision (RED). https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Fenitrothion in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2006). Conclusion regarding the peer review of the pesticide risk assessment of the active substance fenitrothion. EFSA Journal, 4(11):99r. https://doi.org/10.2903/j.efsa.2006.99r",
+      "Khoshbavar-Rostami, H. A., et al. (2006). Toxicity of fenitrothion to fish: Acetylcholinesterase inhibition and behavioral changes in common carp. Veterinary Arhiv, 76(5), 421–429.",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Ahmed, M. T., & Davies, J. E. (1997). Organophosphate poisoning and its effects on reproductive health. Environmental Health Perspectives, 105(Suppl 6), 1328–1331. https://doi.org/10.1289/ehp.97105s61328"
+    ]
+  },
+  "lambda-cyhalothrin": {
+    "id": "lambda-cyhalothrin",
+    "name": "Lambda-cyhalothrin",
+    "description": "Lambda-cyhalothrin is a synthetic pyrethroid insecticide used extensively in agriculture and public health to control a broad range of pests. Although it is effective against insects, it poses potential health risks to humans. Short-term exposure can cause skin and eye irritation, dizziness, nausea, and tingling sensations on the skin. It acts on the nervous system and, with high or prolonged exposure, may lead to more severe neurotoxic effects. Lambda-cyhalothrin is also highly toxic to aquatic organisms and bees, and it can persist in the environment, raising concerns about ecological impact. It has been banned or not authorized for use in 25 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2001). Lambda-cyhalothrin: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Lambda-cyhalothrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2014). Peer review of the pesticide risk assessment of the active substance lambda-cyhalothrin. EFSA Journal, 12(6):3692. https://doi.org/10.2903/j.efsa.2014.3692",
+      "Shafer, T. J., et al. (2005). Neurotoxicity of pyrethroid insecticides. Toxicology and Applied Pharmacology, 207(2 Suppl), 279–286. https://doi.org/10.1016/j.taap.2004.12.009",
+      "Anand, M., et al. (2012). Lambda-cyhalothrin-induced reproductive toxicity in male rats. Pesticide Biochemistry and Physiology, 104(2), 151–157. https://doi.org/10.1016/j.pestbp.2012.06.004",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "permethrin": {
+    "id": "permethrin",
+    "name": "Permethrin",
+    "description": "Permethrin is a synthetic pyrethroid insecticide commonly used in agriculture, public health (e.g., lice and scabies treatments), and household pest control. While generally considered less toxic than many other insecticides, it still presents health concerns. Short-term exposure can cause skin and eye irritation, headaches, nausea, and a burning or tingling sensation. At higher doses or with prolonged exposure, permethrin may affect the nervous system and has shown potential for endocrine disruption in some studies. It is highly toxic to cats, aquatic life, and bees, and can persist in the environment. Permethrin has been banned or not authorized for use in 26 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2009). Permethrin: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2006). Permethrin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2008). Conclusion on the peer review of the pesticide risk assessment of the active substance permethrin. EFSA Journal, 6(11):1388. https://doi.org/10.2903/j.efsa.2008.1388",
+      "Bradberry, S. M., et al. (2005). Pyrethrins and pyrethroids: A review of the literature. Toxicological Reviews, 24(2), 93–106. https://doi.org/10.2165/00139709-200524020-00003",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Wang, D., et al. (2016). Permethrin exposure induces neurotoxicity and reproductive toxicity in animal models. Environmental Science and Pollution Research, 23(20), 20534–20545. https://doi.org/10.1007/s11356-016-7222-z"
+    ]
+  },
+  "pyriproxyfen": {
+    "id": "pyriproxyfen",
+    "name": "Pyriproxyfen",
+    "description": "Pyriproxyfen is an insect growth regulator widely used in agriculture, public health, and household pest control. It disrupts the development of insects by mimicking juvenile hormones, preventing them from maturing or reproducing. Although generally considered to have low acute toxicity in humans, concerns have been raised about its potential effects on development and reproduction, especially with long-term or high-level exposure. Some studies suggest it may affect liver function and endocrine activity. Pyriproxyfen is also moderately toxic to aquatic organisms. Due to health and environmental concerns, it has been banned or not authorized for use in 11 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Pyriproxyfen: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2007). Pyriproxyfen in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance pyriproxyfen. EFSA Journal, 8(6):1643. https://doi.org/10.2903/j.efsa.2010.1643",
+      "Kavlock, R. J., et al. (1996). Developmental toxicity evaluations of pyriproxyfen in rodents. Reproductive Toxicology, 10(4), 261–267. https://doi.org/10.1016/0890-6238(96)00040-2",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Brausch, J. M., & Rand, G. M. (2011). A review of personal care products in the aquatic environment. Environmental International, 37(4), 1283–1297. https://doi.org/10.1016/j.envint.2011.03.004"
+    ]
+  },
+  "spinosad": {
+    "id": "spinosad",
+    "name": "Spinosad",
+    "description": "Spinosad is a natural insecticide derived from soil bacteria, used in both conventional and organic agriculture to control a variety of insect pests. It targets the nervous system of insects, leading to paralysis and death. While it is generally considered less harmful to humans than many synthetic insecticides, exposure can still cause mild symptoms such as skin or eye irritation and, in rare cases, dizziness or nausea. Spinosad is moderately toxic to aquatic organisms and highly toxic to bees upon direct contact, although it breaks down relatively quickly in the environment. It has been banned or not authorized for use in 9 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1997). Spinosad: Pesticide Fact Sheet. https://www.epa.gov",
+      "World Health Organization (WHO). (2006). Spinosad: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2007). Conclusion on the peer review of the pesticide risk assessment of the active substance spinosad. EFSA Journal, 5(6):132r. https://doi.org/10.2903/j.efsa.2007.132r",
+      "Kirst, H. A. (2010). The spinosyn family of insecticides: Realizing the potential of natural products research. Journal of Antibiotics, 63, 101–111. https://doi.org/10.1038/ja.2010.16",
+      "Bacci, L., et al. (2007). Toxicity of spinosad to honey bees under laboratory conditions. Bulletin of Insectology, 60(1), 31–34.",
+      "Pesticide Properties DataBase (PPDB). (2024). Spinosad (Ref: GF-120). University of Hertfordshire. https://sitem.herts.ac.uk/aeru/ppdb"
+    ]
+  },
+  "tebuconazole": {
+    "id": "tebuconazole",
+    "name": "Tebuconazole",
+    "description": "Tebuconazole is a systemic triazole fungicide widely used in agriculture to control fungal diseases in crops such as cereals, fruits, and vegetables. It works by inhibiting ergosterol synthesis, a key component of fungal cell membranes. Although effective, tebuconazole raises health concerns. It can be absorbed through the skin, inhaled, or ingested, and may cause irritation, headaches, or nausea after short-term exposure. Long-term or high-dose exposure has been associated with liver toxicity, endocrine disruption, and developmental effects in animal studies. It is also toxic to aquatic organisms and persistent in the environment. Tebuconazole has been banned or not authorized for use in 27 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2016). Tebuconazole: Human Health Risk Assessment for Proposed Use on Various Crops. https://www.epa.gov",
+      "World Health Organization (WHO). (2009). Tebuconazole in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2014). Conclusion on the peer review of the pesticide risk assessment of the active substance tebuconazole. EFSA Journal, 12(9):3855. https://doi.org/10.2903/j.efsa.2014.3855",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Taxvig, C., et al. (2007). Endocrine-disrupting properties in vivo of the fungicide tebuconazole. Toxicological Sciences, 100(2), 464–473. https://doi.org/10.1093/toxsci/kfm247",
+      "Komarova, T. V., et al. (2010). Developmental toxicity and hepatotoxicity of tebuconazole in rats. Environmental Toxicology and Pharmacology, 29(2), 110–117. https://doi.org/10.1016/j.etap.2009.10.005"
+    ]
+  },
+  "trifloxystrobin": {
+    "id": "trifloxystrobin",
+    "name": "Trifloxystrobin",
+    "description": "Trifloxystrobin is a strobilurin fungicide used to control a broad spectrum of fungal diseases in crops such as cereals, fruits, and vegetables. It acts by inhibiting mitochondrial respiration in fungi, effectively stopping their growth. Although trifloxystrobin is considered to have low acute toxicity in humans, concerns remain regarding its long-term effects. Prolonged or repeated exposure may affect liver function and could cause reproductive or developmental toxicity based on animal studies. It is also persistent in the environment and highly toxic to aquatic organisms. Trifloxystrobin has been banned or not authorized for use in 24 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2000). Trifloxystrobin: Pesticide Fact Sheet. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance trifloxystrobin. EFSA Journal, 8(3):1544. https://doi.org/10.2903/j.efsa.2010.1544",
+      "World Health Organization (WHO). (2007). Pesticides in Drinking-water: Trifloxystrobin. Geneva: WHO.",
+      "Deising, H. B., et al. (2008). The strobilurin fungicide trifloxystrobin: Toxicological profile and environmental behavior. Journal of Pesticide Science, 33(2), 179–190. https://doi.org/10.1584/jpestics.R07-09",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "carbaryl": {
+    "id": "carbaryl",
+    "name": "Carbaryl",
+    "description": "Carbaryl is a carbamate insecticide widely used in agriculture, forestry, and domestic settings to control a variety of insect pests. It works by inhibiting acetylcholinesterase, an enzyme essential for nervous system function. In humans, exposure can lead to symptoms such as headaches, dizziness, nausea, muscle weakness, and, at higher doses, more serious neurotoxic effects including respiratory distress. Long-term exposure has been associated with possible reproductive and developmental toxicity, and it has been classified as a likely human carcinogen by the U.S. EPA. Carbaryl is also toxic to bees, aquatic organisms, and some bird species. It has been banned or not authorized for use in 43 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2007). Carbaryl: Human Health Risk Assessment for Reregistration. https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Carbaryl in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2016). Conclusion on the peer review of the pesticide risk assessment of the active substance carbaryl. EFSA Journal, 14(7):4560. https://doi.org/10.2903/j.efsa.2016.4560",
+      "Garabrant, D. H., & Philbert, M. A. (2002). Review of 2,4-Dichlorophenoxyacetic acid (2,4-D) epidemiology and toxicology. Critical Reviews in Toxicology, 32(4), 233–257. https://doi.org/10.1080/20024091064218",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Rezg, R., et al. (2010). Toxic effects of carbaryl on reproductive system in female rats. Ecotoxicology and Environmental Safety, 73(6), 1112–1117. https://doi.org/10.1016/j.ecoenv.2010.05.008"
+    ]
+  },
+  "clothianidin": {
+    "id": "clothianidin",
+    "name": "Clothianidin",
+    "description": "Clothianidin is a neonicotinoid insecticide commonly used in agriculture to protect crops such as corn, soybeans, and canola from insect pests. It acts on the nervous system of insects by binding to nicotinic acetylcholine receptors, causing paralysis and death. While it is less acutely toxic to humans than many older insecticides, exposure may still cause symptoms such as dizziness, nausea, or muscle tremors. There are concerns about its long-term effects on human health, including potential impacts on the endocrine and immune systems based on animal studies. Clothianidin is particularly controversial for its harmful effects on pollinators like bees and its persistence in soil and water. Due to these environmental and health concerns, it has been banned or not authorized for use in 32 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2003). Clothianidin: Human Health Risk Assessment for Proposed Use on Corn and Canola. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2013). Conclusion on the peer review of the pesticide risk assessment of the active substance clothianidin. EFSA Journal, 11(1):3066. https://doi.org/10.2903/j.efsa.2013.3066",
+      "World Health Organization (WHO). (2010). Neonicotinoid insecticides: A review of their role in environmental and human health. Geneva: WHO.",
+      "Tomizawa, M., & Casida, J. E. (2005). Neonicotinoid insecticide toxicology: Mechanisms of selective action. Annual Review of Pharmacology and Toxicology, 45, 247–268. https://doi.org/10.1146/annurev.pharmtox.45.120403.095930",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Tennekes, H. A., & Sánchez-Bayo, F. (2011). Time-dependent toxicity of neonicotinoids and other toxicants: Implications for a new approach to risk assessment. Journal of Environmental & Analytical Toxicology, S4, 001. https://doi.org/10.4172/2161-0525.S4-001"
+    ]
+  },
+  "imidacloprid": {
+    "id": "imidacloprid",
+    "name": "Imidacloprid",
+    "description": "Imidacloprid is a widely used neonicotinoid insecticide that acts on the central nervous system of insects, causing overstimulation, paralysis, and death. It is used extensively in agriculture, gardening, and pet care products. Although it has relatively low acute toxicity in humans, exposure can lead to symptoms such as dizziness, vomiting, and muscle weakness, especially at high doses. Animal studies have raised concerns about potential neurodevelopmental and reproductive effects. Imidacloprid is also known for its high toxicity to pollinators, particularly bees, and its persistence in soil and water, which raises broader environmental concerns. As a result, it has been banned or not authorized for use in 66 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2008). Imidacloprid: Human Health Risk Assessment for Proposed Uses. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2013). Conclusion on the peer review of the pesticide risk assessment of the active substance imidacloprid. EFSA Journal, 11(1):3068. https://doi.org/10.2903/j.efsa.2013.3068",
+      "World Health Organization (WHO). (2001). Imidacloprid in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Tomizawa, M., & Casida, J. E. (2005). Neonicotinoid insecticide toxicology: Mechanisms of selective action. Annual Review of Pharmacology and Toxicology, 45, 247–268. https://doi.org/10.1146/annurev.pharmtox.45.120403.095930",
+      "Kapoor, U., et al. (2014). Toxicological impact of technical imidacloprid on ovarian morphology, hormones and antioxidant enzymes in female rats. Food and Chemical Toxicology, 68, 190–200. https://doi.org/10.1016/j.fct.2014.03.037",
+      "Bal, R., et al. (2012). Effects of clothianidin and imidacloprid on reproductive organs and hormones in male rats. Pesticide Biochemistry and Physiology, 104(3), 248–253. https://doi.org/10.1016/j.pestbp.2012.07.007"
+    ]
+  },
+  "malathion": {
+    "id": "malathion",
+    "name": "Malathion",
+    "description": "Malathion is an organophosphate insecticide used in agriculture, public health, and residential settings to control a wide range of insects. It works by inhibiting acetylcholinesterase, an enzyme critical for nerve function, which can lead to neurological symptoms such as headaches, dizziness, muscle twitching, and in severe cases, respiratory failure. Long-term or high-level exposure has been linked to reproductive and developmental effects in animals. The International Agency for Research on Cancer (IARC) has classified malathion as probably carcinogenic to humans (Group 2A), based on limited evidence in humans and sufficient evidence in animals. It is also moderately toxic to aquatic life and pollinators. Malathion has been banned or not authorized for use in 40 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision for Malathion. https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Malathion in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance malathion. EFSA Journal, 8(4):1530. https://doi.org/10.2903/j.efsa.2010.1530",
+      "Timchalk, C., et al. (2002). Physiologically based pharmacokinetic and pharmacodynamic modeling of organophosphate pesticides. Toxicology and Industrial Health, 18(6), 329–341. https://doi.org/10.1191/0748233702th144oa",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Slotkin, T. A., et al. (2008). Developmental exposure to organophosphates alters metabolism in adulthood. Environmental Health Perspectives, 116(1), 34–39. https://doi.org/10.1289/ehp.10299"
+    ]
+  },
+  "captan": {
+    "id": "captan",
+    "name": "Captan",
+    "description": "Captan is a fungicide commonly used on fruits, vegetables, and ornamental plants to control fungal diseases. It works by disrupting key metabolic processes in fungal cells. While it has relatively low acute toxicity in humans, exposure—especially through inhalation or skin contact—can cause irritation to the skin, eyes, and respiratory tract. Long-term exposure has raised concerns about potential carcinogenicity, with the U.S. EPA classifying captan as a probable human carcinogen based on animal studies showing gastrointestinal tumors. Captan is also toxic to aquatic organisms and may persist in the environment under certain conditions. It has been banned or not authorized for use in 30 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2004). Captan: Revised Human Health Risk Assessment for the Reregistration Eligibility Decision (RED). https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Captan in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2009). Conclusion on the peer review of the pesticide risk assessment of the active substance captan. EFSA Journal, 7(9):1339. https://doi.org/10.2903/j.efsa.2009.1339",
+      "International Agency for Research on Cancer (IARC). (1987). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans: Captan. Volume 30. Lyon: IARC.",
+      "Reuber, M. D. (1980). Carcinogenicity of captan. Science of the Total Environment, 14(1), 67–75. https://doi.org/10.1016/0048-9697(80)90045-3",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "acetamiprid": {
+    "id": "acetamiprid",
+    "name": "Acetamiprid",
+    "description": "Acetamiprid is a neonicotinoid insecticide used in agriculture to control sucking insects such as aphids, whiteflies, and leafhoppers on a variety of crops. It targets the nicotinic acetylcholine receptors in insects, leading to overstimulation and death. In humans, acetamiprid has relatively low acute toxicity, but exposure—especially through occupational or dietary routes—may cause symptoms like dizziness, nausea, muscle weakness, or neurobehavioral effects. Some animal studies have suggested possible reproductive and developmental toxicity, as well as effects on the nervous and immune systems. There is growing concern about its persistence in the environment and sublethal effects on pollinators such as bees. Acetamiprid has been banned or not authorized for use in 11 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2002). Pesticide Fact Sheet: Acetamiprid. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2016). Conclusion on the peer review of the pesticide risk assessment of the active substance acetamiprid. EFSA Journal, 14(11):4610. https://doi.org/10.2903/j.efsa.2016.4610",
+      "World Health Organization (WHO). (2020). Neonicotinoid insecticides: A review of their effects on human health and the environment. Geneva: WHO.",
+      "Kimura-Kuroda, J., et al. (2012). Neonicotinoid insecticides alter the gene expression profile of neurons and affect axonal growth. PLOS ONE, 7(8), e32432. https://doi.org/10.1371/journal.pone.0032432",
+      "Hirano, T., & Hoshino, Y. (2013). Acetamiprid induces oxidative stress and DNA damage in human peripheral blood lymphocytes. Journal of Toxicological Sciences, 38(2), 217–223. https://doi.org/10.2131/jts.38.217",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "thiacloprid": {
+    "id": "thiacloprid",
+    "name": "Thiacloprid",
+    "description": "Thiacloprid is a neonicotinoid insecticide used to control sucking and biting insects in crops such as fruits, vegetables, and cereals. It acts by binding to nicotinic acetylcholine receptors in the insect nervous system, leading to paralysis and death. In humans, thiacloprid has moderate acute toxicity, and exposure may result in symptoms like nausea, headaches, or neurological effects at higher doses. Animal studies have shown potential for reproductive toxicity, developmental effects, and endocrine disruption. Due to these concerns, as well as its potential environmental impact on pollinators and aquatic life, thiacloprid has been banned or not authorized for use in 39 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2010). Thiacloprid Human Health Risk Assessment. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2019). Peer review of the pesticide risk assessment of the active substance thiacloprid. EFSA Journal, 17(3):5594. https://doi.org/10.2903/j.efsa.2019.5594",
+      "European Commission. (2020). Commission Implementing Regulation (EU) 2020/23 — Non-renewal of the approval of the active substance thiacloprid. https://eur-lex.europa.eu",
+      "WHO/FAO Joint Meeting on Pesticide Residues (JMPR). (2007). Pesticide residues in food—Thiacloprid evaluation. Geneva: WHO.",
+      "Bonné, C., et al. (2019). Endocrine disruption and reproductive toxicity of thiacloprid in zebrafish. Aquatic Toxicology, 209, 29–37. https://doi.org/10.1016/j.aquatox.2019.01.010",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "rotenone": {
+    "id": "rotenone",
+    "name": "Rotenone",
+    "description": "Rotenone is a naturally derived insecticide and piscicide obtained from the roots of certain tropical plants. Though once widely used in organic farming and fisheries management, it has raised serious health concerns due to its high toxicity. In humans, exposure to rotenone—especially through inhalation or ingestion—can affect the nervous system, causing symptoms such as tremors, muscle pain, and respiratory issues. Laboratory studies have linked rotenone exposure to Parkinson’s disease-like symptoms in animals by disrupting mitochondrial function and inducing oxidative stress in brain cells. These neurotoxic effects, along with environmental concerns related to aquatic toxicity, have led to bans or non-authorization of rotenone in 63 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2007). Reregistration Eligibility Decision for Rotenone. https://www.epa.gov",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance rotenone. EFSA Journal, 8(6):1636. https://doi.org/10.2903/j.efsa.2010.1636",
+      "Betarbet, R., et al. (2000). Chronic systemic pesticide exposure reproduces features of Parkinson's disease. Nature Neuroscience, 3(12), 1301–1306. https://doi.org/10.1038/81834",
+      "Caboni, P., et al. (2004). Rotenone-induced toxicity: Mitochondrial dysfunction and reactive oxygen species generation. Toxicology Letters, 150(2), 159–167. https://doi.org/10.1016/j.toxlet.2004.01.005",
+      "Lachenmeier, D. W., & Kroener, L. (2008). Rotenone: Hazardous natural compound? Toxicology Letters, 180(1), S231. https://doi.org/10.1016/j.toxlet.2008.06.957",
+      "World Health Organization (WHO). (1992). Rotenone: Environmental Health Criteria 202. Geneva: WHO."
+    ]
+  },
+  "endosulfan": {
+    "id": "endosulfan",
+    "name": "Endosulfan",
+    "description": "Endosulfan is an organochlorine insecticide and acaricide that was once widely used on a variety of crops. It acts on the nervous system by interfering with GABA-regulated chloride channels, leading to hyperexcitation and convulsions in insects. In humans, endosulfan is highly toxic; acute exposure can cause headaches, seizures, nausea, and, in severe cases, death. Chronic exposure has been associated with endocrine disruption, reproductive and developmental toxicity, and neurobehavioral effects. Due to its persistence in the environment, bioaccumulation in the food chain, and widespread health concerns, endosulfan has been classified as a Persistent Organic Pollutant (POP) and was added to the Stockholm Convention for global elimination. It has been banned or not authorized for use in 102 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2010). Endosulfan: Revised Human Health Risk Assessment for RED. https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Endosulfan in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1984). Environmental Health Criteria 40: Endosulfan. Geneva: WHO.",
+      "Saiyed, H. N., et al. (2003). Effect of endosulfan on male reproductive development. Environmental Health Perspectives, 111(16), 1958–1962. https://doi.org/10.1289/ehp.6273",
+      "Watanabe, T., & Hirano, T. (1999). Neurotoxicity of endosulfan and its metabolites. Toxicology Letters, 107(1-3), 193–201. https://doi.org/10.1016/S0378-4274(99)00034-6",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "European Food Safety Authority (EFSA). (2005). Conclusion regarding the peer review of the pesticide risk assessment of the active substance endosulfan. EFSA Journal, 3(3):43."
+    ]
+  },
+  "diazinon": {
+    "id": "diazinon",
+    "name": "Diazinon",
+    "description": "Diazinon is an organophosphate insecticide formerly used in agriculture and residential pest control. It works by inhibiting acetylcholinesterase, an enzyme essential for nervous system function, leading to the buildup of acetylcholine and continuous nerve stimulation. In humans, acute exposure can cause symptoms such as headaches, nausea, muscle twitching, respiratory distress, and in severe cases, convulsions or death. Chronic exposure has been linked to developmental and neurological effects, particularly in children. Diazinon is also highly toxic to birds, fish, and beneficial insects. Due to these risks, its residential uses have been phased out in several countries, and it has been banned or not authorized for use in 39 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Diazinon Revised Human Health Risk Assessment. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Diazinon in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1998). Environmental Health Criteria 198: Diazinon. Geneva: WHO.",
+      "Slotkin, T. A., et al. (2006). Developmental neurotoxicity of diazinon in rats. Environmental Health Perspectives, 114(3), 431–436. https://doi.org/10.1289/ehp.8465",
+      "Garry, V. F., et al. (2001). Pesticide appliers, biocides, and birth defects in rural Minnesota. Environmental Health Perspectives, 109(6), 629–634. https://doi.org/10.1289/ehp.01109629",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "Bassil, K. L., et al. (2007). Cancer health effects of pesticides. Canadian Family Physician, 53(10), 1704–1711."
+    ]
+  },
+  "diclofop-methyl": {
+    "id": "diclofop-methyl",
+    "name": "Diclofop-methyl",
+    "description": "Diclofop-methyl is a selective herbicide used to control grass weeds in cereal crops like wheat and barley. It works by inhibiting fatty acid synthesis in plants, leading to cell membrane disruption and plant death. In humans, exposure can cause irritation to the skin, eyes, and respiratory tract. Animal studies have shown liver and kidney toxicity with repeated exposure, as well as possible developmental and reproductive effects. Diclofop-methyl has also raised environmental concerns due to its toxicity to aquatic organisms and potential to contaminate water sources. Because of these health and ecological risks, diclofop-methyl has been banned or not authorized for use in 32 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2005). Reregistration Eligibility Decision (RED) for Diclofop-methyl. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Diclofop-methyl: Environmental Health Criteria 209. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2009). Conclusion on the peer review of the pesticide risk assessment of the active substance diclofop-methyl. EFSA Journal, 7(11):1389. https://doi.org/10.2903/j.efsa.2009.1389",
+      "Sharma, P., & Reddy, M. M. (2001). Toxic effects of diclofop-methyl on liver and kidney of rats. Journal of Environmental Biology, 22(4), 295–299.",
+      "IPCS INCHEM. (1996). Pesticide residues in food: 1996. Toxicological evaluations: Diclofop-methyl. https://www.inchem.org/documents/jmpr/jmpmono/v96pr04.htm",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524"
+    ]
+  },
+  "diuron": {
+    "id": "diuron",
+    "name": "Diuron",
+    "description": "Diuron is a broad-spectrum herbicide used to control weeds in agricultural, industrial, and non-crop settings. It inhibits photosynthesis in plants, leading to growth suppression and death. In humans, diuron is considered to have low acute toxicity, but chronic exposure has been associated with effects on the liver, kidneys, and blood. Animal studies have shown that diuron can act as a potential carcinogen, particularly affecting the urinary bladder. It is also persistent in the environment and has been detected in surface and groundwater, raising concerns about contamination and toxicity to aquatic organisms. Due to these risks, diuron has been banned or not authorized for use in 37 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2003). Diuron: Revised Human Health Risk Assessment. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Diuron in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2009). Conclusion on the peer review of the pesticide risk assessment of the active substance diuron. EFSA Journal, 7(7):1261. https://doi.org/10.2903/j.efsa.2009.1261",
+      "Goldenthal, E. I. (1978). Chronic toxicity and carcinogenicity studies on diuron in rats and mice. Toxicology and Applied Pharmacology, 45(2), 507–516.",
+      "IPCS INCHEM. (1996). Pesticide residues in food: 1996. Toxicological evaluations: Diuron. https://www.inchem.org/documents/jmpr/jmpmono/v96pr04.htm",
+      "Benachour, N., & Séralini, G. É. (2009). Glyphosate formulations induce apoptosis and necrosis in human umbilical, embryonic, and placental cells. Chemical Research in Toxicology, 22(1), 97–105. (Includes comparative herbicide toxicity data including diuron)"
+    ]
+  },
+  "paraquat": {
+    "id": "paraquat",
+    "name": "Paraquat",
+    "description": "Paraquat is a highly toxic herbicide used to control weeds and grasses in agriculture. It works by disrupting photosynthesis, producing reactive oxygen species that cause rapid cell damage in plants. In humans, paraquat is extremely poisonous even in small amounts. Ingestion can lead to severe damage to the mouth, throat, gastrointestinal tract, lungs, liver, and kidneys, often resulting in death due to respiratory failure. There is no specific antidote, and exposure through skin or inhalation can also be hazardous. Long-term concerns include potential links to Parkinson’s disease and lung fibrosis. Due to its extreme toxicity and association with accidental and intentional poisonings, paraquat has been banned or not authorized for use in 67 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2019). Paraquat Dichloride: Interim Registration Review Decision. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Paraquat in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1984). Environmental Health Criteria 39: Paraquat and Diquat. Geneva: WHO.",
+      "Dinis-Oliveira, R. J., et al. (2008). Paraquat poisoning: mechanisms of lung toxicity, clinical features, and treatment. Critical Reviews in Toxicology, 38(1), 13–71. https://doi.org/10.1080/10408440701638900",
+      "Sogorb, M. A., & Vilanova, E. (2010). Paraquat: Mechanisms of toxicity and biomarkers. Journal of Toxicology and Environmental Health, Part B, 13(7–8), 503–523.",
+      "EPA. (1997). Recognition and Management of Pesticide Poisonings: Paraquat Chapter. https://www.epa.gov/pesticide-worker-safety",
+      "European Food Safety Authority (EFSA). (2015). Peer review of the pesticide risk assessment of the active substance paraquat. EFSA Journal, 13(3):4030."
+    ]
+  },
+  "phorate": {
+    "id": "phorate",
+    "name": "Phorate",
+    "description": "Phorate is a highly toxic organophosphate insecticide and nematicide used primarily on crops like corn, potatoes, and cotton. It acts by inhibiting acetylcholinesterase, an enzyme essential for nerve function, leading to overstimulation of the nervous system. In humans, even small amounts of phorate can cause serious symptoms such as excessive salivation, muscle twitching, convulsions, respiratory distress, and potentially death. Chronic exposure has been linked to neurological effects, endocrine disruption, and possible developmental toxicity. Phorate is also extremely toxic to birds, bees, and aquatic life. Due to its high acute toxicity and environmental risks, it has been banned or not authorized for use in 38 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2000). Phorate: Revised Risk Assessment and Interim Reregistration Eligibility Decision. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Phorate in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1996). Phorate Health and Safety Guide No. 103. Geneva: WHO.",
+      "Gupta, R. C. (2011). Toxicology of Organophosphate and Carbamate Compounds. Academic Press.",
+      "Goad, P. T., et al. (2004). Neurotoxicity and delayed neurotoxicity of phorate in rats. Toxicology Letters, 147(1), 49–57.",
+      "Mnif, W., et al. (2011). Effect of endocrine disruptor pesticides on human health. Toxicology and Industrial Health, 27(2), 123–134. https://doi.org/10.1177/0748233710382524",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance phorate. EFSA Journal, 8(4):1571. https://doi.org/10.2903/j.efsa.2010.1571"
+    ]
+  },
+  "picloram": {
+    "id": "picloram",
+    "name": "Picloram",
+    "description": "Picloram is a systemic herbicide used to control broadleaf weeds and woody plants, mainly in pasture, rangeland, and forestry management. It functions by mimicking plant growth hormones (auxins), disrupting normal plant development. In humans, picloram is considered to have low acute toxicity, but prolonged exposure has been associated with liver and kidney effects in animal studies. It is persistent in soil and water, raising environmental concerns about contamination of groundwater and surface water. Though not as acutely toxic as some other pesticides, its environmental persistence and mobility have led to regulatory restrictions. Picloram has been banned or not authorized for use in 28 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1995). Reregistration Eligibility Decision (RED) for Picloram. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Picloram in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (2000). Environmental Health Criteria 209: Picloram. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2012). Conclusion on the peer review of the pesticide risk assessment of the active substance picloram. EFSA Journal, 10(10):2903. https://doi.org/10.2903/j.efsa.2012.2903",
+      "National Research Council. (1987). Regulating Pesticides in Food: The Delaney Paradox. National Academies Press.",
+      "Schardein, J. L. (2000). Chemically Induced Birth Defects. Marcel Dekker."
+    ]
+  },
+  "terbufos": {
+    "id": "terbufos",
+    "name": "Terbufos",
+    "description": "Terbufos is a highly toxic organophosphate insecticide and nematicide primarily used on crops like corn, sugar beets, and potatoes. It acts by inhibiting acetylcholinesterase, an enzyme crucial for nervous system function, leading to the accumulation of acetylcholine and overstimulation of nerves. In humans, even low levels of exposure can cause symptoms such as sweating, muscle twitching, nausea, respiratory distress, convulsions, and, in severe cases, death. Terbufos is also extremely hazardous to birds, aquatic life, and pollinators like bees. Due to its high acute toxicity, environmental persistence, and risks to human and ecological health, terbufos has been banned or not authorized for use in 39 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision (RED) for Terbufos. https://www.epa.gov",
+      "International Programme on Chemical Safety (IPCS). (2003). Terbufos: Health and Safety Guide. Geneva: WHO.",
+      "World Health Organization (WHO). (2003). Terbufos in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality.",
+      "European Food Safety Authority (EFSA). (2014). Conclusion on the peer review of the pesticide risk assessment of the active substance terbufos. EFSA Journal, 12(2):3565. https://doi.org/10.2903/j.efsa.2014.3565",
+      "Gupta, R. C. (2011). Toxicology of Organophosphate and Carbamate Compounds. Academic Press.",
+      "Goad, P. T., & Goad, J. T. (1996). Organophosphate toxicity from Terbufos: clinical signs and pathology in rats. Toxicology Letters, 89(1), 17–25."
+    ]
+  },
+  "azinphos-methyl": {
+    "id": "azinphos-methyl",
+    "name": "Azinphos-methyl",
+    "description": "Azinphos-methyl is a broad-spectrum organophosphate insecticide used to control pests on fruit, nut, and vegetable crops. Like other organophosphates, it works by inhibiting acetylcholinesterase, leading to overstimulation of the nervous system. In humans, exposure can result in symptoms such as muscle twitching, headaches, dizziness, respiratory distress, and, in severe cases, seizures or death. Chronic exposure has been linked to neurological damage, reproductive effects, and developmental toxicity. Due to its high acute toxicity, potential for poisoning agricultural workers, and environmental risks to birds, aquatic life, and pollinators, azinphos-methyl has been banned or not authorized for use in 81 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Azinphos-methyl: Interim Reregistration Eligibility Decision (IRED). https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Azinphos-methyl in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1991). Azinphos-methyl: Environmental Health Criteria 132. Geneva: WHO.",
+      "Gupta, R. C. (2011). Toxicology of Organophosphate and Carbamate Compounds. Academic Press.",
+      "Sanborn, M., et al. (2007). Systematic review of pesticide human health effects. Ontario College of Family Physicians.",
+      "European Food Safety Authority (EFSA). (2008). Conclusion on the peer review of the pesticide risk assessment of the active substance azinphos-methyl. EFSA Journal, 6(9):142. https://doi.org/10.2903/j.efsa.2008.142",
+      "U.S. National Toxicology Program (NTP). (1992). Toxicology and carcinogenesis studies of azinphos-methyl in rodents. NIH Publication No. 92-3160."
+    ]
+  },
+  "bendiocarb": {
+    "id": "bendiocarb",
+    "name": "Bendiocarb",
+    "description": "Bendiocarb is a carbamate insecticide used in agriculture and public health programs, including indoor residual spraying for mosquito control. It works by inhibiting acetylcholinesterase, an enzyme essential for nerve function, leading to overstimulation of the nervous system. In humans, exposure can cause symptoms such as nausea, headaches, dizziness, sweating, muscle weakness, and in severe cases, respiratory paralysis. Although it has relatively low environmental persistence, bendiocarb is highly toxic to birds, bees, and aquatic organisms. Due to its potential health risks and environmental concerns, bendiocarb has been banned or not authorized for use in 41 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2007). Reregistration Eligibility Decision for Bendiocarb. https://www.epa.gov",
+      "World Health Organization (WHO). (2000). Bendiocarb in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1993). Bendiocarb: Environmental Health Criteria 122. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2010). Conclusion on the peer review of the pesticide risk assessment of the active substance bendiocarb. EFSA Journal, 8(3):1527. https://doi.org/10.2903/j.efsa.2010.1527",
+      "Gupta, R. C. (2011). Toxicology of Organophosphate and Carbamate Compounds. Academic Press.",
+      "Sanborn, M., et al. (2007). Systematic Review of Pesticide Health Effects. Ontario College of Family Physicians.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council."
+    ]
+  },
+  "bromoxynil": {
+    "id": "bromoxynil",
+    "name": "Bromoxynil",
+    "description": "Bromoxynil is a selective herbicide used to control broadleaf weeds in cereal crops, corn, and pastures. It acts by inhibiting photosynthesis, causing plant cells to die. In humans, bromoxynil has moderate acute toxicity and may cause skin and eye irritation, respiratory issues, and liver and thyroid effects with prolonged or high-level exposure. Animal studies have shown developmental and reproductive toxicity, raising concerns about potential endocrine-disrupting properties. Although less persistent in the environment than some other herbicides, bromoxynil poses a risk to aquatic life. Due to health and environmental concerns, bromoxynil has been banned or not authorized for use in 30 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1998). Reregistration Eligibility Decision (RED) for Bromoxynil. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Bromoxynil in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2011). Conclusion on the peer review of the pesticide risk assessment of bromoxynil. EFSA Journal, 9(7):2304. https://doi.org/10.2903/j.efsa.2011.2304",
+      "International Programme on Chemical Safety (IPCS). (1990). Environmental Health Criteria 105: Bromoxynil. Geneva: WHO.",
+      "Khera, K. S., et al. (1991). Teratogenicity study on bromoxynil in rabbits and rats. Fundamental and Applied Toxicology, 17(2), 385–395.",
+      "Giri, S., & Giri, A. (2007). Cytogenetic effects of bromoxynil in human lymphocyte cultures. Cytotechnology, 55(1), 1–7.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council."
+    ]
+  },
+  "dicamba": {
+    "id": "dicamba",
+    "name": "Dicamba",
+    "description": "Dicamba is a selective herbicide widely used to control broadleaf weeds in crops such as soybeans, corn, and cereals. It functions by mimicking natural plant growth hormones (auxins), causing uncontrolled and disorganized growth that leads to plant death. In humans, dicamba has relatively low acute toxicity but may cause eye and skin irritation, and prolonged exposure has been linked to liver and kidney effects in animal studies. Dicamba is also known for its tendency to volatilize and drift, potentially damaging non-target crops and ecosystems. These concerns have led to regulatory scrutiny, and dicamba has been banned or not authorized for use in 26 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Reregistration Eligibility Decision (RED) for Dicamba. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Dicamba in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2011). Conclusion on the peer review of the pesticide risk assessment of the active substance dicamba. EFSA Journal, 9(10):2399. https://doi.org/10.2903/j.efsa.2011.2399",
+      "Gervais, J. A., et al. (2008). Dicamba: Pesticide Fact Sheet. National Pesticide Information Center, Oregon State University.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council.",
+      "Charles, J. M., et al. (1996). Developmental toxicity studies of dicamba in rats and rabbits. Fundamental and Applied Toxicology, 30(1), 132–138.",
+      "U.S. National Toxicology Program (NTP). (1992). Toxicology and carcinogenesis studies of dicamba in rodents."
+    ]
+  },
+  "dinoseb": {
+    "id": "dinoseb",
+    "name": "Dinoseb",
+    "description": "Dinoseb is a highly toxic herbicide and pesticide that was once widely used to control weeds and pests in crops like soybeans, vegetables, and fruits. It acts as an uncoupler of oxidative phosphorylation, disrupting energy production in cells. In humans, exposure can cause severe health effects, including eye and skin burns, respiratory distress, reproductive toxicity, and in extreme cases, death. Dinoseb is also a known teratogen and has been linked to developmental defects in animal studies. Its high toxicity to humans and wildlife, along with its persistence in the environment, has led to strict regulatory actions. Dinoseb has been banned or not authorized for use in eighty-three (83) countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1986). Dinoseb: Notice of Intent to Cancel Registration. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Dinoseb in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1998). Environmental Health Criteria 104: Dinoseb and related compounds. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2008). Peer review of the pesticide risk assessment of the active substance dinoseb. EFSA Journal, 6(11):141. https://doi.org/10.2903/j.efsa.2008.141",
+      "Gupta, R. C. (2011). Veterinary Toxicology: Basic and Clinical Principles. Academic Press.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council.",
+      "Siroka, Z., & Drastichova, J. (2004). Biochemical and cytotoxic effects of dinoseb in fish. Acta Veterinaria Brno, 73(3), 309–316."
+    ]
+  },
+  "diquat": {
+    "id": "diquat",
+    "name": "Diquat",
+    "description": "Diquat is a fast-acting, non-selective herbicide commonly used for weed control in agriculture, aquatic environments, and public spaces. It kills plants by generating reactive oxygen species that damage cell membranes, leading to rapid desiccation. In humans, diquat is highly toxic if ingested and can cause severe gastrointestinal distress, kidney failure, neurological damage, and potentially death. Unlike paraquat, it is less likely to cause lung fibrosis, but still poses significant health risks with acute exposure. Diquat is also toxic to aquatic organisms and can persist in sediments. Due to these concerns, diquat has been banned or not authorized for use in 52 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1995). Reregistration Eligibility Decision (RED) for Diquat Dibromide. https://www.epa.gov",
+      "World Health Organization (WHO). (2004). Diquat in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2015). Peer review of the pesticide risk assessment of the active substance diquat. EFSA Journal, 13(11):4284. https://doi.org/10.2903/j.efsa.2015.4284",
+      "IPCS INCHEM. (2004). Diquat: Health and Safety Guide. Geneva: WHO/ILO/UNEP.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council.",
+      "Jones, G. M., & Vale, J. A. (2000). Mechanisms of toxicity, clinical features, and management of diquat poisoning: A review. Journal of Toxicology: Clinical Toxicology, 38(2), 123–128.",
+      "Giri, S., et al. (2002). Genotoxic effects of diquat. Toxicology Letters, 129(1–2), 111–117."
+    ]
+  },
+  "glyphosate": {
+    "id": "glyphosate",
+    "name": "Glyphosate",
+    "description": "Glyphosate is a broad-spectrum, non-selective herbicide widely used in agriculture, forestry, and urban weed control. It works by inhibiting the EPSPS enzyme, which is essential for plant growth. Although glyphosate has relatively low acute toxicity in humans, concerns have emerged over potential long-term health effects. Some studies have linked exposure to an increased risk of non-Hodgkin lymphoma, endocrine disruption, and effects on the gut microbiome. Regulatory agencies remain divided on its carcinogenicity: the International Agency for Research on Cancer (IARC) classifies it as \"probably carcinogenic to humans\" (Group 2A), while others, including the U.S. EPA and EFSA, have not found sufficient evidence for a cancer link. Environmental concerns also include impacts on biodiversity, soil health, and aquatic ecosystems. Due to these health and ecological risks, glyphosate has been banned or not authorized for use in 24 countries.",
+    "references": [
+      "International Agency for Research on Cancer (IARC). (2015). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans: Volume 112 – Glyphosate. Lyon: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2020). Glyphosate: Interim Registration Review Decision. https://www.epa.gov",
+      "World Health Organization (WHO) & FAO. (2005). Pesticide Residues in Food – Evaluations: Glyphosate. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2015). Conclusion on the peer review of the pesticide risk assessment of the active substance glyphosate. EFSA Journal, 13(11):4302.",
+      "Mesnage, R., & Antoniou, M. N. (2017). Facts and fallacies in the debate on glyphosate toxicity. Frontiers in Public Health, 5:316.",
+      "Samsel, A., & Seneff, S. (2013). Glyphosate’s suppression of cytochrome P450 enzymes and amino acid biosynthesis. Entropy, 15(4), 1416–1463.",
+      "Benbrook, C. M. (2016). Trends in glyphosate herbicide use in the United States and globally. Environmental Sciences Europe, 28:3.",
+      "Gasnier, C., et al. (2009). Glyphosate-based herbicides are toxic and endocrine disruptors in human cell lines. Toxicology, 262(3), 184–191."
+    ]
+  },
+  "metribuzin": {
+    "id": "metribuzin",
+    "name": "Metribuzin",
+    "description": "Metribuzin is a selective herbicide used to control broadleaf weeds and grasses in crops like soybeans, potatoes, and tomatoes. It inhibits photosynthesis in target plants, causing them to die. In humans, metribuzin has low acute toxicity, but long-term or high-level exposure may lead to liver, kidney, and blood-related effects observed in animal studies. It is moderately persistent in the environment and can contaminate groundwater, raising concerns about drinking water safety. Metribuzin is also toxic to aquatic organisms and some beneficial plants. Due to its environmental and potential health risks, metribuzin has been banned or not authorized for use in 21 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (1998). Reregistration Eligibility Decision (RED) for Metribuzin. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Metribuzin in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "European Food Safety Authority (EFSA). (2008). Conclusion on the peer review of the pesticide risk assessment of the active substance metribuzin. EFSA Journal, 6(7):138.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council.",
+      "Cummings, A. M., & Gray, L. E. (2001). Effects of metribuzin on reproductive development in rats. Toxicology and Applied Pharmacology, 173(1), 26–32.",
+      "International Programme on Chemical Safety (IPCS). (2001). Metribuzin: Health and Safety Guide. Geneva: WHO/ILO/UNEP.",
+      "JMPR (FAO/WHO Joint Meeting on Pesticide Residues). (2007). Pesticide Residues in Food – Toxicological Evaluations: Metribuzin."
+    ]
+  },
+  "parathion": {
+    "id": "parathion",
+    "name": "Parathion",
+    "description": "Parathion is a highly toxic organophosphate insecticide that was once widely used on crops such as cotton, rice, and fruit trees. It works by inhibiting acetylcholinesterase, an enzyme essential for nervous system function, leading to the accumulation of acetylcholine and overstimulation of nerves. In humans, exposure can cause serious symptoms including muscle twitching, respiratory paralysis, seizures, and death. Parathion is particularly hazardous to agricultural workers and is also extremely toxic to birds, bees, and aquatic life. Due to its acute toxicity and environmental risks, parathion has been banned or not authorized for use in 91 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2006). Interim Reregistration Eligibility Decision for Parathion. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Parathion in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Programme on Chemical Safety (IPCS). (1984). Environmental Health Criteria 38: Parathion. Geneva: WHO.",
+      "European Chemicals Agency (ECHA). (2020). Parathion: Substance Information. https://echa.europa.eu",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council.",
+      "Costa, L. G. (2006). Current issues in organophosphate toxicology. Clinica Chimica Acta, 366(1–2), 1–13.",
+      "Ecobichon, D. J. (2001). Toxic effects of pesticides. In: Klaassen, C. D. (Ed.), Casarett and Doull’s Toxicology: The Basic Science of Poisons (6th ed.). McGraw-Hill."
+    ]
+  },
+  "pentachlorophenol": {
+    "id": "pentachlorophenol",
+    "name": "Pentachlorophenol",
+    "description": "Pentachlorophenol (PCP) is a synthetic organochlorine compound historically used as a pesticide, wood preservative, and fungicide. It is highly toxic and can be absorbed through the skin, inhaled, or ingested. In humans, exposure to PCP has been linked to liver and kidney damage, immune suppression, reproductive toxicity, and potential carcinogenic effects. PCP interferes with cellular metabolism by uncoupling oxidative phosphorylation, leading to cellular energy failure. It also contains impurities like dioxins and furans, which are highly persistent and hazardous environmental pollutants. Due to its serious health and environmental risks, pentachlorophenol has been banned or not authorized for use in 91 countries.",
+    "references": [
+      "U.S. Environmental Protection Agency (EPA). (2008). Toxicological Review of Pentachlorophenol. https://www.epa.gov",
+      "World Health Organization (WHO). (2003). Pentachlorophenol in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Agency for Research on Cancer (IARC). (2019). IARC Monographs on the Identification of Carcinogenic Hazards to Humans: Volume 117 – Pentachlorophenol. Lyon: WHO.",
+      "National Toxicology Program (NTP). (2014). Report on Carcinogens, 13th Edition: Pentachlorophenol. U.S. Department of Health and Human Services.",
+      "ATSDR (Agency for Toxic Substances and Disease Registry). (2001). Toxicological Profile for Pentachlorophenol. https://www.atsdr.cdc.gov",
+      "Yuan, T. H., et al. (2015). Health effects associated with occupational exposure to pentachlorophenol. International Journal of Environmental Research and Public Health, 12(1), 998–1016.",
+      "Tomlin, C. D. S. (2009). The Pesticide Manual (15th ed.). British Crop Production Council."
+    ]
+  },
+  "uranium-238": {
+    "id": "uranium-238",
+    "name": "Uranium-238",
+    "description": "Uranium-238 in drinking water poses significant health concerns primarily due to its chemical toxicity and, to a lesser extent, its radioactivity. When ingested, uranium can accumulate in the kidneys, potentially causing nephrotoxicity and impairing renal function. Long-term exposure to elevated levels of uranium in water may also slightly increase the risk of cancer due to internal irradiation, though its radiological risk is generally lower than its chemical toxicity. Populations relying on groundwater sources in areas with naturally high uranium levels are particularly vulnerable.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2013). Toxicological Profile for Uranium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Uranium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2006). Drinking Water Standards and Health Advisories. https://www.epa.gov",
+      "Leggett, R. W. (1994). The biokinetics of uranium in the human body. Science of the Total Environment, 100: 321–339.",
+      "Zamora, M. L., et al. (1998). Chronic ingestion of uranium in drinking water: A study of kidney bioeffects in humans. Toxicological Sciences, 43(1), 68–77.",
+      "Domingo, J. L. (2001). Reproductive and developmental toxicity of natural and depleted uranium: A review. Reproductive Toxicology, 15(6), 603–609.",
+      "Keith, S., et al. (2013). Uranium Toxicokinetics and Toxicodynamics. In: Environmental Toxicants: Human Exposures and Their Health Effects (3rd ed.), John Wiley & Sons."
+    ]
+  },
+  "uranium-234": {
+    "id": "uranium-234",
+    "name": "Uranium-234",
+    "description": "Uranium-234, a radioactive isotope in the uranium decay series, can be found in drinking water, especially in regions with high natural uranium content in bedrock. Although present in much smaller quantities than uranium-238, uranium-234 is more radioactive due to its shorter half-life and higher specific activity. Health concerns from uranium-234 arise primarily from its radiological properties; when ingested, it can irradiate internal tissues, potentially increasing the long-term risk of cancer. However, like other uranium isotopes, its chemical toxicity—particularly to the kidneys—remains the primary health concern at typical environmental concentrations.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2013). Toxicological Profile for Uranium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Uranium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2022). Radiological Health Assessment: Uranium Isotopes. https://www.epa.gov",
+      "Leggett, R. W. (1994). The biokinetics of uranium in the human body. Science of the Total Environment, 100: 321–339.",
+      "McDiarmid, M. A., et al. (2012). Health surveillance of Gulf War I veterans exposed to depleted uranium. International Archives of Occupational and Environmental Health, 85(3), 265–282.",
+      "Domingo, J. L. (2001). Reproductive and developmental toxicity of natural and depleted uranium: A review. Reproductive Toxicology, 15(6), 603–609.",
+      "Rump, W. M., & Kristofzski, J. G. (2008). Environmental Radiochemical Analysis IV. Royal Society of Chemistry."
+    ]
+  },
+  "thorium-230": {
+    "id": "thorium-230",
+    "name": "Thorium-230",
+    "description": "Thorium-230 is a radioactive decay product of uranium-238 and can be found in trace amounts in drinking water, especially in areas with uranium-rich geological formations. Its primary health risk stems from its radiological properties rather than chemical toxicity. When ingested, thorium-230 can deposit in bones, where its alpha radiation may irradiate surrounding tissues over time, potentially increasing the risk of bone cancer and other health effects. Although exposure levels in drinking water are usually low, prolonged intake of elevated levels poses a concern, particularly for populations using untreated groundwater sources.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1990). Toxicological Profile for Thorium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Radiological Aspects of Drinking-water Guidelines. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1994). ICRP Publication 69: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 3: Ingestion Dose Coefficients.",
+      "International Atomic Energy Agency (IAEA). (2001). Thorium: Environmental Aspects and Health Effects. Technical Report Series No. 419.",
+      "National Council on Radiation Protection and Measurements (NCRP). (1984). Exposure of the Population in the United States and Canada from Natural Background Radiation.",
+      "Kathren, R. L., & Moore, B. R. (1986). Acute and chronic effects of internally deposited thorium-230. Health Physics, 51(5), 613–622.",
+      "Mays, C. W., et al. (1985). Bone cancer induction by thorium-230 and other alpha-emitting radionuclides. Health Physics, 48(6), 579–590."
+    ]
+  },
+  "radium-226": {
+    "id": "radium-226",
+    "name": "Radium-226",
+    "description": "Radium-226 is a naturally occurring radioactive element that can leach into drinking water from certain types of rock and soil, especially in areas with uranium and thorium deposits. As an alpha emitter with a long half-life, radium-226 poses significant health risks when ingested over time. It mimics calcium and tends to accumulate in bones, where it can irradiate bone marrow and increase the risk of bone cancer and other disorders, such as anemia and weakened immune function. Long-term exposure to elevated levels of radium-226 in drinking water is considered a serious public health concern.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1990). Toxicological Profile for Radium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Radium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2022). Radionuclides in Drinking Water. https://www.epa.gov",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 78: Ionizing Radiation, Part 2: Some Internally Deposited Radionuclides.",
+      "Mays, C. W., et al. (1985). Cancer risk from the ingestion of radium-226 and radium-228. Health Physics, 48(2), 193–205.",
+      "Rowland, R. E. (1994). Radium in humans: A review of U.S. studies. Argonne National Laboratory Report ANL/ER-3.",
+      "Harrison, J. D., & Stather, J. W. (1981). Metabolism of 226Ra and 228Ra in the rat. Health Physics, 41(3), 463–473."
+    ]
+  },
+  "lead-210": {
+    "id": "lead-210",
+    "name": "Lead-210",
+    "description": "Lead-210 is a radioactive isotope in the uranium-238 decay chain and can be found in drinking water, particularly where groundwater interacts with uranium-rich minerals. As a beta emitter with a relatively long half-life, lead-210 poses radiological health risks when ingested, especially due to its tendency to accumulate in bones and soft tissues. Prolonged exposure to elevated levels may increase the risk of cancer, particularly bone cancer, due to internal radiation. Although generally present in low concentrations, lead-210 can contribute to overall radiation dose from drinking water, especially in areas with naturally high background radioactivity.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2007). Toxicological Profile for Lead. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Lead in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 78: Ionizing Radiation, Part 2: Some Internally Deposited Radionuclides.",
+      "U.S. Environmental Protection Agency (EPA). (2022). Radionuclides in Drinking Water. https://www.epa.gov",
+      "EPA Integrated Risk Information System (IRIS). (2004). Lead and compounds (inorganic).",
+      "Mays, C. W., et al. (1985). Bone cancer induced by internally deposited alpha emitters. Health Physics, 48(6), 579–590.",
+      "Hoover, M. D., et al. (1999). Lead-210 health risk assessment. Radiation Protection Dosimetry, 86(4), 295–305."
+    ]
+  },
+  "polonium-210": {
+    "id": "polonium-210",
+    "name": "Polonium-210",
+    "description": "Polonium-210 is a highly radioactive alpha-emitting isotope found in trace amounts in the environment, including in some groundwater sources, particularly in regions with high natural uranium content. It is extremely toxic when ingested or inhaled, as its alpha particles cause intense localized damage to biological tissues. Once inside the body, polonium-210 can accumulate in organs such as the liver, spleen, bone marrow, and kidneys, increasing the risk of cancers and acute radiation damage. Even at very low concentrations, chronic exposure through drinking water is a serious health concern due to its high radiotoxicity.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2013). Toxicological Profile for Radionuclides. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Polonium-210 in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "International Atomic Energy Agency (IAEA). (2006). Radiotoxicity of Polonium Isotopes. IAEA-TECDOC-1465.",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 78: Ionizing Radiation, Part 2: Some Internally Deposited Radionuclides.",
+      "Harrison, J. D., & Stather, J. W. (1981). Polonium-210 metabolism and dose. Health Physics, 41(5), 647–655.",
+      "Dombrowski, J. (2007). Polonium-210: Review of health effects and exposure risk. Military Medicine, 172(6), 576–581.",
+      "Tawn, E. J., et al. (2018). Genotoxic effects of internally deposited alpha emitters like Po-210. Radiation and Environmental Biophysics, 57(3), 203–212."
+    ]
+  },
+  "thorium-232": {
+    "id": "thorium-232",
+    "name": "Thorium-232",
+    "description": "Thorium-232 is a naturally occurring radioactive element found in soil, rock, and groundwater, especially in regions with granitic or volcanic geology. As an alpha emitter with an extremely long half-life, thorium-232 poses a health risk primarily through internal exposure. When ingested via drinking water, it tends to accumulate in the liver, spleen, and bones, where it can irradiate tissues over long periods and potentially increase the risk of cancers, particularly liver and bone cancer. Although its low solubility limits bioavailability, chronic ingestion of elevated levels in drinking water remains a concern due to its radiotoxicity.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1990). Toxicological Profile for Thorium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Radiological Aspects of Drinking-water Guidelines. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1994). ICRP Publication 69: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 3: Ingestion Dose Coefficients.",
+      "International Atomic Energy Agency (IAEA). (2001). Thorium: Environmental Aspects and Health Effects. Technical Report Series No. 419.",
+      "National Council on Radiation Protection and Measurements (NCRP). (1984). Exposure of the Population in the United States and Canada from Natural Background Radiation.",
+      "Mays, C. W., Rowland, R. E., & Stehney, A. F. (1985). Cancer risk from internally deposited thorium-232. Health Physics, 48(6), 579–590.",
+      "Kathren, R. L., & Moore, B. R. (1986). Health effects of thorium-232 accumulation in humans. Health Physics, 51(5), 613–622."
+    ]
+  },
+  "radium-228": {
+    "id": "radium-228",
+    "name": "Radium-228",
+    "description": "Radium-228 is a radioactive isotope in the thorium decay series and can enter drinking water through the natural erosion of radium-bearing minerals in soil and rock. As a beta and gamma emitter, radium-228 poses health risks when ingested, primarily due to its tendency to mimic calcium and accumulate in bones. Long-term exposure can lead to internal radiation of bone tissues, increasing the risk of bone cancer and other disorders such as anemia or weakened immune function. Although it is less radiotoxic than radium-226, chronic ingestion of elevated levels in drinking water remains a serious concern.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1990). Toxicological Profile for Radium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Radium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2022). Radionuclides in Drinking Water. https://www.epa.gov",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 78: Ionizing Radiation, Part 2: Some Internally Deposited Radionuclides.",
+      "Mays, C. W., Rowland, R. E., & Stehney, A. F. (1985). Cancer risk from the ingestion of radium-226 and radium-228. Health Physics, 48(2), 193–205.",
+      "Harrison, J. D., & Stather, J. W. (1981). Metabolism of 226Ra and 228Ra in the rat. Health Physics, 41(3), 463–473.",
+      "Rowland, R. E. (1994). Radium in humans: A review of U.S. studies. Argonne National Laboratory, ANL/ER-3."
+    ]
+  },
+  "thorium-228": {
+    "id": "thorium-228",
+    "name": "Thorium-228",
+    "description": "Thorium-228 is a short-lived radioactive isotope in the thorium decay series, produced from the decay of radium-228. It can be present in drinking water in areas with natural thorium deposits or as a result of industrial contamination. As an alpha emitter with high radiotoxicity, thorium-228 poses significant health risks if ingested. It can accumulate in bones and other tissues, where it irradiates cells and may increase the risk of bone cancer and other radiation-induced diseases. Although typically found in low concentrations, chronic exposure through contaminated drinking water remains a potential public health concern.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1990). Toxicological Profile for Thorium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Radiological Aspects of Drinking-water Guidelines. Geneva: WHO.",
+      "International Atomic Energy Agency (IAEA). (2001). Thorium: Environmental Aspects and Health Effects. Technical Report Series No. 419.",
+      "International Agency for Research on Cancer (IARC). (2001). IARC Monographs on the Evaluation of Carcinogenic Risks to Humans, Volume 78: Ionizing Radiation, Part 2.",
+      "Kathren, R. L., & Moore, B. R. (1986). Thorium-228 health effects in occupationally exposed individuals. Health Physics, 51(5), 613–622.",
+      "Mays, C. W., Rowland, R. E., & Stehney, A. F. (1985). Cancer risk from thorium-228. Health Physics, 48(6), 579–590.",
+      "U.S. Environmental Protection Agency (EPA). (2022). Radionuclides in Drinking Water. https://www.epa.gov"
+    ]
+  },
+  "caesium-134": {
+    "id": "caesium-134",
+    "name": "Caesium-134",
+    "description": "Caesium-134 is a synthetic radioactive isotope produced through nuclear fission and released into the environment primarily from nuclear accidents or discharges from nuclear facilities. It is a beta and gamma emitter with a relatively short half-life of about two years. If present in drinking water, caesium-134 can be absorbed by the body and distributed primarily to soft tissues such as muscle. Internal exposure to its radiation can increase the risk of cancer over time, especially with prolonged or repeated ingestion. While environmental levels are generally low, its presence in drinking water is a concern during or after nuclear contamination events.",
+    "references": [
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Cesium. U.S. Department of Health and Human Services.",
+      "International Atomic Energy Agency (IAEA). (2006). Radiological Assessment Reports for Cesium Isotopes.",
+      "International Commission on Radiological Protection (ICRP). (1996). ICRP Publication 72: Age-dependent Doses to Members of the Public from Intake of Radionuclides: Part 5.",
+      "ICRP. (1994). ICRP Publication 67: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 2: Ingestion Dose Coefficients.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "Health Physics Society. (2003). Radiological Health Handbook."
+    ]
+  },
+  "caesium-137": {
+    "id": "caesium-137",
+    "name": "Caesium-137",
+    "description": "Caesium-137 is a radioactive isotope produced by nuclear fission, commonly released during nuclear accidents and weapons testing. It is a beta and gamma emitter with a half-life of about 30 years, making it a long-term environmental contaminant. In drinking water, caesium-137 poses health risks due to its ability to be absorbed by the body and distributed to soft tissues, especially muscle. Internal exposure to its radiation can increase the risk of cancer, particularly with chronic ingestion. Although not typically found in natural sources, its presence in water supplies is a concern following radiological contamination events.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Cesium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Atomic Energy Agency (IAEA). (2006). Environmental Consequences of the Chernobyl Accident and Their Remediation: Twenty Years of Experience.",
+      "International Commission on Radiological Protection (ICRP). (1996). ICRP Publication 72: Age-dependent Doses to Members of the Public from Intake of Radionuclides: Part 5.",
+      "ICRP. (1994). ICRP Publication 67: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 2: Ingestion Dose Coefficients.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "Health Physics Society. (2003). Radiological Health Handbook.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier."
+    ]
+  },
+  "strontium-90": {
+    "id": "strontium-90",
+    "name": "Strontium-90",
+    "description": "Strontium-90 is a radioactive isotope produced during nuclear fission and is a common contaminant in the environment following nuclear accidents or weapons testing. As a beta emitter with a half-life of about 29 years, strontium-90 poses serious health risks when ingested through drinking water. It mimics calcium in the body and tends to accumulate in bones and teeth, where it can irradiate bone marrow and surrounding tissues, increasing the risk of bone cancer, leukemia, and other blood disorders. Its persistence in the environment and biological uptake make it a significant public health concern in contaminated areas.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Strontium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1994). ICRP Publication 67: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 2: Ingestion Dose Coefficients.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "International Atomic Energy Agency (IAEA). (2018). Radiation Protection and Safety of Radiation Sources: International Basic Safety Standards.",
+      "Rowland, R. E., Stehney, A. F., & Lucas, H. F. (1978). Cancer risk from long-term ingestion of Strontium-90. Health Physics, 35(3), 465–480.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "Health Physics Society. (2003). Radiological Health Handbook."
+    ]
+  },
+  "iodine-131": {
+    "id": "iodine-131",
+    "name": "Iodine-131",
+    "description": "Iodine-131 is a radioactive isotope commonly released during nuclear accidents and medical or industrial activities involving fission products. It is a beta and gamma emitter with a short half-life of about 8 days. When present in drinking water, iodine-131 can be rapidly absorbed by the thyroid gland, where it irradiates tissue and significantly increases the risk of thyroid cancer, especially in children and pregnant women. Due to its strong affinity for the thyroid and potential for widespread dispersion after nuclear events, even short-term exposure through contaminated water or food is considered a serious public health concern.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Iodine. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1996). ICRP Publication 72: Age-dependent Doses to Members of the Public from Intake of Radionuclides: Part 5.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "National Cancer Institute (NCI). (2020). Health Effects of Iodine-131 Exposure.",
+      "International Atomic Energy Agency (IAEA). (2006). Radiological Assessments of the Chernobyl Accident.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "Becker, D. V. (2002). Radiation exposure and the thyroid. New England Journal of Medicine, 346(20), 1434–1435."
+    ]
+  },
+  "tritium": {
+    "id": "tritium",
+    "name": "Tritium",
+    "description": "Tritium is a radioactive isotope of hydrogen produced naturally in the upper atmosphere and artificially in nuclear reactors and during weapons testing. It emits low-energy beta radiation and has a half-life of about 12.3 years. In drinking water, tritium typically exists as tritiated water (HTO), which is readily absorbed and distributed throughout the body like ordinary water. While its radiation is weak and poses a relatively low external hazard, internal exposure through ingestion can increase the risk of cancer, particularly with chronic intake of elevated levels. Its mobility and difficulty to remove from water make it a monitoring priority near nuclear facilities.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Ionizing Radiation. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1994). ICRP Publication 67: Age-dependent Doses to Members of the Public from Intake of Radionuclides – Part 2: Ingestion Dose Coefficients.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "International Atomic Energy Agency (IAEA). (2008). Tritium in the Environment.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "Little, M. P. (2009). Cancer and non-cancer effects in Japanese atomic bomb survivors and implications for risk assessment at low doses. Health Physics, 97(5), 493–502.",
+      "Harrison, J. D., & Khursheed, A. (2001). Health effects from tritiated water intake. Radiation Protection Dosimetry, 97(3), 245–252."
+    ]
+  },
+  "carbon-14": {
+    "id": "carbon-14",
+    "name": "Carbon-14",
+    "description": "Carbon-14 is a naturally occurring radioactive isotope of carbon, produced in the atmosphere through interactions with cosmic rays and also released from nuclear facilities. It is a beta emitter with a long half-life of about 5,730 years and becomes incorporated into all living organisms through the carbon cycle. In drinking water, carbon-14 typically exists as part of dissolved organic compounds or carbon dioxide. Although its radiation is relatively low in energy, prolonged ingestion can contribute to internal radiation exposure, with a slight increase in cancer risk over time. Its presence is usually minimal in natural water but may be elevated near nuclear sites.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Ionizing Radiation. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "International Commission on Radiological Protection (ICRP). (1993). ICRP Publication 65: Protection Against Radon-222 at Home and at Work.",
+      "International Atomic Energy Agency (IAEA). (2008). Radiological Assessment: Carbon-14 in the Environment.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "Harrison, J. D., et al. (2013). Health risks from internal radionuclides: Carbon-14 and beyond. Radiation Protection Dosimetry, 155(2), 188–192.",
+      "Kendall, G. M., & Smith, T. J. (2002). Doses from carbon-14 in the environment. Journal of Radiological Protection, 22(3A), A35–A40."
+    ]
+  },
+  "plutonium-239": {
+    "id": "plutonium-239",
+    "name": "Plutonium-239",
+    "description": "Plutonium-239 is a man-made radioactive isotope produced in nuclear reactors and found in the environment primarily as a result of nuclear weapons testing, accidents, and fuel cycle activities. It is a potent alpha emitter with a long half-life of about 24,100 years, making it a persistent environmental contaminant. If ingested through drinking water, plutonium-239 poses serious health risks due to its high radiotoxicity. It tends to accumulate in the liver and bones, where it can irradiate tissues and significantly increase the risk of cancers, especially liver and bone cancer. Even very small internal doses are considered hazardous over time.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Plutonium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1995). ICRP Publication 72: Age-dependent Doses to Members of the Public from Intake of Radionuclides: Part 5.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "International Atomic Energy Agency (IAEA). (2011). Plutonium in the Environment: Behavior and Impact.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "National Research Council. (2006). Health Risks from Exposure to Low Levels of Ionizing Radiation: BEIR VII Phase 2. National Academies Press.",
+      "Thorne, M. C. (2003). Radiological protection of the public in the context of disposal of long-lived radioactive wastes. Journal of Radiological Protection, 23(1), 5–28."
+    ]
+  },
+  "americium-241": {
+    "id": "americium-241",
+    "name": "Americium-241",
+    "description": "Americium-241 is a synthetic radioactive element produced as a decay product of plutonium-241, commonly found in nuclear waste and sometimes released during nuclear accidents. It is an alpha emitter with a half-life of about 432 years and is highly radiotoxic when ingested or inhaled. In drinking water, americium-241 can accumulate in bones, liver, and other organs, where it irradiates tissues and increases the risk of bone cancer, liver cancer, and other radiation-induced health effects. Even small internal doses are considered dangerous due to its intense alpha radiation and long biological retention.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Americium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality – Radiological Aspects. Geneva: WHO.",
+      "International Commission on Radiological Protection (ICRP). (1995). ICRP Publication 72: Age-dependent Doses to Members of the Public from Intake of Radionuclides: Part 5.",
+      "United Nations Scientific Committee on the Effects of Atomic Radiation (UNSCEAR). (2000). Sources and Effects of Ionizing Radiation.",
+      "International Atomic Energy Agency (IAEA). (2010). The Environmental Behaviour of Radium, Americium and Plutonium.",
+      "Mettler, F. A., & Upton, A. C. (2008). Medical Effects of Ionizing Radiation. Saunders Elsevier.",
+      "NCRP (National Council on Radiation Protection and Measurements). (1984). Radiation Protection Guidance for Activities in Low-Energy Gamma and X-Ray Fields.",
+      "Gusev, I. A., Guskova, A. K., & Mettler, F. A. (2001). Medical Management of Radiation Accidents. CRC Press."
+    ]
+  },
+  "barium": {
+    "id": "barium",
+    "name": "Barium",
+    "description": "Barium is a naturally occurring metal that can contaminate drinking water through the erosion of rocks and minerals or from industrial discharge. When ingested in significant amounts, barium can interfere with normal muscle function and the transmission of nerve impulses, potentially causing muscle weakness, difficulty breathing, and gastrointestinal irritation. Prolonged exposure to elevated levels of barium in drinking water has been associated with increased blood pressure and cardiovascular issues. Acute exposure may also lead to symptoms such as nausea, vomiting, abdominal cramps, and diarrhea due to its effect on smooth muscle tissue.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2007). Toxicological Profile for Barium and Barium Compounds. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2005). Integrated Risk Information System (IRIS): Barium and compounds.",
+      "Wones, R. G., Stadler, B. L., & Frohman, L. A. (1990). Lack of effect of drinking water barium on cardiovascular risk factors. Environmental Health Perspectives, 85, 355–359.",
+      "Brenniman, G. R., et al. (1979). High barium levels in public drinking water and its association with elevated blood pressure. Archives of Environmental Health, 34(1), 28–32.",
+      "WHO (2004). Barium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "McClure, L. F., & Storment, E. (1970). Toxic effects of soluble barium compounds. American Industrial Hygiene Association Journal, 31(3), 230–235.",
+      "Petris, L., et al. (2011). Toxic effects of barium ions on isolated cardiac myocytes. Environmental Toxicology and Pharmacology, 31(1), 121–127."
+    ]
+  },
+  "chromium": {
+    "id": "chromium",
+    "name": "Chromium",
+    "description": "Chromium can be present in drinking water in several forms, with trivalent chromium (Cr(III)) and hexavalent chromium (Cr(VI)) being the most common. While Cr(III) is an essential nutrient in small amounts, Cr(VI) is highly toxic and carcinogenic. Ingestion of water contaminated with Cr(VI) can lead to serious health effects, including damage to the liver, kidneys, and gastrointestinal tract. Chronic exposure has been associated with an increased risk of stomach cancer and may also cause skin irritation or ulcers when in contact with the skin. Cr(VI) can induce oxidative stress and DNA damage, contributing to its mutagenic and carcinogenic properties",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2012). Toxicological Profile for Chromium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2003). Chromium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (1998). Toxicological Review of Hexavalent Chromium.",
+      "Zhang, J., & Li, X. (1987). Chromium pollution of soil and water in Jinzhou, China. Environmental Science and Technology, 21(3), 272–275.",
+      "Costa, M. (2003). Potential hazards of hexavalent chromate in our drinking water. Toxicol Appl Pharmacol, 188(1), 1–5.",
+      "Sedman, R. M., et al. (2006). Review of cancer risk associated with drinking water contaminated with hexavalent chromium. J Expo Sci Environ Epidemiol, 16(4), 375–384.",
+      "Nickens, K. P., Patierno, S. R., & Ceryak, S. (2010). Chromium genotoxicity: A double-edged sword. Chemico-Biological Interactions, 188(2), 276–288.",
+      "Holmes, A. L., et al. (2008). Chronic exposure to hexavalent chromium alters gene expression in human lung cells. Chemico-Biological Interactions, 173(1), 27–39."
+    ]
+  },
+  "cadmium": {
+    "id": "cadmium",
+    "name": "Cadmium",
+    "description": "Cadmium is a toxic heavy metal that can contaminate drinking water through industrial discharges, corrosion of galvanized pipes, or runoff from agricultural areas. Once ingested, cadmium accumulates primarily in the kidneys and liver, where it can remain for decades. Chronic exposure to cadmium in drinking water can lead to kidney damage, including tubular dysfunction and reduced filtration capacity. It can also weaken bones, increasing the risk of fractures and conditions such as osteoporosis. Additionally, cadmium is classified as a human carcinogen and has been linked to increased risks of lung and prostate cancers through various exposure routes, including ingestion.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2012). Toxicological Profile for Cadmium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Cadmium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (1999). Integrated Risk Information System (IRIS): Cadmium.",
+      "Jarup, L., & Akesson, A. (2009). Current status of cadmium as an environmental health problem. Toxicology and Applied Pharmacology, 238(3), 201–208.",
+      "Satarug, S., et al. (2003). A global perspective on cadmium pollution and toxicity in non-occupationally exposed population. Toxicology Letters, 137(1-2), 65–83.",
+      "Nordberg, G. F., et al. (2007). Cadmium toxicology and treatment. Environmental Health Perspectives, 115(1), 12–17.",
+      "Iwata, H., et al. (1993). Renal effects of cadmium exposure in the general environment of Japan. Environmental Health Perspectives, 101(3), 243–247.",
+      "Godt, J., et al. (2006). The toxicity of cadmium and resulting hazards for human health. Journal of Occupational Medicine and Toxicology, 1(1), 22."
+    ]
+  },
+  "mercury": {
+    "id": "mercury",
+    "name": "Mercury",
+    "description": "Mercury can enter drinking water through natural geological sources, industrial discharges, or atmospheric deposition. It exists in several forms, with inorganic mercury being the most relevant to water contamination. Ingesting mercury-contaminated water can lead to kidney damage, particularly affecting the renal tubules. Mercury also interferes with the nervous system, and chronic exposure may result in neurological symptoms such as tremors, memory loss, and cognitive dysfunction. Although methylmercury is more commonly associated with food sources like fish, its high toxicity highlights the broader risks of mercury exposure, especially for pregnant women and young children, due to potential developmental and neurotoxic effects.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1999). Toxicological Profile for Mercury. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Mercury in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2001). Mercury Study Report to Congress.",
+      "Grandjean, P., et al. (1997). Cognitive deficit in 7-year-old children with prenatal exposure to methylmercury. Neurotoxicology and Teratology, 19(6), 417–428.",
+      "Counter, S. A., & Buchanan, L. H. (2004). Mercury exposure in children: A review. Toxicol Appl Pharmacol, 198(2), 209–230.",
+      "Clarkson, T. W., Magos, L., & Myers, G. J. (2003). The toxicology of mercury—current exposures and clinical manifestations. New England Journal of Medicine, 349(18), 1731–1737.",
+      "Rice, D., & Barone, S. (2000). Critical periods of vulnerability for the developing nervous system: Evidence from humans and animal models. Environmental Health Perspectives, 108(Suppl 3), 511–533.",
+      "Yoshida, M., et al. (1994). Mercury-induced kidney injury: A review. Environmental Health and Preventive Medicine, 8(3), 101–109."
+    ]
+  },
+  "nickel": {
+    "id": "nickel",
+    "name": "Nickel",
+    "description": "Nickel can contaminate drinking water through natural sources such as soil and rock erosion, as well as from industrial activities and corrosion of nickel-containing plumbing materials. Ingesting water with elevated levels of nickel may cause gastrointestinal irritation, including nausea, vomiting, and abdominal cramps. Prolonged exposure has been linked to kidney and liver toxicity, as well as possible effects on the immune and reproductive systems. Nickel is also recognized as a sensitizing agent, and oral exposure can trigger allergic reactions such as dermatitis in sensitized individuals. Additionally, some forms of nickel are considered potentially carcinogenic when exposure is chronic and sustained.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2005). Toxicological Profile for Nickel. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2005). Nickel in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2000). Nickel Compounds - Integrated Risk Information System (IRIS).",
+      "Sunderman, F. W. (1984). Carcinogenicity of nickel compounds in animals. IARC Sci Publ, 53, 127–142.",
+      "Nielsen, G. D., et al. (1999). Nickel sensitization and chronic allergic contact dermatitis. Critical Reviews in Toxicology, 29(3), 351–364.",
+      "Costa, M., & Mollenhauer, H. H. (1980). Carcinogenic activity of particulate nickel compounds is proportional to their cellular uptake. Science, 209(4455), 515–517.",
+      "Kasprzak, K. S., Sunderman Jr., F. W., & Salnikow, K. (2003). Nickel carcinogenesis. Mutation Research/Fundamental and Molecular Mechanisms of Mutagenesis, 533(1–2), 67–97.",
+      "Iavicoli, I., Fontana, L., & Bergamaschi, A. (2009). The effects of nanomaterials as endocrine disruptors. International Journal of Molecular Sciences, 10(2), 525–536."
+    ]
+  },
+  "antimony": {
+    "id": "antimony",
+    "name": "Antimony",
+    "description": "Antimony can enter drinking water through natural geological processes or as a result of industrial activities, such as metal smelting, flame retardant production, and leaching from plumbing materials. When ingested in significant amounts, antimony can cause a range of health effects, primarily targeting the gastrointestinal system. Acute exposure may result in symptoms such as nausea, vomiting, and diarrhea. Longer-term exposure has been associated with liver and heart toxicity, as well as possible alterations in blood parameters. Although data on its carcinogenicity in humans is limited, animal studies suggest that chronic exposure to antimony compounds may increase the risk of certain cancers.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (1992). Toxicological Profile for Antimony. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2003). Antimony in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2009). Drinking Water Contaminants – National Primary Drinking Water Regulations.",
+      "Chulay, J. D., et al. (1985). Cardiotoxicity of antimonial compounds used in the treatment of leishmaniasis. Transactions of the Royal Society of Tropical Medicine and Hygiene, 79(5), 710–714.",
+      "Gebel, T. (1997). Biological monitoring of antimony exposure – a critical review. Toxicology Letters, 92(1), 39–49.",
+      "Fowler, B. A., & Nordberg, G. F. (2008). Environmental Toxicology of Metals. In: Klaassen’s Casarett and Doull’s Toxicology: The Basic Science of Poisons. 7th ed. McGraw-Hill.",
+      "Sundar, S., & Chakravarty, J. (2010). Antimony toxicity. International Journal of Environmental Research and Public Health, 7(12), 4267–4277.",
+      "Winship, K. A. (1987). Toxicity of antimony and its compounds. Adverse Drug Reactions and Acute Poisoning Reviews, 6(2), 67–90."
+    ]
+  },
+  "arsenic": {
+    "id": "arsenic",
+    "name": "Arsenic",
+    "description": "Arsenic is a toxic metalloid that can contaminate drinking water through natural deposits in the earth or from agricultural and industrial sources. It exists in both organic and inorganic forms, with inorganic arsenic—particularly arsenite (As³⁺) and arsenate (As⁵⁺)—being highly toxic. Chronic ingestion of arsenic-contaminated water is strongly linked to skin lesions, peripheral neuropathy, and increased risks of several cancers, including those of the skin, bladder, and lungs. Long-term exposure can also lead to cardiovascular disease, diabetes, and developmental effects in children. Arsenic interferes with cellular respiration and DNA repair, contributing to its toxicity and carcinogenic potential.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2007). Toxicological Profile for Arsenic. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Arsenic in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Smith, A. H., et al. (2000). Contamination of drinking-water by arsenic in Bangladesh: a public health emergency. Bulletin of the World Health Organization, 78(9), 1093–1103.",
+      "National Research Council. (2001). Arsenic in Drinking Water: 2001 Update. Washington, DC: National Academy Press.",
+      "Naujokas, M. F., et al. (2013). The broad scope of health effects from chronic arsenic exposure: Update on a worldwide public health problem. Environmental Health Perspectives, 121(3), 295–302.",
+      "Hughes, M. F., et al. (2011). Arsenic exposure and toxicology: A historical perspective. Toxicological Sciences, 123(2), 305–332.",
+      "Smith, M. T., et al. (2009). Cancer risks from arsenic in drinking water. Environmental Health Perspectives, 117(3), 391–397.",
+      "States, J. C., et al. (2011). Arsenic toxicology: Translating between experimental models and human exposure. Toxicology, 279(1–3), 1–14."
+    ]
+  },
+  "copper": {
+    "id": "copper",
+    "name": "Copper",
+    "description": "Copper is an essential trace element for human health, but excessive exposure through drinking water can lead to toxicity. It can enter water supplies through the corrosion of copper pipes and plumbing fixtures. Acute exposure to high levels of copper may cause gastrointestinal distress, including nausea, vomiting, abdominal pain, and diarrhea. Chronic exposure, particularly in individuals with impaired copper metabolism such as those with Wilson’s disease, can lead to liver and kidney damage. Elevated copper levels have also been associated with oxidative stress and damage to cellular structures due to its redox-active properties.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2004). Toxicological Profile for Copper. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2004). Copper in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "U.S. Environmental Protection Agency (EPA). (2009). Drinking Water Health Advisory for Copper.",
+      "Stern, B. R., et al. (2007). Copper and human health: Biochemistry, genetics, and strategies for modeling dose-response relationships. Journal of Toxicology and Environmental Health, Part B, 10(3), 157–222.",
+      "Gaetke, L. M., & Chow, C. K. (2003). Copper toxicity, oxidative stress, and antioxidant nutrients. Toxicology, 189(1–2), 147–163.",
+      "Brewer, G. J. (2001). Wilson’s disease: A clinician’s guide to recognition, diagnosis, and management. Kluwer Academic Publishers.",
+      "Olivares, M., et al. (1998). Acute copper exposure in drinking water: Gastrointestinal effects in healthy adults. Environmental Health Perspectives, 106(6), 277–282."
+    ]
+  },
+  "lead": {
+    "id": "lead",
+    "name": "Lead",
+    "description": "Lead is a highly toxic metal that can leach into drinking water from corroded pipes, plumbing fixtures, and solder. Even at low levels, lead exposure is particularly harmful, especially for infants and young children. It can cause developmental delays, reduced IQ, learning disabilities, and behavioral problems. In adults, chronic exposure may result in hypertension, kidney dysfunction, and reproductive issues. Lead interferes with various enzymatic processes and disrupts calcium signaling, affecting multiple organ systems. Because it accumulates in bones and soft tissues, long-term exposure poses ongoing health risks even after exposure stops.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2020). Toxicological Profile for Lead. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2011). Lead in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "Centers for Disease Control and Prevention (CDC). (2012). Low Level Lead Exposure Harms Children: A Renewed Call for Primary Prevention. Advisory Committee on Childhood Lead Poisoning Prevention.",
+      "Lanphear, B. P., et al. (2005). Low-level environmental lead exposure and children’s intellectual function: An international pooled analysis. Environmental Health Perspectives, 113(7), 894–899.",
+      "Navas-Acien, A., et al. (2007). Lead exposure and cardiovascular disease—a systematic review. Environmental Health Perspectives, 115(3), 472–482.",
+      "Bellinger, D. C. (2008). Very low lead exposures and children’s neurodevelopment. Current Opinion in Pediatrics, 20(2), 172–177.",
+      "Flora, G., Gupta, D., & Tiwari, A. (2012). Toxicity of lead: A review with recent updates. Interdisciplinary Toxicology, 5(2), 47–58.",
+      "Needleman, H. L. (2004). Lead poisoning. Annual Review of Medicine, 55, 209–222."
+    ]
+  },
+  "beryllium": {
+    "id": "beryllium",
+    "name": "Beryllium",
+    "description": "Beryllium is a lightweight metal that can enter drinking water through natural sources or from industrial activities such as mining, coal combustion, and manufacturing of aerospace materials. Although relatively rare in water, beryllium is highly toxic when ingested or inhaled. Oral exposure to beryllium-contaminated water may cause inflammation of the gastrointestinal tract, resulting in symptoms like nausea, vomiting, and abdominal pain. Long-term exposure has been linked to damage to the liver and kidneys. While its strongest toxic effects are observed via inhalation, systemic absorption through ingestion can still pose serious health risks, particularly affecting immune and organ function.",
+    "references": [
+      "Agency for Toxic Substances and Disease Registry (ATSDR). (2002). Toxicological Profile for Beryllium. U.S. Department of Health and Human Services.",
+      "World Health Organization (WHO). (2009). Beryllium in Drinking-water: Background document for development of WHO Guidelines for Drinking-water Quality. Geneva: WHO.",
+      "National Institute for Occupational Safety and Health (NIOSH). (2011). Criteria for a Recommended Standard: Occupational Exposure to Beryllium.",
+      "Kreiss, K., et al. (1997). Epidemiology of beryllium sensitization and disease. Environmental Health Perspectives, 105(Suppl 5), 943–947.",
+      "Rossman, M. D. (2001). Chronic beryllium disease: Diagnosis and management. Environmental Health Perspectives, 109(Suppl 5), 963–966.",
+      "Maier, L. A. (2001). Beryllium health effects in the era of the beryllium lymphocyte proliferation test. Applied Occupational and Environmental Hygiene, 16(5), 514–520.",
+      "Middleton, D. C., et al. (2008). Beryllium exposure and chronic beryllium disease: A continuing occupational health concern. Journal of Occupational and Environmental Hygiene, 5(7), 435–443."
+    ]
+  },
+  "boron": {
+    "id": "boron",
+    "name": "Boron",
+    "description": "Boron is a naturally occurring element that can enter drinking water through weathering of rocks, use of borate-containing detergents, and agricultural runoff. While boron is essential in small amounts for plant growth, excessive ingestion by humans may lead to toxic effects. Acute exposure can cause gastrointestinal symptoms such as nausea, vomiting, and diarrhea. Chronic exposure to elevated levels of boron has been associated with reproductive and developmental toxicity, including reduced fertility and effects on fetal development. Animal studies suggest boron can interfere with hormone regulation and damage organs such as the testes and kidneys."
+  },
+  "fluoride": {
+    "id": "fluoride",
+    "name": "Fluoride",
+    "description": "Fluoride is a naturally occurring mineral found in various water sources, and while it can help prevent dental cavities at low levels, excessive exposure can lead to adverse health effects. Chronic ingestion of high levels of fluoride in drinking water can cause dental fluorosis, a condition characterized by discoloration and pitting of the teeth. In more severe cases, particularly with long-term exposure, skeletal fluorosis may develop, leading to joint pain, stiffness, and in extreme cases, bone deformities. There is also ongoing scientific debate about potential links between high fluoride exposure and neurodevelopmental effects, such as reduced IQ in children, based on findings from some epidemiological studies."
+  },
+  "microcystin-lr": {
+    "id": "microcystin-lr",
+    "name": "Microcystin-LR",
+    "description": "Microcystin-LR is a potent hepatotoxin produced by certain species of cyanobacteria (blue-green algae), especially during harmful algal blooms in freshwater systems. Ingesting water contaminated with Microcystin-LR can cause acute liver damage, leading to symptoms such as nausea, vomiting, abdominal pain, and in severe cases, liver failure. It inhibits specific protein phosphatases, disrupting cellular function and promoting oxidative stress and apoptosis in liver cells. Chronic exposure, even at lower concentrations, has been associated with liver inflammation, tumor promotion, and potential carcinogenic effects. Vulnerable populations, including young children and individuals with pre-existing liver conditions, are at greater risk."
+  },
+  "benzene": {
+    "id": "benzene",
+    "name": "Benzene",
+    "description": "Benzene is a volatile organic compound that can contaminate drinking water through industrial discharges, petroleum leaks, or the degradation of certain chemicals. It is a well-established human carcinogen primarily affecting the blood and bone marrow. Chronic ingestion of benzene-contaminated water can lead to hematological effects such as anemia, immune suppression, and increased risk of leukemia, particularly acute myeloid leukemia (AML). Even at lower doses, long-term exposure may disrupt normal blood cell production and impair immune system function. Acute exposure may result in dizziness, headaches, and gastrointestinal symptoms, although these effects typically occur at higher concentrations."
+  },
+  "carbon-tetrachloride": {
+    "id": "carbon-tetrachloride",
+    "name": "Carbon tetrachloride",
+    "description": "Carbon tetrachloride is a volatile organic compound formerly used in industrial applications such as cleaning agents, refrigerants, and the production of other chemicals. It can enter drinking water through improper disposal or leakage from contaminated sites. Carbon tetrachloride is highly toxic to the liver, where it is metabolized into reactive intermediates that cause oxidative stress, cellular injury, and necrosis. Chronic exposure has been associated with liver fibrosis, cirrhosis, and an increased risk of liver cancer. It can also affect the kidneys and central nervous system, and acute ingestion may result in dizziness, nausea, confusion, and even coma in severe cases."
+  },
+  "12-dichlorobenzene": {
+    "id": "12-dichlorobenzene",
+    "name": "1,2-Dichlorobenzene",
+    "description": "1,2-Dichlorobenzene (also known as ortho-dichlorobenzene) is an industrial chemical used in the manufacture of dyes, pesticides, and solvents, and it may contaminate drinking water through industrial discharges or improper waste disposal. Ingesting water containing 1,2-dichlorobenzene can lead to irritation of the gastrointestinal tract, with symptoms such as nausea, vomiting, and abdominal discomfort. Prolonged or high-level exposure may cause damage to the liver and kidneys, as well as effects on the central nervous system. Although not classified as a confirmed human carcinogen, its toxic effects on internal organs and potential for bioaccumulation raise concern for long-term health risks."
+  },
+  "14-dichlorobenzene": {
+    "id": "14-dichlorobenzene",
+    "name": "1,4-Dichlorobenzene",
+    "description": "1,4-Dichlorobenzene (also known as para-dichlorobenzene) is an aromatic compound commonly used in air fresheners, moth repellents, and industrial products. It can contaminate drinking water through industrial runoff or improper disposal of waste. Ingestion of water containing 1,4-dichlorobenzene may lead to irritation of the digestive system, causing symptoms such as nausea and abdominal discomfort. Chronic exposure has been linked to liver and kidney toxicity, and there is evidence of effects on the hematopoietic (blood-forming) system. Animal studies have also shown associations with liver and lung tumors, raising concerns about its potential carcinogenicity with long-term exposure."
+  },
+  "12-dichloroethane": {
+    "id": "12-dichloroethane",
+    "name": "1,2-Dichloroethane",
+    "description": "1,2-Dichloroethane is a synthetic chemical primarily used in the production of vinyl chloride and as an industrial solvent. It can enter drinking water sources through spills, improper disposal of industrial waste, or leaking storage tanks. Ingesting water contaminated with 1,2-dichloroethane can lead to central nervous system depression, resulting in symptoms such as dizziness, drowsiness, nausea, and in severe cases, unconsciousness. Chronic exposure may damage the liver, kidneys, and immune system. Animal studies have shown that long-term ingestion of 1,2-dichloroethane can lead to increased incidences of tumors in multiple organs, suggesting a potential carcinogenic risk to humans."
+  },
+  "12-dichloroethene": {
+    "id": "12-dichloroethene",
+    "name": "1,2-Dichloroethene",
+    "description": "1,2-Dichloroethene (1,2-DCE) is an industrial solvent and intermediate used in the production of plastics and other chemicals. It exists in two isomeric forms—cis and trans—and can enter drinking water through industrial discharges, leaks, or improper waste disposal. Ingestion of 1,2-DCE-contaminated water may lead to central nervous system effects such as dizziness, fatigue, and coordination problems. High doses can cause liver and kidney toxicity. Although data on its carcinogenic potential are limited, long-term exposure in animal studies has shown liver enlargement and other signs of organ stress, raising concerns about its chronic toxicity in humans."
+  },
+  "dichloromethane": {
+    "id": "dichloromethane",
+    "name": "Dichloromethane",
+    "description": "Dichloromethane (also known as methylene chloride) is a volatile organic solvent widely used in paint removers, degreasers, and chemical manufacturing. It can contaminate drinking water through industrial discharge or leaching from hazardous waste sites. Ingestion of dichloromethane may cause central nervous system effects such as dizziness, headache, and nausea. High levels of exposure can lead to liver and kidney damage, as well as cardiac arrhythmias. In the body, dichloromethane is metabolized to carbon monoxide, which can impair oxygen transport by binding to hemoglobin. Long-term exposure has been associated with an increased risk of liver and lung tumors in animal studies, raising concerns about its potential carcinogenicity."
+  },
+  "di2-ethylhexylphthalate": {
+    "id": "di2-ethylhexylphthalate",
+    "name": "Di(2-ethylhexyl)phthalate",
+    "description": "Di(2-ethylhexyl)phthalate (DEHP) is a plasticizer commonly used to make plastics like PVC more flexible. It can leach into drinking water from plastic pipes, containers, or industrial waste. DEHP is known to disrupt the endocrine system, and chronic exposure has been associated with reproductive toxicity, including decreased fertility and developmental effects in offspring. Animal studies have shown testicular damage, altered hormone levels, and liver enlargement. Long-term exposure may also lead to liver tumors, suggesting a potential carcinogenic risk. Sensitive populations such as pregnant women and young children may be particularly vulnerable to its effects."
+  },
+  "14-dioxane": {
+    "id": "14-dioxane",
+    "name": "1,4-Dioxane",
+    "description": "1,4-Dioxane is a synthetic industrial chemical used as a solvent and stabilizer in products such as paints, varnishes, and cosmetics. It can enter drinking water through industrial discharges or leaching from contaminated sites. 1,4-Dioxane is readily absorbed by the body and primarily affects the liver and kidneys. Prolonged exposure can lead to liver enlargement and kidney damage. Animal studies have demonstrated that chronic exposure causes tumors in the liver and nasal cavity, indicating a potential carcinogenic risk to humans. Its high water solubility and persistence in the environment make it particularly difficult to remove from drinking water once contamination occurs."
+  },
+  "edetic-acid": {
+    "id": "edetic-acid",
+    "name": "Edetic acid",
+    "description": "Edetic acid (also known as EDTA or ethylenediaminetetraacetic acid) is a synthetic chelating agent widely used in industrial processes, pharmaceuticals, and food products. It can enter drinking water through wastewater discharge from manufacturing and cleaning operations. While EDTA itself has relatively low acute toxicity, it can enhance the absorption of heavy metals in the body by binding to them, potentially increasing the toxicity of those metals. Chronic exposure to high levels of EDTA may lead to disturbances in mineral balance, particularly involving calcium, zinc, and iron, and may cause kidney damage in sensitive individuals. Its environmental persistence and metal-mobilizing properties raise concerns about indirect health effects rather than direct toxicity alone."
+  },
+  "ethylbenzene": {
+    "id": "ethylbenzene",
+    "name": "Ethylbenzene",
+    "description": "Ethylbenzene is an organic compound used primarily in the production of styrene, a building block of plastics and synthetic rubber. It can contaminate drinking water through industrial discharges, spills, or leakage from petroleum products. Acute exposure to ethylbenzene in drinking water may cause irritation of the eyes and throat, dizziness, and central nervous system effects such as fatigue or lack of coordination. Chronic exposure has been linked to liver and kidney damage in animal studies, as well as hearing loss. Ethylbenzene has also been shown to cause tumors in laboratory animals, suggesting a potential carcinogenic risk with long-term ingestion."
+  },
+  "hexachlorobutadiene": {
+    "id": "hexachlorobutadiene",
+    "name": "Hexachlorobutadiene",
+    "description": "Hexachlorobutadiene (HCBD) is a synthetic chlorinated hydrocarbon used as a by-product in the manufacture of other chemicals, particularly chlorinated solvents. It can contaminate drinking water through industrial discharges and improper waste disposal. HCBD is highly toxic to the kidneys, with chronic exposure leading to renal tubular degeneration and impaired kidney function. It can also affect the liver and central nervous system. Animal studies have shown that long-term ingestion can cause kidney and liver tumors, suggesting potential carcinogenicity. Due to its persistence in the environment and bioaccumulative properties, HCBD poses a long-term risk to both human health and aquatic ecosystems."
+  },
+  "nitrilotriacetic-acid": {
+    "id": "nitrilotriacetic-acid",
+    "name": "Nitrilotriacetic acid",
+    "description": "Nitrilotriacetic acid (NTA) is a synthetic chelating agent used in detergents, water softeners, and industrial cleaning products. It can enter drinking water through wastewater discharges from manufacturing or household use. While NTA itself has relatively low acute toxicity, its ability to bind and mobilize heavy metals can increase the bioavailability and potential toxicity of these metals. Animal studies have shown that long-term exposure to high doses of NTA can lead to kidney damage and an increased incidence of urinary tract and kidney tumors, suggesting possible carcinogenic effects. Its persistence in the environment raises additional concerns about chronic exposure and indirect health impacts."
+  },
+  "styrene": {
+    "id": "styrene",
+    "name": "Styrene",
+    "description": "Styrene is an organic compound primarily used in the manufacture of polystyrene plastics and resins. It can enter drinking water through industrial discharges or leaching from plastic pipes and containers. Ingestion of styrene-contaminated water may cause irritation of the gastrointestinal tract, along with symptoms such as nausea, vomiting, and abdominal pain. Chronic exposure has been linked to liver and kidney toxicity, as well as effects on the central nervous system, including fatigue, headaches, and memory disturbances. Animal studies have shown an increased incidence of tumors, particularly in the lungs and liver, raising concerns about styrene's potential carcinogenicity with long-term exposure."
+  },
+  "toluene": {
+    "id": "toluene",
+    "name": "Toluene",
+    "description": "Toluene is a volatile aromatic hydrocarbon commonly used as an industrial solvent in products like paints, adhesives, and fuels. It can contaminate drinking water through industrial discharges, petroleum leaks, or improper disposal of solvents. Acute exposure to toluene in drinking water may cause neurological effects such as dizziness, headache, and cognitive impairment. Chronic exposure can result in liver and kidney damage, as well as long-term effects on the central nervous system, including memory loss and mood disturbances. In pregnant individuals, high exposure levels have been associated with developmental toxicity, including low birth weight and delayed neurodevelopment in offspring."
+  },
+  "trichloroethene": {
+    "id": "trichloroethene",
+    "name": "Trichloroethene",
+    "description": "Trichloroethene (TCE) is a volatile chlorinated solvent widely used in degreasing metal parts and as a chemical intermediate. It can contaminate drinking water through industrial discharges, leaking underground storage tanks, or improper disposal practices. Ingestion of TCE-contaminated water can lead to central nervous system effects such as dizziness, headaches, and confusion. Long-term exposure has been associated with liver and kidney damage, immune system suppression, and reproductive toxicity. Studies in animals and humans have also linked TCE exposure to an increased risk of several cancers, including kidney, liver, and non-Hodgkin lymphoma, raising significant concerns about its carcinogenic potential."
+  },
+  "tetrachloroethene": {
+    "id": "tetrachloroethene",
+    "name": "Tetrachloroethene",
+    "description": "Tetrachloroethene (also known as perchloroethylene or PCE) is a chlorinated solvent commonly used in dry cleaning and degreasing operations. It can enter drinking water supplies through industrial discharges, leaking storage tanks, or improper waste disposal. Short-term exposure to high levels of tetrachloroethene in drinking water can cause dizziness, headaches, nausea, and impaired coordination due to its effects on the central nervous system. Chronic exposure may lead to liver and kidney damage, as well as reproductive and developmental toxicity. Animal studies and some human epidemiological evidence suggest that long-term exposure to PCE may increase the risk of certain cancers, including liver and bladder cancer."
+  },
+  "xylenes": {
+    "id": "xylenes",
+    "name": "Xylenes",
+    "description": "Xylenes are a group of aromatic hydrocarbons—comprising ortho-, meta-, and para-xylene—isomers—used widely as solvents in paints, varnishes, adhesives, and fuel products. They can enter drinking water through industrial discharges, petroleum spills, or leaching from materials. Short-term exposure to xylenes in drinking water may cause symptoms such as headache, dizziness, nausea, and irritation of the skin and respiratory tract. Long-term exposure can affect the liver, kidneys, and central nervous system, potentially leading to memory loss, impaired coordination, and other neurological effects. Although not strongly linked to cancer, their chronic toxicity remains a concern due to their widespread use and environmental persistence."
+  },
+  "asbestos": {
+    "id": "asbestos",
+    "name": "Asbestos",
+    "description": "Asbestos refers to a group of naturally occurring fibrous minerals once widely used in construction and industrial materials for their heat resistance and strength. Asbestos fibers can enter drinking water through the degradation of asbestos-cement pipes or runoff from natural deposits and industrial waste. Ingested asbestos may persist in the gastrointestinal tract, and although its absorption through the gut is limited, long-term exposure raises concerns about potential chronic effects. Animal studies suggest that ingested asbestos can lead to gastrointestinal inflammation and, in some cases, tumors. While the link between asbestos in drinking water and cancer in humans is still debated, some studies indicate a possible association with cancers of the stomach and other digestive organs."
+  },
+  "silver": {
+    "id": "silver",
+    "name": "Silver",
+    "description": "Silver is a naturally occurring metal that may be found in drinking water due to industrial discharges, leaching from silver-containing pipes or fittings, or as a residual from water disinfection processes involving silver compounds. While silver is not considered highly toxic to humans, excessive ingestion over time can lead to a condition known as argyria—a permanent bluish-gray discoloration of the skin and mucous membranes caused by silver deposits in body tissues. Although argyria is primarily a cosmetic condition, it reflects long-term exposure. High doses of silver may also impact liver and kidney function, but such effects are rare. Silver does not appear to be carcinogenic or associated with reproductive toxicity at typical environmental exposure levels."
+  },
+  "aluminium": {
+    "id": "aluminium",
+    "name": "Aluminium",
+    "description": "Aluminium is a naturally occurring metal that can enter drinking water through the erosion of natural deposits, discharge from industrial sources, or leaching from water treatment processes that use aluminium-based coagulants. Although aluminium has low acute toxicity, long-term exposure has raised health concerns, particularly regarding neurotoxicity. Some studies have suggested a potential link between chronic aluminium exposure and neurological effects, including impaired cognitive function and an increased risk of neurodegenerative diseases such as Alzheimer’s disease, though the evidence remains inconclusive. High oral intake may also affect bone mineralization and cause gastrointestinal disturbances, especially in individuals with impaired kidney function who are less able to eliminate excess aluminium."
+  },
+  "bisphenol": {
+    "id": "bisphenol",
+    "name": "Bisphenol",
+    "description": "Bisphenol A (BPA) is a synthetic compound used in the production of polycarbonate plastics and epoxy resins, which are found in food and water containers, the linings of metal cans, and some water supply components. BPA can leach into drinking water, particularly when plastic materials are exposed to heat or degradation. Health concerns surrounding BPA stem from its ability to mimic estrogen and disrupt the endocrine system. Even at low doses, BPA exposure has been associated with developmental and reproductive toxicity, including altered fetal development, early puberty, and reduced fertility. Other potential effects include metabolic disorders, cardiovascular issues, and an increased risk of certain cancers, such as breast and prostate cancer."
+  },
+  "benzoapyrene": {
+    "id": "benzoapyrene",
+    "name": "Benzo[a]pyrene",
+    "description": "Benzo[a]pyrene is a polycyclic aromatic hydrocarbon (PAH) that can contaminate drinking water through the leaching of asphalt-lined pipes, industrial discharges, or the incomplete combustion of organic material. It is highly lipophilic, enabling it to bioaccumulate in human tissues. Benzo[a]pyrene is a potent mutagen and carcinogen, primarily known for its ability to form DNA adducts that lead to mutations and chromosomal damage. Long-term exposure is strongly associated with an increased risk of cancers, particularly of the skin, lungs, and gastrointestinal tract. It may also cause reproductive and developmental toxicity. Its toxicity is exacerbated by metabolic activation in the liver, which produces reactive intermediates capable of damaging DNA."
+  },
+  "vinyl-chloride": {
+    "id": "vinyl-chloride",
+    "name": "Vinyl chloride",
+    "description": "Vinyl chloride is a volatile organic compound primarily used in the production of polyvinyl chloride (PVC) plastics. It can contaminate drinking water through the degradation of PVC pipes or from industrial discharges. Vinyl chloride is highly toxic and has been extensively studied for its carcinogenic potential. Chronic exposure, particularly through ingestion or inhalation, is strongly associated with liver damage, including hepatic angiosarcoma, a rare and aggressive form of cancer. It can also affect the central nervous system, causing dizziness, headaches, and memory loss with high-level exposure. Vinyl chloride is classified as a known human carcinogen, and its genotoxicity is linked to its metabolism into reactive intermediates that bind to DNA and disrupt cellular function."
+  },
+  "sodium-dichloroisocyanurate": {
+    "id": "sodium-dichloroisocyanurate",
+    "name": "Sodium dichloroisocyanurate",
+    "description": "Sodium dichloroisocyanurate (NaDCC) is a chlorine-releasing compound commonly used as a disinfectant in drinking water treatment, swimming pools, and surface sanitation. When dissolved in water, it releases hypochlorous acid, an effective antimicrobial agent. While NaDCC is generally considered safe at low levels used for water disinfection, ingestion of high concentrations can lead to gastrointestinal irritation, including nausea, vomiting, and abdominal pain. Prolonged exposure to elevated doses may also result in kidney and liver toxicity. Additionally, its breakdown products include cyanuric acid, which can accumulate and may pose a concern for individuals with compromised renal function, although toxicity is low at typical exposure levels."
+  },
+  "cyanuric-acid": {
+    "id": "cyanuric-acid",
+    "name": "cyanuric acid",
+    "description": "Cyanuric acid is a chemical compound often used in combination with chlorine-based disinfectants to stabilize chlorine in swimming pools and water treatment applications. It can enter drinking water as a breakdown product of disinfectants like sodium dichloroisocyanurate. Cyanuric acid itself has low acute toxicity, and it is not highly absorbed through the gastrointestinal tract. However, concerns arise with prolonged or excessive exposure, particularly in individuals with impaired kidney function, as the compound is excreted renally. Animal studies suggest that extremely high doses may lead to kidney damage or stone formation, especially when combined with melamine. Despite these effects, cyanuric acid is generally considered to pose a low health risk at typical levels found in treated drinking water."
+  },
+  "bromate": {
+    "id": "bromate",
+    "name": "Bromate",
+    "description": "Bromate is a by-product formed when bromide in water reacts with ozone or chlorine during disinfection processes. It is not naturally present in significant amounts but can contaminate drinking water during ozone treatment or when using hypochlorite disinfectants containing bromide impurities. Bromate is of significant health concern due to its potential to cause oxidative stress and damage to cellular components. Animal studies have shown that chronic ingestion of bromate can lead to kidney tumors, thyroid effects, and damage to the central nervous system and hearing. It is considered a probable human carcinogen based on sufficient evidence of cancer development in laboratory animals."
+  },
+  "acrylamide": {
+    "id": "acrylamide",
+    "name": "Acrylamide",
+    "description": "Acrylamide is a synthetic chemical used in the production of polyacrylamide, which is sometimes applied in water treatment processes to clarify drinking water. It can form as a contaminant when polyacrylamide degrades or is not fully polymerized. Acrylamide is readily absorbed through the gastrointestinal tract and has been shown to cause neurotoxic effects, such as muscle weakness, impaired coordination, and peripheral neuropathy with prolonged exposure. Animal studies have also demonstrated reproductive toxicity and an increased incidence of tumors, particularly in the thyroid, mammary glands, and reproductive organs. Based on these findings, acrylamide is classified as a probable human carcinogen, raising concerns about its presence in drinking water even at low levels."
+  },
+  "chlorine-dioxide": {
+    "id": "chlorine-dioxide",
+    "name": "Chlorine Dioxide",
+    "description": "Chlorine dioxide is a disinfectant used in water treatment for its strong oxidizing properties and effectiveness against bacteria, viruses, and protozoa. It dissolves in water to form chlorite and chlorate, which are primarily responsible for its toxicological effects. Short-term exposure to elevated levels of chlorine dioxide in drinking water can cause irritation of the eyes, nose, and throat, as well as gastrointestinal discomfort such as nausea and vomiting. Prolonged exposure, particularly to its breakdown product chlorite, has been linked to oxidative stress, thyroid dysfunction, and developmental effects in animal studies. Although chlorine dioxide is effective as a disinfectant, careful control is necessary to limit exposure to its potentially harmful by-products."
+  },
+  "chlorine": {
+    "id": "chlorine",
+    "name": "Chlorine",
+    "description": "Chlorine is widely used as a disinfectant in drinking water treatment due to its effectiveness in killing bacteria, viruses, and other pathogens. However, when present in excess or through chronic exposure, chlorine can have adverse health effects. Inhalation or ingestion of high levels can irritate the eyes, skin, and respiratory tract, and may cause gastrointestinal symptoms like nausea and vomiting. Over time, exposure to chlorine and its disinfection by-products—such as trihalomethanes (THMs) and haloacetic acids (HAAs)—has been linked to potential liver, kidney, and central nervous system effects, as well as an increased risk of certain cancers, particularly of the bladder and colon."
+  },
+  "chlorate": {
+    "id": "chlorate",
+    "name": "Chlorate",
+    "description": "Chlorate is a disinfection by-product that can form in drinking water during the use or degradation of chlorine dioxide and hypochlorite solutions. It is a strong oxidizing agent, and its ingestion may pose health risks, especially with prolonged exposure. Chlorate interferes with the function of red blood cells and can impair oxygen transport, leading to oxidative stress. In animal studies, chronic exposure to chlorate has been linked to thyroid gland effects, including changes in hormone levels and structural alterations, due to interference with iodine uptake. There is also evidence suggesting potential kidney and reproductive toxicity at higher doses, although data in humans remain limited."
+  },
+  "chlorite": {
+    "id": "chlorite",
+    "name": "Chlorite",
+    "description": "Chlorite is a disinfection by-product that forms primarily during the use of chlorine dioxide in drinking water treatment. It is chemically reactive and can interfere with normal cellular function. Health concerns associated with chlorite exposure include oxidative damage to red blood cells, potentially leading to hemolytic anemia, particularly in sensitive populations such as infants and individuals with glucose-6-phosphate dehydrogenase (G6PD) deficiency. Animal studies have shown that chronic exposure to chlorite can affect thyroid hormone regulation and lead to changes in the kidneys, liver, and reproductive system. Although chlorite is typically present at low levels in treated water, its potential for systemic toxicity warrants careful monitoring."
+  },
+  "dibromoacetonitrile": {
+    "id": "dibromoacetonitrile",
+    "name": "Dibromoacetonitrile",
+    "description": "Dibromoacetonitrile is a disinfection by-product that forms when chlorine or other disinfectants react with natural organic matter and bromide in water. It belongs to the class of haloacetonitriles, which are known for their potential toxicity. Dibromoacetonitrile is considered cytotoxic and genotoxic, meaning it can damage cells and DNA. Animal studies have shown that it can cause liver and kidney toxicity, as well as reproductive and developmental effects at high exposure levels. Although data on human health effects are limited, its mode of action suggests potential risks with long-term ingestion, including a possible increase in cancer risk due to its ability to induce mutations."
+  },
+  "dichloroacetonitrile": {
+    "id": "dichloroacetonitrile",
+    "name": "Dichloroacetonitrile",
+    "description": "Dichloroacetonitrile is a chemical compound that forms as a disinfection by-product when chlorine reacts with natural organic matter in water, particularly during chlorination processes. It belongs to the class of haloacetonitriles, which are known for their potential cytotoxic and genotoxic properties. Animal studies have demonstrated that dichloroacetonitrile can cause liver and kidney damage, as well as adverse effects on the gastrointestinal tract. It has also shown mutagenic activity in laboratory tests, indicating a potential for DNA damage. Long-term exposure may pose a risk of reproductive toxicity and carcinogenicity, although direct evidence in humans is limited."
+  },
+  "n-nitrosodimethylamine-ndma": {
+    "id": "n-nitrosodimethylamine-ndma",
+    "name": "N-Nitrosodimethylamine (NDMA)",
+    "description": "N-Nitrosodimethylamine (NDMA) is a highly toxic and potent carcinogenic compound that can be found in drinking water as a by-product of chloramination, especially when certain nitrogen-containing compounds are present. NDMA is not intentionally added to water but can form during water treatment processes. It is known for its strong genotoxic properties, meaning it can cause mutations in DNA. Even at very low concentrations, NDMA has been associated with liver damage in both humans and animals, including hepatic necrosis and fibrosis. Chronic exposure has led to the development of liver tumors in animal studies, and NDMA is classified as a probable human carcinogen based on sufficient evidence of carcinogenicity in experimental models."
+  },
+  "246-trichlorophenol": {
+    "id": "246-trichlorophenol",
+    "name": "2,4,6-Trichlorophenol",
+    "description": "2,4,6-Trichlorophenol is a chlorinated organic compound that can enter drinking water through industrial discharges, pesticide degradation, or as a by-product of water chlorination. It is known for its persistence in the environment and potential to bioaccumulate. Health concerns associated with 2,4,6-trichlorophenol stem from its ability to cause liver and kidney toxicity, as well as its potential to disrupt endocrine function. Animal studies have shown that chronic exposure can lead to decreased body weight, organ damage, and changes in enzyme activity. It has also demonstrated mutagenic activity and has been classified as a possible human carcinogen due to evidence of cancer development in laboratory animals."
+  },
+  "epichlorohydrin": {
+    "id": "epichlorohydrin",
+    "name": "Epichlorohydrin",
+    "description": "Epichlorohydrin is an industrial chemical used primarily in the production of epoxy resins and certain water treatment polymers. It can enter drinking water as a residual contaminant from these treatment processes. Epichlorohydrin is highly reactive and has been shown to cause significant toxic effects. Short-term exposure may result in irritation of the eyes, skin, and respiratory tract. Chronic exposure in animal studies has been associated with damage to the liver, kidneys, and central nervous system, as well as reproductive and developmental toxicity. Epichlorohydrin is also genotoxic and has been classified as a probable human carcinogen due to evidence of tumor formation in experimental animals."
+  },
+  "trihalomethanes": {
+    "id": "trihalomethanes",
+    "name": "Trihalomethanes",
+    "description": "Trihalomethanes (THMs) are a group of chemical compounds that form as by-products when chlorine or other disinfectants react with natural organic matter in water during treatment. The most common THMs include chloroform, bromodichloromethane, dibromochloromethane, and bromoform. Long-term exposure to THMs in drinking water has been associated with an increased risk of bladder, colon, and rectal cancers, likely due to their ability to cause DNA damage. Animal studies have also indicated potential liver and kidney toxicity, as well as reproductive and developmental effects such as reduced fetal weight and increased miscarriage rates. THMs are volatile, and exposure can occur through ingestion, inhalation, and skin absorption, especially during activities like showering."
+  },
+  "bromodichloromethane": {
+    "id": "bromodichloromethane",
+    "name": "Bromodichloromethane",
+    "description": "Bromodichloromethane is one of the most common trihalomethanes (THMs), formed as a by-product when chlorine reacts with organic matter in the presence of bromide during water disinfection. It is a volatile compound and can be absorbed through ingestion, inhalation, or skin contact. Animal studies have shown that bromodichloromethane can cause liver and kidney damage, as well as adverse effects on the reproductive system. It has also demonstrated mutagenic and carcinogenic properties, with increased incidences of liver and colon tumors observed in rodents. While human data are limited, its genotoxic potential raises concern for long-term exposure through drinking water."
+  },
+  "bromoform": {
+    "id": "bromoform",
+    "name": "Bromoform",
+    "description": "Bromoform is a trihalomethane that forms as a by-product when disinfectants like chlorine react with natural organic materials in water containing bromide. It is a volatile compound that can enter the body through ingestion, inhalation, or skin absorption. Animal studies have shown that bromoform primarily affects the liver, kidneys, and central nervous system. High doses can cause liver enlargement, degeneration of liver cells, and neurotoxic effects such as sedation and impaired motor coordination. Chronic exposure has been associated with liver and intestinal tumors in rodents, indicating a potential carcinogenic risk. Bromoform also exhibits mutagenic activity, suggesting it may contribute to DNA damage."
+  },
+  "chloroform": {
+    "id": "chloroform",
+    "name": "Chloroform",
+    "description": "Chloroform is a trihalomethane that forms as a by-product when chlorine is used to disinfect drinking water, particularly in the presence of organic matter. It is a volatile compound that can be absorbed through ingestion, inhalation, or skin contact. Chloroform primarily targets the liver and kidneys, with evidence of cellular damage and enzyme disruption at prolonged exposure levels. Animal studies have shown hepatotoxicity, renal toxicity, and central nervous system depression. Chloroform is also classified as a possible human carcinogen, with chronic exposure linked to liver and kidney tumors in rodents. Its genotoxic effects, although relatively weak, raise additional concerns about long-term health risks."
+  },
+  "dibromochloromethane": {
+    "id": "dibromochloromethane",
+    "name": "Dibromochloromethane",
+    "description": "Dibromochloromethane is a trihalomethane formed as a disinfection by-product when chlorine reacts with organic matter in water containing bromide. It is a volatile compound that can enter the body through drinking water, inhalation, or skin contact. Animal studies have shown that dibromochloromethane can cause liver and kidney damage, as well as adverse effects on the reproductive system. It has also demonstrated mutagenic activity in various test systems, raising concerns about its genotoxic potential. Long-term exposure in rodents has led to an increased incidence of liver tumors, suggesting a possible carcinogenic risk in humans, although direct evidence in humans remains limited."
+  },
+  "haloacetic-acids-total": {
+    "id": "haloacetic-acids-total",
+    "name": "Haloacetic acids (total)",
+    "description": "Haloacetic acids (HAAs) are a group of disinfection by-products formed when chlorine or other halogen disinfectants react with natural organic matter in water. The most common HAAs include monochloroacetic acid, dichloroacetic acid, trichloroacetic acid, monobromoacetic acid, and dibromoacetic acid. Health concerns associated with HAAs arise from their ability to cause liver, kidney, and developmental toxicity in animal studies. Some HAAs, particularly dichloroacetic and trichloroacetic acids, have been shown to induce liver tumors and are considered potential human carcinogens. They may also interfere with cellular processes such as enzyme activity and DNA repair, contributing to their genotoxic and cytotoxic effects."
+  },
+  "monochloroacetic-acid": {
+    "id": "monochloroacetic-acid",
+    "name": "Monochloroacetic acid",
+    "description": "Monochloroacetic acid is a chlorinated acetic acid that can form in drinking water as a by-product of disinfection or may enter through industrial discharges. It is highly corrosive and readily absorbed by the body through ingestion, inhalation, or skin contact. Toxicological studies have shown that monochloroacetic acid primarily affects the nervous system, cardiovascular system, and liver. Acute exposure can cause metabolic acidosis, convulsions, and cardiac arrest, while repeated exposure may lead to liver and kidney damage. Its cytotoxic effects are linked to its ability to disrupt cellular respiration and enzyme function, raising concerns about systemic toxicity even at relatively low concentrations."
+  },
+  "dichloroacetic-acid": {
+    "id": "dichloroacetic-acid",
+    "name": "Dichloroacetic Acid",
+    "description": "Dichloroacetic acid is a member of the haloacetic acid group and can form in drinking water as a by-product of chlorination. It is a persistent compound that is absorbed through ingestion and metabolized primarily in the liver. Repeated exposure to dichloroacetic acid has been shown in animal studies to cause significant liver toxicity, including hepatocellular swelling, enzyme disruptions, and fatty changes. It has also been linked to neurotoxicity, reproductive effects, and developmental abnormalities. Most notably, dichloroacetic acid has been shown to induce liver tumors in rodents, and it is considered a potential human carcinogen. Its mechanism of toxicity is thought to involve oxidative stress and interference with mitochondrial function."
+  },
+  "trichloroacetic-acid": {
+    "id": "trichloroacetic-acid",
+    "name": "Trichloroacetic acid",
+    "description": "Trichloroacetic acid is a chlorinated derivative of acetic acid and one of the haloacetic acids formed as a by-product during the chlorination of drinking water. It is readily absorbed and primarily affects the liver, where it can induce cellular damage and alter enzyme activity. Animal studies have shown that chronic exposure to trichloroacetic acid leads to liver enlargement, fatty degeneration, and the development of hepatocellular tumors, indicating its potential as a carcinogen. It also exhibits genotoxic effects, such as chromosomal aberrations and DNA strand breaks, which may contribute to its long-term health risks."
+  },
+  "monobromoacetic-acid": {
+    "id": "monobromoacetic-acid",
+    "name": "monobromoacetic acid",
+    "description": "Monobromoacetic acid is a brominated haloacetic acid that can form as a by-product of water disinfection when bromide-containing water is treated with chlorine or other disinfectants. Although less studied than other haloacetic acids, available toxicological data suggest that monobromoacetic acid is highly cytotoxic and genotoxic. It has been shown to cause DNA damage and disrupt cellular function at low concentrations. Animal studies indicate that it can induce developmental toxicity, including malformations and embryotoxic effects. Its toxicity is believed to result from its ability to interfere with cellular metabolism and oxidative balance, raising concerns about its presence in drinking water even at low levels."
+  },
+  "dibromoacetic-acid": {
+    "id": "dibromoacetic-acid",
+    "name": "dibromoacetic acid",
+    "description": "Dibromoacetic acid is a disinfection by-product that forms in drinking water when bromide reacts with chlorine or other disinfectants. It is one of the brominated haloacetic acids and is known for its potent biological activity. Animal studies have shown that dibromoacetic acid can cause liver toxicity, including hepatocellular damage, enzyme disruption, and fatty liver changes. It has also been linked to developmental and reproductive toxicity, such as reduced fetal weight and increased skeletal abnormalities. Additionally, dibromoacetic acid has demonstrated mutagenic and genotoxic effects, and chronic exposure has been associated with liver tumors in rodents, raising concerns about its potential carcinogenicity."
+  },
+  "dichloroacetate": {
+    "id": "dichloroacetate",
+    "name": "Dichloroacetate",
+    "description": "Dichloroacetate (DCA) is a chlorinated compound that can occur as a by-product of water disinfection or from the metabolism of other chlorinated solvents. It is readily absorbed and primarily affects the liver, where it inhibits the enzyme pyruvate dehydrogenase kinase, disrupting cellular energy metabolism. Chronic exposure to dichloroacetate in animal studies has resulted in liver enlargement, hepatocellular degeneration, and tumor formation. It also causes peripheral nerve degeneration and has shown developmental and reproductive toxicity in laboratory animals. Dichloroacetate is genotoxic and has been classified as a potential carcinogen based on its ability to induce DNA damage and liver tumors in rodents."
+  },
+  "trichloroacetate": {
+    "id": "trichloroacetate",
+    "name": "Trichloroacetate",
+    "description": "Trichloroacetate, also known as trichloroacetic acid, is a chlorinated acetic acid that can form as a by-product during the chlorination of drinking water. It is readily absorbed and primarily accumulates in the liver, where it interferes with metabolic processes and cellular signaling. Toxicological studies have shown that trichloroacetate can cause liver enlargement, enzyme disruption, and fatty changes in liver tissue. Chronic exposure in animal models has led to the development of hepatocellular tumors, indicating its potential carcinogenicity. Additionally, trichloroacetate has demonstrated genotoxic effects, including chromosomal damage and oxidative stress, contributing to concerns about long-term exposure through contaminated water."
+  },
+  "ammonia": {
+    "id": "ammonia",
+    "name": "Ammonia",
+    "description": "Ammonia is a naturally occurring compound that can enter drinking water through agricultural runoff, sewage, or industrial discharges. While ammonia itself is not highly toxic in low concentrations, it can pose health risks at elevated levels, particularly when it reacts with chlorine used in water treatment, forming chloramines and potentially harmful disinfection by-products. High levels of ammonia can lead to irritation of the respiratory tract, eyes, and skin. Ingested ammonia may cause gastrointestinal irritation, and prolonged exposure has been linked to metabolic disturbances and damage to the liver and kidneys in animal studies. Additionally, ammonia can exacerbate the toxicity of other contaminants by altering water chemistry."
+  },
+  "monochloramine": {
+    "id": "monochloramine",
+    "name": "Monochloramine",
+    "description": "Monochloramine is a disinfectant formed by combining ammonia with chlorine, commonly used in water treatment as an alternative to free chlorine. While it is effective in controlling microbial growth and maintaining residual disinfection in water systems, monochloramine can pose health risks with prolonged exposure. It can irritate the eyes, nose, throat, and respiratory tract when present in elevated concentrations, particularly in aerosolized form during showering or humidification. Ingestion of water containing monochloramine may cause gastrointestinal disturbances. Long-term exposure has been associated with oxidative stress and damage to red blood cells in animal studies. Additionally, monochloramine can contribute to the formation of other potentially harmful disinfection by-products."
+  },
+  "microplastics": {
+    "id": "microplastics",
+    "name": "Microplastics",
+    "description": "Microplastics are tiny plastic particles less than 5 millimeters in diameter that can enter drinking water through environmental pollution, degradation of larger plastic debris, and wastewater discharges. Although research on their health effects is ongoing, concerns center around their potential to cause physical and chemical harm. Microplastics may accumulate in the gastrointestinal tract and induce inflammation, oxidative stress, and immune system disruption. Additionally, they can act as carriers for harmful chemicals such as plasticizers, flame retardants, and persistent organic pollutants, which may leach into the body and interfere with endocrine function or cause other toxic effects. The smallest particles (nanoplastics) pose particular concern due to their potential to cross biological barriers and reach internal organs."
+  },
+  "perfluorooctanoic-acid-pfoa": {
+    "id": "perfluorooctanoic-acid-pfoa",
+    "name": "Perfluorooctanoic acid (PFOA)",
+    "description": "Perfluorooctanoic acid (PFOA) is a synthetic perfluorinated compound widely used in industrial applications and consumer products for its resistance to heat, water, and oil. It is highly persistent in the environment and the human body, leading to widespread exposure through drinking water and other sources. PFOA has been associated with a range of adverse health effects, including liver damage, immune system suppression, thyroid dysfunction, and developmental toxicity. Epidemiological studies have also linked PFOA exposure to kidney and testicular cancers, decreased fertility, and elevated cholesterol levels. Its long half-life in the human body contributes to bioaccumulation and chronic toxicity concerns."
+  },
+  "perfluorooctane-sulfonate-pfos": {
+    "id": "perfluorooctane-sulfonate-pfos",
+    "name": "Perfluorooctane sulfonate (PFOS)",
+    "description": "Perfluorooctane sulfonate (PFOS) is a man-made perfluorinated compound once widely used in firefighting foams, stain repellents, and industrial processes. Like other PFAS (per- and polyfluoroalkyl substances), PFOS is extremely persistent in the environment and resistant to degradation, leading to long-term contamination of water sources. In the human body, PFOS accumulates and has been linked to a variety of health effects. These include liver toxicity, immune suppression, thyroid hormone disruption, and developmental issues such as reduced birth weight and delayed puberty. Epidemiological studies have also associated PFOS exposure with increased risks of kidney and testicular cancer, altered cholesterol levels, and reproductive toxicity."
+  },
+  "perfluorononanoic-acid-pfna": {
+    "id": "perfluorononanoic-acid-pfna",
+    "name": "Perfluorononanoic acid (PFNA)",
+    "description": "Perfluorononanoic acid (PFNA) is a synthetic perfluoroalkyl substance (PFAS) used in industrial processes and found as a by-product in the manufacture of fluoropolymers. It is persistent, bioaccumulative, and resistant to environmental degradation, leading to its detection in drinking water and human tissues. PFNA has been shown to disrupt lipid metabolism and liver function, with studies reporting liver enlargement and altered enzyme activity in exposed animals. It also interferes with the endocrine system, particularly thyroid hormone regulation, and may impair immune responses. Developmental toxicity has been observed in animal studies, including reduced fetal weight and delayed development, raising concerns about its long-term health effects."
+  },
+  "perfluorohexanesulfonic-acid-pfhxs": {
+    "id": "perfluorohexanesulfonic-acid-pfhxs",
+    "name": "Perfluorohexanesulfonic acid (PFHxS)",
+    "description": "Perfluorohexanesulfonic acid (PFHxS) is a synthetic perfluoroalkyl substance (PFAS) used in fire-fighting foams, textiles, and surface treatments. Like other PFAS, PFHxS is highly persistent in the environment and the human body, where it accumulates over time. Health concerns linked to PFHxS exposure include liver toxicity, disruption of thyroid hormone levels, and immune system impairment. It has also been associated with altered reproductive and developmental outcomes, such as reduced birth weight and delayed puberty in animal studies. Emerging evidence suggests PFHxS may affect cholesterol metabolism and increase the risk of metabolic disorders, though human data are still limited."
+  },
+  "perfluoroheptanoic-acid-pfhpa": {
+    "id": "perfluoroheptanoic-acid-pfhpa",
+    "name": "Perfluoroheptanoic acid (PFHpA)",
+    "description": "Perfluoroheptanoic acid (PFHpA) is a perfluoroalkyl substance (PFAS) used in various industrial and commercial applications for its water- and stain-resistant properties. Like other PFAS, PFHpA is persistent in the environment and can accumulate in the human body through drinking water and food. Although research on PFHpA is less extensive than on other PFAS like PFOA or PFOS, available studies indicate that it may cause similar toxic effects. These include liver enlargement, disruption of lipid metabolism, and potential interference with hormone regulation, particularly thyroid function. Its persistence and potential for bioaccumulation raise concerns about long-term health risks, especially during developmental stages."
+  },
+  "perfluorohexanoic-acid-pfhxa": {
+    "id": "perfluorohexanoic-acid-pfhxa",
+    "name": "Perfluorohexanoic acid (PFHxA)",
+    "description": "Perfluorohexanoic acid (PFHxA) is a short-chain perfluoroalkyl substance (PFAS) used in manufacturing fluorinated polymers and as a degradation product of other PFAS. Although it is less bioaccumulative than long-chain PFAS like PFOA and PFOS, PFHxA is still environmentally persistent and resistant to breakdown. Toxicological studies suggest that PFHxA may affect liver and kidney function, alter lipid metabolism, and disrupt endocrine activity, particularly thyroid hormone regulation. Some animal studies have also reported developmental and reproductive toxicity. Due to its mobility in water and potential for human exposure, PFHxA remains a concern for long-term health effects despite its relatively lower bioaccumulation."
+  },
+  "perfluorobutanoic-acid-pfba": {
+    "id": "perfluorobutanoic-acid-pfba",
+    "name": "Perfluorobutanoic acid (PFBA)",
+    "description": "Perfluorobutanoic acid (PFBA) is a short-chain perfluoroalkyl substance (PFAS) used in the production of fluoropolymers and as a degradation product of other PFAS. Although it is less bioaccumulative than longer-chain PFAS, PFBA is highly persistent in the environment and can be found in drinking water. Toxicological studies indicate that PFBA primarily accumulates in the thyroid and kidneys. It has been shown to interfere with thyroid hormone balance, potentially disrupting metabolism and development. Animal studies have also reported liver enlargement and changes in blood chemistry. Despite its rapid elimination compared to other PFAS, PFBA’s persistence and potential for widespread exposure raise concerns about its long-term health effects."
+  },
+  "perfluoropentanoic-acid-pfpea": {
+    "id": "perfluoropentanoic-acid-pfpea",
+    "name": "Perfluoropentanoic acid (PFPeA)",
+    "description": "Perfluoropentanoic acid (PFPeA) is a short-chain perfluoroalkyl substance (PFAS) used in industrial applications and formed as a breakdown product of longer-chain PFAS. While PFPeA is less bioaccumulative than its long-chain counterparts, it is still environmentally persistent and can be found in surface water and drinking water. Toxicological data on PFPeA are limited, but available studies suggest potential for liver toxicity, effects on kidney function, and disruption of lipid metabolism. Like other PFAS, PFPeA may interfere with hormone regulation, particularly thyroid hormones, and contribute to developmental toxicity. Its smaller molecular size allows it to travel easily through water systems, increasing the risk of widespread human exposure."
+  },
+  "perfluorodecanoic-acid-pfda": {
+    "id": "perfluorodecanoic-acid-pfda",
+    "name": "Perfluorodecanoic acid (PFDA)",
+    "description": "Perfluorodecanoic acid (PFDA) is a long-chain perfluoroalkyl substance (PFAS) used in industrial applications such as non-stick coatings, water-repellent fabrics, and food packaging. PFDA is highly persistent in the environment and bioaccumulative in living organisms, including humans. Toxicological studies have shown that PFDA can cause significant liver toxicity, including hepatomegaly and altered liver enzyme levels. It also disrupts lipid and glucose metabolism and has been associated with thyroid hormone imbalance. Developmental and reproductive toxicity, such as reduced birth weight and delayed sexual maturation, has been observed in animal studies. Its strong binding to proteins and long half-life contribute to its potential for chronic health effects."
+  },
+  "perfluoroundecanoic-acid-pfunda": {
+    "id": "perfluoroundecanoic-acid-pfunda",
+    "name": "Perfluoroundecanoic acid (PFUnDA)",
+    "description": "Perfluoroundecanoic acid (PFUnDA) is a long-chain perfluoroalkyl substance (PFAS) used in various industrial processes and found as a degradation product of other fluorinated compounds. It is highly persistent in the environment and strongly bioaccumulative in humans and wildlife. Toxicological studies have associated PFUnDA exposure with liver damage, altered lipid metabolism, and oxidative stress. It may also interfere with immune and endocrine system function, particularly affecting thyroid hormone balance. Developmental and reproductive toxicity has been observed in animal studies, including delayed development and impaired fertility. Due to its long half-life in the body, PFUnDA poses concerns for chronic toxicity and long-term health risks."
+  },
+  "perfluorododecanoic-acid-pfdoda": {
+    "id": "perfluorododecanoic-acid-pfdoda",
+    "name": "Perfluorododecanoic acid (PFDoDA)",
+    "description": "Perfluorododecanoic acid (PFDoDA) is a long-chain perfluoroalkyl substance (PFAS) known for its environmental persistence and strong tendency to bioaccumulate in human and animal tissues. It is used in industrial applications involving stain-resistant coatings and fluoropolymer production. Toxicological studies suggest that PFDoDA can cause liver toxicity, including hepatocellular hypertrophy and altered lipid metabolism. It has also been linked to disruptions in thyroid hormone homeostasis and reproductive function. Animal studies report developmental delays and potential immune system effects. Due to its long biological half-life, PFDoDA may contribute to chronic toxicity and poses significant concerns for long-term health exposure."
+  },
+  "perfluorobutanesulfonic-acid-pfbs": {
+    "id": "perfluorobutanesulfonic-acid-pfbs",
+    "name": "Perfluorobutanesulfonic acid (PFBS)",
+    "description": "Perfluorobutanesulfonic acid (PFBS) is a short-chain perfluoroalkyl substance (PFAS) used as a replacement for longer-chain compounds like PFOS in industrial and consumer products. Although PFBS is less bioaccumulative than long-chain PFAS, it remains highly persistent in the environment and can still pose health risks. Toxicological studies have indicated that PFBS may cause thyroid hormone disruption, developmental effects, and kidney toxicity. Some evidence also suggests potential impacts on reproductive health and cellular function, though data are more limited compared to other PFAS. Despite its shorter half-life in humans, its environmental stability raises concerns about long-term exposure and contamination."
+  },
+  "perfluoroheptanesulfonic-acid-pfhps": {
+    "id": "perfluoroheptanesulfonic-acid-pfhps",
+    "name": "Perfluoroheptanesulfonic acid (PFHpS)",
+    "description": "Perfluoroheptanesulfonic acid (PFHpS) is a long-chain perfluoroalkyl sulfonic acid (PFAS) known for its environmental persistence and bioaccumulative properties. It has been used in industrial applications such as stain-resistant coatings and firefighting foams. PFHpS has been detected in human blood and environmental samples, indicating widespread exposure. Toxicological studies have shown that PFHpS can cause liver toxicity, disrupt lipid metabolism, and interfere with thyroid hormone regulation. Animal studies also suggest potential developmental and reproductive toxicity. Like other long-chain PFAS, PFHpS may impair immune function and contribute to chronic health effects due to its long biological half-life."
+  },
+  "perfluorodecanesulfonic-acid-pfds": {
+    "id": "perfluorodecanesulfonic-acid-pfds",
+    "name": "Perfluorodecanesulfonic acid (PFDS)",
+    "description": "Perfluorodecanesulfonic acid (PFDS) is a long-chain perfluoroalkyl sulfonic acid (PFAS) with strong environmental persistence and high potential for bioaccumulation. It has been used in industrial processes such as surfactant production and surface treatments. Toxicological studies indicate that PFDS can cause significant liver toxicity, including hepatomegaly and enzyme alterations, as well as disruption of lipid metabolism. It also interferes with thyroid hormone levels, which may impact growth and metabolism. In animal models, PFDS exposure has been linked to developmental delays, reproductive toxicity, and immune suppression. Due to its long half-life in organisms, PFDS poses concerns for long-term and cumulative health risks."
+  },
+  "hexafluoropropylene-oxide-dimer-acid-hfpo-da-also-known-as-genx": {
+    "id": "hexafluoropropylene-oxide-dimer-acid-hfpo-da-also-known-as-genx",
+    "name": "Hexafluoropropylene oxide dimer acid (HFPO-DA, also known as GenX)",
+    "description": "Hexafluoropropylene oxide dimer acid (HFPO-DA), commonly known as GenX, is a short-chain per- and polyfluoroalkyl substance (PFAS) developed as a replacement for PFOA in industrial applications such as the manufacture of fluoropolymers. Despite being marketed as a safer alternative, HFPO-DA has demonstrated toxicological effects similar to those of its predecessor. Animal studies have shown that HFPO-DA can cause liver damage, including hepatocellular hypertrophy and increased liver weight, as well as kidney effects, immune suppression, and developmental toxicity such as low birth weight and delayed development. It may also disrupt lipid metabolism and endocrine function. Due to its persistence in the environment and mobility in water, HFPO-DA poses significant concerns for human exposure and chronic health effects."
+  },
+  "42-fluorotelomer-sulfonic-acid-42-fts": {
+    "id": "42-fluorotelomer-sulfonic-acid-42-fts",
+    "name": "4:2 Fluorotelomer sulfonic acid (4:2 FTS)",
+    "description": "4:2 Fluorotelomer sulfonic acid (4:2 FTS) is a short-chain fluorinated compound used as a surfactant in industrial applications and firefighting foams, and it can also form as a degradation product of fluorotelomer-based substances. Although less bioaccumulative than long-chain PFAS, 4:2 FTS is still environmentally persistent and has been detected in surface water, soil, and biota. Toxicological studies suggest that 4:2 FTS may cause liver toxicity, including enzyme alterations and changes in lipid metabolism. There is also evidence of endocrine disruption, particularly involving thyroid hormone regulation. In animal models, developmental and immune effects have been observed, raising concerns about chronic exposure and health risks despite its shorter environmental half-life compared to legacy PFAS."
+  },
+  "62-fluorotelomer-sulfonic-acid-62-fts": {
+    "id": "62-fluorotelomer-sulfonic-acid-62-fts",
+    "name": "6:2 Fluorotelomer sulfonic acid (6:2 FTS)",
+    "description": "6:2 Fluorotelomer sulfonic acid (6:2 FTS) is a fluorinated compound widely used in firefighting foams, textile treatments, and other industrial applications. It is a replacement for legacy PFAS like PFOS, but it remains environmentally persistent and mobile, leading to widespread detection in water and soil. Although 6:2 FTS is less bioaccumulative than long-chain PFAS, it can still accumulate in organisms and has been associated with liver toxicity, including enzyme alterations and lipid metabolism disruption. Animal studies suggest potential effects on kidney function, endocrine activity—particularly thyroid hormones—and immune responses. Its degradation can also yield other toxic PFAS, raising concerns about both direct and indirect health impacts from exposure."
+  },
+  "82-fluorotelomer-sulfonic-acid-82-fts": {
+    "id": "82-fluorotelomer-sulfonic-acid-82-fts",
+    "name": "8:2 Fluorotelomer sulfonic acid (8:2 FTS)",
+    "description": "8:2 Fluorotelomer sulfonic acid (8:2 FTS) is a long-chain fluorinated compound used in industrial applications such as firefighting foams and surface treatments. It is also a degradation product of fluorotelomer-based materials. Like other long-chain PFAS, 8:2 FTS is highly persistent in the environment and bioaccumulative in living organisms. Toxicological studies have shown that 8:2 FTS can cause liver toxicity, including increased liver weight and altered lipid metabolism. It may also interfere with thyroid hormone function and disrupt endocrine signaling. Evidence from animal studies indicates potential for developmental and reproductive toxicity, as well as immune system effects, raising concern for chronic health impacts from prolonged exposure."
+  },
+  "n-methyl-perfluorooctanesulfonamidoacetic-acid-n-mefosaa": {
+    "id": "n-methyl-perfluorooctanesulfonamidoacetic-acid-n-mefosaa",
+    "name": "N-methyl perfluorooctanesulfonamidoacetic acid (N-MeFOSAA)",
+    "description": "N-methyl perfluorooctanesulfonamidoacetic acid (N-MeFOSAA) is a perfluorinated compound that serves as a precursor to perfluorooctanesulfonate (PFOS) in the environment and within biological systems. It is a degradation product of fluorinated surfactants and stain-resistant treatments used in consumer and industrial products. N-MeFOSAA is persistent and bioaccumulative, with studies detecting it in human blood and environmental samples. Toxicologically, it has been associated with liver effects, altered lipid metabolism, and thyroid hormone disruption. As it breaks down into PFOS, it contributes indirectly to the health concerns linked to long-chain PFAS, including developmental and immune system toxicity."
+  },
+  "n-ethyl-perfluorooctanesulfonamidoacetic-acid-n-etfosaa": {
+    "id": "n-ethyl-perfluorooctanesulfonamidoacetic-acid-n-etfosaa",
+    "name": "N-ethyl perfluorooctanesulfonamidoacetic acid (N-EtFOSAA)",
+    "description": "N-ethyl perfluorooctanesulfonamidoacetic acid (N-EtFOSAA) is a perfluoroalkyl substance (PFAS) that acts as a metabolic and environmental precursor to perfluorooctanesulfonate (PFOS). It originates from the breakdown of fluorinated surfactants and polymers used in consumer products such as stain repellents and food packaging. N-EtFOSAA is highly persistent and has been detected in human serum, indicating widespread exposure. Toxicological studies suggest that it can cause liver damage, disrupt lipid metabolism, and interfere with thyroid hormone regulation. Like other PFOS precursors, it may also pose risks for immune, reproductive, and developmental toxicity due to its transformation into more bioactive and persistent compounds."
+  },
+  "pharmaceuticals": {
+    "id": "pharmaceuticals",
+    "name": "Pharmaceuticals",
+    "description": "Pharmaceuticals in drinking water, even at very low concentrations, raise concerns because long-term exposure to mixtures of these substances may affect human health, especially in vulnerable populations like pregnant women, infants, and people with chronic illnesses. Some pharmaceuticals, such as hormones and antibiotics, can act as endocrine disruptors or contribute to antimicrobial resistance. While current levels in drinking water are typically far below therapeutic doses, the potential cumulative and interactive effects of lifelong exposure remain largely unknown and are the subject of ongoing scientific research."
+  }
 }
 
 export function getContaminantHealthEffects(contaminantId: string): ContaminantHealthEffect | null {
