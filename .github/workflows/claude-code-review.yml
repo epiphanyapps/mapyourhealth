@@ -45,10 +45,8 @@ jobs:
         uses: actions/github-script@v7
         with:
           script: |
-            // Get the authenticated user
             const { data: user } = await github.rest.users.getAuthenticated();
 
-            // Check if any review comments were posted by this workflow
             const { data: comments } = await github.rest.pulls.listReviewComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
