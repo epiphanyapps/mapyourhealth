@@ -19,6 +19,7 @@ import { requestMagicLink } from './functions/request-magic-link/resource';
 import { placesAutocomplete } from './functions/places-autocomplete/resource';
 import { resolveLocation } from './functions/resolve-location/resource';
 import { deleteAccount } from './functions/delete-account/resource';
+import { manageData } from './functions/manage-data/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -37,6 +38,7 @@ const backend = defineBackend({
   placesAutocomplete,
   resolveLocation,
   deleteAccount,
+  manageData,
   // storage,
 });
 
@@ -432,3 +434,44 @@ const deleteAccountDynamoPolicy = new Policy(deleteAccountStack, 'DeleteAccountD
   ],
 });
 backend.deleteAccount.resources.lambda.role?.attachInlinePolicy(deleteAccountDynamoPolicy);
+
+// ============================================
+// Manage Data Lambda Setup
+// ============================================
+
+const manageDataLambda = backend.manageData.resources.lambda as LambdaFunction;
+const manageDataStack = Stack.of(manageDataLambda);
+
+// Reference data tables that the manage-data Lambda can operate on
+const referenceTableNames = [
+  'Jurisdiction', 'Contaminant', 'ContaminantThreshold',
+  'Location', 'LocationMeasurement', 'LocationObservation',
+  'Category', 'SubCategory', 'ObservedProperty', 'PropertyThreshold',
+] as const;
+
+// Set environment variables for all reference table names
+for (const name of referenceTableNames) {
+  const table = backend.data.resources.tables[name];
+  manageDataLambda.addEnvironment(`${name.toUpperCase()}_TABLE_NAME`, table.tableName);
+}
+
+// Grant DynamoDB permissions on reference tables only — never user data tables
+const manageDataDynamoPolicy = new Policy(manageDataStack, 'ManageDataDynamoPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: [
+        'dynamodb:Scan',
+        'dynamodb:BatchWriteItem',
+        'dynamodb:DeleteItem',
+        'dynamodb:PutItem',
+        'dynamodb:DescribeTable',
+      ],
+      resources: referenceTableNames.map((name) => {
+        const table = backend.data.resources.tables[name];
+        return table.tableArn;
+      }),
+    }),
+  ],
+});
+backend.manageData.resources.lambda.role?.attachInlinePolicy(manageDataDynamoPolicy);

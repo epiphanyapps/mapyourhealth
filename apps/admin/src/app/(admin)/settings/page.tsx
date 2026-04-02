@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
+import { Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,8 +12,18 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 
 const client = generateClient<Schema>();
@@ -26,10 +38,49 @@ const CONFIG_DESCRIPTIONS: Record<string, { label: string; description: string }
   },
 };
 
+// Database management action definitions
+const DATA_ACTIONS = [
+  {
+    action: "wipeContaminants" as const,
+    label: "Wipe Contaminant Data",
+    description: "Clears Contaminant, ContaminantThreshold, and Jurisdiction tables.",
+    confirmPhrase: "DELETE",
+    variant: "destructive" as const,
+  },
+  {
+    action: "wipeLocations" as const,
+    label: "Wipe Location Data",
+    description: "Clears Location, LocationMeasurement, and LocationObservation tables.",
+    confirmPhrase: "DELETE",
+    variant: "destructive" as const,
+  },
+  {
+    action: "wipeAll" as const,
+    label: "Wipe All Reference Data",
+    description:
+      "Clears all 10 reference data tables. User data (subscriptions, reports, health records) is never affected.",
+    confirmPhrase: "DELETE ALL",
+    variant: "destructive" as const,
+  },
+  {
+    action: "reseedAll" as const,
+    label: "Reseed All Data",
+    description:
+      "Wipes all reference data, then re-seeds from Risks.xlsx seed files (~9,000 records). This may take 1-3 minutes.",
+    confirmPhrase: "RESEED",
+    variant: "default" as const,
+  },
+];
+
 export default function SettingsPage() {
   const [configs, setConfigs] = useState<AppConfig[]>([]);
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState<string | null>(null);
+
+  // Database management state
+  const [activeAction, setActiveAction] = useState<string | null>(null);
+  const [dialogAction, setDialogAction] = useState<string | null>(null);
+  const [confirmText, setConfirmText] = useState("");
 
   const fetchConfigs = async () => {
     try {
@@ -108,6 +159,46 @@ export default function SettingsPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
 
+  const handleDataAction = async (action: string) => {
+    setActiveAction(action);
+    setDialogAction(null);
+    setConfirmText("");
+
+    try {
+      const { data, errors } = await client.mutations.manageData({
+        action: action as "wipeContaminants" | "wipeLocations" | "wipeAll" | "reseedAll",
+      });
+
+      if (errors) {
+        toast.error(`Operation failed: ${errors[0].message}`);
+        return;
+      }
+
+      if (data?.success) {
+        toast.success(data.details);
+      } else {
+        toast.error(data?.error || data?.details || "Operation failed");
+      }
+    } catch (err) {
+      console.error(`Error during ${action}:`, err);
+      const isTimeout =
+        err instanceof Error &&
+        (err.message.includes("timeout") ||
+          err.message.includes("Network") ||
+          err.name === "TimeoutError");
+      if (isTimeout && (action === "reseedAll" || action === "wipeAll")) {
+        toast.warning(
+          "The request timed out, but the operation is likely still running in the background. Check the data in a few minutes.",
+          { duration: 10000 },
+        );
+      } else {
+        toast.error("Operation failed unexpectedly");
+      }
+    } finally {
+      setActiveAction(null);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -156,6 +247,92 @@ export default function SettingsPage() {
 
           {configs.length === 0 && (
             <p className="text-sm text-muted-foreground">No configuration entries found.</p>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Database Management</CardTitle>
+          <CardDescription>
+            Wipe or reseed reference data tables. User data (subscriptions, reports, health records)
+            is never affected by these operations.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {DATA_ACTIONS.map((item) => (
+            <div
+              key={item.action}
+              className="flex items-center justify-between space-x-4 rounded-lg border p-4"
+            >
+              <div className="space-y-1">
+                <p className="text-sm font-medium">{item.label}</p>
+                <p className="text-sm text-muted-foreground">{item.description}</p>
+              </div>
+
+              <Dialog
+                open={dialogAction === item.action}
+                onOpenChange={(open) => {
+                  setDialogAction(open ? item.action : null);
+                  if (!open) setConfirmText("");
+                }}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    variant={item.variant}
+                    size="sm"
+                    disabled={!!activeAction}
+                  >
+                    {activeAction === item.action && (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    )}
+                    {activeAction === item.action ? "Running..." : item.label}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>Confirm: {item.label}</DialogTitle>
+                    <DialogDescription>{item.description}</DialogDescription>
+                  </DialogHeader>
+                  <div className="space-y-2 py-4">
+                    <Label htmlFor="confirm-input">
+                      Type <span className="font-mono font-bold">{item.confirmPhrase}</span> to
+                      confirm
+                    </Label>
+                    <Input
+                      id="confirm-input"
+                      value={confirmText}
+                      onChange={(e) => setConfirmText(e.target.value)}
+                      placeholder={item.confirmPhrase}
+                    />
+                  </div>
+                  <DialogFooter>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setDialogAction(null);
+                        setConfirmText("");
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant={item.variant}
+                      disabled={confirmText !== item.confirmPhrase}
+                      onClick={() => handleDataAction(item.action)}
+                    >
+                      {item.label}
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
+            </div>
+          ))}
+
+          {activeAction && (
+            <p className="text-sm text-muted-foreground animate-pulse">
+              Operation in progress... This may take a few minutes. Do not close this page.
+            </p>
           )}
         </CardContent>
       </Card>

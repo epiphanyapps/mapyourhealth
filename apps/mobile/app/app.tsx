@@ -64,7 +64,6 @@ const config = {
     },
     CategoryDetail: "category/:category/:zipCode",
     StatTrend: "trend/:statId/:zipCode",
-    Compare: "compare",
     Login: "login",
     Signup: "signup",
     ConfirmSignup: "confirm-signup",

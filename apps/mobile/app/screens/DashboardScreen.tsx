@@ -801,7 +801,7 @@ View details: ${shareUrl}`
         </View>
       )}
 
-      {/* Action Buttons Row: Follow, Share, and Compare */}
+      {/* Action Buttons Row: Follow and Share */}
       <View style={$actionButtonsRow}>
         {/* Follow Button */}
         <Pressable
@@ -841,21 +841,6 @@ View details: ${shareUrl}`
             color={theme.colors.tint}
           />
           <Text style={[$actionButtonText, { color: theme.colors.tint }]}>Share</Text>
-        </Pressable>
-
-        {/* Compare Button */}
-        <Pressable
-          onPress={() => navigation.navigate("Compare")}
-          style={({ pressed }) => [
-            $actionButton,
-            { borderColor: theme.colors.tint },
-            pressed && { opacity: 0.8 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="Compare zip codes"
-        >
-          <MaterialCommunityIcons name="compare" size={20} color={theme.colors.tint} />
-          <Text style={[$actionButtonText, { color: theme.colors.tint }]}>Compare</Text>
         </Pressable>
       </View>
 

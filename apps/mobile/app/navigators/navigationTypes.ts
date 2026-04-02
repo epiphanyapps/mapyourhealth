@@ -46,7 +46,6 @@ export type AppStackParamList = {
     state: string
     country: string
   }
-  Compare: undefined
   LocationObservations: {
     city: string
     state: string
