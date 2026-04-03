@@ -91,7 +91,12 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
     useContaminants()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
-  const { getLocationFromGPS, isLocating } = useLocation()
+  const {
+    getLocationFromGPS,
+    isLocating,
+    error: locationError,
+    clearError: clearLocationError,
+  } = useLocation()
   const { getCategoryName } = useCategories()
   const { banners: adminBanners } = useWarningBanners({
     city: route.params?.city,
@@ -575,6 +580,8 @@ View details: ${shareUrl}`
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
             selectedLocation={currentLocation}
+            locationError={locationError}
+            onLocationErrorDismiss={clearLocationError}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -612,6 +619,8 @@ View details: ${shareUrl}`
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
             selectedLocation={currentLocation}
+            locationError={locationError}
+            onLocationErrorDismiss={clearLocationError}
           />
         </View>
         <View style={$loadingContainer}>
@@ -646,6 +655,8 @@ View details: ${shareUrl}`
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
             selectedLocation={currentLocation}
+            locationError={locationError}
+            onLocationErrorDismiss={clearLocationError}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -694,6 +705,8 @@ View details: ${shareUrl}`
             onLocationPress={handleLocationPress}
             isLocating={isLocating}
             selectedLocation={currentLocation}
+            locationError={locationError}
+            onLocationErrorDismiss={clearLocationError}
           />
         </View>
         <View style={$emptyStateContainer}>
@@ -770,6 +783,8 @@ View details: ${shareUrl}`
           onLocationPress={handleLocationPress}
           isLocating={isLocating}
           selectedLocation={currentLocation}
+          locationError={locationError}
+          onLocationErrorDismiss={clearLocationError}
         />
       </View>
 

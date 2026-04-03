@@ -19,7 +19,7 @@ jest.mock("../services/amplify/data", () => ({
 }))
 
 // eslint-disable-next-line import/first
-import { Alert, Platform } from "react-native"
+import { Platform } from "react-native"
 // eslint-disable-next-line import/first
 import * as Location from "expo-location"
 // eslint-disable-next-line import/first
@@ -30,8 +30,6 @@ import { useLocation } from "./useLocation"
 // eslint-disable-next-line import/first
 import { resolveLocationByCoords } from "../services/amplify/data"
 
-// Mock Alert
-jest.spyOn(Alert, "alert").mockImplementation(() => {})
 
 const mockRequestPermissions = Location.requestForegroundPermissionsAsync as jest.MockedFunction<
   typeof Location.requestForegroundPermissionsAsync
@@ -55,7 +53,6 @@ const MOCK_POSITION = {
 describe("useLocation", () => {
   beforeEach(() => {
     jest.clearAllMocks()
-    ;(Alert.alert as jest.Mock).mockClear()
 
     // Default: permission granted
     mockRequestPermissions.mockResolvedValue({
@@ -78,7 +75,7 @@ describe("useLocation", () => {
     expect(result.current.clearError).toBeInstanceOf(Function)
   })
 
-  it("returns null and shows alert when permission denied", async () => {
+  it("returns null and sets error when permission denied", async () => {
     mockRequestPermissions.mockResolvedValue({
       status: "denied" as Location.PermissionStatus,
       granted: false,
@@ -94,11 +91,7 @@ describe("useLocation", () => {
     })
 
     expect(location).toBeNull()
-    expect(Alert.alert).toHaveBeenCalledWith(
-      "Location Permission Required",
-      expect.any(String),
-      expect.any(Array),
-    )
+    expect(result.current.error).toContain("Location permission denied")
   })
 
   describe("native platform (iOS/Android)", () => {
@@ -230,7 +223,7 @@ describe("useLocation", () => {
       expect(mockResolveByCoords).toHaveBeenCalledWith(MOCK_COORDS.latitude, MOCK_COORDS.longitude)
     })
 
-    it("returns null and shows alert when backend returns error", async () => {
+    it("returns null and sets error when backend returns error", async () => {
       mockResolveByCoords.mockResolvedValue({
         city: "",
         state: "",
@@ -249,11 +242,7 @@ describe("useLocation", () => {
       })
 
       expect(location).toBeNull()
-      expect(Alert.alert).toHaveBeenCalledWith(
-        "Location Not Found",
-        expect.any(String),
-        expect.any(Array),
-      )
+      expect(result.current.error).toContain("Could not determine your city")
     })
   })
 
@@ -267,7 +256,9 @@ describe("useLocation", () => {
         await result.current.getLocationFromGPS()
       })
 
-      expect(result.current.error).toBe("Location request timed out. Please try again.")
+      expect(result.current.error).toBe(
+        "Could not determine your location. Please search for your city instead.",
+      )
     })
 
     it("sets generic error on unknown failure", async () => {
@@ -279,7 +270,9 @@ describe("useLocation", () => {
         await result.current.getLocationFromGPS()
       })
 
-      expect(result.current.error).toBe("Failed to get your location. Please try again.")
+      expect(result.current.error).toBe(
+        "Failed to get your location. Please search for your city instead.",
+      )
     })
 
     it("clears error with clearError", async () => {

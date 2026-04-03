@@ -9,7 +9,7 @@
  */
 
 import { useState, useCallback } from "react"
-import { Alert, Platform } from "react-native"
+import { Platform } from "react-native"
 import * as Location from "expo-location"
 
 import { resolveLocationByCoords } from "@/services/amplify/data"
@@ -84,10 +84,8 @@ export function useLocation(): UseLocationResult {
       const { status } = await Location.requestForegroundPermissionsAsync()
       console.log("useLocation: Permission status:", status)
       if (status !== "granted") {
-        Alert.alert(
-          "Location Permission Required",
-          "Please enable location access in your device settings to use this feature.",
-          [{ text: "OK" }],
+        setError(
+          "Location permission denied. Please enable location access in your device settings.",
         )
         return null
       }
@@ -129,11 +127,7 @@ export function useLocation(): UseLocationResult {
       const resolved = await resolveLocationByCoords(latitude, longitude)
 
       if (resolved.error || !resolved.city) {
-        Alert.alert(
-          "Location Not Found",
-          "We could not determine your city from your GPS location. Please search for your city manually.",
-          [{ text: "OK" }],
-        )
+        setError("Could not determine your city. Please search for your city instead.")
         return null
       }
 
@@ -146,9 +140,9 @@ export function useLocation(): UseLocationResult {
       console.error("useLocation: Error:", err)
       const message = err instanceof Error ? err.message : "Unknown error"
       if (message.includes("timed out")) {
-        setError("Location request timed out. Please try again.")
+        setError("Could not determine your location. Please search for your city instead.")
       } else {
-        setError("Failed to get your location. Please try again.")
+        setError("Failed to get your location. Please search for your city instead.")
       }
       return null
     } finally {
