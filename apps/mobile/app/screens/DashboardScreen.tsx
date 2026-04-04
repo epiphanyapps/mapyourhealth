@@ -948,6 +948,31 @@ View details: ${shareUrl}`
         />
       </View>
 
+      {/* Pollution Sources Card */}
+      <View style={$observationsCardContainer}>
+        <Card
+          heading="Pollution Sources"
+          content="View known pollution sources and environmental contamination sites near this area."
+          onPress={() => {
+            navigation.navigate("PollutionSources", {
+              city: currentLocation?.city || "",
+              state: currentLocation?.state || "",
+              country: currentLocation?.country || "",
+            })
+          }}
+          RightComponent={
+            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
+          }
+          LeftComponent={
+            <View
+              style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
+            >
+              <MaterialCommunityIcons name="factory" size={24} color={theme.colors.tint} />
+            </View>
+          }
+        />
+      </View>
+
       {/* Report Hazard Button */}
       <Pressable
         onPress={handleReportHazard}

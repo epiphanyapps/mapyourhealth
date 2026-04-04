@@ -24,6 +24,7 @@ import { MagicLinkScreen } from "@/screens/MagicLinkScreen"
 import { MagicLinkSentScreen } from "@/screens/MagicLinkSentScreen"
 import { MagicLinkVerifyScreen } from "@/screens/MagicLinkVerifyScreen"
 import { OnboardingLocationsScreen } from "@/screens/OnboardingLocationsScreen"
+import { PollutionSourcesScreen } from "@/screens/PollutionSourcesScreen"
 import { ProfileScreen } from "@/screens/ProfileScreen"
 import { ReportScreen } from "@/screens/ReportScreen"
 import { SignupScreen } from "@/screens/SignupScreen"
@@ -77,11 +78,12 @@ const AppStack = () => {
           backgroundColor: colors.background,
         },
       }}
-      initialRouteName={isAuthenticated ? "Dashboard" : "Welcome"}
+      initialRouteName="Dashboard"
     >
       <Stack.Screen name="Dashboard" component={DashboardScreen} />
       <Stack.Screen name="CategoryDetail" component={CategoryDetailScreen} />
       <Stack.Screen name="LocationObservations" component={LocationObservationsScreen} />
+      <Stack.Screen name="PollutionSources" component={PollutionSourcesScreen} />
       <Stack.Screen name="StatTrend" component={StatTrendScreen} />
       <Stack.Screen name="OnboardingLocations" component={OnboardingLocationsScreen} />
       <Stack.Screen name="Report" component={ReportScreen} />
@@ -159,6 +161,19 @@ const linking: LinkingOptions<AppStackParamList> = {
       },
       LocationObservations: {
         path: "location/:city/:state/:country/observations",
+        parse: {
+          city: (city: string) => decodeURIComponent(city),
+          state: (state: string) => decodeURIComponent(state),
+          country: (country: string) => decodeURIComponent(country),
+        },
+        stringify: {
+          city: (city: string) => encodeURIComponent(city),
+          state: (state: string) => encodeURIComponent(state),
+          country: (country: string) => encodeURIComponent(country),
+        },
+      },
+      PollutionSources: {
+        path: "location/:city/:state/:country/pollution-sources",
         parse: {
           city: (city: string) => decodeURIComponent(city),
           state: (state: string) => decodeURIComponent(state),

@@ -78,4 +78,11 @@ export const queryKeys = {
     byJurisdiction: (code: string) =>
       [...queryKeys.propertyThresholds.all, "jurisdiction", code] as const,
   },
+
+  // ── Pollution Sources ──
+  pollutionSources: {
+    all: ["pollutionSources"] as const,
+    byCity: (city: string) => [...queryKeys.pollutionSources.all, "city", city] as const,
+    byState: (state: string) => [...queryKeys.pollutionSources.all, "state", state] as const,
+  },
 } as const
