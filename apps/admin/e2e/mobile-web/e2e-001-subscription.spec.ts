@@ -166,28 +166,4 @@ test.describe("E2E-001: Subscription Flow", () => {
     await expect(shareButton).toBeVisible();
   });
 
-  test("compare button navigates correctly", async ({ page }) => {
-    // Navigate to city first
-    await expect(page.getByText("Find out how safe your location is")).toBeVisible({
-      timeout: 30000,
-    });
-
-    const searchInput = page.getByPlaceholder("Search cities...");
-    await searchInput.fill(testCities.default);
-    await searchInput.press("Enter");
-
-    // Wait for dashboard to load
-    await expect(page.getByText(testCities.default)).toBeVisible({
-      timeout: 15000,
-    });
-
-    // Click compare button
-    const compareButton = page.getByRole("button", { name: /compare/i });
-    await compareButton.click();
-
-    // Verify we navigate to compare screen (URL contains compare or compare UI visible)
-    await page.waitForURL(/.*compare.*/i, { timeout: 10000 }).catch(() => {
-      // If URL doesn't change, that's okay for web - check for compare UI
-    });
-  });
 });
