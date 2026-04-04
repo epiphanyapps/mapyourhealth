@@ -29,11 +29,6 @@ const PollutionSourceMap = dynamic(
   { ssr: false, loading: () => <div className="h-full animate-pulse bg-gray-100 rounded-lg" /> }
 );
 
-const SourceListPanel = dynamic(
-  () => import("@/components/pollution-sources/SourceListPanel"),
-  { ssr: false }
-);
-
 type PollutionSource = Schema["PollutionSource"]["type"];
 type Contaminant = Schema["Contaminant"]["type"];
 

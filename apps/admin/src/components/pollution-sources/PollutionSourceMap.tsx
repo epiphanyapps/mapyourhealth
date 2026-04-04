@@ -1,9 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import {
+  APIProvider,
+  Map,
+  AdvancedMarker,
+  useMap,
+} from "@vis.gl/react-google-maps";
 import {
   Sheet,
   SheetContent,
@@ -24,14 +30,12 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { 
-  MapPin, 
-  Loader2, 
-  Save, 
-  Trash2, 
-  AlertTriangle,
-  Plus,
-  X 
+import {
+  MapPin,
+  Loader2,
+  Save,
+  Trash2,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -106,6 +110,57 @@ const sourceFormSchema = z.object({
 
 type FormData = z.infer<typeof sourceFormSchema>;
 
+const SEVERITY_COLORS: Record<string, string> = {
+  low: "#22c55e",
+  moderate: "#eab308",
+  high: "#f97316",
+  critical: "#ef4444",
+};
+
+// Inner component that has access to the map instance via useMap()
+function ImpactCircles({
+  sources,
+  selectedSource,
+}: {
+  sources: PollutionSource[];
+  selectedSource: PollutionSource | null;
+}) {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map) return;
+
+    const circles: google.maps.Circle[] = [];
+
+    sources.forEach((source) => {
+      if (!source.id) return;
+
+      const isSelected = selectedSource?.id === source.id;
+      const color = SEVERITY_COLORS[source.severityLevel] || "#6b7280";
+
+      const circle = new google.maps.Circle({
+        map,
+        center: { lat: source.latitude, lng: source.longitude },
+        radius: source.impactRadius,
+        fillColor: color,
+        fillOpacity: isSelected ? 0.4 : 0.2,
+        strokeColor: color,
+        strokeOpacity: 0.8,
+        strokeWeight: isSelected ? 3 : 2,
+        clickable: false,
+      });
+
+      circles.push(circle);
+    });
+
+    return () => {
+      circles.forEach((c) => c.setMap(null));
+    };
+  }, [map, sources, selectedSource]);
+
+  return null;
+}
+
 export default function PollutionSourceMap({
   sources,
   selectedSource,
@@ -118,11 +173,9 @@ export default function PollutionSourceMap({
   isCreatingSource,
   contaminants,
 }: PollutionSourceMapProps) {
-  const mapContainer = useRef<HTMLDivElement>(null);
-  const map = useRef<mapboxgl.Map | null>(null);
-  const markers = useRef<Map<string, mapboxgl.Marker>>(new Map());
-  const circles = useRef<Map<string, string>>(new Map()); // sourceId -> layerId mapping
   const [isSaving, setIsSaving] = useState(false);
+
+  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "";
 
   // Form management
   const {
@@ -138,235 +191,14 @@ export default function PollutionSourceMap({
 
   const watchedContaminants = watch("primaryContaminants", []);
 
-  // Initialize Mapbox
-  useEffect(() => {
-    if (!mapContainer.current || map.current) return;
-
-    // Load Mapbox GL JS dynamically to avoid SSR issues
-    import("mapbox-gl").then((mapboxgl) => {
-      if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN) {
-        console.error("Mapbox token not found");
-        return;
-      }
-
-      mapboxgl.default.accessToken = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-
-      map.current = new mapboxgl.default.Map({
-        container: mapContainer.current!,
-        style: "mapbox://styles/mapbox/light-v11",
-        center: [viewport.longitude, viewport.latitude],
-        zoom: viewport.zoom,
-      });
-
-      map.current.addControl(new mapboxgl.default.NavigationControl(), "top-right");
-      map.current.addControl(new mapboxgl.default.ScaleControl(), "bottom-left");
-
-      // Handle map clicks
-      map.current.on("click", (e) => {
-        onMapClick({ lat: e.lngLat.lat, lng: e.lngLat.lng });
-      });
-
-      // Handle viewport changes
-      map.current.on("moveend", () => {
-        if (map.current) {
-          const center = map.current.getCenter();
-          const zoom = map.current.getZoom();
-          onViewportChange({
-            latitude: center.lat,
-            longitude: center.lng,
-            zoom,
-          });
-        }
-      });
-
-      // Change cursor when creating source
-      map.current.getCanvas().style.cursor = isCreatingSource ? "crosshair" : "";
-    });
-
-    return () => {
-      map.current?.remove();
-      map.current = null;
-    };
-  }, []);
-
-  // Update cursor when creating source
-  useEffect(() => {
-    if (map.current) {
-      map.current.getCanvas().style.cursor = isCreatingSource ? "crosshair" : "";
-    }
-  }, [isCreatingSource]);
-
-  // Update viewport when prop changes
-  useEffect(() => {
-    if (map.current) {
-      map.current.flyTo({
-        center: [viewport.longitude, viewport.latitude],
-        zoom: viewport.zoom,
-        duration: 1000,
-      });
-    }
-  }, [viewport]);
-
-  // Render pollution sources on map
-  useEffect(() => {
-    if (!map.current) return;
-
-    // Clear existing markers and circles
-    markers.current.forEach((marker) => marker.remove());
-    markers.current.clear();
-    
-    circles.current.forEach((layerId) => {
-      if (map.current!.getLayer(layerId)) {
-        map.current!.removeLayer(layerId);
-      }
-      if (map.current!.getSource(layerId)) {
-        map.current!.removeSource(layerId);
-      }
-    });
-    circles.current.clear();
-
-    // Add pollution sources to map
-    import("mapbox-gl").then((mapboxgl) => {
-      sources.forEach((source) => {
-        if (!map.current || !source.id) return;
-
-        // Create impact circle
-        const circleLayerId = `circle-${source.id}`;
-        
-        // Create circle polygon
-        const center = [source.longitude, source.latitude];
-        const radius = source.impactRadius; // meters
-        const points = 64;
-        const coordinates = [];
-        
-        for (let i = 0; i < points; i++) {
-          const angle = (i / points) * 2 * Math.PI;
-          const dx = radius * Math.cos(angle);
-          const dy = radius * Math.sin(angle);
-          
-          // Convert meters to degrees (approximate)
-          const deltaLng = dx / (111320 * Math.cos(source.latitude * Math.PI / 180));
-          const deltaLat = dy / 110540;
-          
-          coordinates.push([
-            source.longitude + deltaLng,
-            source.latitude + deltaLat,
-          ]);
-        }
-        coordinates.push(coordinates[0]); // Close polygon
-
-        // Add circle source and layer
-        map.current.addSource(circleLayerId, {
-          type: "geojson",
-          data: {
-            type: "Feature",
-            properties: {},
-            geometry: {
-              type: "Polygon",
-              coordinates: [coordinates],
-            },
-          },
-        });
-
-        // Get color based on severity
-        const getColor = (severity: string) => {
-          switch (severity) {
-            case "low": return "#22c55e";
-            case "moderate": return "#eab308";
-            case "high": return "#f97316";
-            case "critical": return "#ef4444";
-            default: return "#6b7280";
-          }
-        };
-
-        map.current.addLayer({
-          id: circleLayerId,
-          type: "fill",
-          source: circleLayerId,
-          paint: {
-            "fill-color": getColor(source.severityLevel),
-            "fill-opacity": source.id === selectedSource?.id ? 0.4 : 0.2,
-          },
-        });
-
-        map.current.addLayer({
-          id: `${circleLayerId}-outline`,
-          type: "line",
-          source: circleLayerId,
-          paint: {
-            "line-color": getColor(source.severityLevel),
-            "line-width": source.id === selectedSource?.id ? 3 : 2,
-            "line-opacity": 0.8,
-          },
-        });
-
-        circles.current.set(source.id, circleLayerId);
-
-        // Create marker
-        const markerElement = document.createElement("div");
-        markerElement.className = "pollution-source-marker";
-        markerElement.style.cssText = `
-          width: 24px;
-          height: 24px;
-          background-color: ${getColor(source.severityLevel)};
-          border: 2px solid white;
-          border-radius: 50%;
-          cursor: pointer;
-          box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          font-size: 12px;
-          color: white;
-          font-weight: bold;
-        `;
-
-        // Add severity indicator
-        const icon = document.createElement("div");
-        icon.innerHTML = source.severityLevel === "critical" ? "!" : "•";
-        markerElement.appendChild(icon);
-
-        const marker = new mapboxgl.default.Marker(markerElement)
-          .setLngLat([source.longitude, source.latitude])
-          .addTo(map.current);
-
-        // Click handler for marker
-        markerElement.addEventListener("click", (e) => {
-          e.stopPropagation();
-          onSourceSelect(source);
-        });
-
-        markers.current.set(source.id, marker);
-
-        // Add click handlers for circle layers
-        map.current.on("click", circleLayerId, (e) => {
-          e.preventDefault();
-          onSourceSelect(source);
-        });
-
-        map.current.on("mouseenter", circleLayerId, () => {
-          if (map.current) {
-            map.current.getCanvas().style.cursor = "pointer";
-          }
-        });
-
-        map.current.on("mouseleave", circleLayerId, () => {
-          if (map.current) {
-            map.current.getCanvas().style.cursor = isCreatingSource ? "crosshair" : "";
-          }
-        });
-      });
-    });
-  }, [sources, selectedSource, isCreatingSource, onSourceSelect]);
-
-  // Populate form when source is selected
+  // Pre-populate form when source is selected
   useEffect(() => {
     if (selectedSource) {
       reset({
         name: selectedSource.name || "",
         sourceType: selectedSource.sourceType || "other",
-        latitude: selectedSource.latitude || 0,
-        longitude: selectedSource.longitude || 0,
+        latitude: selectedSource.latitude,
+        longitude: selectedSource.longitude,
         impactRadius: selectedSource.impactRadius || 500,
         address: selectedSource.address || "",
         city: selectedSource.city || "",
@@ -397,7 +229,7 @@ export default function PollutionSourceMap({
 
   const handleDelete = async () => {
     if (!selectedSource?.id) return;
-    
+
     try {
       await onSourceDelete(selectedSource.id);
       toast.success("Pollution source deleted successfully");
@@ -419,34 +251,103 @@ export default function PollutionSourceMap({
     setValue("primaryContaminants", current.filter(id => id !== contaminantId));
   };
 
-  const getSourceTypeLabel = (type: string) => {
-    return type.charAt(0).toUpperCase() + type.slice(1).replace('_', ' ');
-  };
+  const handleMapClick = useCallback(
+    (e: google.maps.MapMouseEvent) => {
+      if (isCreatingSource && e.latLng) {
+        onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+      }
+    },
+    [isCreatingSource, onMapClick],
+  );
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "low": return "bg-green-100 text-green-800 border-green-200";
-      case "moderate": return "bg-yellow-100 text-yellow-800 border-yellow-200";
-      case "high": return "bg-orange-100 text-orange-800 border-orange-200";
-      case "critical": return "bg-red-100 text-red-800 border-red-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
-    }
-  };
+  const mapCenter = useMemo(
+    () => ({ lat: viewport.latitude, lng: viewport.longitude }),
+    [viewport.latitude, viewport.longitude],
+  );
+
+  if (!apiKey) {
+    return (
+      <div className="relative h-full flex items-center justify-center bg-gray-100 rounded-lg">
+        <div className="text-center text-gray-500 p-8">
+          <MapPin className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p className="font-medium">Map not configured</p>
+          <p className="text-sm mt-1">
+            Set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY in apps/admin/.env.local
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative h-full">
-      {/* Map Container */}
-      <div ref={mapContainer} className="w-full h-full rounded-lg overflow-hidden" />
+      {/* Google Map */}
+      <APIProvider apiKey={apiKey}>
+        <div
+          className="w-full h-full rounded-lg overflow-hidden"
+          style={{ cursor: isCreatingSource ? "crosshair" : "default" }}
+        >
+          <Map
+            defaultCenter={mapCenter}
+            defaultZoom={viewport.zoom}
+            center={mapCenter}
+            zoom={viewport.zoom}
+            gestureHandling="greedy"
+            disableDefaultUI={false}
+            mapId="pollution-sources-map"
+            onClick={handleMapClick}
+            onCameraChanged={(ev) => {
+              const { center, zoom } = ev.detail;
+              onViewportChange({
+                latitude: center.lat,
+                longitude: center.lng,
+                zoom,
+              });
+            }}
+          >
+            {/* Impact circles */}
+            <ImpactCircles sources={sources} selectedSource={selectedSource} />
 
-      {/* Map Loading Indicator */}
-      {!map.current && (
-        <div className="absolute inset-0 flex items-center justify-center bg-gray-100 rounded-lg">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Loader2 className="h-5 w-5 animate-spin" />
-            <span>Loading map...</span>
-          </div>
+            {/* Source markers */}
+            {sources.map((source) => {
+              if (!source.id) return null;
+              const color = SEVERITY_COLORS[source.severityLevel] || "#6b7280";
+              const isSelected = selectedSource?.id === source.id;
+
+              return (
+                <AdvancedMarker
+                  key={source.id}
+                  position={{ lat: source.latitude, lng: source.longitude }}
+                  onClick={() => onSourceSelect(source)}
+                  title={source.name}
+                >
+                  <div
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: "50%",
+                      backgroundColor: color,
+                      border: `2px solid ${isSelected ? "#000" : "#fff"}`,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#fff",
+                      fontSize: 12,
+                      fontWeight: "bold",
+                      boxShadow: isSelected
+                        ? "0 0 0 2px #000, 0 2px 8px rgba(0,0,0,0.3)"
+                        : "0 2px 4px rgba(0,0,0,0.3)",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {source.severityLevel === "critical" ? "!" : "•"}
+                  </div>
+                </AdvancedMarker>
+              );
+            })}
+          </Map>
         </div>
-      )}
+      </APIProvider>
 
       {/* Source Details Panel */}
       <Sheet open={!!selectedSource} onOpenChange={() => onSourceSelect(null)}>
@@ -457,7 +358,7 @@ export default function PollutionSourceMap({
               {selectedSource?.id ? "Edit Pollution Source" : "New Pollution Source"}
             </SheetTitle>
             <SheetDescription>
-              {selectedSource?.id 
+              {selectedSource?.id
                 ? "Update the pollution source information below."
                 : "Enter details for the new pollution source."}
             </SheetDescription>
@@ -468,7 +369,7 @@ export default function PollutionSourceMap({
               {/* Basic Information */}
               <div className="space-y-4">
                 <h3 className="font-medium">Basic Information</h3>
-                
+
                 <div>
                   <Label htmlFor="name">Source Name *</Label>
                   <Input
@@ -519,7 +420,7 @@ export default function PollutionSourceMap({
               {/* Location */}
               <div className="space-y-4">
                 <h3 className="font-medium">Location</h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="latitude">Latitude *</Label>
@@ -533,7 +434,7 @@ export default function PollutionSourceMap({
                       <p className="text-sm text-red-500 mt-1">{errors.latitude.message}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="longitude">Longitude *</Label>
                     <Input
@@ -569,7 +470,7 @@ export default function PollutionSourceMap({
                       <p className="text-sm text-red-500 mt-1">{errors.city.message}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="state">State/Province *</Label>
                     <Input
@@ -581,7 +482,7 @@ export default function PollutionSourceMap({
                       <p className="text-sm text-red-500 mt-1">{errors.state.message}</p>
                     )}
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="country">Country *</Label>
                     <Input
@@ -613,7 +514,7 @@ export default function PollutionSourceMap({
               {/* Impact Zone */}
               <div className="space-y-4">
                 <h3 className="font-medium">Impact Zone</h3>
-                
+
                 <div>
                   <Label htmlFor="impactRadius">Radius (meters) *</Label>
                   <Input
@@ -637,14 +538,14 @@ export default function PollutionSourceMap({
               {/* Contaminants */}
               <div className="space-y-4">
                 <h3 className="font-medium">Contaminants</h3>
-                
+
                 <div className="flex flex-wrap gap-2">
                   {(watchedContaminants || []).map((contaminantId) => {
                     const contaminant = contaminants.find(c => c.contaminantId === contaminantId);
                     return (
-                      <Badge 
-                        key={contaminantId} 
-                        variant="secondary" 
+                      <Badge
+                        key={contaminantId}
+                        variant="secondary"
                         className="flex items-center gap-1"
                       >
                         {contaminant?.name || contaminantId}
@@ -671,8 +572,8 @@ export default function PollutionSourceMap({
                     {contaminants
                       .filter(c => !(watchedContaminants || []).includes(c.contaminantId))
                       .map((contaminant) => (
-                        <SelectItem 
-                          key={contaminant.contaminantId} 
+                        <SelectItem
+                          key={contaminant.contaminantId}
                           value={contaminant.contaminantId}
                         >
                           {contaminant.name} ({contaminant.category})
@@ -687,7 +588,7 @@ export default function PollutionSourceMap({
               {/* Status & Severity */}
               <div className="space-y-4">
                 <h3 className="font-medium">Status & Severity</h3>
-                
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <Label htmlFor="severityLevel">Severity Level *</Label>
@@ -755,7 +656,7 @@ export default function PollutionSourceMap({
                     </Button>
                   )}
                 </div>
-                
+
                 <div className="flex gap-2">
                   <Button
                     type="button"
