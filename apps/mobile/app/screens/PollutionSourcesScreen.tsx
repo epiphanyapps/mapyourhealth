@@ -238,11 +238,7 @@ export const PollutionSourcesScreen: FC<PollutionSourcesScreenProps> =
     // Success state
     return (
       <Screen preset="fixed" safeAreaEdges={["top"]}>
-        <Header
-          title="Pollution Sources"
-          leftIcon="back"
-          onLeftPress={() => navigation.goBack()}
-        />
+        <Header title="Pollution Sources" leftIcon="back" onLeftPress={() => navigation.goBack()} />
         <ScrollView
           contentContainerStyle={styles.$scrollContent}
           testID="pollution-sources-list"
