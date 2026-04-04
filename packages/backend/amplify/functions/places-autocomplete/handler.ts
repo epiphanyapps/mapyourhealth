@@ -213,8 +213,6 @@ async function fetchPlacesAutocomplete(
   const params = new URLSearchParams({
     input: query,
     key: GOOGLE_PLACES_API_KEY,
-    // Bias towards US/Canada
-    components: 'country:us|country:ca',
   });
 
   if (sessionToken) {
