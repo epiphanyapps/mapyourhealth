@@ -38,37 +38,10 @@ import {
   X,
 } from "lucide-react";
 import { toast } from "sonner";
+import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 
-// Types from schema
-type PollutionSource = {
-  id?: string;
-  sourceId?: string;
-  name: string;
-  sourceType: "industrial" | "agricultural" | "waste_site" | "spill" | "mining" | "transportation" | "construction" | "other";
-  latitude: number;
-  longitude: number;
-  impactRadius: number;
-  address?: string;
-  city: string;
-  state: string;
-  country: string;
-  jurisdictionCode: string;
-  primaryContaminants: string[];
-  severityLevel: "low" | "moderate" | "high" | "critical";
-  status: "active" | "monitored" | "remediated" | "closed";
-  description?: string;
-  notes?: string;
-  reportedAt: string;
-  reportedBy?: string;
-};
-
-type Contaminant = {
-  id: string;
-  contaminantId: string;
-  name: string;
-  unit: string;
-  category: string;
-};
+type PollutionSource = Schema["PollutionSource"]["type"];
+type Contaminant = Schema["Contaminant"]["type"];
 
 interface MapViewport {
   latitude: number;
@@ -82,7 +55,7 @@ interface PollutionSourceMapProps {
   viewport: MapViewport;
   onViewportChange: (viewport: MapViewport) => void;
   onMapClick: (coordinates: { lat: number; lng: number }) => void;
-  onSourceSelect: (source: PollutionSource) => void;
+  onSourceSelect: (source: PollutionSource | null) => void;
   onSourceSave: (sourceData: Partial<PollutionSource>) => Promise<void>;
   onSourceDelete: (sourceId: string) => Promise<void>;
   isCreatingSource: boolean;
@@ -136,7 +109,7 @@ function ImpactCircles({
       if (!source.id) return;
 
       const isSelected = selectedSource?.id === source.id;
-      const color = SEVERITY_COLORS[source.severityLevel] || "#6b7280";
+      const color = SEVERITY_COLORS[source.severityLevel ?? "moderate"] || "#6b7280";
 
       const circle = new google.maps.Circle({
         map,
@@ -205,7 +178,7 @@ export default function PollutionSourceMap({
         state: selectedSource.state || "",
         country: selectedSource.country || "",
         jurisdictionCode: selectedSource.jurisdictionCode || "",
-        primaryContaminants: selectedSource.primaryContaminants || [],
+        primaryContaminants: (selectedSource.primaryContaminants || []).filter((v): v is string => v != null),
         severityLevel: selectedSource.severityLevel || "moderate",
         status: selectedSource.status || "active",
         description: selectedSource.description || "",
@@ -252,9 +225,9 @@ export default function PollutionSourceMap({
   };
 
   const handleMapClick = useCallback(
-    (e: google.maps.MapMouseEvent) => {
-      if (isCreatingSource && e.latLng) {
-        onMapClick({ lat: e.latLng.lat(), lng: e.latLng.lng() });
+    (e: { detail: { latLng: { lat: number; lng: number } | null } }) => {
+      if (isCreatingSource && e.detail.latLng) {
+        onMapClick({ lat: e.detail.latLng.lat, lng: e.detail.latLng.lng });
       }
     },
     [isCreatingSource, onMapClick],
@@ -311,7 +284,7 @@ export default function PollutionSourceMap({
             {/* Source markers */}
             {sources.map((source) => {
               if (!source.id) return null;
-              const color = SEVERITY_COLORS[source.severityLevel] || "#6b7280";
+              const color = SEVERITY_COLORS[source.severityLevel ?? "moderate"] || "#6b7280";
               const isSelected = selectedSource?.id === source.id;
 
               return (
@@ -386,7 +359,7 @@ export default function PollutionSourceMap({
                   <Label htmlFor="sourceType">Source Type *</Label>
                   <Select
                     value={watch("sourceType")}
-                    onValueChange={(value) => setValue("sourceType", value)}
+                    onValueChange={(value) => setValue("sourceType", value as FormData["sourceType"])}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -594,7 +567,7 @@ export default function PollutionSourceMap({
                     <Label htmlFor="severityLevel">Severity Level *</Label>
                     <Select
                       value={watch("severityLevel")}
-                      onValueChange={(value) => setValue("severityLevel", value)}
+                      onValueChange={(value) => setValue("severityLevel", value as FormData["severityLevel"])}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -612,7 +585,7 @@ export default function PollutionSourceMap({
                     <Label htmlFor="status">Status *</Label>
                     <Select
                       value={watch("status")}
-                      onValueChange={(value) => setValue("status", value)}
+                      onValueChange={(value) => setValue("status", value as FormData["status"])}
                     >
                       <SelectTrigger>
                         <SelectValue />

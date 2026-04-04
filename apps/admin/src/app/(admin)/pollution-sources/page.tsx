@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -148,14 +147,16 @@ export default function PollutionSourcesPage() {
     }
   };
 
-  const handleSourceSelect = (source: PollutionSource) => {
+  const handleSourceSelect = (source: PollutionSource | null) => {
     setSelectedSource(source);
     setIsCreatingSource(false);
-    setMapViewport({
-      latitude: source.latitude,
-      longitude: source.longitude,
-      zoom: 14,
-    });
+    if (source) {
+      setMapViewport({
+        latitude: source.latitude,
+        longitude: source.longitude,
+        zoom: 14,
+      });
+    }
   };
 
   const handleSourceSave = async (sourceData: Partial<PollutionSource>) => {
@@ -175,11 +176,25 @@ export default function PollutionSourcesPage() {
       } else {
         // Create new source
         const result = await client.models.PollutionSource.create({
-          ...sourceData,
-          sourceId: `PS_${Date.now()}`, // Generate unique ID
+          name: sourceData.name || "Unnamed Source",
+          latitude: sourceData.latitude || 0,
+          longitude: sourceData.longitude || 0,
+          impactRadius: sourceData.impactRadius || 500,
+          city: sourceData.city || "",
+          state: sourceData.state || "",
+          country: sourceData.country || "",
+          sourceId: `PS_${Date.now()}`,
+          sourceType: sourceData.sourceType,
+          address: sourceData.address,
+          jurisdictionCode: sourceData.jurisdictionCode,
+          primaryContaminants: sourceData.primaryContaminants,
+          severityLevel: sourceData.severityLevel,
+          status: sourceData.status,
+          description: sourceData.description,
+          notes: sourceData.notes,
           reportedAt: new Date().toISOString(),
-          reportedBy: "admin", // TODO: Use actual user ID
-        } as Record<string, unknown>);
+          reportedBy: "admin",
+        });
         
         if (result.errors) {
           throw new Error("Failed to create source");
@@ -232,11 +247,10 @@ export default function PollutionSourcesPage() {
     }
   };
 
-  // Get unique values for filter dropdowns
-  const uniqueSourceTypes = [...new Set(sources.map(s => s.sourceType))];
-  const uniqueSeverities = [...new Set(sources.map(s => s.severityLevel))];
-  const uniqueStatuses = [...new Set(sources.map(s => s.status))];
-  const uniqueJurisdictions = [...new Set(sources.map(s => s.jurisdictionCode))];
+  // Get unique values for filter dropdowns (filter out nulls)
+  const uniqueSourceTypes = [...new Set(sources.map(s => s.sourceType).filter(Boolean))] as string[];
+  const uniqueSeverities = [...new Set(sources.map(s => s.severityLevel).filter(Boolean))] as string[];
+  const uniqueStatuses = [...new Set(sources.map(s => s.status).filter(Boolean))] as string[];
 
   return (
     <div className="flex h-[calc(100vh-4rem)] gap-6 p-6">
@@ -373,7 +387,7 @@ export default function PollutionSourcesPage() {
                     onClick={() => handleSourceSelect(source)}
                   >
                     <div className="flex items-start gap-2">
-                      {getStatusIcon(source.status)}
+                      {getStatusIcon(source.status ?? "active")}
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-sm truncate">
                           {source.name}
@@ -384,9 +398,9 @@ export default function PollutionSourcesPage() {
                         <div className="flex items-center gap-2 mt-1">
                           <Badge
                             variant="secondary"
-                            className={`text-xs ${getSeverityColor(source.severityLevel)}`}
+                            className={`text-xs ${getSeverityColor(source.severityLevel ?? "moderate")}`}
                           >
-                            {source.severityLevel}
+                            {source.severityLevel ?? "moderate"}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {source.impactRadius}m
