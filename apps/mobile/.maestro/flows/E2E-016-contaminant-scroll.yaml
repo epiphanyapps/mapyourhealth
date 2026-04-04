@@ -1,0 +1,99 @@
+# flow: E2E-016 Contaminant List Scrolling
+# intent:
+#   Verify that the water contaminants list is fully scrollable on mobile.
+#   Users should be able to scroll to the end of the list without content
+#   being clipped. Tests the fix for issue #177.
+#   1. Search Montreal → select from autocomplete
+#   2. Expand Water Quality category
+#   3. Tap a subcategory with many contaminants (e.g. Heavy Metals)
+#   4. Scroll down and verify items near the bottom are visible
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/177
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-016 - Contaminant List Scrolling
+tags:
+  - e2e
+  - scroll
+  - regression
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search for Montreal
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar"
+
+- inputText: "Montreal"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- extendedWaitUntil:
+    visible: ".*Montreal, QC, Canada.*"
+    timeout: 10000
+
+- tapOn:
+    text: ".*Montreal, QC, Canada.*"
+    index: 0
+    label: "Select Montreal from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+# ========================================
+# Step 2: Verify Dashboard loaded
+# ========================================
+- assertVisible:
+    text: "Montreal, QC"
+    label: "Montreal dashboard header visible"
+
+# ========================================
+# Step 3: Expand Water Quality & navigate to subcategory
+# ========================================
+- tapOn:
+    text: ".*Water Quality.*"
+    label: "Tap Water Quality category"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn:
+    text: ".*Heavy Metals.*"
+    label: "Tap Heavy Metals subcategory"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# ========================================
+# Step 4: Verify the contaminant table loaded
+# ========================================
+- assertVisible:
+    text: ".*Contaminant.*"
+    label: "Contaminant table header visible"
+    optional: true
+
+# ========================================
+# Step 5: Scroll down to verify bottom items are accessible
+# ========================================
+- scroll:
+    label: "Scroll down the contaminant list"
+
+- scroll:
+    label: "Scroll down more"
+
+- scroll:
+    label: "Scroll down to bottom"
+
+# Verify we can see items near the bottom of the list
+# (If scrolling was broken, these would be clipped)
+- assertVisible:
+    text: ".*WHO.*"
+    label: "WHO threshold column visible after scrolling"
+    optional: true

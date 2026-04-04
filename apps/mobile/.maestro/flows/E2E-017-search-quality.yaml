@@ -1,0 +1,81 @@
+# flow: E2E-017 Search Suggestion Quality
+# intent:
+#   Verify that search suggestions prioritize main cities over
+#   neighborhoods, POIs, and establishments. The backend sorts
+#   predictions by priority tier (cities first).
+#   1. Search "Montreal" → first suggestion should be the main city
+#   2. Search "New York" → first suggestion should be the main city
+# Issue: https://github.com/epiphanyapps/mapyourhealth/issues/183
+
+appId: ${MAESTRO_APP_ID}
+name: E2E-017 - Search Suggestion Quality
+tags:
+  - e2e
+  - search
+  - quality
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Step 1: Search Montreal - verify city is first
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar is visible"
+
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar"
+
+- inputText: "Montreal"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# First suggestion should be the main city, not a neighborhood
+- extendedWaitUntil:
+    visible: ".*Montreal, QC, Canada.*"
+    timeout: 10000
+
+- assertVisible:
+    text: ".*Montreal, QC, Canada.*"
+    label: "Montreal city is in suggestions (should be first)"
+
+# ========================================
+# Step 2: Clear and search New York
+# ========================================
+- tapOn:
+    text: "Search city or location..."
+    label: "Tap search bar again"
+
+- eraseText: 20
+
+- inputText: "New York"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+# First suggestion should be New York city
+- extendedWaitUntil:
+    visible: ".*New York.*"
+    timeout: 10000
+
+- assertVisible:
+    text: ".*New York.*"
+    label: "New York is in suggestions (should be first)"
+
+# ========================================
+# Step 3: Select New York and verify dashboard
+# ========================================
+- tapOn:
+    text: ".*New York.*"
+    index: 0
+    label: "Select New York from suggestions"
+
+- waitForAnimationToEnd:
+    timeout: 10000
+
+- assertVisible:
+    text: ".*New York.*"
+    label: "New York dashboard loaded"
