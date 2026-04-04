@@ -16,6 +16,7 @@ import type { StatCategory, StatStatus, SubCategory } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
 
 import { CategoryIcon } from "./CategoryIcon"
+import { CategoryInfoButton } from "./CategoryInfoButton"
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
 
@@ -80,10 +81,11 @@ export interface ExpandableCategoryCardProps {
 export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const { category, categoryName, status, onPress, getSubCategoryStatus, style } = props
   const { theme } = useAppTheme()
-  const { getSubCategoriesByCategoryId } = useCategories()
+  const { getCategoryById, getSubCategoriesByCategoryId } = useCategories()
 
   // Get category ID as string (handles both enum and string)
   const categoryId = String(category)
+  const categoryData = getCategoryById(categoryId)
 
   // Try dynamic sub-categories first, fallback to legacy config
   const dynamicSubCategories = getSubCategoriesByCategoryId(categoryId)
@@ -271,6 +273,9 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
             accessibilityLabel={`${subCategory.name} sub-category${subCategoryStatusResult ? `, status: ${subCategoryStatusResult.status}` : ""}`}
           >
             <Text style={$subCategoryText}>{subCategory.name}</Text>
+            {"description" in subCategory && subCategory.description && (
+              <CategoryInfoButton name={subCategory.name} description={subCategory.description} />
+            )}
             {subCategoryStatusResult && (
               <View style={$subCategoryStatusContainer}>
                 <StatusIndicator
@@ -304,6 +309,9 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
         <View style={$textContainer}>
           <Text style={$categoryNameText}>{categoryName}</Text>
         </View>
+        {categoryData?.description && (
+          <CategoryInfoButton name={categoryName} description={categoryData.description} />
+        )}
         {hasSubCategories ? (
           <Animated.View style={[$chevronContainer, animatedChevronStyle]}>
             <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />

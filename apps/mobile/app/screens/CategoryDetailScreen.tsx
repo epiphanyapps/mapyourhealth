@@ -102,6 +102,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
 
       return {
         name: definition.name,
+        contaminantId: stat.statId,
         value: stat.value,
         unit: definition.unit,
         whoLimit: whoThreshold?.limitValue ?? null,

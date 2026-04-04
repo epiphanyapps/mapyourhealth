@@ -25,6 +25,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { SearchSuggestionsDropdown } from "@/components/SearchSuggestionsDropdown"
+import { Text } from "@/components/Text"
 import { SearchSuggestion } from "@/data/types/safety"
 import { useLocationSearch } from "@/hooks/useLocationSearch"
 import { useAppTheme } from "@/theme/context"
@@ -66,6 +67,14 @@ export interface PlacesSearchBarProps {
    * Shows as the input value when not actively searching
    */
   selectedLocation?: { city: string; state: string } | null
+  /**
+   * Location error message to display below the search bar
+   */
+  locationError?: string
+  /**
+   * Callback to dismiss the location error
+   */
+  onLocationErrorDismiss?: () => void
 }
 
 /**
@@ -80,6 +89,8 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     onLocationPress,
     isLocating = false,
     selectedLocation,
+    locationError,
+    onLocationErrorDismiss,
   } = props
 
   const { theme } = useAppTheme()
@@ -215,6 +226,28 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     marginLeft: 8,
   }
 
+  const $errorBanner: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#FEE2E2",
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginTop: 8,
+  }
+
+  const $errorText: TextStyle = {
+    flex: 1,
+    fontSize: 13,
+    color: theme.colors.error,
+    marginLeft: 8,
+  }
+
+  const $errorDismiss: ViewStyle = {
+    padding: 4,
+    marginLeft: 4,
+  }
+
   return (
     <View style={[$wrapper, style]}>
       <View style={$container}>
@@ -266,6 +299,21 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
           </Pressable>
         )}
       </View>
+      {locationError ? (
+        <View style={$errorBanner}>
+          <MaterialCommunityIcons
+            name="alert-circle-outline"
+            size={18}
+            color={theme.colors.error}
+          />
+          <Text style={$errorText}>{locationError}</Text>
+          {onLocationErrorDismiss && (
+            <Pressable onPress={onLocationErrorDismiss} style={$errorDismiss}>
+              <MaterialCommunityIcons name="close" size={16} color={theme.colors.error} />
+            </Pressable>
+          )}
+        </View>
+      ) : null}
       <SearchSuggestionsDropdown
         suggestions={suggestions}
         visible={showSuggestions}

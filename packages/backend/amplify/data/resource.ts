@@ -87,14 +87,16 @@ const schema = a.schema({
     .handler(a.handler.function(placesAutocomplete)),
 
   /**
-   * resolveLocation - Resolves a Google Places placeId to a location
+   * resolveLocation - Resolves a location from a Google Places placeId or GPS coordinates
    * Auto-assigns jurisdiction and caches in Location table
    */
   resolveLocation: a
     .mutation()
     .arguments({
-      placeId: a.string().required(),
+      placeId: a.string(),
       sessionToken: a.string(),
+      latitude: a.float(),
+      longitude: a.float(),
     })
     .returns(a.ref("ResolveLocationResponse"))
     .authorization((allow) => [allow.guest(), allow.authenticated()])

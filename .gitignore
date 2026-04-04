@@ -127,4 +127,3 @@ build-*.tar.gz
 
 # Generated seed data
 packages/backend/scripts/seed-data.json
-packages/backend/scripts/seed-om-data.json
