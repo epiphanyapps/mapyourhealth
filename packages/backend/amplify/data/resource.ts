@@ -520,7 +520,8 @@ const schema = a.schema({
       allow.guest().to(["read"]),
       allow.authenticated().to(["read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
-    ]),
+    ])
+    .secondaryIndexes((index) => [index("city"), index("state")]),
 
   // =========================================================================
   // Observations & Measurements (O&M) Data Model
