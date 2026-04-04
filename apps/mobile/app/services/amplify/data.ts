@@ -772,6 +772,40 @@ export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
 }
 
 // =============================================================================
+// Pollution Sources (Public Read)
+// =============================================================================
+
+/**
+ * Fetch pollution sources for a specific city
+ */
+export async function getPollutionSourcesByCity(city: string): Promise<AmplifyPollutionSource[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.PollutionSource.listPollutionSourceByCity({
+    city,
+  })
+  if (errors) {
+    console.error("Error fetching pollution sources:", errors)
+    throw new Error("Failed to fetch pollution sources")
+  }
+  return data
+}
+
+/**
+ * Fetch pollution sources for a specific state/province
+ */
+export async function getPollutionSourcesByState(state: string): Promise<AmplifyPollutionSource[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.PollutionSource.listPollutionSourceByState({
+    state,
+  })
+  if (errors) {
+    console.error("Error fetching pollution sources by state:", errors)
+    throw new Error("Failed to fetch pollution sources by state")
+  }
+  return data
+}
+
+// =============================================================================
 // Legacy Exports (for backward compatibility during migration)
 // =============================================================================
 
@@ -789,6 +823,8 @@ export async function getStatDefinitions(): Promise<AmplifyContaminant[]> {
 // =============================================================================
 // App Configuration
 // =============================================================================
+
+export type AmplifyPollutionSource = Schema["PollutionSource"]["type"]
 
 export type AmplifyAppConfig = Schema["AppConfig"]["type"]
 

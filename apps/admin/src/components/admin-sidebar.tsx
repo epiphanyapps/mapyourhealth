@@ -36,6 +36,7 @@ import {
   Activity,
   Gauge,
   Eye,
+  Factory,
   Settings,
 } from "lucide-react";
 
@@ -89,6 +90,11 @@ const menuItems = [
     title: "Hazard Reports",
     url: "/reports",
     icon: AlertTriangle,
+  },
+  {
+    title: "Pollution Sources",
+    url: "/pollution-sources",
+    icon: Factory,
   },
   {
     title: "Testing Guide",

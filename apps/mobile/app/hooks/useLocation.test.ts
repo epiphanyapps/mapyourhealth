@@ -30,7 +30,6 @@ import { useLocation } from "./useLocation"
 // eslint-disable-next-line import/first
 import { resolveLocationByCoords } from "../services/amplify/data"
 
-
 const mockRequestPermissions = Location.requestForegroundPermissionsAsync as jest.MockedFunction<
   typeof Location.requestForegroundPermissionsAsync
 >
