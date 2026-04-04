@@ -479,6 +479,51 @@ const schema = a.schema({
     .secondaryIndexes((index) => [index("configKey")]),
 
   // =========================================================================
+  // Pollution Sources
+  // =========================================================================
+
+  /**
+   * PollutionSource - Localized pollution sources with contamination radius
+   * Admin-managed, displayed on map with impact zones
+   */
+  PollutionSource: a
+    .model({
+      sourceId: a.string(),
+      name: a.string().required(),
+      sourceType: a.enum([
+        "industrial",
+        "agricultural",
+        "waste_site",
+        "spill",
+        "mining",
+        "transportation",
+        "construction",
+        "other",
+      ]),
+      latitude: a.float().required(),
+      longitude: a.float().required(),
+      impactRadius: a.float().required(), // meters
+      address: a.string(),
+      city: a.string().required(),
+      state: a.string().required(),
+      country: a.string().required(),
+      jurisdictionCode: a.string(),
+      primaryContaminants: a.string().array(), // contaminant IDs
+      severityLevel: a.enum(["low", "moderate", "high", "critical"]),
+      status: a.enum(["active", "monitored", "remediated", "closed"]),
+      description: a.string(),
+      notes: a.string(),
+      reportedAt: a.datetime(),
+      reportedBy: a.string(),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ])
+    .secondaryIndexes((index) => [index("city"), index("state")]),
+
+  // =========================================================================
   // Observations & Measurements (O&M) Data Model
   // Flexible system for tracking various environmental/health properties
   // =========================================================================
