@@ -78,19 +78,26 @@ interface PlaceDetailsResult {
   error?: string;
 }
 
+/** Place types that are relevant for a health/environment app */
+const ALLOWED_PLACE_TYPES = new Set([
+  'locality',
+  'administrative_area_level_1',
+  'administrative_area_level_2',
+  'administrative_area_level_3',
+  'sublocality_level_1',
+  'sublocality',
+]);
+
 /**
- * Sort Google Places predictions to prioritize main cities over neighborhoods and sub-locations
- * 
- * Priority ranking:
- * 1. Main administrative areas (locality, administrative_area_level_1/2)
- * 2. Secondary administrative areas (sublocality_level_1) 
- * 3. Lower-level areas (sublocality_level_2+, neighborhoods)
- * 4. Establishments and points of interest
- * 
- * Within each tier, sort alphabetically by main text
+ * Filter and sort Google Places predictions.
+ * Removes irrelevant types (establishments, POIs, airports, etc.)
+ * and sorts remaining results by priority with cities first.
  */
 function sortPlacesPredictions(predictions: GooglePrediction[]): GooglePrediction[] {
-  return predictions.sort((a, b) => {
+  return predictions.filter((prediction) => {
+    const types = prediction.types || [];
+    return types.some((type) => ALLOWED_PLACE_TYPES.has(type));
+  }).sort((a, b) => {
     const scoreA = getPlacePriorityScore(a);
     const scoreB = getPlacePriorityScore(b);
     
@@ -373,7 +380,7 @@ export const handler: Handler<PlacesAutocompleteEvent, PlacesAutocompleteResult 
     let sortedPredictions = data.predictions;
     if (data.status === 'OK' && data.predictions && data.predictions.length > 0) {
       sortedPredictions = sortPlacesPredictions(data.predictions);
-      console.log(`Sorted ${sortedPredictions.length} predictions for query: "${query}"`);
+      console.log(`Filtered to ${sortedPredictions.length}/${data.predictions.length} predictions for query: "${query}"`);
     }
 
     // Cache successful results (with original data to maintain API contract)
