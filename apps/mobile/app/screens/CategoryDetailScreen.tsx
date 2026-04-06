@@ -182,8 +182,7 @@ View details: ${shareUrl}`
 
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
-    paddingBottom: 48, // Increased bottom padding for better scrolling experience on mobile
-    minHeight: "100%", // Ensures content can scroll even on shorter screens
+    paddingBottom: 48,
   }
 
   const $categoryHeader: ViewStyle = {
@@ -418,7 +417,7 @@ View details: ${shareUrl}`
   }
 
   return (
-    <Screen preset="fixed" safeAreaEdges={["top"]}>
+    <Screen preset="fixed" safeAreaEdges={["top"]} contentContainerStyle={$screenContent}>
       <Header
         title={categoryName}
         leftIcon="back"
@@ -428,6 +427,7 @@ View details: ${shareUrl}`
       />
 
       <ScrollView
+        style={$scrollView}
         contentContainerStyle={$contentContainer}
         refreshControl={
           <RefreshControl
@@ -567,6 +567,14 @@ View details: ${shareUrl}`
       </ScrollView>
     </Screen>
   )
+}
+
+const $screenContent: ViewStyle = {
+  flex: 1,
+}
+
+const $scrollView: ViewStyle = {
+  flex: 1,
 }
 
 const $headerShareButton: ViewStyle = {
