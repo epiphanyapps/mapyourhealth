@@ -91,7 +91,7 @@ export default function AnalyticsPage() {
         // Count measurements per contaminant category
         const contaminantCategoryMap = new Map<string, string>()
         for (const c of contaminants) {
-          contaminantCategoryMap.set(c.id, c.category || "Unknown")
+          contaminantCategoryMap.set(c.contaminantId, c.category || "Unknown")
         }
         const catMap = new Map<string, number>()
         for (const m of measurements) {
@@ -125,7 +125,7 @@ export default function AnalyticsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground">
-          Platform overview and engagement metrics
+          Data inventory and platform statistics
         </p>
       </div>
 
