@@ -26,7 +26,11 @@ import { Text } from "@/components/Text"
 import { useCategories } from "@/context/CategoriesContext"
 import { useContaminants } from "@/context/ContaminantsContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
-import { CATEGORY_CONFIG, getCategoryDescription } from "@/data/categoryConfig"
+import {
+  CATEGORY_CONFIG,
+  getCategoryDescription,
+  getLocalStandardsLink,
+} from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
 import { useLocationData, getRiskStatsForCategory } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
@@ -456,7 +460,7 @@ View details: ${shareUrl}`
         </View>
 
         {/* Links to external resources */}
-        {categoryConfig.links.length > 0 && (
+        {(categoryConfig.links.length > 0 || category === StatCategory.water) && (
           <View style={$linksContainer}>
             {categoryConfig.links.map((link, index) => (
               <TouchableOpacity
@@ -470,6 +474,25 @@ View details: ${shareUrl}`
                 <Text style={$linkText}>{link.label}</Text>
               </TouchableOpacity>
             ))}
+            {category === StatCategory.water &&
+              (() => {
+                const localLink = getLocalStandardsLink(localJurisdictionCode)
+                return (
+                  <TouchableOpacity
+                    style={$linkButton}
+                    onPress={() => handleLinkPress(localLink.url)}
+                    accessibilityRole="link"
+                    accessibilityLabel={`Open ${localLink.label}`}
+                  >
+                    <MaterialCommunityIcons
+                      name="open-in-new"
+                      size={16}
+                      color={theme.colors.tint}
+                    />
+                    <Text style={$linkText}>{localLink.label}</Text>
+                  </TouchableOpacity>
+                )
+              })()}
           </View>
         )}
 

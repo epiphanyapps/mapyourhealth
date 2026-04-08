@@ -28,10 +28,6 @@ export const mockCategories: Category[] = [
         label: "WHO Drinking Water Guidelines",
         url: "https://www.who.int/publications/i/item/9789241549950",
       },
-      {
-        label: "Local Standards",
-        url: "https://www.epa.gov/ground-water-and-drinking-water/national-primary-drinking-water-regulations",
-      },
     ],
     showStandardsTable: true,
   },
