@@ -39,6 +39,7 @@ import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationD
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { trackEvent } from "@/utils/analytics"
 // jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
 // postalCode utilities removed - using city-level granularity
 
@@ -140,6 +141,17 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     isOffline,
     refresh,
   } = locationData
+
+  // Track city view for analytics
+  useEffect(() => {
+    if (currentLocation?.city) {
+      trackEvent("CityViewed", {
+        city: currentLocation.city,
+        state: currentLocation.state,
+        country: currentLocation.country,
+      })
+    }
+  }, [currentLocation?.city, currentLocation?.state, currentLocation?.country])
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)

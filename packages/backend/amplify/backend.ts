@@ -9,6 +9,7 @@ import {
   HttpMethod,
 } from 'aws-cdk-lib/aws-lambda';
 import { Table, AttributeType, BillingMode } from 'aws-cdk-lib/aws-dynamodb';
+import { CfnApp } from 'aws-cdk-lib/aws-pinpoint';
 import { auth } from './auth/resource';
 import { data } from './data/resource';
 import { sendNotifications } from './functions/send-notifications/resource';
@@ -475,3 +476,39 @@ const manageDataDynamoPolicy = new Policy(manageDataStack, 'ManageDataDynamoPoli
   ],
 });
 backend.manageData.resources.lambda.role?.attachInlinePolicy(manageDataDynamoPolicy);
+
+// ============================================
+// Analytics (Pinpoint) Setup
+// ============================================
+
+const analyticsStack = backend.createStack('analytics-stack');
+
+// Create a Pinpoint app for analytics
+const pinpoint = new CfnApp(analyticsStack, 'Pinpoint', {
+  name: 'MapYourHealth',
+});
+
+// IAM policy for authenticated and unauthenticated users to send analytics events
+const pinpointPolicy = new Policy(analyticsStack, 'PinpointPolicy', {
+  policyName: 'PinpointPolicy',
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['mobiletargeting:UpdateEndpoint', 'mobiletargeting:PutEvents'],
+      resources: [pinpoint.attrArn + '/*'],
+    }),
+  ],
+});
+
+backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(pinpointPolicy);
+backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(pinpointPolicy);
+
+// Add Pinpoint config to amplify_outputs.json
+backend.addOutput({
+  analytics: {
+    amazon_pinpoint: {
+      app_id: pinpoint.ref,
+      aws_region: Stack.of(pinpoint).region,
+    },
+  },
+});
