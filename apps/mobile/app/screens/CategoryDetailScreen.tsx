@@ -462,18 +462,6 @@ View details: ${shareUrl}`
         {/* Links to external resources */}
         {(categoryConfig.links.length > 0 || category === StatCategory.water) && (
           <View style={$linksContainer}>
-            {categoryConfig.links.map((link, index) => (
-              <TouchableOpacity
-                key={index}
-                style={$linkButton}
-                onPress={() => handleLinkPress(link.url)}
-                accessibilityRole="link"
-                accessibilityLabel={`Open ${link.label}`}
-              >
-                <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
-                <Text style={$linkText}>{link.label}</Text>
-              </TouchableOpacity>
-            ))}
             {category === StatCategory.water &&
               (() => {
                 const localLink = getLocalStandardsLink(localJurisdictionCode)
@@ -493,6 +481,18 @@ View details: ${shareUrl}`
                   </TouchableOpacity>
                 )
               })()}
+            {categoryConfig.links.map((link, index) => (
+              <TouchableOpacity
+                key={index}
+                style={$linkButton}
+                onPress={() => handleLinkPress(link.url)}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${link.label}`}
+              >
+                <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
+                <Text style={$linkText}>{link.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
