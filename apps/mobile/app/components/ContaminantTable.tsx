@@ -159,15 +159,6 @@ export function ContaminantTable(props: ContaminantTableProps) {
         </View>
         <TouchableOpacity
           style={[$headerCell, $valueCell]}
-          onPress={onWhoHeaderPress}
-          disabled={!onWhoHeaderPress}
-          accessibilityRole="link"
-          accessibilityLabel="View WHO drinking water guidelines"
-        >
-          <Text style={onWhoHeaderPress ? $linkHeaderText : $headerText}>WHO</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[$headerCell, $valueCell]}
           onPress={onLocalHeaderPress}
           disabled={!onLocalHeaderPress}
           accessibilityRole="link"
@@ -176,6 +167,15 @@ export function ContaminantTable(props: ContaminantTableProps) {
           <Text style={onLocalHeaderPress ? $linkHeaderText : $headerText}>
             {localJurisdictionLabel}
           </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[$headerCell, $valueCell]}
+          onPress={onWhoHeaderPress}
+          disabled={!onWhoHeaderPress}
+          accessibilityRole="link"
+          accessibilityLabel="View WHO drinking water guidelines"
+        >
+          <Text style={onWhoHeaderPress ? $linkHeaderText : $headerText}>WHO</Text>
         </TouchableOpacity>
         <View style={[$headerCell, $statusCell]}>
           <Text style={$headerText}></Text>
@@ -192,15 +192,15 @@ export function ContaminantTable(props: ContaminantTableProps) {
             )}
           </View>
           <View style={$valueCell}>
-            <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
-              {formatValue(row.whoLimit)}
-            </Text>
-          </View>
-          <View style={$valueCell}>
             <Text
               style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
             >
               {formatValue(row.localLimit, row.isUnregulated)}
+            </Text>
+          </View>
+          <View style={$valueCell}>
+            <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
+              {formatValue(row.whoLimit)}
             </Text>
           </View>
           <View style={$statusCell}>
