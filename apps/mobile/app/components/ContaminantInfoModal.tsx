@@ -48,19 +48,6 @@ export function ContaminantInfoModal({
                     {healthEffects.description}
                   </Text>
                 </View>
-
-                {healthEffects.references && healthEffects.references.length > 0 && (
-                  <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: theme.colors.tint }]}>
-                      References
-                    </Text>
-                    {healthEffects.references.map((ref, index) => (
-                      <Text key={index} style={[styles.listItem, { color: theme.colors.text }]}>
-                        {"• " + ref}
-                      </Text>
-                    ))}
-                  </View>
-                )}
               </>
             ) : (
               <View style={styles.section}>

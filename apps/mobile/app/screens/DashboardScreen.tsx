@@ -27,7 +27,6 @@ import { ProfileMenu } from "@/components/ProfileMenu"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { Text } from "@/components/Text"
-import { WarningBanner } from "@/components/WarningBanner"
 import { useAuth } from "@/context/AuthContext"
 import { useCategories } from "@/context/CategoriesContext"
 import { useContaminants } from "@/context/ContaminantsContext"
@@ -36,7 +35,7 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
-import { useLocationData, getWorstStatusForCategory, getAlertStats } from "@/hooks/useLocationData"
+import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -47,32 +46,6 @@ import { useAppTheme } from "@/theme/context"
 const WHO_EXCEEDANCE_COLOR = "#F97316"
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
-
-/**
- * Map any category string to a StatCategory for navigation.
- * ContaminantCategory types (fertilizer, pesticide, etc.) all map to water.
- */
-function mapToStatCategory(category: string): StatCategory {
-  // If it's already a StatCategory, return it
-  if (Object.values(StatCategory).includes(category as StatCategory)) {
-    return category as StatCategory
-  }
-  // ContaminantCategory types are all water-related
-  const contaminantCategories = [
-    "fertilizer",
-    "pesticide",
-    "radioactive",
-    "disinfectant",
-    "inorganic",
-    "organic",
-    "microbiological",
-  ]
-  if (contaminantCategories.includes(category)) {
-    return StatCategory.water
-  }
-  // Default fallback
-  return StatCategory.water
-}
 
 /**
  * Dashboard Screen - Main screen showing safety overview for a location.
@@ -536,11 +509,6 @@ View details: ${shareUrl}`
     flex: 1,
   }
 
-  // Get alert stats (danger/warning) for the warning banner
-  const alertStats = cityData ? getAlertStats(cityData, statDefinitions) : []
-  // Show the first danger stat, or first warning if no danger
-  const priorityAlert = alertStats.find((a) => a.stat.status === "danger") ?? alertStats[0]
-
   const $emptyStateContainer: ViewStyle = {
     flex: 1,
     justifyContent: "center",
@@ -873,25 +841,6 @@ View details: ${shareUrl}`
             <AdminWarningBanner banner={banner} />
           </View>
         ))}
-
-      {/* Warning Banner - shows for danger/warning stats */}
-      {priorityAlert && priorityAlert.definition && (
-        <View style={$warningBannerContainer}>
-          <WarningBanner
-            statDefinition={priorityAlert.definition}
-            stat={priorityAlert.stat}
-            onViewDetails={() => {
-              // Navigate to category detail for this stat
-              navigation.navigate("CategoryDetail", {
-                category: mapToStatCategory(priorityAlert.definition.category),
-                city: currentLocation?.city || "",
-                state: currentLocation?.state || "",
-                country: currentLocation?.country || "",
-              })
-            }}
-          />
-        </View>
-      )}
 
       {/* Category Cards */}
       <View style={$categoriesContainer}>
