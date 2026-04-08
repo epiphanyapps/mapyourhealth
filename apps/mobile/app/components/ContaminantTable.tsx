@@ -1,4 +1,4 @@
-import { View, ViewStyle, TextStyle } from "react-native"
+import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
 
 import { hasHealthEffectsData } from "@/data/contaminantHealthEffects"
 import type { StatStatus } from "@/data/types/safety"
@@ -34,6 +34,10 @@ export interface ContaminantTableProps {
   rows: ContaminantTableRow[]
   /** Unit to display in header (optional, defaults to first row's unit) */
   unit?: string
+  /** Callback when WHO column header is tapped */
+  onWhoHeaderPress?: () => void
+  /** Callback when Local column header is tapped */
+  onLocalHeaderPress?: () => void
 }
 
 /**
@@ -42,7 +46,7 @@ export interface ContaminantTableProps {
  * Displays columns: Name | WHO Standard | Local Standard | Status
  */
 export function ContaminantTable(props: ContaminantTableProps) {
-  const { rows, unit } = props
+  const { rows, unit, onWhoHeaderPress, onLocalHeaderPress } = props
   const { theme } = useAppTheme()
 
   const displayUnit = unit || (rows.length > 0 ? rows[0].unit : "")
@@ -132,6 +136,14 @@ export function ContaminantTable(props: ContaminantTableProps) {
     fontStyle: "italic",
   }
 
+  const $linkHeaderText: TextStyle = {
+    ...$headerText,
+    color: theme.colors.tint,
+    textDecorationLine: "underline",
+  }
+
+  const localJurisdictionLabel = rows.length > 0 ? rows[0].localJurisdictionName : "LOCAL"
+
   const formatValue = (value: number | null, isUnregulated?: boolean): string => {
     if (isUnregulated) return "UNREGULATED"
     if (value === null) return "NO STANDARD"
@@ -145,12 +157,26 @@ export function ContaminantTable(props: ContaminantTableProps) {
         <View style={[$headerCell, $nameCell]}>
           <Text style={$headerText}>Contaminant</Text>
         </View>
-        <View style={[$headerCell, $valueCell]}>
-          <Text style={$headerText}>WHO</Text>
-        </View>
-        <View style={[$headerCell, $valueCell]}>
-          <Text style={$headerText}>Local</Text>
-        </View>
+        <TouchableOpacity
+          style={[$headerCell, $valueCell]}
+          onPress={onWhoHeaderPress}
+          disabled={!onWhoHeaderPress}
+          accessibilityRole="link"
+          accessibilityLabel="View WHO drinking water guidelines"
+        >
+          <Text style={onWhoHeaderPress ? $linkHeaderText : $headerText}>WHO</Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[$headerCell, $valueCell]}
+          onPress={onLocalHeaderPress}
+          disabled={!onLocalHeaderPress}
+          accessibilityRole="link"
+          accessibilityLabel={`View ${localJurisdictionLabel} water standards`}
+        >
+          <Text style={onLocalHeaderPress ? $linkHeaderText : $headerText}>
+            {localJurisdictionLabel}
+          </Text>
+        </TouchableOpacity>
         <View style={[$headerCell, $statusCell]}>
           <Text style={$headerText}></Text>
         </View>
