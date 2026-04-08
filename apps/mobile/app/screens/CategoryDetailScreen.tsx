@@ -103,6 +103,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     return stats.map(({ stat, definition }) => {
       const whoThreshold = getWHOThreshold(stat.statId)
       const localThreshold = getThreshold(stat.statId, localJurisdictionCode)
+      const hasLocalThreshold = localThreshold != null && localThreshold.jurisdictionCode !== "WHO"
 
       return {
         name: definition.name,
@@ -110,10 +111,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         value: stat.value,
         unit: definition.unit,
         whoLimit: whoThreshold?.limitValue ?? null,
-        localLimit: localThreshold?.limitValue ?? null,
+        localLimit: hasLocalThreshold ? (localThreshold.limitValue ?? null) : null,
         localJurisdictionName,
         status: stat.status,
-        isUnregulated: localThreshold?.status === "not_controlled",
+        isUnregulated: hasLocalThreshold && localThreshold.status === "not_controlled",
       }
     })
   }, [stats, category, getWHOThreshold, getThreshold, localJurisdictionCode, localJurisdictionName])

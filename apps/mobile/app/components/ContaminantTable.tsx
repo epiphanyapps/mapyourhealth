@@ -143,9 +143,12 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
   const localJurisdictionLabel = rows.length > 0 ? rows[0].localJurisdictionName : "LOCAL"
 
-  const formatValue = (value: number | null, isUnregulated?: boolean): string => {
-    if (isUnregulated) return "UNREGULATED"
-    if (value === null) return "NO STANDARD"
+  const formatValue = (
+    value: number | null,
+    options?: { isUnregulated?: boolean; isLocal?: boolean },
+  ): string => {
+    if (options?.isUnregulated) return "UNREGULATED"
+    if (value === null) return options?.isLocal ? "N/A" : "NO STANDARD"
     return `${value} ${displayUnit}`
   }
 
@@ -197,7 +200,7 @@ export function ContaminantTable(props: ContaminantTableProps) {
             <Text
               style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
             >
-              {formatValue(row.localLimit, row.isUnregulated)}
+              {formatValue(row.localLimit, { isUnregulated: row.isUnregulated, isLocal: true })}
             </Text>
           </View>
           <View style={$valueCell}>
