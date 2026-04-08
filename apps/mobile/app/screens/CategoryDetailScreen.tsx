@@ -103,6 +103,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     return stats.map(({ stat, definition }) => {
       const whoThreshold = getWHOThreshold(stat.statId)
       const localThreshold = getThreshold(stat.statId, localJurisdictionCode)
+      const hasLocalThreshold = localThreshold != null && localThreshold.jurisdictionCode !== "WHO"
 
       return {
         name: definition.name,
@@ -110,10 +111,10 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         value: stat.value,
         unit: definition.unit,
         whoLimit: whoThreshold?.limitValue ?? null,
-        localLimit: localThreshold?.limitValue ?? null,
+        localLimit: hasLocalThreshold ? (localThreshold.limitValue ?? null) : null,
         localJurisdictionName,
         status: stat.status,
-        isUnregulated: localThreshold?.status === "not_controlled",
+        isUnregulated: hasLocalThreshold && localThreshold.status === "not_controlled",
       }
     })
   }, [stats, category, getWHOThreshold, getThreshold, localJurisdictionCode, localJurisdictionName])
@@ -210,7 +211,6 @@ View details: ${shareUrl}`
   }
 
   const $statsContainer: ViewStyle = {
-    paddingHorizontal: 16,
     paddingTop: 8,
   }
 
@@ -462,18 +462,6 @@ View details: ${shareUrl}`
         {/* Links to external resources */}
         {(categoryConfig.links.length > 0 || category === StatCategory.water) && (
           <View style={$linksContainer}>
-            {categoryConfig.links.map((link, index) => (
-              <TouchableOpacity
-                key={index}
-                style={$linkButton}
-                onPress={() => handleLinkPress(link.url)}
-                accessibilityRole="link"
-                accessibilityLabel={`Open ${link.label}`}
-              >
-                <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
-                <Text style={$linkText}>{link.label}</Text>
-              </TouchableOpacity>
-            ))}
             {category === StatCategory.water &&
               (() => {
                 const localLink = getLocalStandardsLink(localJurisdictionCode)
@@ -493,6 +481,18 @@ View details: ${shareUrl}`
                   </TouchableOpacity>
                 )
               })()}
+            {categoryConfig.links.map((link, index) => (
+              <TouchableOpacity
+                key={index}
+                style={$linkButton}
+                onPress={() => handleLinkPress(link.url)}
+                accessibilityRole="link"
+                accessibilityLabel={`Open ${link.label}`}
+              >
+                <MaterialCommunityIcons name="open-in-new" size={16} color={theme.colors.tint} />
+                <Text style={$linkText}>{link.label}</Text>
+              </TouchableOpacity>
+            ))}
           </View>
         )}
 
@@ -549,7 +549,15 @@ View details: ${shareUrl}`
           {stats.length > 0 ? (
             category === StatCategory.water && categoryConfig.showStandardsTable ? (
               // Water category: Show contaminant table with WHO/Local standards
-              <ContaminantTable rows={tableRows} />
+              <ContaminantTable
+                rows={tableRows}
+                onWhoHeaderPress={() =>
+                  handleLinkPress("https://www.who.int/publications/i/item/9789241549950")
+                }
+                onLocalHeaderPress={() =>
+                  handleLinkPress(getLocalStandardsLink(localJurisdictionCode).url)
+                }
+              />
             ) : (
               // Other categories: Show stat items
               stats.map(({ stat, definition }) => (

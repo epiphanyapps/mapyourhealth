@@ -1,4 +1,4 @@
-import { View, ViewStyle, TextStyle } from "react-native"
+import { View, ViewStyle, TextStyle, TouchableOpacity } from "react-native"
 
 import { hasHealthEffectsData } from "@/data/contaminantHealthEffects"
 import type { StatStatus } from "@/data/types/safety"
@@ -34,6 +34,10 @@ export interface ContaminantTableProps {
   rows: ContaminantTableRow[]
   /** Unit to display in header (optional, defaults to first row's unit) */
   unit?: string
+  /** Callback when WHO column header is tapped */
+  onWhoHeaderPress?: () => void
+  /** Callback when Local column header is tapped */
+  onLocalHeaderPress?: () => void
 }
 
 /**
@@ -42,18 +46,13 @@ export interface ContaminantTableProps {
  * Displays columns: Name | WHO Standard | Local Standard | Status
  */
 export function ContaminantTable(props: ContaminantTableProps) {
-  const { rows, unit } = props
+  const { rows, unit, onWhoHeaderPress, onLocalHeaderPress } = props
   const { theme } = useAppTheme()
 
   const displayUnit = unit || (rows.length > 0 ? rows[0].unit : "")
 
   const $container: ViewStyle = {
     marginTop: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.palette.neutral200,
-    // Removed overflow: "hidden" to allow full content to be scrollable
-    // The parent ScrollView will handle scrolling behavior
   }
 
   const $headerRow: ViewStyle = {
@@ -78,8 +77,12 @@ export function ContaminantTable(props: ContaminantTableProps) {
   const $row: ViewStyle = {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.palette.neutral200,
+    borderBottomColor: theme.colors.palette.neutral300,
     backgroundColor: theme.colors.background,
+  }
+
+  const $alternateRow: ViewStyle = {
+    backgroundColor: theme.colors.palette.neutral100,
   }
 
   const $lastRow: ViewStyle = {
@@ -132,9 +135,20 @@ export function ContaminantTable(props: ContaminantTableProps) {
     fontStyle: "italic",
   }
 
-  const formatValue = (value: number | null, isUnregulated?: boolean): string => {
-    if (isUnregulated) return "UNREGULATED"
-    if (value === null) return "NO STANDARD"
+  const $linkHeaderText: TextStyle = {
+    ...$headerText,
+    color: theme.colors.tint,
+    textDecorationLine: "underline",
+  }
+
+  const localJurisdictionLabel = rows.length > 0 ? rows[0].localJurisdictionName : "LOCAL"
+
+  const formatValue = (
+    value: number | null,
+    options?: { isUnregulated?: boolean; isLocal?: boolean },
+  ): string => {
+    if (options?.isUnregulated) return "UNREGULATED"
+    if (value === null) return options?.isLocal ? "N/A" : "NO STANDARD"
     return `${value} ${displayUnit}`
   }
 
@@ -145,12 +159,26 @@ export function ContaminantTable(props: ContaminantTableProps) {
         <View style={[$headerCell, $nameCell]}>
           <Text style={$headerText}>Contaminant</Text>
         </View>
-        <View style={[$headerCell, $valueCell]}>
-          <Text style={$headerText}>WHO</Text>
-        </View>
-        <View style={[$headerCell, $valueCell]}>
-          <Text style={$headerText}>Local</Text>
-        </View>
+        <TouchableOpacity
+          style={[$headerCell, $valueCell]}
+          onPress={onLocalHeaderPress}
+          disabled={!onLocalHeaderPress}
+          accessibilityRole="link"
+          accessibilityLabel={`View ${localJurisdictionLabel} water standards`}
+        >
+          <Text style={onLocalHeaderPress ? $linkHeaderText : $headerText}>
+            {localJurisdictionLabel}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[$headerCell, $valueCell]}
+          onPress={onWhoHeaderPress}
+          disabled={!onWhoHeaderPress}
+          accessibilityRole="link"
+          accessibilityLabel="View WHO drinking water guidelines"
+        >
+          <Text style={onWhoHeaderPress ? $linkHeaderText : $headerText}>WHO</Text>
+        </TouchableOpacity>
         <View style={[$headerCell, $statusCell]}>
           <Text style={$headerText}></Text>
         </View>
@@ -158,7 +186,10 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
       {/* Data Rows */}
       {rows.map((row, index) => (
-        <View key={row.name} style={[$row, index === rows.length - 1 && $lastRow]}>
+        <View
+          key={row.name}
+          style={[$row, index % 2 === 1 && $alternateRow, index === rows.length - 1 && $lastRow]}
+        >
           <View style={[$nameCell, $nameCellRow]}>
             <Text style={$cellText}>{row.name}</Text>
             {row.contaminantId && hasHealthEffectsData(row.contaminantId) && (
@@ -166,15 +197,15 @@ export function ContaminantTable(props: ContaminantTableProps) {
             )}
           </View>
           <View style={$valueCell}>
-            <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
-              {formatValue(row.whoLimit)}
-            </Text>
-          </View>
-          <View style={$valueCell}>
             <Text
               style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
             >
-              {formatValue(row.localLimit, row.isUnregulated)}
+              {formatValue(row.localLimit, { isUnregulated: row.isUnregulated, isLocal: true })}
+            </Text>
+          </View>
+          <View style={$valueCell}>
+            <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
+              {formatValue(row.whoLimit)}
             </Text>
           </View>
           <View style={$statusCell}>

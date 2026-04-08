@@ -597,7 +597,7 @@ export default function LocationDetailPage({
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="source">Source</Label>
+                  <Label htmlFor="source">Data Source</Label>
                   <Input
                     id="source"
                     placeholder="e.g., EPA, CDC, Local Health Dept"
@@ -675,7 +675,9 @@ export default function LocationDetailPage({
                   <TableHead>Category</TableHead>
                   <TableHead>Value</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Source</TableHead>
+                  <TableHead title="Where the measurement data was obtained — not the regulatory standard">
+                    Data Source
+                  </TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
