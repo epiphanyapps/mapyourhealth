@@ -1,8 +1,10 @@
+import { useEffect } from "react"
 import { Modal, Pressable, ScrollView, View } from "react-native"
 import { Divider, IconButton } from "react-native-paper"
 
 import { getContaminantHealthEffects } from "@/data/contaminantHealthEffects"
 import { useAppTheme } from "@/theme/context"
+import { trackEvent } from "@/utils/analytics"
 
 import { infoModalStyles as styles } from "./infoModalStyles"
 import { Text } from "./Text"
@@ -20,6 +22,12 @@ export function ContaminantInfoModal({
 }: ContaminantInfoModalProps) {
   const { theme } = useAppTheme()
   const healthEffects = getContaminantHealthEffects(contaminantId)
+
+  useEffect(() => {
+    if (visible) {
+      trackEvent("ContaminantInfoViewed", { contaminantId })
+    }
+  }, [visible, contaminantId])
 
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>

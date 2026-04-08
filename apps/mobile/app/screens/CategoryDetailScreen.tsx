@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles */
-import { FC, useCallback, useMemo, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useState } from "react"
 import {
   View,
   ViewStyle,
@@ -35,6 +35,7 @@ import { StatCategory } from "@/data/types/safety"
 import { useLocationData, getRiskStatsForCategory } from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
+import { trackEvent } from "@/utils/analytics"
 
 interface CategoryDetailScreenProps extends AppStackScreenProps<"CategoryDetail"> {}
 
@@ -95,6 +96,15 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const localJurisdictionCode = localJurisdiction?.code ?? "WHO"
   const localJurisdictionName =
     localJurisdiction?.name?.toUpperCase() || cityData?.state?.toUpperCase() || "LOCAL"
+
+  // Track category view for analytics
+  useEffect(() => {
+    trackEvent("CategoryViewed", {
+      category: String(category),
+      city: cityData?.city ?? city ?? "",
+      state: cityData?.state ?? state ?? "",
+    })
+  }, [category, city, state, cityData?.city, cityData?.state])
 
   // Build table rows for water category
   const tableRows: ContaminantTableRow[] = useMemo(() => {

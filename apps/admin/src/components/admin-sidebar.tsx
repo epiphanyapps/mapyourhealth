@@ -38,6 +38,7 @@ import {
   Eye,
   Factory,
   Settings,
+  BarChart3,
 } from "lucide-react";
 
 const menuItems = [
@@ -45,6 +46,11 @@ const menuItems = [
     title: "Dashboard",
     url: "/",
     icon: LayoutDashboard,
+  },
+  {
+    title: "Analytics",
+    url: "/analytics",
+    icon: BarChart3,
   },
   {
     title: "Contaminants",
