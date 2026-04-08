@@ -142,6 +142,7 @@ const linking: LinkingOptions<AppStackParamList> = {
           city: (city: string) => encodeURIComponent(city),
           state: (state: string) => encodeURIComponent(state),
           country: (country: string) => encodeURIComponent(country),
+          category: (category: string) => encodeURIComponent(category),
         },
       },
       StatTrend: {
