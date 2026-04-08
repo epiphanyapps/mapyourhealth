@@ -53,11 +53,6 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
   const $container: ViewStyle = {
     marginTop: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: theme.colors.palette.neutral200,
-    // Removed overflow: "hidden" to allow full content to be scrollable
-    // The parent ScrollView will handle scrolling behavior
   }
 
   const $headerRow: ViewStyle = {

@@ -210,7 +210,6 @@ View details: ${shareUrl}`
   }
 
   const $statsContainer: ViewStyle = {
-    paddingHorizontal: 16,
     paddingTop: 8,
   }
 
