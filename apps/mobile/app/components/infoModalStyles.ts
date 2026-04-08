@@ -11,7 +11,9 @@ export const infoModalStyles = StyleSheet.create({
     borderRadius: 12,
     margin: 20,
     maxHeight: "80%",
+    maxWidth: 600,
     padding: 0,
+    width: "100%",
   },
   content: {
     padding: 20,
