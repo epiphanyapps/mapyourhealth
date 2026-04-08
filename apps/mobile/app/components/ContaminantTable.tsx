@@ -82,8 +82,12 @@ export function ContaminantTable(props: ContaminantTableProps) {
   const $row: ViewStyle = {
     flexDirection: "row",
     borderBottomWidth: 1,
-    borderBottomColor: theme.colors.palette.neutral200,
+    borderBottomColor: theme.colors.palette.neutral300,
     backgroundColor: theme.colors.background,
+  }
+
+  const $alternateRow: ViewStyle = {
+    backgroundColor: theme.colors.palette.neutral100,
   }
 
   const $lastRow: ViewStyle = {
@@ -184,7 +188,10 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
       {/* Data Rows */}
       {rows.map((row, index) => (
-        <View key={row.name} style={[$row, index === rows.length - 1 && $lastRow]}>
+        <View
+          key={row.name}
+          style={[$row, index % 2 === 1 && $alternateRow, index === rows.length - 1 && $lastRow]}
+        >
           <View style={[$nameCell, $nameCellRow]}>
             <Text style={$cellText}>{row.name}</Text>
             {row.contaminantId && hasHealthEffectsData(row.contaminantId) && (
