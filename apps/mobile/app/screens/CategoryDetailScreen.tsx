@@ -549,15 +549,7 @@ View details: ${shareUrl}`
           {stats.length > 0 ? (
             category === StatCategory.water && categoryConfig.showStandardsTable ? (
               // Water category: Show contaminant table with WHO/Local standards
-              <ContaminantTable
-                rows={tableRows}
-                onWhoHeaderPress={() =>
-                  handleLinkPress("https://www.who.int/publications/i/item/9789241549950")
-                }
-                onLocalHeaderPress={() =>
-                  handleLinkPress(getLocalStandardsLink(localJurisdictionCode).url)
-                }
-              />
+              <ContaminantTable rows={tableRows} />
             ) : (
               // Other categories: Show stat items
               stats.map(({ stat, definition }) => (
