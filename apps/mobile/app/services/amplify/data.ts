@@ -1100,3 +1100,25 @@ export async function getPlaceDetails(
 
   return null
 }
+
+/**
+ * Record a location visit for admin analytics.
+ * Fire-and-forget — errors are silently ignored so analytics never breaks the UI.
+ */
+export async function recordLocationVisit(
+  city: string,
+  state: string,
+  country: string,
+): Promise<void> {
+  try {
+    const client = await getPublicClient()
+    await client.models.LocationVisit.create({
+      city,
+      state,
+      country,
+      visitedAt: new Date().toISOString(),
+    })
+  } catch {
+    // Non-blocking — analytics should not break the user experience
+  }
+}

@@ -11,19 +11,32 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip"
+import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
   CartesianGrid,
-  Tooltip,
+  Tooltip as RechartsTooltip,
   ResponsiveContainer,
   PieChart,
   Pie,
   Cell,
   Legend,
 } from "recharts"
-import { Activity, Globe, Droplets, Users, Loader2 } from "lucide-react"
+import {
+  Activity,
+  Globe,
+  Droplets,
+  Users,
+  Eye,
+  Info,
+  Loader2,
+} from "lucide-react"
 
 const client = generateClient<Schema>()
 
@@ -38,6 +51,18 @@ const PIE_COLORS = [
   "#06B6D4",
 ]
 
+const CARD_TOOLTIPS = {
+  measurements:
+    "Total number of contaminant measurement records across all cities and contaminants.",
+  cities: "Number of distinct cities with at least one measurement record.",
+  contaminants:
+    "Number of contaminant definitions configured in the system.",
+  subscribers:
+    "Number of active user subscriptions for push/email notifications.",
+  visits:
+    "Total times users have viewed a location dashboard in the mobile app.",
+} as const
+
 interface LocationStat {
   city: string
   count: number
@@ -48,32 +73,81 @@ interface CategoryStat {
   count: number
 }
 
+/**
+ * Fetch all records from an Amplify model, paginating through all pages.
+ */
+async function fetchAllRecords<T>(
+  listFn: (opts: {
+    limit: number
+    nextToken?: string | null
+  }) => Promise<{ data: T[]; nextToken?: string | null }>,
+  limit = 1000,
+): Promise<T[]> {
+  const allRecords: T[] = []
+  let nextToken: string | null | undefined = undefined
+  do {
+    const result = await listFn({ limit, nextToken })
+    allRecords.push(...result.data)
+    nextToken = result.nextToken
+  } while (nextToken)
+  return allRecords
+}
+
+function InfoTip({ text }: { text: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <button
+          type="button"
+          className="text-muted-foreground hover:text-foreground"
+        >
+          <Info className="h-3.5 w-3.5" />
+        </button>
+      </TooltipTrigger>
+      <TooltipContent side="top" className="max-w-[220px]">
+        {text}
+      </TooltipContent>
+    </Tooltip>
+  )
+}
+
 export default function AnalyticsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [totalMeasurements, setTotalMeasurements] = useState(0)
   const [totalLocations, setTotalLocations] = useState(0)
   const [totalContaminants, setTotalContaminants] = useState(0)
   const [totalSubscriptions, setTotalSubscriptions] = useState(0)
+  const [totalVisits, setTotalVisits] = useState(0)
   const [locationStats, setLocationStats] = useState<LocationStat[]>([])
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([])
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
-        const [measurementsRes, contaminantsRes, subscriptionsRes] =
+        const [measurements, contaminants, subscriptions] =
           await Promise.all([
-            client.models.LocationMeasurement.list({ limit: 10000 }),
-            client.models.Contaminant.list({ limit: 1000 }),
-            client.models.UserSubscription.list({ limit: 1000 }),
+            fetchAllRecords((opts) =>
+              client.models.LocationMeasurement.list(opts),
+            ),
+            fetchAllRecords((opts) => client.models.Contaminant.list(opts)),
+            fetchAllRecords((opts) =>
+              client.models.UserSubscription.list(opts),
+            ),
           ])
-
-        const measurements = measurementsRes.data || []
-        const contaminants = contaminantsRes.data || []
-        const subscriptions = subscriptionsRes.data || []
 
         setTotalMeasurements(measurements.length)
         setTotalContaminants(contaminants.length)
         setTotalSubscriptions(subscriptions.length)
+
+        // LocationVisit may not exist yet if backend hasn't been deployed
+        try {
+          const visits = await fetchAllRecords((opts) =>
+            client.models.LocationVisit.list(opts),
+          )
+          setTotalVisits(visits.length)
+        } catch {
+          // Model not deployed yet
+        }
 
         // Count measurements per city
         const cityMap = new Map<string, number>()
@@ -91,7 +165,7 @@ export default function AnalyticsPage() {
         // Count measurements per contaminant category
         const contaminantCategoryMap = new Map<string, string>()
         for (const c of contaminants) {
-          contaminantCategoryMap.set(c.id, c.category || "Unknown")
+          contaminantCategoryMap.set(c.contaminantId, c.category || "Unknown")
         }
         const catMap = new Map<string, number>()
         for (const m of measurements) {
@@ -125,7 +199,7 @@ export default function AnalyticsPage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Analytics</h1>
         <p className="text-muted-foreground">
-          Platform overview and engagement metrics
+          Data inventory and platform statistics
         </p>
       </div>
 
@@ -136,7 +210,10 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">
               Total Measurements
             </CardTitle>
-            <Droplets className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              <InfoTip text={CARD_TOOLTIPS.measurements} />
+              <Droplets className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
@@ -153,7 +230,10 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">
               Cities Tracked
             </CardTitle>
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              <InfoTip text={CARD_TOOLTIPS.cities} />
+              <Globe className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalLocations}</div>
@@ -168,7 +248,10 @@ export default function AnalyticsPage() {
             <CardTitle className="text-sm font-medium">
               Contaminants Defined
             </CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-1">
+              <InfoTip text={CARD_TOOLTIPS.contaminants} />
+              <Activity className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalContaminants}</div>
@@ -180,16 +263,35 @@ export default function AnalyticsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Subscribers
-            </CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Subscribers</CardTitle>
+            <div className="flex items-center gap-1">
+              <InfoTip text={CARD_TOOLTIPS.subscribers} />
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </div>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{totalSubscriptions}</div>
             <p className="text-xs text-muted-foreground">
               Active subscriptions
             </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">
+              Location Visits
+            </CardTitle>
+            <div className="flex items-center gap-1">
+              <InfoTip text={CARD_TOOLTIPS.visits} />
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {totalVisits.toLocaleString()}
+            </div>
+            <p className="text-xs text-muted-foreground">All-time views</p>
           </CardContent>
         </Card>
       </div>
@@ -220,7 +322,7 @@ export default function AnalyticsPage() {
                     width={75}
                     tick={{ fontSize: 12 }}
                   />
-                  <Tooltip />
+                  <RechartsTooltip />
                   <Bar dataKey="count" fill="#3B82F6" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
@@ -261,7 +363,7 @@ export default function AnalyticsPage() {
                       />
                     ))}
                   </Pie>
-                  <Tooltip />
+                  <RechartsTooltip />
                   <Legend />
                 </PieChart>
               </ResponsiveContainer>

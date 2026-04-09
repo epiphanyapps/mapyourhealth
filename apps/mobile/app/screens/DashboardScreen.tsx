@@ -38,6 +38,7 @@ import { useLocation } from "@/hooks/useLocation"
 import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
+import { recordLocationVisit } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
 // jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
@@ -150,6 +151,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         state: currentLocation.state,
         country: currentLocation.country,
       })
+      recordLocationVisit(currentLocation.city, currentLocation.state, currentLocation.country)
     }
   }, [currentLocation?.city, currentLocation?.state, currentLocation?.country])
 
