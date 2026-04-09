@@ -1118,7 +1118,7 @@ export async function recordLocationVisit(
       country,
       visitedAt: new Date().toISOString(),
     })
-  } catch {
-    // Non-blocking — analytics should not break the user experience
+  } catch (err) {
+    console.warn("recordLocationVisit failed:", err)
   }
 }
