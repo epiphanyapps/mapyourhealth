@@ -11,6 +11,13 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
@@ -60,7 +67,7 @@ const CARD_TOOLTIPS = {
   subscribers:
     "Number of active user subscriptions for push/email notifications.",
   visits:
-    "Total times users have viewed a location dashboard in the mobile app.",
+    "Total times users have viewed a location dashboard in the mobile app. Click for city breakdown.",
 } as const
 
 interface LocationStat {
@@ -69,6 +76,11 @@ interface LocationStat {
 }
 
 interface CategoryStat {
+  name: string
+  count: number
+}
+
+interface VisitStat {
   name: string
   count: number
 }
@@ -120,6 +132,8 @@ export default function AnalyticsPage() {
   const [totalVisits, setTotalVisits] = useState(0)
   const [locationStats, setLocationStats] = useState<LocationStat[]>([])
   const [categoryStats, setCategoryStats] = useState<CategoryStat[]>([])
+  const [visitStats, setVisitStats] = useState<VisitStat[]>([])
+  const [showVisitsModal, setShowVisitsModal] = useState(false)
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -145,6 +159,17 @@ export default function AnalyticsPage() {
             client.models.LocationVisit.list(opts),
           )
           setTotalVisits(visits.length)
+
+          // Aggregate visits by city
+          const visitCityMap = new Map<string, number>()
+          for (const v of visits) {
+            const city = v.city || "Unknown"
+            visitCityMap.set(city, (visitCityMap.get(city) || 0) + 1)
+          }
+          const sortedVisits = Array.from(visitCityMap.entries())
+            .map(([name, count]) => ({ name, count }))
+            .sort((a, b) => b.count - a.count)
+          setVisitStats(sortedVisits)
         } catch (err) {
           console.warn("LocationVisit query failed:", err)
         }
@@ -193,6 +218,8 @@ export default function AnalyticsPage() {
       </div>
     )
   }
+
+  const visitsChartData = visitStats.slice(0, 10)
 
   return (
     <div className="space-y-6">
@@ -277,7 +304,11 @@ export default function AnalyticsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        {/* Location Visits - clickable with mini pie chart */}
+        <Card
+          className="cursor-pointer transition-shadow hover:shadow-md"
+          onClick={() => setShowVisitsModal(true)}
+        >
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Location Visits
@@ -292,9 +323,123 @@ export default function AnalyticsPage() {
               {totalVisits.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground">All-time views</p>
+            {visitsChartData.length > 0 && (
+              <div className="mt-3">
+                <ResponsiveContainer width="100%" height={100}>
+                  <PieChart>
+                    <Pie
+                      data={visitsChartData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={20}
+                      outerRadius={40}
+                      fill="#8884d8"
+                      dataKey="count"
+                      strokeWidth={1}
+                    >
+                      {visitsChartData.map((_entry, index) => (
+                        <Cell
+                          key={`mini-${index}`}
+                          fill={PIE_COLORS[index % PIE_COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <RechartsTooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+                <p className="mt-1 text-center text-xs text-muted-foreground">
+                  Click for details
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Location Visits Detail Modal */}
+      <Dialog open={showVisitsModal} onOpenChange={setShowVisitsModal}>
+        <DialogContent className="sm:max-w-[700px]">
+          <DialogHeader>
+            <DialogTitle>Location Visits Breakdown</DialogTitle>
+            <DialogDescription>
+              {totalVisits.toLocaleString()} total visits across{" "}
+              {visitStats.length} {visitStats.length === 1 ? "city" : "cities"}
+            </DialogDescription>
+          </DialogHeader>
+          {visitStats.length > 0 ? (
+            <div className="space-y-6">
+              <ResponsiveContainer width="100%" height={350}>
+                <PieChart>
+                  <Pie
+                    data={visitsChartData}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    outerRadius={120}
+                    fill="#8884d8"
+                    dataKey="count"
+                    label={({ name, percent }) =>
+                      `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`
+                    }
+                  >
+                    {visitsChartData.map((_entry, index) => (
+                      <Cell
+                        key={`modal-${index}`}
+                        fill={PIE_COLORS[index % PIE_COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <RechartsTooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+
+              {/* City detail table */}
+              <div className="max-h-[200px] overflow-y-auto">
+                <table className="w-full text-sm">
+                  <thead className="border-b">
+                    <tr>
+                      <th className="pb-2 text-left font-medium">City</th>
+                      <th className="pb-2 text-right font-medium">Visits</th>
+                      <th className="pb-2 text-right font-medium">Share</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visitStats.map((stat, index) => (
+                      <tr key={stat.name} className="border-b last:border-0">
+                        <td className="flex items-center gap-2 py-2">
+                          <span
+                            className="inline-block h-2.5 w-2.5 rounded-full"
+                            style={{
+                              backgroundColor:
+                                index < 10
+                                  ? PIE_COLORS[index % PIE_COLORS.length]
+                                  : "#9CA3AF",
+                            }}
+                          />
+                          {stat.name}
+                        </td>
+                        <td className="py-2 text-right">
+                          {stat.count.toLocaleString()}
+                        </td>
+                        <td className="py-2 text-right text-muted-foreground">
+                          {totalVisits > 0
+                            ? `${((stat.count / totalVisits) * 100).toFixed(1)}%`
+                            : "0%"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <p className="py-8 text-center text-muted-foreground">
+              No visit data available yet
+            </p>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Charts */}
       <div className="grid gap-6 lg:grid-cols-2">
