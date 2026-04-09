@@ -145,8 +145,8 @@ export default function AnalyticsPage() {
             client.models.LocationVisit.list(opts),
           )
           setTotalVisits(visits.length)
-        } catch {
-          // Model not deployed yet
+        } catch (err) {
+          console.warn("LocationVisit query failed:", err)
         }
 
         // Count measurements per city
