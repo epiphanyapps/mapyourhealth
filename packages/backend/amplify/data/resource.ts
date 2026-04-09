@@ -429,6 +429,27 @@ const schema = a.schema({
     ]),
 
   // =========================================================================
+  // Analytics
+  // =========================================================================
+
+  /**
+   * LocationVisit - tracks when users view a location in the mobile app
+   * Used by the admin analytics dashboard to show visit counts
+   */
+  LocationVisit: a
+    .model({
+      city: a.string().required(),
+      state: a.string().required(),
+      country: a.string().required(),
+      visitedAt: a.datetime().required(),
+    })
+    .authorization((allow) => [
+      allow.authenticated().to(["create", "read"]),
+      allow.guest().to(["create", "read"]),
+      allow.group("admin").to(["read", "delete"]),
+    ]),
+
+  // =========================================================================
   // Warning Banners (Admin-managed alerts)
   // =========================================================================
 

@@ -73,20 +73,35 @@ export default function LoginPage() {
     checkExistingAuth();
   }, []);
 
-  const validateAdminAndRedirect = async () => {
-    const session = await fetchAuthSession();
-    const groups =
-      (session.tokens?.idToken?.payload?.["cognito:groups"] as string[]) || [];
+  const validateAdminAndRedirect = async (retries = 3): Promise<boolean> => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        // Force a fresh session fetch
+        const session = await fetchAuthSession({ forceRefresh: true });
+        const groups =
+          (session.tokens?.idToken?.payload?.[
+            "cognito:groups"
+          ] as string[]) || [];
 
-    if (!groups.includes("admin")) {
-      await signOut();
-      setError("Access denied. You must be an admin to access this portal.");
-      setAuthStep("SIGN_IN");
-      return false;
+        if (!groups.includes("admin")) {
+          await signOut();
+          setError(
+            "Access denied. You must be an admin to access this portal.",
+          );
+          setAuthStep("SIGN_IN");
+          return false;
+        }
+
+        window.location.href = "/";
+        return true;
+      } catch {
+        // Session may not be ready yet — wait and retry
+        if (i < retries - 1) {
+          await new Promise((r) => setTimeout(r, 500));
+        }
+      }
     }
-
-    window.location.href = "/";
-    return true;
+    return false;
   };
 
   const handleSignIn = async (e: React.FormEvent) => {
@@ -103,7 +118,21 @@ export default function LoginPage() {
         // Ignore sign out errors
       }
 
-      const signInResult = await signIn({ username: email, password });
+      let signInResult;
+      try {
+        signInResult = await signIn({ username: email, password });
+      } catch (signInErr) {
+        // Amplify may throw "Unable to get user session following successful sign-in"
+        // when custom auth triggers are configured. The sign-in actually succeeds —
+        // attempt to validate the session before treating it as a real error.
+        const msg =
+          signInErr instanceof Error ? signInErr.message : String(signInErr);
+        if (msg.includes("Unable to get user session")) {
+          const ok = await validateAdminAndRedirect();
+          if (ok) return;
+        }
+        throw signInErr;
+      }
 
       // Handle different sign-in steps
       switch (signInResult.nextStep?.signInStep) {
