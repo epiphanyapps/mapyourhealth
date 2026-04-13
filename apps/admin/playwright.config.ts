@@ -43,6 +43,13 @@ export default defineConfig({
       use: { ...devices["iPhone 14"] },
       testMatch: /mobile-web\/.*.spec.ts/,
     },
+
+    // Web Landing Page Tests - Desktop Chrome
+    {
+      name: "web-landing",
+      use: { ...devices["Desktop Chrome"] },
+      testMatch: /e2e\/web\/.*.spec.ts/,
+    },
   ],
 
   // Web servers to start before tests
@@ -63,6 +70,17 @@ export default defineConfig({
             url: "http://localhost:8081",
             reuseExistingServer: !process.env.CI,
             cwd: "../mobile",
+            timeout: 120000,
+          },
+        ]),
+    ...(process.env.SKIP_WEB_SERVER
+      ? []
+      : [
+          {
+            command: "npm run dev -- --port 3001",
+            url: "http://localhost:3001",
+            reuseExistingServer: !process.env.CI,
+            cwd: "../web",
             timeout: 120000,
           },
         ]),
