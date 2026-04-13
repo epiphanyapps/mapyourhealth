@@ -83,7 +83,7 @@ export function ObservationCard(props: ObservationCardProps) {
         style: [
           styles.container,
           {
-            backgroundColor: theme.colors.background,
+            backgroundColor: theme.colors.cardSurface,
             borderLeftColor: theme.colors[statusColorKey],
             shadowColor: theme.colors.palette.neutral800,
           },
@@ -96,7 +96,7 @@ export function ObservationCard(props: ObservationCardProps) {
         style: [
           styles.container,
           {
-            backgroundColor: theme.colors.background,
+            backgroundColor: theme.colors.cardSurface,
             borderLeftColor: theme.colors[statusColorKey],
             shadowColor: theme.colors.palette.neutral800,
           },

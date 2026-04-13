@@ -9,6 +9,7 @@
     "packages/backend/amplify/functions/*"
   ],
   "scripts": {
+    "web": "yarn workspace @mapyourhealth/web dev",
     "mobile": "yarn workspace @mapyourhealth/mobile start",
     "mobile:ios": "yarn workspace @mapyourhealth/mobile ios",
     "mobile:android": "yarn workspace @mapyourhealth/mobile android",

@@ -50,6 +50,9 @@ const palette = {
 
   overlay20: "rgba(25, 16, 21, 0.2)",
   overlay50: "rgba(25, 16, 21, 0.5)",
+
+  // Card surface color (slightly different from background for contrast)
+  cardSurface: "#FFFFFF",
 } as const
 
 export const colors = {
@@ -117,4 +120,8 @@ export const colors = {
    * Accent backgrounds
    */
   accentBlueBg: palette.accentBlueBg,
+  /**
+   * Card surface color (slightly elevated from background)
+   */
+  cardSurface: palette.cardSurface,
 } as const
