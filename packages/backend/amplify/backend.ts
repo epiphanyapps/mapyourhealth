@@ -21,6 +21,8 @@ import { placesAutocomplete } from './functions/places-autocomplete/resource';
 import { resolveLocation } from './functions/resolve-location/resource';
 import { deleteAccount } from './functions/delete-account/resource';
 import { manageData } from './functions/manage-data/resource';
+import { signUpNewsletter } from './functions/sign-up-newsletter/resource';
+import { confirmNewsletter } from './functions/confirm-newsletter/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -40,6 +42,8 @@ const backend = defineBackend({
   resolveLocation,
   deleteAccount,
   manageData,
+  signUpNewsletter,
+  confirmNewsletter,
   // storage,
 });
 
@@ -502,6 +506,24 @@ const pinpointPolicy = new Policy(analyticsStack, 'PinpointPolicy', {
 
 backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(pinpointPolicy);
 backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(pinpointPolicy);
+
+// ============================================
+// Newsletter Signup Lambda Setup
+// ============================================
+
+const signUpNewsletterLambda = backend.signUpNewsletter.resources.lambda as LambdaFunction;
+const signUpNewsletterStack = Stack.of(signUpNewsletterLambda);
+
+const signUpNewsletterSesPolicy = new Policy(signUpNewsletterStack, 'SignUpNewsletterSESPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    }),
+  ],
+});
+backend.signUpNewsletter.resources.lambda.role?.attachInlinePolicy(signUpNewsletterSesPolicy);
 
 // Add Pinpoint config to amplify_outputs.json
 backend.addOutput({

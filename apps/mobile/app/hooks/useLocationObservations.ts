@@ -42,6 +42,8 @@ interface UseLocationObservationsResult {
   worstStatus: "danger" | "warning" | "safe"
   /** Count of danger/warning observations */
   alertCount: number
+  /** Whether data is from state-level fallback (not city-specific) */
+  isStateLevelFallback: boolean
 }
 
 interface LocationParams {
@@ -160,6 +162,23 @@ function mapAmplifyThreshold(threshold: AmplifyPropertyThreshold): {
   }
 }
 
+const STATUS_PRIORITY: Record<string, number> = { danger: 2, warning: 1, safe: 0 }
+
+/**
+ * Deduplicate observations by propertyId, keeping the worst status per property.
+ * Used when showing state-level fallback data to avoid duplicate cards.
+ */
+function deduplicateByWorstStatus(observations: ObservationWithStatus[]): ObservationWithStatus[] {
+  const byProperty = new Map<string, ObservationWithStatus>()
+  for (const obs of observations) {
+    const existing = byProperty.get(obs.propertyId)
+    if (!existing || STATUS_PRIORITY[obs.status] > STATUS_PRIORITY[existing.status]) {
+      byProperty.set(obs.propertyId, obs)
+    }
+  }
+  return Array.from(byProperty.values())
+}
+
 /**
  * Hook to fetch and process location observations
  */
@@ -173,11 +192,11 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     queryKey: queryKeys.observations.byCity(city),
     queryFn: async () => {
       const cityObs = await getLocationObservations(city)
-      if (cityObs.length > 0) return cityObs
+      if (cityObs.length > 0) return { data: cityObs, isStateFallback: false }
 
-      // Fallback to state-level observations
+      // Fallback to state-level observations (dedup happens in useMemo after status calc)
       const stateObs = await getLocationObservationsByState(state)
-      return stateObs
+      return { data: stateObs, isStateFallback: stateObs.length > 0 }
     },
     enabled: !!city && !!state,
     staleTime: 5 * 60 * 1000, // 5 minutes
@@ -200,7 +219,7 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
 
   // Build enriched observations with status
   const observations = useMemo<ObservationWithStatus[]>(() => {
-    if (!observationsQuery.data || !propertiesQuery.data) {
+    if (!observationsQuery.data?.data || !propertiesQuery.data) {
       return []
     }
 
@@ -210,7 +229,7 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
       (thresholdsQuery.data ?? []).map((t) => [`${t.propertyId}:${t.jurisdictionCode}`, t]),
     )
 
-    return observationsQuery.data
+    const enriched = observationsQuery.data.data
       .map((obs) => {
         const amplifyProp = propertyMap.get(obs.propertyId)
         if (!amplifyProp) return null
@@ -231,6 +250,13 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
         } as ObservationWithStatus
       })
       .filter((obs): obs is ObservationWithStatus => obs !== null)
+
+    // Deduplicate state-level fallback data by propertyId, keeping worst status
+    if (observationsQuery.data.isStateFallback) {
+      return deduplicateByWorstStatus(enriched)
+    }
+
+    return enriched
   }, [observationsQuery.data, propertiesQuery.data, thresholdsQuery.data, jurisdictionCode])
 
   // Filter by category
@@ -265,6 +291,8 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     ])
   }, [qc, city, state, jurisdictionCode])
 
+  const isStateLevelFallback = observationsQuery.data?.isStateFallback ?? false
+
   // Combine loading states
   const isLoading =
     observationsQuery.isLoading || propertiesQuery.isLoading || thresholdsQuery.isLoading
@@ -285,5 +313,6 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     getByCategory,
     worstStatus,
     alertCount,
+    isStateLevelFallback,
   }
 }

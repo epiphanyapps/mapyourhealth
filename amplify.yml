@@ -55,6 +55,30 @@ applications:
           - node_modules/**/*
           - ../../node_modules/**/*
 
+  # Web landing page deployment (configure app ID in ca-central-1)
+  # TODO: Create Amplify app in AWS console and replace APP_ID below
+  - appRoot: apps/web
+    frontend:
+      phases:
+        preBuild:
+          commands:
+            - corepack enable
+            - corepack prepare yarn@4.5.3 --activate
+            - cd ../.. && yarn install --immutable && cd apps/web
+            - npx ampx generate outputs --branch $AWS_BRANCH --app-id d3jl0ykn4qgj9r
+        build:
+          commands:
+            - npm run build
+      artifacts:
+        baseDirectory: .next
+        files:
+          - '**/*'
+      cache:
+        paths:
+          - node_modules/**/*
+          - ../../node_modules/**/*
+          - .next/cache/**/*
+
   # Admin portal deployment (app: d26q32gc98goap in ca-central-1)
   - appRoot: apps/admin
     frontend:
