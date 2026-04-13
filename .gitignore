@@ -78,6 +78,9 @@ buck-out/
 # VS Code
 .vscode
 
+# Next.js
+.next/
+
 # Expo
 .expo/*
 bin/Exponent.app
@@ -124,6 +127,7 @@ output/
 build-*.tar.gz
 *.png
 !apps/mobile/assets/**/*.png
+!apps/web/public/**/*.png
 
 # Generated seed data
 packages/backend/scripts/seed-data.json

@@ -3,6 +3,8 @@ import { placesAutocomplete } from "../functions/places-autocomplete/resource";
 import { resolveLocation } from "../functions/resolve-location/resource";
 import { deleteAccount } from "../functions/delete-account/resource";
 import { manageData } from "../functions/manage-data/resource";
+import { signUpNewsletter } from "../functions/sign-up-newsletter/resource";
+import { confirmNewsletter } from "../functions/confirm-newsletter/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -444,8 +446,8 @@ const schema = a.schema({
       visitedAt: a.datetime().required(),
     })
     .authorization((allow) => [
-      allow.authenticated().to(["create", "read"]),
-      allow.guest().to(["create", "read"]),
+      allow.authenticated().to(["create"]),
+      allow.guest().to(["create"]),
       allow.group("admin").to(["read", "delete"]),
     ]),
 
@@ -543,6 +545,67 @@ const schema = a.schema({
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ])
     .secondaryIndexes((index) => [index("city"), index("state")]),
+
+  // =========================================================================
+  // Newsletter Subscriptions (Landing Page)
+  // =========================================================================
+
+  /**
+   * NewsletterSubscriber - Landing page newsletter signups
+   * Keyed by email. Guest can create, admin can manage.
+   */
+  NewsletterSubscriber: a
+    .model({
+      email: a.email().required(),
+      name: a.string(),
+      source: a.string().default("landingPage"),
+      country: a.string(),
+      zip: a.string(),
+      confirmed: a.boolean().default(false),
+      confirmationCode: a.string(),
+    })
+    .identifier(["email"])
+    .authorization((allow) => [
+      allow.guest().to(["create"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["read", "update", "delete"]),
+    ])
+    .secondaryIndexes((index) => [
+      index("source"),
+      index("confirmationCode"),
+    ]),
+
+  /**
+   * signUpNewsletter - Creates a subscriber and sends confirmation email
+   */
+  signUpNewsletter: a
+    .query()
+    .arguments({
+      email: a.string().required(),
+      country: a.string(),
+      zip: a.string(),
+      callbackURL: a.string(),
+      lang: a.string(),
+    })
+    .returns(
+      a.customType({ success: a.boolean().required(), message: a.string() }),
+    )
+    .handler(a.handler.function(signUpNewsletter))
+    .authorization((allow) => [allow.guest(), allow.authenticated()]),
+
+  /**
+   * confirmNewsletter - Confirms a subscriber's email address
+   */
+  confirmNewsletter: a
+    .mutation()
+    .arguments({
+      confirmationCode: a.string().required(),
+    })
+    .returns(
+      a.customType({ success: a.boolean().required(), message: a.string() }),
+    )
+    .authorization((allow) => [allow.guest(), allow.authenticated()])
+    .handler(a.handler.function(confirmNewsletter)),
 
   // =========================================================================
   // Observations & Measurements (O&M) Data Model
