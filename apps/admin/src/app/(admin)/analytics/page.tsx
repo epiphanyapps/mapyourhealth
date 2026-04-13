@@ -153,27 +153,6 @@ export default function AnalyticsPage() {
         setTotalContaminants(contaminants.length)
         setTotalSubscriptions(subscriptions.length)
 
-        // LocationVisit may not exist yet if backend hasn't been deployed
-        try {
-          const visits = await fetchAllRecords((opts) =>
-            client.models.LocationVisit.list(opts),
-          )
-          setTotalVisits(visits.length)
-
-          // Aggregate visits by city
-          const visitCityMap = new Map<string, number>()
-          for (const v of visits) {
-            const city = v.city || "Unknown"
-            visitCityMap.set(city, (visitCityMap.get(city) || 0) + 1)
-          }
-          const sortedVisits = Array.from(visitCityMap.entries())
-            .map(([name, count]) => ({ name, count }))
-            .sort((a, b) => b.count - a.count)
-          setVisitStats(sortedVisits)
-        } catch (err) {
-          console.warn("LocationVisit query failed:", err)
-        }
-
         // Count measurements per city
         const cityMap = new Map<string, number>()
         for (const m of measurements) {
@@ -209,6 +188,28 @@ export default function AnalyticsPage() {
     }
 
     fetchAnalytics()
+  }, [])
+
+  // Live subscription: observeQuery streams onCreate/onUpdate/onDelete events
+  // and maintains a synchronized snapshot of LocationVisit, so the dashboard
+  // updates within seconds of a user viewing a city in the mobile app.
+  useEffect(() => {
+    const sub = client.models.LocationVisit.observeQuery().subscribe({
+      next: ({ items }) => {
+        setTotalVisits(items.length)
+        const visitCityMap = new Map<string, number>()
+        for (const v of items) {
+          const city = v.city || "Unknown"
+          visitCityMap.set(city, (visitCityMap.get(city) || 0) + 1)
+        }
+        const sortedVisits = Array.from(visitCityMap.entries())
+          .map(([name, count]) => ({ name, count }))
+          .sort((a, b) => b.count - a.count)
+        setVisitStats(sortedVisits)
+      },
+      error: (err) => console.warn("LocationVisit observeQuery failed:", err),
+    })
+    return () => sub.unsubscribe()
   }, [])
 
   if (isLoading) {

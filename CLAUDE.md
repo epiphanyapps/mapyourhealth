@@ -651,6 +651,29 @@ Missing location data is replaced with generic strings instead of surfacing the 
 | `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 133 | `m.city ?? "Unknown"` | `"Unknown"` |
 | `apps/mobile/app/screens/CompareScreen.tsx` | 76–87 | Multi-level fallback chain | `"Unknown Location"` |
 
+### 10. Measurement "Source" Field vs Threshold Jurisdiction
+
+The `source` field on `LocationMeasurement` records indicates **where the measurement data came from** (e.g., "NY DEC", "EPA", "WHO"), NOT which regulatory threshold standard applies. This is a common source of confusion in the Admin Portal:
+
+- **New York** measurements show `source: "NY DEC"` — data came from NY Dept. of Environmental Conservation
+- **Atlanta** measurements show `source: "WHO"` — data was seeded using WHO as the data source label
+- The **threshold comparison** (WHO vs Local columns in the mobile app) is determined by the `Jurisdiction` and `ContaminantThreshold` models, NOT by the measurement's `source` field
+
+This means a city can have `source: "WHO"` on its measurements while still being compared against US-GA (Georgia) thresholds. The `source` field is informational only and was set during data seeding. It can be updated per-measurement via the Admin Portal (pencil icon → edit Source).
+
+### 11. Identical WHO and Local Threshold Columns
+
+When a city's jurisdiction has no state-specific thresholds seeded, the threshold resolution falls back to WHO for both columns. This causes the WHO and LOCAL columns in the mobile app's contaminant table to display identical values, which is confusing to users.
+
+**Example:** Atlanta, GA shows the same values in both WHO and LOCAL columns because:
+1. No `US-GA` jurisdiction thresholds exist
+2. No `US` (federal EPA) thresholds exist for those contaminants
+3. Both columns fall back to WHO thresholds
+
+**States with seeded thresholds:** `CA-QC`, `CA-ON`, `CA-BC`, `CA-AB`, `US-NY`, `US-CA`, `US-TX`, `US-FL`, `US-IL`, `US-WA`, `US-GA`, `US-AZ`, `US-CO`, `US-MA` — though having a jurisdiction defined doesn't guarantee all contaminants have thresholds.
+
+**To fix for a specific state:** Add contaminant thresholds in the Admin Portal → Thresholds page for that state's jurisdiction code (e.g., `US-GA`). Alternatively, adding `US`-level EPA thresholds would provide a meaningful fallback for all US states without state-specific data.
+
 ## Deployment
 
 **All deployments are triggered by pushing to the appropriate git branch.** There is no manual deploy command — Amplify auto-builds and deploys on push.

@@ -119,7 +119,7 @@ export function ExpandableCard(props: ExpandableCardProps) {
   })
 
   const $container: ViewStyle = {
-    backgroundColor: theme.colors.background,
+    backgroundColor: theme.colors.cardSurface,
     borderRadius: 12,
     marginHorizontal: 16,
     marginVertical: 4,

@@ -103,12 +103,20 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       route.params.jurisdictionCode ?? getJurisdictionForLocation(state, country)?.code ?? "WHO"
     const { theme } = useAppTheme()
 
-    const { observations, isLoading, error, isOffline, refresh, worstStatus, alertCount } =
-      useLocationObservations({
-        city,
-        state,
-        jurisdictionCode,
-      })
+    const {
+      observations,
+      isLoading,
+      error,
+      isOffline,
+      refresh,
+      worstStatus,
+      alertCount,
+      isStateLevelFallback,
+    } = useLocationObservations({
+      city,
+      state,
+      jurisdictionCode,
+    })
 
     const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -232,7 +240,7 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
             style={[
               styles.summaryCard,
               {
-                backgroundColor: theme.colors.background,
+                backgroundColor: theme.colors.cardSurface,
                 borderLeftColor: theme.colors[worstStatusColorKey],
                 shadowColor: theme.colors.palette.neutral800,
               },
@@ -259,6 +267,23 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
               </Text>
             </View>
           </View>
+
+          {/* State-level fallback banner */}
+          {isStateLevelFallback && (
+            <View
+              style={[styles.stateFallbackBanner, { backgroundColor: theme.colors.accentBlueBg }]}
+              testID="state-fallback-banner"
+            >
+              <MaterialCommunityIcons
+                name="information-outline"
+                size={16}
+                color={theme.colors.tint}
+              />
+              <Text style={[styles.stateFallbackText, { color: theme.colors.tint }]}>
+                Based on {state} provincial data
+              </Text>
+            </View>
+          )}
 
           {/* Offline Banner */}
           {isOffline && (
@@ -424,6 +449,22 @@ const styles = StyleSheet.create({
   retryButtonText: {
     fontSize: 16,
     fontWeight: "600",
+  } as TextStyle,
+  stateFallbackBanner: {
+    alignItems: "center",
+    borderRadius: 6,
+    flexDirection: "row",
+    gap: 8,
+    justifyContent: "center",
+    marginHorizontal: 16,
+    marginTop: 8,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+  } as ViewStyle,
+  stateFallbackText: {
+    flex: 1,
+    fontSize: 12,
+    textAlign: "center",
   } as TextStyle,
   summaryCard: {
     alignItems: "center",
