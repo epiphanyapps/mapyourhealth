@@ -145,20 +145,18 @@ describe("usePollutionSources", () => {
 
   describe("disabled state", () => {
     it("returns empty sources when city is empty", () => {
-      const { result } = renderHook(
-        () => usePollutionSources({ city: "", state: "QC" }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => usePollutionSources({ city: "", state: "QC" }), {
+        wrapper: createWrapper(),
+      })
 
       expect(result.current.sources).toEqual([])
       expect(mockGetPollutionSourcesByCity).not.toHaveBeenCalled()
     })
 
     it("returns empty sources when state is empty", () => {
-      const { result } = renderHook(
-        () => usePollutionSources({ city: "Sorel-Tracy", state: "" }),
-        { wrapper: createWrapper() },
-      )
+      const { result } = renderHook(() => usePollutionSources({ city: "Sorel-Tracy", state: "" }), {
+        wrapper: createWrapper(),
+      })
 
       expect(result.current.sources).toEqual([])
       expect(mockGetPollutionSourcesByCity).not.toHaveBeenCalled()

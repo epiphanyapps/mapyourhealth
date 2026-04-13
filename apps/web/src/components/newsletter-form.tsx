@@ -48,7 +48,7 @@ export function NewsletterForm() {
 
     try {
       const client = generateClient<Schema>();
-      const result = await client.queries.signUpNewsletter({
+      const result = await client.mutations.signUpNewsletter({
         email,
         country: country || undefined,
         zip: zipCode || undefined,
@@ -57,8 +57,14 @@ export function NewsletterForm() {
       });
 
       if (!result.data?.success) {
-        setSuccessMessage(t("home.successAlreadyRegistered"));
-        setErrorMessage(t("home.errorMessage"));
+        const msg = result.data?.message;
+        if (msg?.includes("already been subscribed")) {
+          setSuccess(true);
+          setSuccessMessage(t("home.successAlreadyRegistered"));
+          localStorage.setItem("newsletterSubscribed", "true");
+        } else {
+          setErrorMessage(msg || t("home.errorMessage"));
+        }
       } else {
         setSuccess(true);
         setSuccessMessage(t("home.success"));

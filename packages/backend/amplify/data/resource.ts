@@ -579,7 +579,7 @@ const schema = a.schema({
    * signUpNewsletter - Creates a subscriber and sends confirmation email
    */
   signUpNewsletter: a
-    .query()
+    .mutation()
     .arguments({
       email: a.string().required(),
       country: a.string(),

@@ -3,17 +3,17 @@ import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 import { randomBytes } from "crypto";
 
-import { env } from "$amplify/env/sign-up-newsletter";
 import type { Schema } from "../../data/resource";
 
-const emailFrom = env.EMAIL_FROM;
+const emailFrom =
+  process.env.EMAIL_FROM || "noreply@mapyourhealth.info";
 
 Amplify.configure(
   {
     API: {
       GraphQL: {
-        endpoint: env.AMPLIFY_DATA_GRAPHQL_ENDPOINT,
-        region: env.AWS_REGION,
+        endpoint: process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT!,
+        region: process.env.AWS_REGION!,
         defaultAuthMode: "identityPool",
       },
     },
@@ -23,9 +23,9 @@ Amplify.configure(
       credentialsProvider: {
         getCredentialsAndIdentityId: async () => ({
           credentials: {
-            accessKeyId: env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-            sessionToken: env.AWS_SESSION_TOKEN,
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+            sessionToken: process.env.AWS_SESSION_TOKEN!,
           },
         }),
         clearCredentialsAndIdentityId: () => {
@@ -52,6 +52,20 @@ export const handler: Schema["signUpNewsletter"]["functionHandler"] = async (
     return { success: false, message: "Invalid email format" };
   }
 
+  const ALLOWED_HOSTS = [
+    "mapyourhealth.info",
+    "www.mapyourhealth.info",
+    "localhost",
+    "localhost:3000",
+    "127.0.0.1",
+    "127.0.0.1:3000",
+  ];
+
+  const host = callbackURL?.replace(/\/$/, "") || "mapyourhealth.info";
+  if (!ALLOWED_HOSTS.some((h) => host === h || host.endsWith(`.${h}`))) {
+    return { success: false, message: "Invalid callback URL" };
+  }
+
   try {
     const confirmationCode = generateConfirmationCode();
     await dataClient.models.NewsletterSubscriber.create({
@@ -62,16 +76,8 @@ export const handler: Schema["signUpNewsletter"]["functionHandler"] = async (
       confirmationCode,
     });
 
-    let baseUrl: string;
-    if (
-      callbackURL?.includes("localhost") ||
-      callbackURL?.includes("127.0.0.1")
-    ) {
-      baseUrl = `http://${callbackURL}`;
-    } else {
-      baseUrl = `https://${callbackURL}`;
-    }
-    baseUrl = baseUrl.replace(/\/$/, "");
+    const isLocal = host === "localhost" || host.startsWith("localhost:") || host === "127.0.0.1" || host.startsWith("127.0.0.1:");
+    const baseUrl = `${isLocal ? "http" : "https"}://${host}`;
 
     const confirmationUrl = `${baseUrl}/confirm/${confirmationCode}`;
 

@@ -20,6 +20,7 @@ export default function ConfirmPage() {
   useEffect(() => {
     const confirmSubscription = async () => {
       if (hasConfirmed.current) return;
+      hasConfirmed.current = true;
 
       if (!code) {
         setState("error");
@@ -34,7 +35,6 @@ export default function ConfirmPage() {
         });
 
         if (result.data?.success) {
-          hasConfirmed.current = true;
           setState("success");
           setMessage(t("confirm.success"));
         } else {

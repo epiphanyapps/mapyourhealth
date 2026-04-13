@@ -1,15 +1,14 @@
 import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 
-import { env } from "$amplify/env/confirm-newsletter";
 import type { Schema } from "../../data/resource";
 
 Amplify.configure(
   {
     API: {
       GraphQL: {
-        endpoint: env.AMPLIFY_DATA_GRAPHQL_ENDPOINT,
-        region: env.AWS_REGION,
+        endpoint: process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT!,
+        region: process.env.AWS_REGION!,
         defaultAuthMode: "identityPool",
       },
     },
@@ -19,9 +18,9 @@ Amplify.configure(
       credentialsProvider: {
         getCredentialsAndIdentityId: async () => ({
           credentials: {
-            accessKeyId: env.AWS_ACCESS_KEY_ID,
-            secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
-            sessionToken: env.AWS_SESSION_TOKEN,
+            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+            sessionToken: process.env.AWS_SESSION_TOKEN!,
           },
         }),
         clearCredentialsAndIdentityId: () => {
@@ -45,7 +44,7 @@ export const handler: Schema["confirmNewsletter"]["functionHandler"] = async (
 
   try {
     const result =
-      await dataClient.models.NewsletterSubscriber.listNewsletterSubscriberByConfirmationCodeAndCreatedAt(
+      await dataClient.models.NewsletterSubscriber.listNewsletterSubscriberByConfirmationCode(
         { confirmationCode },
       );
 
