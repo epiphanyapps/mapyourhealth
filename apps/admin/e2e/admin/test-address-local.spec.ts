@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+// This test requires a local mobile server on port 8082 — skip in CI
+test.skip(!!process.env.CI, 'Requires local mobile server');
+
 test('debug address selection on local', async ({ browser }) => {
   const context = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const page = await context.newPage();
