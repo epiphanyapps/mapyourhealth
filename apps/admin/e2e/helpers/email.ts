@@ -232,6 +232,16 @@ export function extractMagicLink(email: TestEmail): string | null {
 }
 
 /**
+ * Extract newsletter confirmation link from email body
+ * Looks for /confirm/{64-char-hex-code} URLs in the HTML body
+ */
+export function extractConfirmationLink(email: TestEmail): string | null {
+  const regex = /href="([^"]*\/confirm\/[a-f0-9]{64})"/i;
+  const match = email.htmlBody.match(regex);
+  return match ? match[1] : null;
+}
+
+/**
  * Verify email contains expected content
  */
 export function verifyEmailContent(
