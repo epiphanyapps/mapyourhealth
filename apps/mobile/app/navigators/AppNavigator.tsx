@@ -10,6 +10,7 @@ import { NavigationContainer, LinkingOptions } from "@react-navigation/native"
 import { createNativeStackNavigator } from "@react-navigation/native-stack"
 
 import Config from "@/config"
+import { APP_NAME } from "@/config/appConstants"
 import { useAuth } from "@/context/AuthContext"
 import { useAppConfig } from "@/hooks/useAppConfig"
 import { CategoryDetailScreen } from "@/screens/CategoryDetailScreen"
@@ -213,7 +214,20 @@ export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} {...props}>
+    <NavigationContainer
+      ref={navigationRef}
+      theme={navigationTheme}
+      linking={linking}
+      documentTitle={{
+        formatter: (options, route) =>
+          options?.title
+            ? `${options.title} | ${APP_NAME}`
+            : route?.name
+              ? `${route.name} | ${APP_NAME}`
+              : APP_NAME,
+      }}
+      {...props}
+    >
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>
