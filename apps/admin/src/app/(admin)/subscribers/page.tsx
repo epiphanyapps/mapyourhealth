@@ -34,6 +34,7 @@ import {
   Users,
   Search,
   Download,
+  Mail,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -48,6 +49,7 @@ export default function SubscribersPage() {
   const [search, setSearch] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [resendingEmail, setResendingEmail] = useState<string | null>(null);
 
   const fetchSubscribers = async () => {
     try {
@@ -79,6 +81,26 @@ export default function SubscribersPage() {
   useEffect(() => {
     fetchSubscribers();
   }, []);
+
+  const handleResend = async (subscriber: NewsletterSubscriber) => {
+    try {
+      setResendingEmail(subscriber.email);
+      const client = generateClient<Schema>();
+      const result = await client.mutations.resendConfirmation({
+        email: subscriber.email,
+      });
+      if (result.data?.success) {
+        toast.success(`Confirmation email resent to ${subscriber.email}`);
+      } else {
+        toast.error(result.data?.message || "Failed to resend confirmation");
+      }
+    } catch (error) {
+      console.error("Error resending confirmation:", error);
+      toast.error("Failed to resend confirmation");
+    } finally {
+      setResendingEmail(null);
+    }
+  };
 
   const handleDelete = async (subscriber: NewsletterSubscriber) => {
     if (
@@ -359,9 +381,25 @@ export default function SubscribersPage() {
                     </TableCell>
                     <TableCell>{formatDate(subscriber.createdAt)}</TableCell>
                     <TableCell className="text-right">
+                      {!subscriber.confirmed && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          title="Resend confirmation email"
+                          disabled={resendingEmail === subscriber.email}
+                          onClick={() => handleResend(subscriber)}
+                        >
+                          {resendingEmail === subscriber.email ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <Mail className="h-4 w-4 text-blue-500" />
+                          )}
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
+                        title="Delete subscriber"
                         onClick={() => handleDelete(subscriber)}
                       >
                         <Trash2 className="h-4 w-4 text-red-500" />
