@@ -55,10 +55,13 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
   const ALLOWED_HOSTS = [
     "mapyourhealth.info",
     "www.mapyourhealth.info",
+    "main.dv0j563gt073v.amplifyapp.com",
     "localhost",
     "localhost:3000",
+    "localhost:3001",
     "127.0.0.1",
     "127.0.0.1:3000",
+    "127.0.0.1:3001",
   ];
 
   const host = callbackURL?.replace(/\/$/, "") || "mapyourhealth.info";
