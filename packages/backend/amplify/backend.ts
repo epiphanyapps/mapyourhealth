@@ -534,6 +534,11 @@ backend.subscribeToNewsletter.resources.lambda.role?.attachInlinePolicy(subscrib
 const resendConfirmationLambda = backend.resendConfirmation.resources.lambda as LambdaFunction;
 const resendConfirmationStack = Stack.of(resendConfirmationLambda);
 
+resendConfirmationLambda.addEnvironment(
+  'CONFIRM_BASE_URL',
+  process.env.CONFIRM_BASE_URL || 'https://www.mapyourhealth.info',
+);
+
 const resendConfirmationSesPolicy = new Policy(resendConfirmationStack, 'ResendConfirmationSESPolicy', {
   statements: [
     new PolicyStatement({

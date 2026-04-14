@@ -54,7 +54,7 @@ export default function SubscribersPage() {
   const fetchSubscribers = async () => {
     try {
       setIsLoading(true);
-      const client = generateClient<Schema>();
+      const client = generateClient<Schema>({ authMode: "userPool" });
       const { data, errors } = await client.models.NewsletterSubscriber.list({
         limit: 1000,
       });
@@ -85,7 +85,7 @@ export default function SubscribersPage() {
   const handleResend = async (subscriber: NewsletterSubscriber) => {
     try {
       setResendingEmail(subscriber.email);
-      const client = generateClient<Schema>();
+      const client = generateClient<Schema>({ authMode: "userPool" });
       const result = await client.mutations.resendConfirmation({
         email: subscriber.email,
       });
@@ -112,7 +112,7 @@ export default function SubscribersPage() {
     }
 
     try {
-      const client = generateClient<Schema>();
+      const client = generateClient<Schema>({ authMode: "userPool" });
       await client.models.NewsletterSubscriber.delete({
         email: subscriber.email,
       });
@@ -132,9 +132,10 @@ export default function SubscribersPage() {
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
-    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
-    // dateTo is inclusive: treat as end-of-day in the user's local zone
-    const toMs = dateTo ? new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
+    // Treat the picker's YYYY-MM-DD as a local-time boundary so filtering
+    // matches what the admin sees in the Created column.
+    const fromMs = dateFrom ? new Date(`${dateFrom}T00:00:00`).getTime() : null;
+    const toMs = dateTo ? new Date(`${dateTo}T23:59:59.999`).getTime() : null;
     return subscribers.filter((s) => {
       if (filter === "confirmed" && s.confirmed !== true) return false;
       if (filter === "pending" && s.confirmed === true) return false;
