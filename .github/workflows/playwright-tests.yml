@@ -37,13 +37,22 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Create Amplify outputs stub for CI build
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      - name: Generate Amplify outputs
         run: |
-          # Amplify Gen2 outputs file (gitignored) - stub for CI builds
-          STUB='{"version":"1","auth":{"aws_region":"us-east-1","user_pool_id":"us-east-1_test","user_pool_client_id":"test"}}'
-          echo "$STUB" > amplify_outputs.json
-          echo "$STUB" > apps/admin/amplify_outputs.json
-          echo "$STUB" > apps/mobile/amplify_outputs.json
+          npx ampx generate outputs \
+            --branch main \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --out-dir apps/admin
+          cp apps/admin/amplify_outputs.json apps/web/amplify_outputs.json
+          cp apps/admin/amplify_outputs.json apps/mobile/amplify_outputs.json
+          cp apps/admin/amplify_outputs.json amplify_outputs.json
 
       - name: Install Playwright Browsers
         working-directory: apps/admin
@@ -55,6 +64,7 @@ jobs:
         env:
           CI: true
           SKIP_MOBILE_SERVER: "true"
+          SKIP_WEB_SERVER: "true"
           # AWS credentials for E2E email testing (S3 bucket access)
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_E2E_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_E2E_SECRET_ACCESS_KEY }}

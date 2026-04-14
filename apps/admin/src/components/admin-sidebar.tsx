@@ -39,6 +39,7 @@ import {
   Factory,
   Settings,
   BarChart3,
+  Mail,
 } from "lucide-react";
 
 const menuItems = [
@@ -96,6 +97,11 @@ const menuItems = [
     title: "Hazard Reports",
     url: "/reports",
     icon: AlertTriangle,
+  },
+  {
+    title: "Subscribers",
+    url: "/subscribers",
+    icon: Mail,
   },
   {
     title: "Pollution Sources",

@@ -1,9 +1,0 @@
-{
-  "name": "sign-up-newsletter",
-  "version": "1.0.0",
-  "private": true,
-  "type": "module",
-  "dependencies": {
-    "@aws-sdk/client-ses": "^3.975.0"
-  }
-}

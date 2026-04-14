@@ -30,9 +30,10 @@ export default function ConfirmPage() {
 
       try {
         const client = generateClient<Schema>();
-        const result = await client.mutations.confirmNewsletter({
-          confirmationCode: code,
-        });
+        const result = await client.mutations.confirmNewsletter(
+          { confirmationCode: code },
+          { authMode: "iam" },
+        );
 
         if (result.data?.success) {
           setState("success");

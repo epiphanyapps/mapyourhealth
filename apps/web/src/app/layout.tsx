@@ -29,6 +29,7 @@ const netflixSansLight = localFont({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL("https://mapyourhealth.info"),
   title: "MapYourHealth - Monitor Environmental Health Hazards",
   description:
     "Track toxic pollutants, monitor public services, and protect your health. Sign up for alerts about environmental hazards in your area.",
@@ -39,11 +40,29 @@ export const metadata: Metadata = {
     url: "https://mapyourhealth.info",
     siteName: "MapYourHealth",
     type: "website",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1024,
+        height: 1024,
+        alt: "MapYourHealth",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "MapYourHealth",
     description: "Monitor environmental health hazards in your area.",
+    images: ["/og-image.png"],
+  },
+  icons: {
+    icon: [
+      { url: "/favicon.ico" },
+      { url: "/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180" }],
   },
   robots: { index: true, follow: true },
 };

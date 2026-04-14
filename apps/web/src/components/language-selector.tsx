@@ -10,7 +10,7 @@ const languages: { code: Language; label: string }[] = [
 
 export function LanguageSelector() {
   const { i18n } = useTranslation();
-  const currentLang = i18n.language as Language;
+  const currentLang = (i18n.resolvedLanguage ?? i18n.language) as Language;
 
   return (
     <div className="z-50 flex gap-1 rounded-full bg-primary-500 p-1 shadow-lg">

@@ -1,14 +1,11 @@
 name: Claude Code Review
 
 on:
-  pull_request:
-    types: [opened, synchronize, ready_for_review, reopened]
-    # Optional: Only run on specific file changes
-    # paths:
-    #   - "src/**/*.ts"
-    #   - "src/**/*.tsx"
-    #   - "src/**/*.js"
-    #   - "src/**/*.jsx"
+  # Disabled: ANTHROPIC_API_KEY secret is not configured, causing every run to fail auth.
+  # Re-enable by restoring the pull_request trigger once the secret is in place.
+  workflow_dispatch:
+  # pull_request:
+  #   types: [opened, synchronize, ready_for_review, reopened]
 
 jobs:
   claude-review:

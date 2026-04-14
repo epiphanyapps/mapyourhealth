@@ -7,6 +7,9 @@ import { test, expect } from '@playwright/test';
  * and the app resolves it to the nearest city in the database.
  */
 
+// These tests hit the live production app and depend on Google Places API — skip in CI
+test.skip(!!process.env.CI, 'Requires live production app and Google Places API');
+
 test.describe('Address Selection', () => {
   test('should resolve address to nearest city and display data', async ({ page }) => {
     // Navigate to app

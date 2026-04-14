@@ -1,16 +1,12 @@
 name: Seed Backend Data
 
 on:
-  workflow_run:
-    workflows: ["Backend CI/CD"]
-    types: [completed]
-    branches: [main]
+  workflow_dispatch:
 
 jobs:
   seed-data:
     name: Seed Data After Backend Deployment
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion == 'success'
 
     steps:
       - uses: actions/checkout@v4

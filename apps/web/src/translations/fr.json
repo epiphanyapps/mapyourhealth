@@ -23,7 +23,7 @@
     "description": "Elle est responsable d'un décès sur six dans le monde, causant des cancers, des maladies cardiaques et respiratoires, l'hypersensibilité chimique et de nombreuses autres maladies chroniques.",
     "enterEmail": "Entrez votre email",
     "enterZipCode": "Veuillez saisir votre code postal",
-    "errorMessage": "Oups, entrez un email correct.",
+    "errorMessage": "Une erreur s'est produite. Veuillez réessayer.",
     "faq": {
       "answer1": "MapYourHealth est une carte interactive qui vous informe de tous les dangers sanitaires dans votre environnement immédiat et au-delà. Cette plateforme unique représente visuellement des études scientifiques, des rapports de la santé publique et des articles d'enquête journalistiques relatifs à la santé environnementale.",
       "answer2": "Les polluants environnementaux mettent en danger la santé de tous. Selon l'endroit où vous vous trouvez, ils peuvent entraîner toute une série de problèmes graves à court et long terme, notamment l'hypersensibilité chimique, des problèmes respiratoires, des maladies cardiovasculaires, des cancers, des troubles du développement et d'autres maladies chroniques.",

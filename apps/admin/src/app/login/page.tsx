@@ -131,6 +131,20 @@ export default function LoginPage() {
           const ok = await validateAdminAndRedirect();
           if (ok) return;
         }
+        // Cognito users in status RESET_REQUIRED (admin used "Reset password")
+        // fail sign-in with PasswordResetRequiredException. Kick off the reset
+        // flow automatically so the user can complete it in-app.
+        const name =
+          signInErr && typeof signInErr === "object" && "name" in signInErr
+            ? String((signInErr as { name: unknown }).name)
+            : "";
+        if (
+          name === "PasswordResetRequiredException" ||
+          msg.includes("Password reset required")
+        ) {
+          await startResetFlow();
+          return;
+        }
         throw signInErr;
       }
 
@@ -144,6 +158,10 @@ export default function LoginPage() {
           setAuthStep("NEW_PASSWORD_REQUIRED");
           break;
 
+        case "RESET_PASSWORD":
+          await startResetFlow();
+          break;
+
         default:
           setError(
             `Sign in requires additional step: ${signInResult.nextStep?.signInStep}. Please contact your administrator.`,
@@ -155,6 +173,31 @@ export default function LoginPage() {
       setError(errorMessage);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const startResetFlow = async () => {
+    try {
+      const output = await resetPassword({ username: email });
+      setResetPasswordOutput(output);
+      if (
+        output.nextStep.resetPasswordStep === "CONFIRM_RESET_PASSWORD_WITH_CODE"
+      ) {
+        const destination = output.nextStep.codeDeliveryDetails?.destination;
+        setSuccess(
+          `Your account needs a password reset. A confirmation code has been sent to ${destination}. Enter it below with your new password.`,
+        );
+        setAuthStep("CONFIRM_RESET_PASSWORD");
+      } else {
+        setError(
+          "Your account requires a password reset. Please use the 'Forgot your password?' link.",
+        );
+        setAuthStep("FORGOT_PASSWORD");
+      }
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to start password reset";
+      setError(errorMessage);
     }
   };
 

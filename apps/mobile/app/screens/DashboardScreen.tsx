@@ -872,7 +872,7 @@ View details: ${shareUrl}`
                   city: currentLocation?.city || "",
                   state: currentLocation?.state || "",
                   country: currentLocation?.country || "",
-                  subCategoryId,
+                  ...(subCategoryId ? { subCategoryId } : {}),
                 })
               }}
             />

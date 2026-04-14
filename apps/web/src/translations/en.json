@@ -23,7 +23,7 @@
     "description": "It is responsible for one in six deaths worldwide, causing cancer, heart and respiratory diseases, multiple chemical sensitivity and more chronic illnesses.",
     "enterEmail": "Enter your email",
     "enterZipCode": "Please enter your zip code",
-    "errorMessage": "Whoops, enter a correct email.",
+    "errorMessage": "Something went wrong. Please try again.",
     "faq": {
       "answer1": "MapYourHealth is an interactive map monitoring all health hazards in your immediate environment and beyond.\nThis unique platform visually represents research studies, public health records and investigative reporting pertaining to environmental health.",
       "answer2": "Environmental pollutants are endangering the health of everyone. Depending on where you are, they can lead to a range of serious short-term and long-term problems, including Chemical Sensitivity (CS), respiratory issues, cardiovascular diseases, cancers, developmental disorders and other chronic illnesses.",

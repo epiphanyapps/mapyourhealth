@@ -3,8 +3,9 @@ import { placesAutocomplete } from "../functions/places-autocomplete/resource";
 import { resolveLocation } from "../functions/resolve-location/resource";
 import { deleteAccount } from "../functions/delete-account/resource";
 import { manageData } from "../functions/manage-data/resource";
-import { signUpNewsletter } from "../functions/sign-up-newsletter/resource";
+import { subscribeToNewsletter } from "../functions/subscribe-to-newsletter/resource";
 import { confirmNewsletter } from "../functions/confirm-newsletter/resource";
+import { resendConfirmation } from "../functions/resend-confirmation/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -576,9 +577,10 @@ const schema = a.schema({
     ]),
 
   /**
-   * signUpNewsletter - Creates a subscriber and sends confirmation email
+   * subscribeToNewsletter - Creates a newsletter subscriber row and sends
+   * a confirmation email. Does not create a Cognito user.
    */
-  signUpNewsletter: a
+  subscribeToNewsletter: a
     .mutation()
     .arguments({
       email: a.string().required(),
@@ -590,7 +592,7 @@ const schema = a.schema({
     .returns(
       a.customType({ success: a.boolean().required(), message: a.string() }),
     )
-    .handler(a.handler.function(signUpNewsletter))
+    .handler(a.handler.function(subscribeToNewsletter))
     .authorization((allow) => [allow.guest(), allow.authenticated()]),
 
   /**
@@ -606,6 +608,22 @@ const schema = a.schema({
     )
     .authorization((allow) => [allow.guest(), allow.authenticated()])
     .handler(a.handler.function(confirmNewsletter)),
+
+  /**
+   * resendConfirmation - Admin-only: regenerate code and re-send the
+   * confirmation email for a pending subscriber.
+   */
+  resendConfirmation: a
+    .mutation()
+    .arguments({
+      email: a.string().required(),
+      lang: a.string(),
+    })
+    .returns(
+      a.customType({ success: a.boolean().required(), message: a.string() }),
+    )
+    .authorization((allow) => [allow.group("admin")])
+    .handler(a.handler.function(resendConfirmation)),
 
   // =========================================================================
   // Observations & Measurements (O&M) Data Model
@@ -731,10 +749,16 @@ const schema = a.schema({
     ]),
 });
 
-export type Schema = ClientSchema<typeof schema>;
+const schemaWithFunctionAccess = schema.authorization((allow) => [
+  allow.resource(subscribeToNewsletter).to(["query", "mutate"]),
+  allow.resource(confirmNewsletter).to(["query", "mutate"]),
+  allow.resource(resendConfirmation).to(["query", "mutate"]),
+]);
+
+export type Schema = ClientSchema<typeof schemaWithFunctionAccess>;
 
 export const data = defineData({
-  schema,
+  schema: schemaWithFunctionAccess,
   authorizationModes: {
     defaultAuthorizationMode: "userPool",
   },

@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { generateClient } from "aws-amplify/api";
 import { CheckCircle, ChevronRight } from "lucide-react";
 import { countries } from "@/lib/countries";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
+
+const SUBSCRIBED_KEY = "newsletterSubscribed";
+
+function subscribeToStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function getSubscribedSnapshot() {
+  return localStorage.getItem(SUBSCRIBED_KEY) === "true";
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 export function NewsletterForm() {
   const { t, i18n } = useTranslation();
@@ -14,12 +29,13 @@ export function NewsletterForm() {
   const [zipCode, setZipCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [success, setSuccess] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("newsletterSubscribed") === "true";
-    }
-    return false;
-  });
+  const subscribed = useSyncExternalStore(
+    subscribeToStorage,
+    getSubscribedSnapshot,
+    getServerSnapshot,
+  );
+  const [localSuccess, setSuccess] = useState(false);
+  const success = subscribed || localSuccess;
   const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,27 +64,30 @@ export function NewsletterForm() {
 
     try {
       const client = generateClient<Schema>();
-      const result = await client.mutations.signUpNewsletter({
-        email,
-        country: country || undefined,
-        zip: zipCode || undefined,
-        lang: i18n.language,
-        callbackURL: window.location.host,
-      });
+      const result = await client.mutations.subscribeToNewsletter(
+        {
+          email,
+          country: country || undefined,
+          zip: zipCode || undefined,
+          lang: i18n.language,
+          callbackURL: window.location.host,
+        },
+        { authMode: "iam" },
+      );
 
       if (!result.data?.success) {
         const msg = result.data?.message;
         if (msg?.includes("already been subscribed")) {
           setSuccess(true);
           setSuccessMessage(t("home.successAlreadyRegistered"));
-          localStorage.setItem("newsletterSubscribed", "true");
+          localStorage.setItem(SUBSCRIBED_KEY, "true");
         } else {
           setErrorMessage(msg || t("home.errorMessage"));
         }
       } else {
         setSuccess(true);
         setSuccessMessage(t("home.success"));
-        localStorage.setItem("newsletterSubscribed", "true");
+        localStorage.setItem(SUBSCRIBED_KEY, "true");
       }
     } catch {
       setErrorMessage(t("home.errorMessage"));
@@ -95,7 +114,10 @@ export function NewsletterForm() {
         </p>
 
         {success ? (
-          <div className="mt-8 flex w-full animate-in fade-in items-center justify-center gap-4 duration-1000">
+          <div
+            data-testid="newsletter-success"
+            className="mt-8 flex w-full animate-in fade-in items-center justify-center gap-4 duration-1000"
+          >
             <CheckCircle className="size-12 text-primary-550" />
             <span className="font-[family-name:var(--font-netflix-regular)] text-3xl text-white">
               {successMessage || t("home.success")}
@@ -112,6 +134,7 @@ export function NewsletterForm() {
         ) : (
           <form
             onSubmit={handleSubmit}
+            data-testid="newsletter-form"
             className="mt-4 flex flex-col items-center justify-center gap-4 md:mt-0 md:h-48 md:flex-row"
           >
             <div className="mt-8 flex flex-col items-center justify-evenly gap-4 md:mt-0 md:flex-row">
@@ -119,13 +142,17 @@ export function NewsletterForm() {
                 <input
                   type="email"
                   autoComplete="email"
+                  data-testid="newsletter-email"
                   placeholder={t("home.enterEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="h-11 rounded-md border border-neutral-700 bg-neutral-800 px-3 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-primary-550 focus:outline-none"
                 />
                 {errorMessage && (
-                  <span className="mt-1 text-sm text-red-400">
+                  <span
+                    data-testid="newsletter-error"
+                    className="mt-1 text-sm text-red-400"
+                  >
                     {errorMessage}
                   </span>
                 )}
@@ -133,6 +160,7 @@ export function NewsletterForm() {
               <select
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
+                data-testid="newsletter-country"
                 className="h-11 w-[200px] rounded-md border border-neutral-700 bg-neutral-800 px-2 text-white focus:ring-2 focus:ring-primary-550 focus:outline-none"
               >
                 <option value="">{t("home.selectCountry")}</option>
@@ -144,6 +172,7 @@ export function NewsletterForm() {
               </select>
               <input
                 type="text"
+                data-testid="newsletter-zip"
                 placeholder={t("home.zipCode")}
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
@@ -152,6 +181,7 @@ export function NewsletterForm() {
             </div>
             <button
               type="submit"
+              data-testid="newsletter-submit"
               disabled={loading}
               className="flex h-11 items-center gap-2 rounded-md bg-primary-550 px-6 font-[family-name:var(--font-netflix-bold)] text-xl text-white transition-colors hover:bg-primary-550/90 disabled:opacity-50"
             >
