@@ -2,7 +2,7 @@ name: Mobile Web Deploy
 
 on:
   push:
-    branches: [main]
+    branches: [main, staging]
     paths:
       - 'apps/mobile/**'
       - 'packages/backend/amplify/data/**'
@@ -58,9 +58,9 @@ jobs:
     name: Deploy Mobile Web
     runs-on: ubuntu-latest
     needs: detect-changes
-    if: (needs.detect-changes.outputs.mobile_changed == 'true' || github.event_name == 'workflow_dispatch') && github.ref_name == 'main'
+    if: (needs.detect-changes.outputs.mobile_changed == 'true' || github.event_name == 'workflow_dispatch') && (github.ref_name == 'main' || github.ref_name == 'staging')
     environment:
-      name: production
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -73,5 +73,5 @@ jobs:
         run: |
           aws amplify start-job \
             --app-id ${{ secrets.AMPLIFY_MOBILE_APP_ID }} \
-            --branch-name main \
+            --branch-name ${{ github.ref_name }} \
             --job-type RELEASE
