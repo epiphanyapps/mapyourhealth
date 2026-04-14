@@ -127,6 +127,7 @@ describe("NewsletterForm", () => {
             country: "CA",
             zip: "H2X",
           }),
+          { authMode: "iam" },
         );
       });
 

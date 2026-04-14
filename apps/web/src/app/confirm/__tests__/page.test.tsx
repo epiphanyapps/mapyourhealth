@@ -39,9 +39,10 @@ describe("ConfirmPage", () => {
       expect(screen.getByText("confirm.success")).toBeInTheDocument();
     });
 
-    expect(mockConfirm).toHaveBeenCalledWith({
-      confirmationCode: "abc123def456",
-    });
+    expect(mockConfirm).toHaveBeenCalledWith(
+      { confirmationCode: "abc123def456" },
+      { authMode: "iam" },
+    );
   });
 
   it("shows error message on failed confirmation", async () => {

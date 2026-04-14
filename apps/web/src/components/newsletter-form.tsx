@@ -1,11 +1,26 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { generateClient } from "aws-amplify/api";
 import { CheckCircle, ChevronRight } from "lucide-react";
 import { countries } from "@/lib/countries";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
+
+const SUBSCRIBED_KEY = "newsletterSubscribed";
+
+function subscribeToStorage(onChange: () => void) {
+  window.addEventListener("storage", onChange);
+  return () => window.removeEventListener("storage", onChange);
+}
+
+function getSubscribedSnapshot() {
+  return localStorage.getItem(SUBSCRIBED_KEY) === "true";
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 export function NewsletterForm() {
   const { t, i18n } = useTranslation();
@@ -14,12 +29,13 @@ export function NewsletterForm() {
   const [zipCode, setZipCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [success, setSuccess] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("newsletterSubscribed") === "true";
-    }
-    return false;
-  });
+  const subscribed = useSyncExternalStore(
+    subscribeToStorage,
+    getSubscribedSnapshot,
+    getServerSnapshot,
+  );
+  const [localSuccess, setSuccess] = useState(false);
+  const success = subscribed || localSuccess;
   const [successMessage, setSuccessMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -48,27 +64,30 @@ export function NewsletterForm() {
 
     try {
       const client = generateClient<Schema>();
-      const result = await client.mutations.subscribeToNewsletter({
-        email,
-        country: country || undefined,
-        zip: zipCode || undefined,
-        lang: i18n.language,
-        callbackURL: window.location.host,
-      });
+      const result = await client.mutations.subscribeToNewsletter(
+        {
+          email,
+          country: country || undefined,
+          zip: zipCode || undefined,
+          lang: i18n.language,
+          callbackURL: window.location.host,
+        },
+        { authMode: "iam" },
+      );
 
       if (!result.data?.success) {
         const msg = result.data?.message;
         if (msg?.includes("already been subscribed")) {
           setSuccess(true);
           setSuccessMessage(t("home.successAlreadyRegistered"));
-          localStorage.setItem("newsletterSubscribed", "true");
+          localStorage.setItem(SUBSCRIBED_KEY, "true");
         } else {
           setErrorMessage(msg || t("home.errorMessage"));
         }
       } else {
         setSuccess(true);
         setSuccessMessage(t("home.success"));
-        localStorage.setItem("newsletterSubscribed", "true");
+        localStorage.setItem(SUBSCRIBED_KEY, "true");
       }
     } catch {
       setErrorMessage(t("home.errorMessage"));
