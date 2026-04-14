@@ -101,6 +101,9 @@ export function NewsletterForm() {
         <h1 className="px-8 text-center font-[family-name:var(--font-netflix-bold)] text-4xl text-primary-500 sm:px-16 sm:text-5xl">
           {t("home.title")}
         </h1>
+        <p className="mt-2 px-8 text-center font-[family-name:var(--font-netflix-bold)] text-2xl text-white sm:px-16 sm:text-3xl">
+          {t("home.subtitle")}
+        </p>
         <p className="mt-4 px-8 text-center text-xl sm:px-20">
           <span className="font-[family-name:var(--font-netflix-light)] text-xl text-white">
             {t("home.CTA1")}
