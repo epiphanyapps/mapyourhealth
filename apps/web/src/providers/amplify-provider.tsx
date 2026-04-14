@@ -1,18 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
 import { Amplify } from "aws-amplify";
 import outputs from "@/lib/amplify";
 
-let configured = false;
+Amplify.configure(outputs, { ssr: true });
 
 export function AmplifyProvider({ children }: { children: React.ReactNode }) {
-  useEffect(() => {
-    if (!configured) {
-      Amplify.configure(outputs);
-      configured = true;
-    }
-  }, []);
-
   return <>{children}</>;
 }
