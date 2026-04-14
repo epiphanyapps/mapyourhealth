@@ -40,6 +40,7 @@ import {
   Settings,
   BarChart3,
   Mail,
+  FileText,
 } from "lucide-react";
 
 const menuItems = [
@@ -92,6 +93,11 @@ const menuItems = [
     title: "Warning Banners",
     url: "/banners",
     icon: Megaphone,
+  },
+  {
+    title: "Landing Page",
+    url: "/landing-page",
+    icon: FileText,
   },
   {
     title: "Hazard Reports",
