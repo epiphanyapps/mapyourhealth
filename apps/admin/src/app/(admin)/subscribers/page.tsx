@@ -33,6 +33,7 @@ import {
   Clock,
   Users,
   Search,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -45,6 +46,8 @@ export default function SubscribersPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<FilterValue>("all");
   const [search, setSearch] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const fetchSubscribers = async () => {
     try {
@@ -107,13 +110,66 @@ export default function SubscribersPage() {
 
   const visible = useMemo(() => {
     const query = search.trim().toLowerCase();
+    const fromMs = dateFrom ? new Date(dateFrom).getTime() : null;
+    // dateTo is inclusive: treat as end-of-day in the user's local zone
+    const toMs = dateTo ? new Date(dateTo).getTime() + 24 * 60 * 60 * 1000 - 1 : null;
     return subscribers.filter((s) => {
       if (filter === "confirmed" && s.confirmed !== true) return false;
       if (filter === "pending" && s.confirmed === true) return false;
       if (query && !s.email.toLowerCase().includes(query)) return false;
+      if (fromMs !== null || toMs !== null) {
+        const createdMs = new Date(s.createdAt).getTime();
+        if (fromMs !== null && createdMs < fromMs) return false;
+        if (toMs !== null && createdMs > toMs) return false;
+      }
       return true;
     });
-  }, [subscribers, filter, search]);
+  }, [subscribers, filter, search, dateFrom, dateTo]);
+
+  const handleExport = () => {
+    if (visible.length === 0) {
+      toast.error("No subscribers to export");
+      return;
+    }
+    const headers = [
+      "email",
+      "name",
+      "source",
+      "country",
+      "zip",
+      "confirmed",
+      "createdAt",
+    ];
+    const escape = (val: unknown) => {
+      const str = val === null || val === undefined ? "" : String(val);
+      return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    };
+    const rows = visible.map((s) =>
+      [
+        s.email,
+        s.name ?? "",
+        s.source ?? "landingPage",
+        s.country ?? "",
+        s.zip ?? "",
+        s.confirmed ? "true" : "false",
+        s.createdAt,
+      ]
+        .map(escape)
+        .join(","),
+    );
+    const csv = [headers.join(","), ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const stamp = new Date().toISOString().slice(0, 10);
+    a.href = url;
+    a.download = `subscribers-${stamp}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success(`Exported ${visible.length} subscriber${visible.length !== 1 ? "s" : ""}`);
+  };
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -182,25 +238,73 @@ export default function SubscribersPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-4">
-            <Tabs
-              value={filter}
-              onValueChange={(v) => setFilter(v as FilterValue)}
-            >
-              <TabsList>
-                <TabsTrigger value="all">All</TabsTrigger>
-                <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
-                <TabsTrigger value="pending">Pending</TabsTrigger>
-              </TabsList>
-            </Tabs>
-            <div className="relative w-full sm:w-72">
-              <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Search by email..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="pl-8"
-              />
+          <div className="flex flex-col gap-4 mb-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <Tabs
+                value={filter}
+                onValueChange={(v) => setFilter(v as FilterValue)}
+              >
+                <TabsList>
+                  <TabsTrigger value="all">All</TabsTrigger>
+                  <TabsTrigger value="confirmed">Confirmed</TabsTrigger>
+                  <TabsTrigger value="pending">Pending</TabsTrigger>
+                </TabsList>
+              </Tabs>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Search by email..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-8"
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                <div className="flex items-center gap-2">
+                  <label htmlFor="dateFrom" className="text-sm text-muted-foreground">
+                    From
+                  </label>
+                  <Input
+                    id="dateFrom"
+                    type="date"
+                    value={dateFrom}
+                    max={dateTo || undefined}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <label htmlFor="dateTo" className="text-sm text-muted-foreground">
+                    To
+                  </label>
+                  <Input
+                    id="dateTo"
+                    type="date"
+                    value={dateTo}
+                    min={dateFrom || undefined}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="w-auto"
+                  />
+                </div>
+                {(dateFrom || dateTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDateFrom("");
+                      setDateTo("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <Button variant="outline" onClick={handleExport} disabled={visible.length === 0}>
+                <Download className="h-4 w-4 mr-2" />
+                Export CSV
+              </Button>
             </div>
           </div>
 
