@@ -213,7 +213,20 @@ export const AppNavigator = (props: NavigationProps) => {
   useBackButtonHandler((routeName) => exitRoutes.includes(routeName))
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking} {...props}>
+    <NavigationContainer
+      ref={navigationRef}
+      theme={navigationTheme}
+      linking={linking}
+      documentTitle={{
+        formatter: (options, route) =>
+          options?.title
+            ? `${options.title} | MapYourHealth`
+            : route?.name
+              ? `${route.name} | MapYourHealth`
+              : "MapYourHealth",
+      }}
+      {...props}
+    >
       <ErrorBoundary catchErrors={Config.catchErrors}>
         <AppStack />
       </ErrorBoundary>
