@@ -732,10 +732,15 @@ const schema = a.schema({
     ]),
 });
 
-export type Schema = ClientSchema<typeof schema>;
+const schemaWithFunctionAccess = schema.authorization((allow) => [
+  allow.resource(subscribeToNewsletter).to(["query", "mutate"]),
+  allow.resource(confirmNewsletter).to(["query", "mutate"]),
+]);
+
+export type Schema = ClientSchema<typeof schemaWithFunctionAccess>;
 
 export const data = defineData({
-  schema,
+  schema: schemaWithFunctionAccess,
   authorizationModes: {
     defaultAuthorizationMode: "userPool",
   },
