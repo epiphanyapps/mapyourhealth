@@ -1,41 +1,30 @@
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - subpath export not visible to some TS module resolutions
+import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtime";
 import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 
+// eslint-disable-next-line @typescript-eslint/ban-ts-comment
+// @ts-ignore - generated at build
+import { env } from "$amplify/env/confirm-newsletter";
+
 import type { Schema } from "../../data/resource";
 
-Amplify.configure(
-  {
-    API: {
-      GraphQL: {
-        endpoint: process.env.AMPLIFY_DATA_GRAPHQL_ENDPOINT!,
-        region: process.env.AWS_REGION!,
-        defaultAuthMode: "identityPool",
-      },
-    },
-  },
-  {
-    Auth: {
-      credentialsProvider: {
-        getCredentialsAndIdentityId: async () => ({
-          credentials: {
-            accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-            secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-            sessionToken: process.env.AWS_SESSION_TOKEN!,
-          },
-        }),
-        clearCredentialsAndIdentityId: () => {
-          /* noop */
-        },
-      },
-    },
-  },
-);
+let configured = false;
+async function ensureConfigured() {
+  if (configured) return;
+  const { resourceConfig, libraryOptions } =
+    await getAmplifyDataClientConfig(env);
+  Amplify.configure(resourceConfig, libraryOptions);
+  configured = true;
+}
 
 const dataClient = generateClient<Schema>();
 
 export const handler: Schema["confirmNewsletter"]["functionHandler"] = async (
   event,
 ) => {
+  await ensureConfigured();
   const { confirmationCode } = event.arguments;
 
   if (!confirmationCode) {
