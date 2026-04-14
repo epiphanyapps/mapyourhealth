@@ -103,6 +103,26 @@ jobs:
       - name: Lint mobile
         run: yarn workspace @mapyourhealth/mobile lint:check
 
+  lint-web:
+    name: Lint Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint web
+        run: yarn workspace @mapyourhealth/web lint:check
+
   lint-admin:
     name: Lint Admin
     needs: changes
