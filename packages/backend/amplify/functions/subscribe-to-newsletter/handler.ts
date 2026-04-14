@@ -71,13 +71,15 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
 
     const confirmationUrl = `${baseUrl}/confirm/${confirmationCode}`;
 
+    const webBetaUrl = "https://app.mapyourhealth.info";
+
     const emailContent = {
       en: {
         subject: "Welcome to MapYourHealth",
         greeting: "Dear friend,",
         thankYouMessage: "Thank you for taking care of your health.",
-        cityMessage:
-          "Currently, your city is not in our database. But rest assured that we will notify you via email as soon as we have mapped your neighborhood.",
+        tryWebBefore: "While waiting for our mobile app, try our Beta Web Version Now by clicking on the following link:",
+        tryWebCta: "TRY IT!",
         mainMessage:
           "Monitoring environmental health is essential for a safer and healthier world. By identifying and addressing local health hazards, you can prevent chronic illnesses, reduce exposure to harmful pollutants, and ensure access to clean air, water, and safe living conditions.",
         followUpMessage:
@@ -85,7 +87,7 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
         inviteMessage:
           "Help us save more lives by inviting family and friends to Sign Up at",
         closingMessage: "Wishing you a long and fulfilling life.",
-        footerSignature: "The MapYourHealth team",
+        footerSignature: "The MapYourHealth Team",
         confirmButton: "Confirm Subscription",
         confirmMessage:
           "Please confirm your subscription by clicking the button below:",
@@ -94,8 +96,8 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
         subject: "Bienvenue à MapYourHealth",
         greeting: "Bonjour,",
         thankYouMessage: "Merci de prendre soin de votre santé.",
-        cityMessage:
-          "Présentement, votre ville n'est pas dans notre base de données. Mais rassurez-vous, nous vous enverrons un courriel dès que nous aurons cartographié votre quartier.",
+        tryWebBefore: "En attendant notre application mobile, essayez dès maintenant notre version Web Bêta en cliquant sur le lien suivant :",
+        tryWebCta: "ESSAYEZ-LA !",
         mainMessage:
           "Veiller à la santé environnementale est essentiel pour un monde plus sûr et plus sain. En identifiant les menaces environnementales dans votre localité, vous pouvez prévenir des maladies chroniques, réduire l'exposition aux polluants nocifs et garantir l'accès à de l'air pur, de l'eau propre et des conditions de vie sûres.",
         followUpMessage:
@@ -103,7 +105,7 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
         inviteMessage:
           "Aidez-nous à sauver plus de vies en invitant vos amis et votre famille à s'inscrire sur",
         closingMessage: "Amicalement,",
-        footerSignature: "L'équipe de MapYourHealth",
+        footerSignature: "L'équipe MapYourHealth",
         confirmButton: "Confirmer",
         confirmMessage:
           "Veuillez confirmer votre inscription en cliquant sur le bouton ci-dessous :",
@@ -136,7 +138,7 @@ export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async
           <div class="content">
             <p>${content.greeting}</p>
             <p>${content.thankYouMessage}</p>
-            <p>${content.cityMessage}</p>
+            <p>${content.tryWebBefore} <a href="${webBetaUrl}"><strong>${content.tryWebCta}</strong></a></p>
             <p>${content.mainMessage}</p>
             <p>${content.followUpMessage}</p>
             <p>${content.inviteMessage} <a href="https://mapyourhealth.info">MapYourHealth.info</a></p>

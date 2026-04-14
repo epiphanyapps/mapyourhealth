@@ -65,14 +65,14 @@ export const handler: Schema["resendConfirmation"]["functionHandler"] = async (
             greeting: "Bonjour,",
             body: "Veuillez confirmer votre inscription en cliquant sur le bouton ci-dessous :",
             button: "Confirmer",
-            signature: "L'équipe de MapYourHealth",
+            signature: "L'équipe MapYourHealth",
           }
         : {
             subject: "Confirm your MapYourHealth subscription",
             greeting: "Dear friend,",
             body: "Please confirm your subscription by clicking the button below:",
             button: "Confirm Subscription",
-            signature: "The MapYourHealth team",
+            signature: "The MapYourHealth Team",
           };
 
     const html = `
