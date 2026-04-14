@@ -48,9 +48,18 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ca-central-1
 
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
       - name: Deploy Web Landing Page
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=%s "${{ github.sha }}")
+          COMMIT_TIME=$(git log -1 --pretty=%cI "${{ github.sha }}")
           aws amplify start-job \
             --app-id ${{ secrets.AMPLIFY_WEB_APP_ID }} \
             --branch-name ${{ github.ref_name }} \
-            --job-type RELEASE
+            --job-type RELEASE \
+            --commit-id ${{ github.sha }} \
+            --commit-message "$COMMIT_MSG" \
+            --commit-time "$COMMIT_TIME"
