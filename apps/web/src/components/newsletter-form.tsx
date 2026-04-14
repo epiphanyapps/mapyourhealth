@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { generateClient } from "aws-amplify/api";
 import { CheckCircle, ChevronRight } from "lucide-react";
@@ -14,13 +14,14 @@ export function NewsletterForm() {
   const [zipCode, setZipCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [success, setSuccess] = useState(() => {
-    if (typeof window !== "undefined") {
-      return localStorage.getItem("newsletterSubscribed") === "true";
-    }
-    return false;
-  });
+  const [success, setSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  useEffect(() => {
+    if (localStorage.getItem("newsletterSubscribed") === "true") {
+      setSuccess(true);
+    }
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,13 +49,16 @@ export function NewsletterForm() {
 
     try {
       const client = generateClient<Schema>();
-      const result = await client.mutations.subscribeToNewsletter({
-        email,
-        country: country || undefined,
-        zip: zipCode || undefined,
-        lang: i18n.language,
-        callbackURL: window.location.host,
-      });
+      const result = await client.mutations.subscribeToNewsletter(
+        {
+          email,
+          country: country || undefined,
+          zip: zipCode || undefined,
+          lang: i18n.language,
+          callbackURL: window.location.host,
+        },
+        { authMode: "iam" },
+      );
 
       if (!result.data?.success) {
         const msg = result.data?.message;
