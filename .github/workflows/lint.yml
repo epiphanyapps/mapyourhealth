@@ -7,8 +7,46 @@ on:
     branches: [main, staging]
 
 jobs:
+  changes:
+    name: Detect Changed Packages
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      mobile: ${{ steps.filter.outputs.mobile }}
+      admin: ${{ steps.filter.outputs.admin }}
+      web: ${{ steps.filter.outputs.web }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          # `shared` triggers every job (root deps, lockfile, workspace config)
+          filters: |
+            shared: &shared
+              - 'package.json'
+              - 'yarn.lock'
+              - '.yarnrc.yml'
+              - '.github/workflows/lint.yml'
+            backend:
+              - *shared
+              - 'packages/backend/**'
+            mobile:
+              - *shared
+              - 'apps/mobile/**'
+              - 'packages/backend/amplify/data/**'
+            admin:
+              - *shared
+              - 'apps/admin/**'
+              - 'packages/backend/amplify/data/**'
+            web:
+              - *shared
+              - 'apps/web/**'
+              - 'packages/backend/amplify/data/**'
+
   lint-backend:
     name: Lint Backend
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -30,6 +68,8 @@ jobs:
 
   lint-mobile:
     name: Lint Mobile
+    needs: changes
+    if: needs.changes.outputs.mobile == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -65,6 +105,8 @@ jobs:
 
   lint-admin:
     name: Lint Admin
+    needs: changes
+    if: needs.changes.outputs.admin == 'true'
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -83,3 +125,26 @@ jobs:
 
       - name: Lint admin
         run: yarn workspace admin lint
+
+  lint-web:
+    name: Lint Web
+    needs: changes
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Lint web
+        run: yarn workspace @mapyourhealth/web lint:check
