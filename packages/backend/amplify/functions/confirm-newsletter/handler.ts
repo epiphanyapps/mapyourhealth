@@ -4,17 +4,15 @@ import { getAmplifyDataClientConfig } from "@aws-amplify/backend/function/runtim
 import { Amplify } from "aws-amplify";
 import { generateClient } from "aws-amplify/data";
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore - generated at build
-import { env } from "$amplify/env/confirm-newsletter";
-
 import type { Schema } from "../../data/resource";
 
 let configured = false;
 async function ensureConfigured() {
   if (configured) return;
   const { resourceConfig, libraryOptions } =
-    await getAmplifyDataClientConfig(env);
+    await getAmplifyDataClientConfig(
+      process.env as Parameters<typeof getAmplifyDataClientConfig>[0],
+    );
   Amplify.configure(resourceConfig, libraryOptions);
   configured = true;
 }
