@@ -502,6 +502,24 @@ const schema = a.schema({
     ])
     .secondaryIndexes((index) => [index("configKey")]),
 
+  /**
+   * LandingPageContent - Admin-editable copy for apps/web landing page
+   * One row per locale; `content` is a flat JSON map of i18n dotted keys
+   * to strings. Public read; admin CRUD.
+   */
+  LandingPageContent: a
+    .model({
+      locale: a.string().required(),
+      content: a.json().required(),
+      updatedBy: a.string(),
+    })
+    .identifier(["locale"])
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ]),
+
   // =========================================================================
   // Pollution Sources
   // =========================================================================
