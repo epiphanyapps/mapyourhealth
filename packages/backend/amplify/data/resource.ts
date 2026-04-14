@@ -5,6 +5,7 @@ import { deleteAccount } from "../functions/delete-account/resource";
 import { manageData } from "../functions/manage-data/resource";
 import { subscribeToNewsletter } from "../functions/subscribe-to-newsletter/resource";
 import { confirmNewsletter } from "../functions/confirm-newsletter/resource";
+import { resendConfirmation } from "../functions/resend-confirmation/resource";
 
 /**
  * MapYourHealth Data Schema
@@ -608,6 +609,22 @@ const schema = a.schema({
     .authorization((allow) => [allow.guest(), allow.authenticated()])
     .handler(a.handler.function(confirmNewsletter)),
 
+  /**
+   * resendConfirmation - Admin-only: regenerate code and re-send the
+   * confirmation email for a pending subscriber.
+   */
+  resendConfirmation: a
+    .mutation()
+    .arguments({
+      email: a.string().required(),
+      lang: a.string(),
+    })
+    .returns(
+      a.customType({ success: a.boolean().required(), message: a.string() }),
+    )
+    .authorization((allow) => [allow.group("admin")])
+    .handler(a.handler.function(resendConfirmation)),
+
   // =========================================================================
   // Observations & Measurements (O&M) Data Model
   // Flexible system for tracking various environmental/health properties
@@ -735,6 +752,7 @@ const schema = a.schema({
 const schemaWithFunctionAccess = schema.authorization((allow) => [
   allow.resource(subscribeToNewsletter).to(["query", "mutate"]),
   allow.resource(confirmNewsletter).to(["query", "mutate"]),
+  allow.resource(resendConfirmation).to(["query", "mutate"]),
 ]);
 
 export type Schema = ClientSchema<typeof schemaWithFunctionAccess>;

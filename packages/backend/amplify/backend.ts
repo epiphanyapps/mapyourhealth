@@ -23,6 +23,7 @@ import { deleteAccount } from './functions/delete-account/resource';
 import { manageData } from './functions/manage-data/resource';
 import { subscribeToNewsletter } from './functions/subscribe-to-newsletter/resource';
 import { confirmNewsletter } from './functions/confirm-newsletter/resource';
+import { resendConfirmation } from './functions/resend-confirmation/resource';
 // import { storage } from './storage/resource';
 
 /**
@@ -44,6 +45,7 @@ const backend = defineBackend({
   manageData,
   subscribeToNewsletter,
   confirmNewsletter,
+  resendConfirmation,
   // storage,
 });
 
@@ -524,6 +526,29 @@ const subscribeToNewsletterSesPolicy = new Policy(subscribeToNewsletterStack, 'S
   ],
 });
 backend.subscribeToNewsletter.resources.lambda.role?.attachInlinePolicy(subscribeToNewsletterSesPolicy);
+
+// ============================================
+// Resend Confirmation Lambda Setup
+// ============================================
+
+const resendConfirmationLambda = backend.resendConfirmation.resources.lambda as LambdaFunction;
+const resendConfirmationStack = Stack.of(resendConfirmationLambda);
+
+resendConfirmationLambda.addEnvironment(
+  'CONFIRM_BASE_URL',
+  process.env.CONFIRM_BASE_URL || 'https://www.mapyourhealth.info',
+);
+
+const resendConfirmationSesPolicy = new Policy(resendConfirmationStack, 'ResendConfirmationSESPolicy', {
+  statements: [
+    new PolicyStatement({
+      effect: Effect.ALLOW,
+      actions: ['ses:SendEmail', 'ses:SendRawEmail'],
+      resources: ['*'],
+    }),
+  ],
+});
+backend.resendConfirmation.resources.lambda.role?.attachInlinePolicy(resendConfirmationSesPolicy);
 
 // Add Pinpoint config to amplify_outputs.json
 backend.addOutput({
