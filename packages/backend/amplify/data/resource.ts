@@ -3,7 +3,7 @@ import { placesAutocomplete } from "../functions/places-autocomplete/resource";
 import { resolveLocation } from "../functions/resolve-location/resource";
 import { deleteAccount } from "../functions/delete-account/resource";
 import { manageData } from "../functions/manage-data/resource";
-import { signUpNewsletter } from "../functions/sign-up-newsletter/resource";
+import { subscribeToNewsletter } from "../functions/subscribe-to-newsletter/resource";
 import { confirmNewsletter } from "../functions/confirm-newsletter/resource";
 
 /**
@@ -576,9 +576,10 @@ const schema = a.schema({
     ]),
 
   /**
-   * signUpNewsletter - Creates a subscriber and sends confirmation email
+   * subscribeToNewsletter - Creates a newsletter subscriber row and sends
+   * a confirmation email. Does not create a Cognito user.
    */
-  signUpNewsletter: a
+  subscribeToNewsletter: a
     .mutation()
     .arguments({
       email: a.string().required(),
@@ -590,7 +591,7 @@ const schema = a.schema({
     .returns(
       a.customType({ success: a.boolean().required(), message: a.string() }),
     )
-    .handler(a.handler.function(signUpNewsletter))
+    .handler(a.handler.function(subscribeToNewsletter))
     .authorization((allow) => [allow.guest(), allow.authenticated()]),
 
   /**

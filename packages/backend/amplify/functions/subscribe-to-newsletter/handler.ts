@@ -43,7 +43,7 @@ function generateConfirmationCode(): string {
   return randomBytes(32).toString("hex");
 }
 
-export const handler: Schema["signUpNewsletter"]["functionHandler"] = async (
+export const handler: Schema["subscribeToNewsletter"]["functionHandler"] = async (
   event,
 ) => {
   const { email, lang, callbackURL, country, zip } = event.arguments;

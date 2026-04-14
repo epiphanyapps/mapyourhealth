@@ -21,7 +21,7 @@ import { placesAutocomplete } from './functions/places-autocomplete/resource';
 import { resolveLocation } from './functions/resolve-location/resource';
 import { deleteAccount } from './functions/delete-account/resource';
 import { manageData } from './functions/manage-data/resource';
-import { signUpNewsletter } from './functions/sign-up-newsletter/resource';
+import { subscribeToNewsletter } from './functions/subscribe-to-newsletter/resource';
 import { confirmNewsletter } from './functions/confirm-newsletter/resource';
 // import { storage } from './storage/resource';
 
@@ -42,7 +42,7 @@ const backend = defineBackend({
   resolveLocation,
   deleteAccount,
   manageData,
-  signUpNewsletter,
+  subscribeToNewsletter,
   confirmNewsletter,
   // storage,
 });
@@ -508,13 +508,13 @@ backend.auth.resources.authenticatedUserIamRole.attachInlinePolicy(pinpointPolic
 backend.auth.resources.unauthenticatedUserIamRole.attachInlinePolicy(pinpointPolicy);
 
 // ============================================
-// Newsletter Signup Lambda Setup
+// Newsletter Subscribe Lambda Setup
 // ============================================
 
-const signUpNewsletterLambda = backend.signUpNewsletter.resources.lambda as LambdaFunction;
-const signUpNewsletterStack = Stack.of(signUpNewsletterLambda);
+const subscribeToNewsletterLambda = backend.subscribeToNewsletter.resources.lambda as LambdaFunction;
+const subscribeToNewsletterStack = Stack.of(subscribeToNewsletterLambda);
 
-const signUpNewsletterSesPolicy = new Policy(signUpNewsletterStack, 'SignUpNewsletterSESPolicy', {
+const subscribeToNewsletterSesPolicy = new Policy(subscribeToNewsletterStack, 'SubscribeToNewsletterSESPolicy', {
   statements: [
     new PolicyStatement({
       effect: Effect.ALLOW,
@@ -523,7 +523,7 @@ const signUpNewsletterSesPolicy = new Policy(signUpNewsletterStack, 'SignUpNewsl
     }),
   ],
 });
-backend.signUpNewsletter.resources.lambda.role?.attachInlinePolicy(signUpNewsletterSesPolicy);
+backend.subscribeToNewsletter.resources.lambda.role?.attachInlinePolicy(subscribeToNewsletterSesPolicy);
 
 // Add Pinpoint config to amplify_outputs.json
 backend.addOutput({

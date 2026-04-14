@@ -28720,17 +28720,6 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sign-up-newsletter@workspace:packages/backend/amplify/functions/sign-up-newsletter":
-  version: 0.0.0-use.local
-  resolution: "sign-up-newsletter@workspace:packages/backend/amplify/functions/sign-up-newsletter"
-  dependencies:
-    "@aws-sdk/client-ses": "npm:^3.975.0"
-    "@types/jest": "npm:^29.5.14"
-    jest: "npm:^29.7.0"
-    ts-jest: "npm:^29.3.4"
-  languageName: unknown
-  linkType: soft
-
 "signal-exit@npm:^3.0.2, signal-exit@npm:^3.0.3, signal-exit@npm:^3.0.7":
   version: 3.0.7
   resolution: "signal-exit@npm:3.0.7"
@@ -29405,6 +29394,17 @@ __metadata:
   checksum: 10c0/975d951792e65052f1f6e41aaad46492642ce4922b3dc36d4b49b37c8509f9a776794d8f275360f00116a5e6ab1e31514bdcd5840656c4e3213da6803fa12941
   languageName: node
   linkType: hard
+
+"subscribe-to-newsletter@workspace:packages/backend/amplify/functions/subscribe-to-newsletter":
+  version: 0.0.0-use.local
+  resolution: "subscribe-to-newsletter@workspace:packages/backend/amplify/functions/subscribe-to-newsletter"
+  dependencies:
+    "@aws-sdk/client-ses": "npm:^3.975.0"
+    "@types/jest": "npm:^29.5.14"
+    jest: "npm:^29.7.0"
+    ts-jest: "npm:^29.3.4"
+  languageName: unknown
+  linkType: soft
 
 "sucrase@npm:~3.35.1":
   version: 3.35.1

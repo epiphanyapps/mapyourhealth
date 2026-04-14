@@ -32,7 +32,7 @@ function callHandler(args: Record<string, unknown>) {
   return (handler as Function)({ arguments: args });
 }
 
-describe("sign-up-newsletter handler", () => {
+describe("subscribe-to-newsletter handler", () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockCreate.mockResolvedValue({});
