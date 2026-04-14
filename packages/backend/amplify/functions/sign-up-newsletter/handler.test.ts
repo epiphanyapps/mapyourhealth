@@ -20,7 +20,9 @@ jest.mock("@aws-sdk/client-ses", () => ({
   SendEmailCommand: jest.fn().mockImplementation((params) => params),
 }));
 
+// Only override randomBytes; preserve all other crypto exports
 jest.mock("crypto", () => ({
+  ...jest.requireActual("crypto"),
   randomBytes: jest.fn(() => Buffer.from("a".repeat(32))),
 }));
 
