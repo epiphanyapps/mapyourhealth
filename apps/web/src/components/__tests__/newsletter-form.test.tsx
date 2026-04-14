@@ -9,7 +9,7 @@ jest.mock("@/lib/countries", () => ({
   ],
 }));
 
-const mockSignUp = (globalThis as Record<string, jest.Mock>)
+const mockSignUp = (globalThis as unknown as Record<string, jest.Mock>)
   .__mockSignUpNewsletter;
 
 describe("NewsletterForm", () => {

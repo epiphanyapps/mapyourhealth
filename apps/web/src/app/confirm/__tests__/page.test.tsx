@@ -17,7 +17,7 @@ jest.mock("next/link", () => {
   };
 });
 
-const mockConfirm = (globalThis as Record<string, jest.Mock>)
+const mockConfirm = (globalThis as unknown as Record<string, jest.Mock>)
   .__mockConfirmNewsletter;
 
 describe("ConfirmPage", () => {
