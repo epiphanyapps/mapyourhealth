@@ -48,7 +48,7 @@ export function NewsletterForm() {
 
     try {
       const client = generateClient<Schema>();
-      const result = await client.mutations.signUpNewsletter({
+      const result = await client.mutations.subscribeToNewsletter({
         email,
         country: country || undefined,
         zip: zipCode || undefined,

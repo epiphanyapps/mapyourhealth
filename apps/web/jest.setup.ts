@@ -10,20 +10,20 @@ jest.mock("react-i18next", () => ({
 }));
 
 // Mock aws-amplify/api
-const mockSignUpNewsletter = jest.fn();
+const mockSubscribeToNewsletter = jest.fn();
 const mockConfirmNewsletter = jest.fn();
 
 jest.mock("aws-amplify/api", () => ({
   generateClient: jest.fn(() => ({
     mutations: {
-      signUpNewsletter: mockSignUpNewsletter,
+      subscribeToNewsletter: mockSubscribeToNewsletter,
       confirmNewsletter: mockConfirmNewsletter,
     },
   })),
 }));
 
 // Export mocks for test files to use
-(globalThis as Record<string, unknown>).__mockSignUpNewsletter =
-  mockSignUpNewsletter;
+(globalThis as Record<string, unknown>).__mockSubscribe =
+  mockSubscribeToNewsletter;
 (globalThis as Record<string, unknown>).__mockConfirmNewsletter =
   mockConfirmNewsletter;

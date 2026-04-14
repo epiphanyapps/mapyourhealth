@@ -9,8 +9,8 @@ jest.mock("@/lib/countries", () => ({
   ],
 }));
 
-const mockSignUp = (globalThis as unknown as Record<string, jest.Mock>)
-  .__mockSignUpNewsletter;
+const mockSubscribe = (globalThis as unknown as Record<string, jest.Mock>)
+  .__mockSubscribe;
 
 describe("NewsletterForm", () => {
   beforeEach(() => {
@@ -62,7 +62,7 @@ describe("NewsletterForm", () => {
       await waitFor(() => {
         expect(screen.getByText("home.invalidEmail")).toBeInTheDocument();
       });
-      expect(mockSignUp).not.toHaveBeenCalled();
+      expect(mockSubscribe).not.toHaveBeenCalled();
     });
 
     it("shows error when no country selected", async () => {
@@ -105,7 +105,7 @@ describe("NewsletterForm", () => {
 
   describe("successful submission", () => {
     it("calls mutation and shows success state", async () => {
-      mockSignUp.mockResolvedValue({ data: { success: true } });
+      mockSubscribe.mockResolvedValue({ data: { success: true } });
       const user = userEvent.setup();
       render(<NewsletterForm />);
 
@@ -121,7 +121,7 @@ describe("NewsletterForm", () => {
       await user.click(screen.getByRole("button", { name: /home\.signUp/i }));
 
       await waitFor(() => {
-        expect(mockSignUp).toHaveBeenCalledWith(
+        expect(mockSubscribe).toHaveBeenCalledWith(
           expect.objectContaining({
             email: "test@example.com",
             country: "CA",
@@ -140,7 +140,7 @@ describe("NewsletterForm", () => {
 
   describe("error handling", () => {
     it("displays API error message", async () => {
-      mockSignUp.mockResolvedValue({
+      mockSubscribe.mockResolvedValue({
         data: { success: false, message: "Server error" },
       });
       const user = userEvent.setup();
@@ -163,7 +163,7 @@ describe("NewsletterForm", () => {
     });
 
     it("shows generic error on network failure", async () => {
-      mockSignUp.mockRejectedValue(new Error("Network error"));
+      mockSubscribe.mockRejectedValue(new Error("Network error"));
       const user = userEvent.setup();
       render(<NewsletterForm />);
 
@@ -186,7 +186,7 @@ describe("NewsletterForm", () => {
 
   describe("duplicate email", () => {
     it("shows success with already-registered message", async () => {
-      mockSignUp.mockResolvedValue({
+      mockSubscribe.mockResolvedValue({
         data: {
           success: false,
           message:
