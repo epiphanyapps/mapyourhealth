@@ -403,10 +403,11 @@ GitHub Actions workflows in `.github/workflows/`:
 |----------|---------|---------|
 | `lint.yml` | PR, push | ESLint checks |
 | `type-check.yml` | PR, push | TypeScript compilation |
-| `backend-ci.yml` | PR to main | Backend CI |
+| `backend-ci.yml` | Push to `main` or `staging` | Backend CI |
 | `backend-seed.yml` | Manual | Seed database |
-| `admin-deploy.yml` | Push to main | Deploy admin dashboard |
-| `mobile-deploy.yml` | Push to main | Deploy mobile web |
+| `admin-deploy.yml` | Push to `main` or `staging` | Deploy admin dashboard |
+| `mobile-deploy.yml` | Push to `main` or `staging` | Deploy mobile web |
+| `web-deploy.yml` | Push to `main` or `staging` | Deploy web landing page |
 | `e2e-tests.yml` | PR, manual | Run E2E tests |
 | `e2e-ios.yml` | Manual | iOS E2E tests |
 | `playwright-tests.yml` | PR | Playwright tests |
@@ -458,76 +459,99 @@ cd apps/admin && npm run dev
 
 ## Feature Branch Testing Workflow
 
-All feature branches should be tested using the **staging environment** before merging to `main`.
+**Default PR target is `staging`.** Every change flows `feat/*` → `staging` → `main`:
+1. Open feature PRs against `staging` (`gh pr create --base staging`).
+2. Once merged, CI auto-deploys to the staging environment where you smoke-test on the staging URLs.
+3. When staging is green, promote with a separate PR from `staging` → `main`.
 
-- **Staging URL**: https://staging.d2z5ddqhlc1q5.amplifyapp.com/
-- The staging frontend (`staging` branch on Mobile Web app `d2z5ddqhlc1q5`) shares the production backend
-- Push feature branches to `staging` to deploy and test
+`staging` has its own backend (Amplify staging env), so breaking it is low-risk. Production (`main`) should only receive changes that have already been validated on staging.
+
+### Staging URLs
+
+- **Web landing (staging)**: https://staging.dv0j563gt073v.amplifyapp.com/
+- **Admin (staging)**: https://staging.d26q32gc98goap.amplifyapp.com/
+- **Mobile web (staging)**: https://staging.d2z5ddqhlc1q5.amplifyapp.com/
 
 ### Testing Strategy by Change Type
 
 | Change Type | How to Test |
 |-------------|-------------|
-| **Backend only** (schema, Lambda) | Deploy backend to `main` → verify via staging or AppSync console |
-| **Mobile only** (UI, hooks, screens) | Push to `staging` branch → test at staging URL |
-| **Admin only** (pages, components) | `cd apps/admin && npm run dev` locally |
-| **Backend + Frontend** | Deploy backend first → push frontend to `staging` → test |
-| **Full stack** | Deploy backend → push mobile to `staging` + run admin locally |
+| **Backend only** (schema, Lambda) | Merge PR to `staging` → Amplify backend staging auto-deploys → verify via staging URLs or AppSync console |
+| **Mobile only** (UI, hooks, screens) | Merge PR to `staging` → test at mobile staging URL |
+| **Admin only** (pages, components) | `cd apps/admin && npm run dev` locally; then merge PR to `staging` and test at admin staging URL |
+| **Web landing only** | Merge PR to `staging` → test at web staging URL |
+| **Backend + Frontend** | Merge PR to `staging`; backend staging builds first, frontend staging picks up new outputs on next build |
+| **Full stack** | Same as above; validate all affected staging URLs before promoting |
 
-### Step-by-Step: Staging Testing
+### Step-by-Step: Open a Feature PR
 
 ```bash
-# 1. Develop on feature branch
-git checkout feat/my-feature
+# 1. Branch off the latest main (or staging if it's ahead)
+git checkout main && git pull --ff-only
+git checkout -b feat/my-feature
 
-# 2. Push to staging to deploy
-git push origin feat/my-feature:staging
+# 2. Commit and push
+git push -u origin feat/my-feature
 
-# 3. Wait for Amplify to build and deploy
-# Check status at: https://console.aws.amazon.com/amplify/apps/d2z5ddqhlc1q5/branches/staging
+# 3. Open a PR targeting staging
+gh pr create --base staging --title "feat: my feature" --body "..."
 
-# 4. Test at staging URL
-# https://staging.d2z5ddqhlc1q5.amplifyapp.com/
-
-# 5. For local development, use:
-yarn mobile                      # Mobile app (local)
-cd apps/admin && npm run dev     # Admin dashboard (local)
+# 4. After merge, smoke-test on the relevant staging URL(s).
 ```
 
-### Pre-Merge Checklist
+### Promoting `staging` → `main`
 
-Before merging any PR to `main`, verify:
+Once staging is validated, open a promotion PR:
 
 ```bash
-# 1. Lint passes
+git checkout staging && git pull --ff-only
+gh pr create --base main --head staging --title "release: promote staging to main" --body "..."
+```
+
+Merge with a regular merge commit so the commit history stays linear and traceable.
+
+### Exceptions — target `main` directly
+
+Only when going through `staging` would be counterproductive:
+- **CI/workflow fixes** that would otherwise block the staging pipeline itself.
+- **Production hotfixes** validated independently and too urgent for a staging cycle. Back-merge `main` → `staging` immediately after so the branches don't diverge.
+
+### Pre-merge checks (before merging into `staging`)
+
+```bash
+# Lint
 npx eslint apps/mobile/app --ext .ts,.tsx    # Mobile
 cd apps/admin && npm run lint                 # Admin
+cd apps/web && npm run lint                   # Web
 
-# 2. Type check passes
-cd apps/mobile && npx tsc --noEmit           # Mobile
-cd apps/admin && npx tsc --noEmit            # Admin
+# Type check
+cd apps/mobile && npx tsc --noEmit            # Mobile
+cd apps/admin && npx tsc --noEmit             # Admin
+cd apps/web && npx tsc --noEmit               # Web
 
-# 3. Unit tests pass
-cd apps/mobile && npm run test               # Jest
-
-# 4. Manual smoke test
-# - Run the app and verify the feature works
-# - Check for visual regressions on affected screens
-
-# 5. E2E tests (if feature touches critical flows)
-cd apps/mobile && npm run test:maestro       # Maestro (requires preview build)
-cd apps/admin && npm run test:e2e            # Playwright
+# Unit tests
+cd apps/mobile && npm run test                # Jest
 ```
+
+### Pre-promotion checks (before merging `staging` → `main`)
+
+1. All staging URLs load and the affected flows work end-to-end.
+2. No visual regressions on the changed screens.
+3. E2E suites (Maestro / Playwright) pass if the feature touches critical flows:
+   ```bash
+   cd apps/mobile && npm run test:maestro     # requires preview build
+   cd apps/admin && npm run test:e2e          # Playwright
+   ```
 
 ### Merge Order for Related PRs
 
-When multiple PRs touch overlapping files, merge in dependency order:
-1. Backend-only changes first (schema must exist before frontend uses it)
-2. Admin-only changes (independent of mobile)
-3. Mobile-only changes (independent of admin)
-4. Full-stack changes last (depend on backend being deployed)
+When multiple PRs touch overlapping files, merge into `staging` in dependency order:
+1. Backend-only changes first (schema must exist before frontend uses it).
+2. Admin-only changes (independent of mobile).
+3. Mobile-only changes (independent of admin).
+4. Full-stack changes last (depend on backend being deployed).
 
-After each merge to `main`, CI auto-deploys. Wait for deployment to complete before merging the next PR if they share backend dependencies.
+Each merge to `staging` auto-deploys. Wait for the deployment to complete before merging the next PR if they share backend dependencies. The same order applies to the eventual `staging` → `main` promotion.
 
 ## Known Fallback Values (Tech Debt)
 
@@ -676,21 +700,26 @@ When a city's jurisdiction has no state-specific thresholds seeded, the threshol
 
 ## Deployment
 
-**All deployments are triggered by pushing to the appropriate git branch.** There is no manual deploy command — Amplify auto-builds and deploys on push.
+**All deployments are triggered by GitHub Actions after a merge to `main` or `staging`.** Amplify auto-build is disabled on both branches; the deploy workflows gate on lint + type check, then call `aws amplify start-job`. There is no manual deploy command for normal flow.
 
-1. **Backend**: Push to `main` → Amplify auto-deploys (App ID: `d3jl0ykn4qgj9r`)
-2. **Mobile Web (prod)**: Push to `main` → Amplify auto-deploys (App ID: `d2z5ddqhlc1q5`)
-3. **Mobile Web (staging)**: Push to `staging` branch → Amplify auto-deploys → https://staging.d2z5ddqhlc1q5.amplifyapp.com/
-4. **Admin**: Push to `main` → Amplify auto-deploys (App ID: `d26q32gc98goap`)
+Each Amplify app has both `main` (production) and `staging` branches:
+
+| App | Production | Staging |
+|---|---|---|
+| Backend (`d3jl0ykn4qgj9r`) | `main` | `staging` |
+| Mobile Web (`d2z5ddqhlc1q5`) | https://app.mapyourhealth.info/ | https://staging.d2z5ddqhlc1q5.amplifyapp.com/ |
+| Admin (`d26q32gc98goap`) | https://admin.mapyourhealth.info/ | https://staging.d26q32gc98goap.amplifyapp.com/ |
+| Web landing (`dv0j563gt073v`) | https://www.mapyourhealth.info/ | https://staging.dv0j563gt073v.amplifyapp.com/ |
 
 ```bash
-# Deploy backend + frontend to production
-git push origin main
+# Default: open a feature PR against staging
+gh pr create --base staging --title "feat: my feature" --body "..."
 
-# Deploy to staging (push feature branch)
-git push origin feat/my-feature:staging
+# After staging is validated, promote to production with a follow-up PR
+git checkout staging && git pull --ff-only
+gh pr create --base main --head staging --title "release: promote staging to main" --body "..."
 
-# Mobile native builds (EAS Build)
+# Mobile native builds (EAS Build) — unchanged
 cd apps/mobile && eas build --profile production --platform all
 ```
 
