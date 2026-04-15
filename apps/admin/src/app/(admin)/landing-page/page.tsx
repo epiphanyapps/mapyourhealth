@@ -8,7 +8,7 @@ import {
   SUPPORTED_LOCALES,
   type Locale,
   flattenContent,
-  sectionForKey,
+  groupKeysBySection,
   isLikelyMultiline,
   parseContent,
   serializeContent,
@@ -123,27 +123,10 @@ export default function LandingPageContentPage() {
     load();
   }, []);
 
-  const sections = useMemo(() => {
-    const keys = Object.keys(bundledFlat[activeLocale]).sort();
-    const grouped: Record<string, string[]> = {};
-    for (const key of keys) {
-      const section = sectionForKey(key);
-      grouped[section] = grouped[section] ?? [];
-      grouped[section].push(key);
-    }
-    const order = [
-      "Branding",
-      "Hero",
-      "Newsletter form",
-      "Benefits",
-      "FAQ",
-      "Confirm page",
-      "Other",
-    ];
-    return order
-      .filter((s) => grouped[s]?.length)
-      .map((s) => ({ section: s, keys: grouped[s] }));
-  }, [bundledFlat, activeLocale]);
+  const sections = useMemo(
+    () => groupKeysBySection(Object.keys(bundledFlat[activeLocale])),
+    [bundledFlat, activeLocale],
+  );
 
   const handleChange = (locale: Locale, key: string, value: string) => {
     setValues((prev) => ({

@@ -42,38 +42,104 @@ export function expandFlatContent(
   return out;
 }
 
-export const LANDING_SECTION_ORDER: { section: string; prefix: string }[] = [
-  { section: "Hero", prefix: "home.title" },
-  { section: "Hero", prefix: "home.subtitle" },
-  { section: "Hero", prefix: "home.description" },
-  { section: "Hero", prefix: "home.CTA" },
-  { section: "Hero", prefix: "home.alreadyKnow" },
-  { section: "Hero", prefix: "home.tryWebBeta" },
-  { section: "Hero", prefix: "home.mobileComingSoon" },
-  { section: "Hero", prefix: "home.signUp" },
-  { section: "Newsletter form", prefix: "home.enterEmail" },
-  { section: "Newsletter form", prefix: "home.enterZipCode" },
-  { section: "Newsletter form", prefix: "home.zipCode" },
-  { section: "Newsletter form", prefix: "home.selectCountry" },
-  { section: "Newsletter form", prefix: "home.invalidEmail" },
-  { section: "Newsletter form", prefix: "home.errorMessage" },
-  { section: "Newsletter form", prefix: "home.success" },
-  { section: "Newsletter form", prefix: "home.successAlreadyRegistered" },
-  { section: "Benefits", prefix: "home.benefits" },
-  { section: "Benefits", prefix: "home.benefitsTitle" },
-  { section: "FAQ", prefix: "home.faq" },
-  { section: "FAQ", prefix: "home.faqTitle" },
-  { section: "Confirm page", prefix: "confirm." },
-  { section: "Branding", prefix: "appName" },
+/**
+ * Section + key order shown in the admin CMS. Mirrors the top-to-bottom
+ * reading order of the live landing page so editors find fields where
+ * they see them. Any key not listed here falls into an "Other" section
+ * sorted alphabetically.
+ */
+export const LANDING_SECTIONS: { section: string; keys: string[] }[] = [
+  { section: "Branding", keys: ["appName"] },
+  {
+    section: "Hero",
+    keys: [
+      "home.title",
+      "home.subtitle",
+      "home.CTA1",
+      "home.CTA2",
+      "home.description",
+    ],
+  },
+  {
+    section: "Newsletter form",
+    keys: [
+      "home.enterEmail",
+      "home.selectCountry",
+      "home.zipCode",
+      "home.enterZipCode",
+      "home.signUp",
+      "home.invalidEmail",
+      "home.errorMessage",
+      "home.success",
+      "home.successAlreadyRegistered",
+    ],
+  },
+  {
+    section: "Below form",
+    keys: ["home.alreadyKnow", "home.tryWebBeta", "home.mobileComingSoon"],
+  },
+  {
+    section: "Benefits",
+    keys: [
+      "home.benefitsTitle",
+      "home.benefits.title1",
+      "home.benefits.content1",
+      "home.benefits.title2",
+      "home.benefits.content2",
+      "home.benefits.title3",
+      "home.benefits.content3",
+      "home.benefits.title4",
+      "home.benefits.content4",
+    ],
+  },
+  {
+    section: "FAQ",
+    keys: [
+      "home.faqTitle",
+      "home.faq.question1",
+      "home.faq.answer1",
+      "home.faq.question2",
+      "home.faq.answer2",
+      "home.faq.question3",
+      "home.faq.answer3",
+      "home.faq.question4",
+      "home.faq.answer4",
+      "home.faq.question5",
+      "home.faq.answer5",
+      "home.faq.question6",
+      "home.faq.answer6",
+    ],
+  },
+  {
+    section: "Confirm page",
+    keys: [
+      "confirm.loading",
+      "confirm.success",
+      "confirm.invalidCode",
+      "confirm.error",
+    ],
+  },
 ];
 
-export function sectionForKey(key: string): string {
-  for (const { section, prefix } of LANDING_SECTION_ORDER) {
-    if (key === prefix || key.startsWith(`${prefix}.`) || key.startsWith(prefix)) {
-      return section;
-    }
-  }
-  return "Other";
+/**
+ * Given the full set of keys discovered in the bundled translations,
+ * return grouped sections in the order above. Unknown keys land in
+ * "Other" (alphabetical) so newly-added i18n keys never disappear from
+ * the CMS — they just surface at the bottom until someone slots them
+ * into LANDING_SECTIONS.
+ */
+export function groupKeysBySection(
+  availableKeys: Iterable<string>,
+): { section: string; keys: string[] }[] {
+  const available = new Set(availableKeys);
+  const known = new Set(LANDING_SECTIONS.flatMap((s) => s.keys));
+  const grouped = LANDING_SECTIONS.map(({ section, keys }) => ({
+    section,
+    keys: keys.filter((k) => available.has(k)),
+  })).filter((s) => s.keys.length > 0);
+  const leftover = [...available].filter((k) => !known.has(k)).sort();
+  if (leftover.length) grouped.push({ section: "Other", keys: leftover });
+  return grouped;
 }
 
 export function isLikelyMultiline(value: string): boolean {
