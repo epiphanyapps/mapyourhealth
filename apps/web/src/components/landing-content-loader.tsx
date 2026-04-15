@@ -25,7 +25,11 @@ export function LandingContentLoader() {
                 locale,
               });
               if (cancelled || !data?.content) return;
-              const flat = data.content as Record<string, string>;
+              const raw = data.content;
+              const flat =
+                typeof raw === "string"
+                  ? (JSON.parse(raw) as Record<string, string>)
+                  : (raw as Record<string, string>);
               const expanded = expandFlatContent(flat);
               i18n.addResourceBundle(
                 locale,

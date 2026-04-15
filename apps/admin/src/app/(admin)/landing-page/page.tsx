@@ -40,6 +40,21 @@ function lastSegment(key: string): string {
   return parts[parts.length - 1] ?? key;
 }
 
+function parseContent(raw: unknown): FieldState {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object"
+        ? (parsed as FieldState)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  return raw as FieldState;
+}
+
 export default function LandingPageContentPage() {
   const [activeLocale, setActiveLocale] = useState<Locale>("en");
   const [bundledFlat, setBundledFlat] = useState<Record<Locale, FieldState>>({
@@ -78,7 +93,7 @@ export default function LandingPageContentPage() {
               locale,
             });
             if (data?.content) {
-              fetched[locale] = data.content as FieldState;
+              fetched[locale] = parseContent(data.content);
             }
           }),
         );
@@ -158,18 +173,19 @@ export default function LandingPageContentPage() {
       const existing = overrides[locale];
       const hasExisting = Object.keys(existing).length > 0;
 
-      if (hasExisting) {
-        await client.models.LandingPageContent.update({
-          locale,
-          content: next,
-          updatedBy: email,
-        });
-      } else {
-        await client.models.LandingPageContent.create({
-          locale,
-          content: next,
-          updatedBy: email,
-        });
+      const payload = {
+        locale,
+        content: JSON.stringify(next),
+        updatedBy: email,
+      };
+      const result = hasExisting
+        ? await client.models.LandingPageContent.update(payload)
+        : await client.models.LandingPageContent.create(payload);
+      if (result.errors?.length) {
+        throw new Error(
+          result.errors.map((e) => e.message).join("; ") ||
+            "AppSync returned errors",
+        );
       }
 
       setOverrides((prev) => ({ ...prev, [locale]: next }));
