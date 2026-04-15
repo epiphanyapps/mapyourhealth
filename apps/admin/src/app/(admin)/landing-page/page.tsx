@@ -85,6 +85,7 @@ function throwIfErrors(errors: readonly { message: string }[] | undefined) {
 
 export default function LandingPageContentPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("en");
+  const [themePreviewLocale, setThemePreviewLocale] = useState<Locale>("en");
   const [bundledFlat, setBundledFlat] = useState<Record<Locale, FieldState>>({
     en: {},
     fr: {},
@@ -193,7 +194,8 @@ export default function LandingPageContentPage() {
     load();
   }, []);
 
-  const activeLocale: Locale = activeTab === "theme" ? "en" : activeTab;
+  const activeLocale: Locale =
+    activeTab === "theme" ? themePreviewLocale : activeTab;
 
   const sections = useMemo(
     () => groupKeysBySection(Object.keys(bundledFlat[activeLocale])),
@@ -475,23 +477,51 @@ export default function LandingPageContentPage() {
               ))}
 
               <TabsContent value="theme" className="space-y-6 mt-4">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3 flex-wrap">
                   <p className="text-sm text-muted-foreground">
                     {Object.keys(themeOverrides).length} theme token
                     {Object.keys(themeOverrides).length === 1 ? "" : "s"}{" "}
                     persisted.
                   </p>
-                  <Button
-                    onClick={handleSaveTheme}
-                    disabled={!themeDirty || savingTheme}
-                  >
-                    {savingTheme ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Save className="h-4 w-4 mr-2" />
-                    )}
-                    Save theme
-                  </Button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground">
+                      Preview locale:
+                    </span>
+                    <div
+                      role="tablist"
+                      aria-label="Preview locale"
+                      className="inline-flex rounded-md border"
+                    >
+                      {SUPPORTED_LOCALES.map((locale) => (
+                        <button
+                          key={locale}
+                          type="button"
+                          role="tab"
+                          aria-selected={themePreviewLocale === locale}
+                          onClick={() => setThemePreviewLocale(locale)}
+                          className={
+                            "px-3 py-1 text-xs transition-colors " +
+                            (themePreviewLocale === locale
+                              ? "bg-muted font-medium"
+                              : "text-muted-foreground hover:bg-muted/50")
+                          }
+                        >
+                          {locale.toUpperCase()}
+                        </button>
+                      ))}
+                    </div>
+                    <Button
+                      onClick={handleSaveTheme}
+                      disabled={!themeDirty || savingTheme}
+                    >
+                      {savingTheme ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Save className="h-4 w-4 mr-2" />
+                      )}
+                      Save theme
+                    </Button>
+                  </div>
                 </div>
 
                 <Card>

@@ -3,6 +3,34 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { I18nProvider } from "@/providers/i18n-provider";
 import { AmplifyProvider } from "@/providers/amplify-provider";
+import { LANDING_THEME_STORAGE_KEY } from "@/components/landing-theme-loader";
+
+/**
+ * Runs before React hydrates. Reads the last-seen theme from localStorage
+ * and applies the CSS vars to documentElement, avoiding a flash of the
+ * bundled defaults on return visits.
+ */
+const themePrehydrateScript = `
+(function(){
+  try {
+    var raw = localStorage.getItem(${JSON.stringify(LANDING_THEME_STORAGE_KEY)});
+    if (!raw) return;
+    var tokens = JSON.parse(raw);
+    if (!tokens || typeof tokens !== 'object') return;
+    var map = {
+      accent: '--mh-accent', accentSoft: '--mh-accent-soft',
+      accentFg: '--mh-accent-fg', background: '--mh-bg',
+      cardBg: '--mh-card-bg', surfaceAlt: '--mh-surface-alt',
+      text: '--mh-text', textMuted: '--mh-text-muted'
+    };
+    for (var k in map) {
+      if (typeof tokens[k] === 'string' && tokens[k]) {
+        document.documentElement.style.setProperty(map[k], tokens[k]);
+      }
+    }
+  } catch (e) {}
+})();
+`;
 
 const netflixSansBold = localFont({
   src: "../fonts/NetflixSans-Bold.otf",
@@ -74,6 +102,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" dir="ltr" className="dark">
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themePrehydrateScript }} />
+      </head>
       <body
         className={`${netflixSansBold.variable} ${netflixSansMedium.variable} ${netflixSansRegular.variable} ${netflixSansLight.variable} antialiased`}
       >

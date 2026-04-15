@@ -70,7 +70,9 @@ export function LandingPreview({ content, theme }: Props) {
         className="relative overflow-auto"
         style={{ maxHeight: "calc(100vh - 12rem)" }}
       >
-        <div style={{ width: "1280px", transform: "scale(0.5)", transformOrigin: "top left" }}>
+        {/* `zoom` scales the subtree AND its laid-out size, so parent
+            scroll heights stay accurate. `transform: scale` does not. */}
+        <div style={{ width: "1280px", zoom: 0.5 }}>
           <Landing
             content={content}
             theme={theme}
@@ -79,7 +81,6 @@ export function LandingPreview({ content, theme }: Props) {
             formSlot={<FormPlaceholder content={content} />}
           />
         </div>
-        <div aria-hidden style={{ height: "calc(100vh * 0.5)" }} />
       </div>
     </div>
   );
