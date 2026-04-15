@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@mapyourhealth/landing-ui/styles.css";
+
+@source "../../../../packages/landing-ui/src";
 
 @custom-variant dark (&:is(.dark *));
 

@@ -9,6 +9,8 @@ const config = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
     "^@mapyourhealth/backend/(.*)$": "<rootDir>/../../packages/backend/$1",
+    "^@mapyourhealth/landing-ui$": "<rootDir>/../../packages/landing-ui/src/index.ts",
+    "^@mapyourhealth/landing-ui/(.*)$": "<rootDir>/../../packages/landing-ui/$1",
   },
 };
 

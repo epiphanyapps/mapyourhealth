@@ -5,6 +5,7 @@ import { I18nextProvider, useTranslation } from "react-i18next";
 import i18n from "@/lib/i18n";
 import { RTL_LANGUAGES, type Language } from "@/lib/i18n/resources";
 import { LandingContentLoader } from "@/components/landing-content-loader";
+import { LandingThemeLoader } from "@/components/landing-theme-loader";
 import { LogoProvider } from "@/context/logo-context";
 
 const STORAGE_KEY = "i18nextLng";
@@ -67,6 +68,7 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       <LanguageDetector />
       <DirectionUpdater />
       <LandingContentLoader />
+      <LandingThemeLoader />
       <LogoProvider>{children}</LogoProvider>
     </I18nextProvider>
   );

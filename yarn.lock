@@ -11082,6 +11082,19 @@ __metadata:
   languageName: unknown
   linkType: soft
 
+"@mapyourhealth/landing-ui@workspace:*, @mapyourhealth/landing-ui@workspace:packages/landing-ui":
+  version: 0.0.0-use.local
+  resolution: "@mapyourhealth/landing-ui@workspace:packages/landing-ui"
+  dependencies:
+    "@types/react": "npm:^19.0.0"
+    "@types/react-dom": "npm:^19.0.0"
+    typescript: "npm:~5.9.2"
+  peerDependencies:
+    react: ^19.0.0
+    react-dom: ^19.0.0
+  languageName: unknown
+  linkType: soft
+
 "@mapyourhealth/mobile@workspace:apps/mobile":
   version: 0.0.0-use.local
   resolution: "@mapyourhealth/mobile@workspace:apps/mobile"
@@ -11165,6 +11178,7 @@ __metadata:
   resolution: "@mapyourhealth/web@workspace:apps/web"
   dependencies:
     "@mapyourhealth/backend": "workspace:*"
+    "@mapyourhealth/landing-ui": "workspace:*"
     "@tailwindcss/postcss": "npm:^4"
     "@testing-library/dom": "npm:^10.4.0"
     "@testing-library/jest-dom": "npm:^6.6.3"
@@ -16300,7 +16314,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:^19":
+"@types/react-dom@npm:^19, @types/react-dom@npm:^19.0.0":
   version: 19.2.3
   resolution: "@types/react-dom@npm:19.2.3"
   peerDependencies:
@@ -16315,6 +16329,15 @@ __metadata:
   dependencies:
     csstype: "npm:^3.2.2"
   checksum: 10c0/832834998c4ee971fca72ecf1eb95dc924ad3931a2112c687a4dae498aabd115c5fa4db09186853e34a646226b0223808c8f867df03d17601168f9cf119448de
+  languageName: node
+  linkType: hard
+
+"@types/react@npm:^19.0.0":
+  version: 19.2.14
+  resolution: "@types/react@npm:19.2.14"
+  dependencies:
+    csstype: "npm:^3.2.2"
+  checksum: 10c0/7d25bf41b57719452d86d2ac0570b659210402707313a36ee612666bf11275a1c69824f8c3ee1fdca077ccfe15452f6da8f1224529b917050eb2d861e52b59b7
   languageName: node
   linkType: hard
 
@@ -16897,6 +16920,7 @@ __metadata:
     "@aws-sdk/client-s3": "npm:^3.975.0"
     "@hookform/resolvers": "npm:^5.2.2"
     "@mapyourhealth/backend": "workspace:*"
+    "@mapyourhealth/landing-ui": "workspace:*"
     "@playwright/test": "npm:^1.57.0"
     "@radix-ui/react-dialog": "npm:^1.1.15"
     "@radix-ui/react-dropdown-menu": "npm:^2.1.16"

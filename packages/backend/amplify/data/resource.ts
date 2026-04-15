@@ -520,6 +520,25 @@ const schema = a.schema({
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ]),
 
+  /**
+   * LandingTheme - Admin-editable theme tokens for apps/web landing page
+   * Single row keyed as "default"; `tokens` is a flat JSON map of token
+   * names (accent, background, etc.) to CSS colour strings. Public read;
+   * admin CRUD. Theme applies to all locales.
+   */
+  LandingTheme: a
+    .model({
+      key: a.string().required(),
+      tokens: a.json().required(),
+      updatedBy: a.string(),
+    })
+    .identifier(["key"])
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["read"]),
+      allow.group("admin").to(["create", "update", "delete", "read"]),
+    ]),
+
   // =========================================================================
   // Pollution Sources
   // =========================================================================
