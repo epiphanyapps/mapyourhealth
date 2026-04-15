@@ -10,6 +10,8 @@ import {
   flattenContent,
   sectionForKey,
   isLikelyMultiline,
+  parseContent,
+  serializeContent,
 } from "@mapyourhealth/backend/shared/landing-page-content";
 import enBundled from "../../../../../web/src/translations/en.json";
 import frBundled from "../../../../../web/src/translations/fr.json";
@@ -39,6 +41,29 @@ function lastSegment(key: string): string {
   const parts = key.split(".");
   return parts[parts.length - 1] ?? key;
 }
+
+function computeOverrides(
+  values: FieldState,
+  bundled: FieldState,
+): FieldState {
+  const out: FieldState = {};
+  for (const [key, value] of Object.entries(values)) {
+    const defaultValue = bundled[key] ?? "";
+    if (value.trim() !== "" && value !== defaultValue) {
+      out[key] = value;
+    }
+  }
+  return out;
+}
+
+function throwIfErrors(errors: readonly { message: string }[] | undefined) {
+  if (errors?.length) {
+    throw new Error(
+      errors.map((e) => e.message).join("; ") || "AppSync returned errors",
+    );
+  }
+}
+
 
 export default function LandingPageContentPage() {
   const [activeLocale, setActiveLocale] = useState<Locale>("en");
@@ -78,7 +103,7 @@ export default function LandingPageContentPage() {
               locale,
             });
             if (data?.content) {
-              fetched[locale] = data.content as FieldState;
+              fetched[locale] = parseContent(data.content) as FieldState;
             }
           }),
         );
@@ -140,44 +165,41 @@ export default function LandingPageContentPage() {
   const handleSave = async (locale: Locale) => {
     try {
       setSaving(locale);
-      const next: FieldState = {};
-      for (const [key, value] of Object.entries(values[locale])) {
-        const bundled = bundledFlat[locale][key] ?? "";
-        // Only persist values that differ from the bundled default.
-        if (value.trim() !== "" && value !== bundled) {
-          next[key] = value;
-        }
-      }
-
-      const session = await fetchAuthSession();
-      const email =
-        (session.tokens?.idToken?.payload?.email as string | undefined) ??
-        "admin";
-
+      const next = computeOverrides(values[locale], bundledFlat[locale]);
+      const hasExisting = Object.keys(overrides[locale]).length > 0;
       const client = generateClient<Schema>({ authMode: "userPool" });
-      const existing = overrides[locale];
-      const hasExisting = Object.keys(existing).length > 0;
 
-      if (hasExisting) {
-        await client.models.LandingPageContent.update({
-          locale,
-          content: next,
-          updatedBy: email,
-        });
+      if (Object.keys(next).length === 0) {
+        if (hasExisting) {
+          const result = await client.models.LandingPageContent.delete({
+            locale,
+          });
+          throwIfErrors(result.errors);
+        }
+        // else: nothing to persist and nothing to clean up.
       } else {
-        await client.models.LandingPageContent.create({
+        const session = await fetchAuthSession();
+        const email =
+          (session.tokens?.idToken?.payload?.email as string | undefined) ??
+          "admin";
+        const payload = {
           locale,
-          content: next,
+          content: serializeContent(next),
           updatedBy: email,
-        });
+        };
+        const result = hasExisting
+          ? await client.models.LandingPageContent.update(payload)
+          : await client.models.LandingPageContent.create(payload);
+        throwIfErrors(result.errors);
       }
 
       setOverrides((prev) => ({ ...prev, [locale]: next }));
       setDirty((prev) => ({ ...prev, [locale]: false }));
+      const count = Object.keys(next).length;
       toast.success(
-        `Saved ${Object.keys(next).length} override${
-          Object.keys(next).length === 1 ? "" : "s"
-        } for ${locale.toUpperCase()}`,
+        count === 0
+          ? `Cleared all overrides for ${locale.toUpperCase()}`
+          : `Saved ${count} override${count === 1 ? "" : "s"} for ${locale.toUpperCase()}`,
       );
     } catch (err) {
       console.error("Failed to save:", err);
