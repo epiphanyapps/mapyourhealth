@@ -29,6 +29,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
+import { LogoSection } from "./logo-section";
 
 const BUNDLED: Record<Locale, Record<string, unknown>> = {
   en: enBundled as Record<string, unknown>,
@@ -221,6 +222,8 @@ export default function LandingPageContentPage() {
           blank (or click Reset) to fall back to the bundled default.
         </p>
       </div>
+
+      <LogoSection />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
