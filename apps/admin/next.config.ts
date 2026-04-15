@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  transpilePackages: ["@mapyourhealth/landing-ui"],
 };
 
 export default nextConfig;

@@ -1,0 +1,19 @@
+/**
+ * Default CSS variables for @mapyourhealth/landing-ui.
+ * Consumers can override any of these at any scope (e.g. :root for global,
+ * or on a container to scope to a preview pane).
+ */
+:where(:root) {
+  --mh-accent: #9db835;
+  --mh-accent-soft: #c4d779;
+  --mh-accent-fg: #ffffff;
+  --mh-bg: #000000;
+  --mh-card-bg: #1c1c1c;
+  --mh-surface-alt: #2e2e2e;
+  --mh-text: #ffffff;
+  --mh-text-muted: #a3a3a3;
+  --mh-font-bold: inherit;
+  --mh-font-medium: inherit;
+  --mh-font-regular: inherit;
+  --mh-font-light: inherit;
+}
