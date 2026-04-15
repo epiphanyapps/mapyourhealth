@@ -79,3 +79,30 @@ export function sectionForKey(key: string): string {
 export function isLikelyMultiline(value: string): boolean {
   return value.includes("\n") || value.length > 80;
 }
+
+/**
+ * The `content` field is stored as AppSync AWSJSON (a JSON string). The
+ * Amplify data client doesn't auto-serialize this on write or auto-parse
+ * it on read, so both sides must go through these helpers.
+ */
+export function serializeContent(flat: Record<string, string>): string {
+  return JSON.stringify(flat);
+}
+
+export function parseContent(raw: unknown): Record<string, string> {
+  if (!raw) return {};
+  if (typeof raw === "string") {
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" && !Array.isArray(parsed)
+        ? (parsed as Record<string, string>)
+        : {};
+    } catch {
+      return {};
+    }
+  }
+  if (typeof raw === "object" && !Array.isArray(raw)) {
+    return raw as Record<string, string>;
+  }
+  return {};
+}
