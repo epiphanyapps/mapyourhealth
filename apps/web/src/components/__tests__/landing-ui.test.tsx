@@ -5,6 +5,8 @@ import {
   BenefitsSection,
   FaqSection,
   Footer,
+  Navbar,
+  LanguageSelector,
   createT,
   defaultThemeTokens,
   applyTheme,
@@ -78,7 +80,7 @@ describe("HeroSection", () => {
 
 describe("BenefitsSection", () => {
   it("renders four benefit items using content", () => {
-    render(<BenefitsSection content={content} usePlaceholders />);
+    render(<BenefitsSection content={content} />);
     expect(screen.getByText("B1 title")).toBeInTheDocument();
     expect(screen.getByText("B4 content")).toBeInTheDocument();
     expect(screen.getByText("Sign up")).toBeInTheDocument();
@@ -124,6 +126,57 @@ describe("Landing composer", () => {
     expect(screen.getByText("B1 title")).toBeInTheDocument();
     expect(screen.getByText("Q1")).toBeInTheDocument();
     expect(screen.getByText(/MapYourHealth/)).toBeInTheDocument();
+  });
+});
+
+describe("Navbar", () => {
+  it("renders text logo with custom color and right slot", () => {
+    render(
+      <Navbar
+        logo={{ kind: "text", text: "BRAND_X", color: "#123456" }}
+        right={<span>RIGHT_SLOT</span>}
+      />,
+    );
+    expect(screen.getByText("BRAND_X")).toBeInTheDocument();
+    expect(screen.getByText("RIGHT_SLOT")).toBeInTheDocument();
+    const link = screen.getByRole("link");
+    expect(link).toHaveStyle({ color: "#123456" });
+    expect(link).toHaveAttribute("href", "/");
+  });
+
+  it("renders image logo when logo.kind === 'image'", () => {
+    render(
+      <Navbar
+        logo={{ kind: "image", src: "/logo.png", alt: "Brand X logo" }}
+      />,
+    );
+    const img = screen.getByAltText("Brand X logo");
+    expect(img).toHaveAttribute("src", "/logo.png");
+  });
+});
+
+describe("LanguageSelector", () => {
+  const LANGUAGES = [
+    { code: "en", label: "En" },
+    { code: "fr", label: "Fr" },
+  ];
+
+  it("fires onChange when a non-active language is clicked", () => {
+    const onChange = jest.fn();
+    render(
+      <LanguageSelector languages={LANGUAGES} current="en" onChange={onChange} />,
+    );
+    fireEvent.click(screen.getByText("Fr"));
+    expect(onChange).toHaveBeenCalledWith("fr");
+  });
+
+  it("still calls onChange on the active language (parent decides noop)", () => {
+    const onChange = jest.fn();
+    render(
+      <LanguageSelector languages={LANGUAGES} current="en" onChange={onChange} />,
+    );
+    fireEvent.click(screen.getByText("En"));
+    expect(onChange).toHaveBeenCalledWith("en");
   });
 });
 

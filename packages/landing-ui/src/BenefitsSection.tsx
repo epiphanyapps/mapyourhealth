@@ -7,7 +7,6 @@ type Props = {
   content?: LandingContent;
   images?: LandingImages;
   imageBase?: string;
-  usePlaceholders?: boolean;
 };
 
 const DEFAULT_ICONS = ["pollution.png", "monitor.png", "protect.png", "relocation.png"] as const;
@@ -16,7 +15,6 @@ export function BenefitsSection({
   content,
   images,
   imageBase = "/images/",
-  usePlaceholders = false,
 }: Props) {
   const t = createT(content);
   const icons = images?.benefitIcons ?? DEFAULT_ICONS.map((f) => `${imageBase}icons/${f}`);
@@ -59,21 +57,13 @@ export function BenefitsSection({
               <p className="self-start pt-4 text-lg" style={{ color: "var(--mh-text)" }}>
                 {item.content}
               </p>
-              {usePlaceholders ? (
-                <div
-                  aria-hidden
-                  className="size-16 shrink-0 rounded lg:size-24"
-                  style={{ backgroundColor: "var(--mh-surface-alt)" }}
-                />
-              ) : (
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  width={96}
-                  height={96}
-                  className="size-16 shrink-0 object-contain lg:size-24"
-                />
-              )}
+              <img
+                src={item.image}
+                alt={item.title}
+                width={96}
+                height={96}
+                className="size-16 shrink-0 object-contain lg:size-24"
+              />
             </div>
           </article>
         ))}

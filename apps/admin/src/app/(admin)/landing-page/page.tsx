@@ -365,7 +365,7 @@ export default function LandingPageContentPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,640px)]">
+        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,760px)]">
           <div>
             <Tabs value={activeTab} onValueChange={handleTabChange}>
               <TabsList>
@@ -595,6 +595,7 @@ export default function LandingPageContentPage() {
             <LandingPreview
               content={previewValues[activeLocale]}
               theme={previewTheme}
+              locale={activeLocale}
             />
           </div>
         </div>

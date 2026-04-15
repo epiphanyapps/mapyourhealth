@@ -51,7 +51,6 @@ export function Landing({
           content={content}
           images={images}
           imageBase={imageBase}
-          usePlaceholders={usePlaceholders}
         />
         <div className="h-12 md:h-24" />
         <FaqSection content={content} />

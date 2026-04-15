@@ -26,8 +26,12 @@ export function HeroSection({
   navbarSlot,
   formSlot,
 }: Props) {
+  // `min-h-screen` makes the live hero fill the viewport. Drop it in placeholder
+  // mode (admin preview) so Benefits immediately follows — otherwise the scaled
+  // hero leaves the section off-screen when the preview loads.
+  const heightClass = usePlaceholders ? "" : "min-h-screen";
   return (
-    <section className="relative min-h-screen w-full" style={{ backgroundColor: "var(--mh-bg)" }}>
+    <section className={`relative w-full ${heightClass}`.trim()} style={{ backgroundColor: "var(--mh-bg)" }}>
       {usePlaceholders ? (
         <div
           aria-hidden
