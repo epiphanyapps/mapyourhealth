@@ -52,12 +52,15 @@
   --mh-bg: #000000;
   --mh-card-bg: #1c1c1c;
   --mh-surface-alt: #2e2e2e;
+  --mh-faq-row-bg: #1f2937;
+  --mh-faq-row-bg-hover: #374151;
+  --mh-input-bg: #262626;
+  --mh-input-border: #404040;
   --mh-text: #ffffff;
   --mh-text-muted: #a3a3a3;
-  --mh-font-bold: var(--font-netflix-bold);
-  --mh-font-medium: var(--font-netflix-medium);
-  --mh-font-regular: var(--font-netflix-regular);
-  --mh-font-light: var(--font-netflix-light);
+  /* Font vars cannot live on :root because next/font puts --font-netflix-* on
+     <body>; CSS custom-property substitution resolves at the declaring element.
+     Bound on `body` below so the cascade picks them up. */
 
   --card: #1c1c1c;
   --card-foreground: #ffffff;
@@ -83,5 +86,11 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Bound here (not :root) so var(--font-netflix-*) resolves on the same
+       element where next/font defined them. */
+    --mh-font-bold: var(--font-netflix-bold);
+    --mh-font-medium: var(--font-netflix-medium);
+    --mh-font-regular: var(--font-netflix-regular);
+    --mh-font-light: var(--font-netflix-light);
   }
 }
