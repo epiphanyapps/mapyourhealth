@@ -26,8 +26,11 @@ const LANGUAGES = [
 
 const PREVIEW_APP_URL = "https://app.mapyourhealth.info";
 // Icons + footer imagery live with the landing app, not the admin domain.
-// Point at the production landing so the preview doesn't need its own copy.
-const PREVIEW_IMAGE_BASE = "https://www.mapyourhealth.info/images/";
+// Override per-environment with NEXT_PUBLIC_PREVIEW_IMAGE_BASE (e.g. staging
+// admin → staging web) so the preview stays in-environment.
+const PREVIEW_IMAGE_BASE =
+  process.env.NEXT_PUBLIC_PREVIEW_IMAGE_BASE ??
+  "https://www.mapyourhealth.info/images/";
 
 export function LandingPreview({ content, theme, locale }: Props) {
   const t = (key: string, fallback?: string) => content[key] ?? fallback ?? key;
@@ -37,7 +40,10 @@ export function LandingPreview({ content, theme, locale }: Props) {
   };
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-background shadow-sm">
+    <div
+      className="overflow-auto rounded-lg border bg-background shadow-sm"
+      style={{ maxHeight: "calc(100vh - 8rem)" }}
+    >
       <div style={{ width: "1520px", zoom: 0.5 }}>
         <Landing
           content={content}

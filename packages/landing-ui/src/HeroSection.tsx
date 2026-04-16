@@ -57,6 +57,7 @@ export function HeroSection({
             alt=""
             className="absolute inset-0 h-full w-full object-cover"
             fetchPriority="high"
+            referrerPolicy="no-referrer"
           />
         </picture>
       )}

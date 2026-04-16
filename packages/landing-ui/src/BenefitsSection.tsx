@@ -62,6 +62,7 @@ export function BenefitsSection({
                 alt={item.title}
                 width={96}
                 height={96}
+                referrerPolicy="no-referrer"
                 className="size-16 shrink-0 object-contain lg:size-24"
               />
             </div>

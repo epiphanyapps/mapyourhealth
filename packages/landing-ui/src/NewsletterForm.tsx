@@ -34,6 +34,9 @@ function subscribeToStorage(onChange: () => void) {
   return () => window.removeEventListener("storage", onChange);
 }
 
+// `readOnly` only gates writes — reads always happen so a real subscriber who
+// returns to the landing sees the success state. Admin previews live on a
+// different origin so this localStorage is isolated from real subscribers.
 function getSubscribedSnapshot() {
   try {
     return localStorage.getItem(SUBSCRIBED_KEY) === "true";
