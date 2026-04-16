@@ -1,41 +1,47 @@
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { NewsletterForm } from "../newsletter-form";
+import { NewsletterForm } from "@mapyourhealth/landing-ui";
+import type { SubscribeArgs, SubscribeResult } from "@mapyourhealth/landing-ui";
 
-jest.mock("@/lib/countries", () => ({
-  countries: [
-    { code: "US", name: "United States" },
-    { code: "CA", name: "Canada" },
-  ],
-}));
+const TEST_COUNTRIES = [
+  { code: "US", name: "United States" },
+  { code: "CA", name: "Canada" },
+];
 
-const mockSubscribe = (globalThis as unknown as Record<string, jest.Mock>)
-  .__mockSubscribe;
+type Props = Partial<React.ComponentProps<typeof NewsletterForm>>;
 
-describe("NewsletterForm", () => {
+function renderForm(props: Props = {}) {
+  const onSubscribe = props.onSubscribe ?? jest.fn();
+  const result = render(
+    <NewsletterForm
+      t={(key, fallback) => fallback ?? key}
+      lang="en"
+      appUrl="https://app.example.com"
+      countries={TEST_COUNTRIES}
+      onSubscribe={onSubscribe as (args: SubscribeArgs) => Promise<SubscribeResult>}
+      {...props}
+    />,
+  );
+  return { ...result, onSubscribe };
+}
+
+describe("NewsletterForm (landing-ui)", () => {
   beforeEach(() => {
-    jest.clearAllMocks();
     localStorage.clear();
   });
 
   describe("rendering", () => {
     it("renders the form with all inputs", () => {
-      render(<NewsletterForm />);
-
-      expect(
-        screen.getByPlaceholderText("home.enterEmail"),
-      ).toBeInTheDocument();
+      renderForm();
+      expect(screen.getByPlaceholderText("home.enterEmail")).toBeInTheDocument();
       expect(screen.getByText("home.selectCountry")).toBeInTheDocument();
-      expect(
-        screen.getByPlaceholderText("home.zipCode"),
-      ).toBeInTheDocument();
+      expect(screen.getByPlaceholderText("home.zipCode")).toBeInTheDocument();
       expect(screen.getByText("home.signUp")).toBeInTheDocument();
     });
 
     it("shows success state when localStorage has newsletterSubscribed", () => {
       localStorage.setItem("newsletterSubscribed", "true");
-      render(<NewsletterForm />);
-
+      renderForm();
       expect(screen.getByText("home.success")).toBeInTheDocument();
       expect(
         screen.queryByPlaceholderText("home.enterEmail"),
@@ -46,29 +52,28 @@ describe("NewsletterForm", () => {
   describe("client-side validation", () => {
     it("shows error for invalid email", async () => {
       const user = userEvent.setup();
-      render(<NewsletterForm />);
+      const { onSubscribe } = renderForm();
 
-      const emailInput = screen.getByPlaceholderText("home.enterEmail");
-      await user.type(emailInput, "not-valid");
+      await user.type(screen.getByPlaceholderText("home.enterEmail"), "not-valid");
       await user.selectOptions(
         screen.getByDisplayValue("home.selectCountry"),
         "CA",
       );
       await user.type(screen.getByPlaceholderText("home.zipCode"), "H2X");
 
-      // Use fireEvent.submit to bypass HTML5 type="email" validation in jsdom
-      fireEvent.submit(screen.getByRole("button", { name: /home\.signUp/i }).closest("form")!);
+      fireEvent.submit(
+        screen.getByRole("button", { name: /home\.signUp/i }).closest("form")!,
+      );
 
       await waitFor(() => {
         expect(screen.getByText("home.invalidEmail")).toBeInTheDocument();
       });
-      expect(mockSubscribe).not.toHaveBeenCalled();
+      expect(onSubscribe).not.toHaveBeenCalled();
     });
 
     it("shows error when no country selected", async () => {
       const user = userEvent.setup();
-      render(<NewsletterForm />);
-
+      renderForm();
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
         "test@example.com",
@@ -76,17 +81,16 @@ describe("NewsletterForm", () => {
       await user.type(screen.getByPlaceholderText("home.zipCode"), "H2X");
       await user.click(screen.getByRole("button", { name: /home\.signUp/i }));
 
-      // The error message is rendered in a span.text-red-400
       await waitFor(() => {
-        const errorSpan = document.querySelector(".text-red-400");
-        expect(errorSpan).toHaveTextContent("home.selectCountry");
+        expect(screen.getByTestId("newsletter-error")).toHaveTextContent(
+          "home.selectCountry",
+        );
       });
     });
 
     it("shows error when zip is empty", async () => {
       const user = userEvent.setup();
-      render(<NewsletterForm />);
-
+      renderForm();
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
         "test@example.com",
@@ -104,10 +108,10 @@ describe("NewsletterForm", () => {
   });
 
   describe("successful submission", () => {
-    it("calls mutation and shows success state", async () => {
-      mockSubscribe.mockResolvedValue({ data: { success: true } });
+    it("calls onSubscribe and shows success state", async () => {
+      const onSubscribe = jest.fn().mockResolvedValue({ success: true });
       const user = userEvent.setup();
-      render(<NewsletterForm />);
+      renderForm({ onSubscribe });
 
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
@@ -121,13 +125,13 @@ describe("NewsletterForm", () => {
       await user.click(screen.getByRole("button", { name: /home\.signUp/i }));
 
       await waitFor(() => {
-        expect(mockSubscribe).toHaveBeenCalledWith(
+        expect(onSubscribe).toHaveBeenCalledWith(
           expect.objectContaining({
             email: "test@example.com",
             country: "CA",
             zip: "H2X",
+            lang: "en",
           }),
-          { authMode: "iam" },
         );
       });
 
@@ -141,11 +145,11 @@ describe("NewsletterForm", () => {
 
   describe("error handling", () => {
     it("displays API error message", async () => {
-      mockSubscribe.mockResolvedValue({
-        data: { success: false, message: "Server error" },
-      });
+      const onSubscribe = jest
+        .fn()
+        .mockResolvedValue({ success: false, message: "Server error" });
       const user = userEvent.setup();
-      render(<NewsletterForm />);
+      renderForm({ onSubscribe });
 
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
@@ -163,10 +167,10 @@ describe("NewsletterForm", () => {
       });
     });
 
-    it("shows generic error on network failure", async () => {
-      mockSubscribe.mockRejectedValue(new Error("Network error"));
+    it("shows generic error on thrown exception", async () => {
+      const onSubscribe = jest.fn().mockRejectedValue(new Error("Network"));
       const user = userEvent.setup();
-      render(<NewsletterForm />);
+      renderForm({ onSubscribe });
 
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
@@ -187,15 +191,13 @@ describe("NewsletterForm", () => {
 
   describe("duplicate email", () => {
     it("shows success with already-registered message", async () => {
-      mockSubscribe.mockResolvedValue({
-        data: {
-          success: false,
-          message:
-            "A user with your email address has already been subscribed for updates.",
-        },
+      const onSubscribe = jest.fn().mockResolvedValue({
+        success: false,
+        message:
+          "A user with your email address has already been subscribed for updates.",
       });
       const user = userEvent.setup();
-      render(<NewsletterForm />);
+      renderForm({ onSubscribe });
 
       await user.type(
         screen.getByPlaceholderText("home.enterEmail"),
@@ -215,6 +217,30 @@ describe("NewsletterForm", () => {
       });
 
       expect(localStorage.getItem("newsletterSubscribed")).toBe("true");
+    });
+  });
+
+  describe("readOnly mode", () => {
+    it("does not touch localStorage on success", async () => {
+      const onSubscribe = jest.fn().mockResolvedValue({ success: true });
+      const user = userEvent.setup();
+      renderForm({ onSubscribe, readOnly: true });
+
+      await user.type(
+        screen.getByPlaceholderText("home.enterEmail"),
+        "preview@example.com",
+      );
+      await user.selectOptions(
+        screen.getByDisplayValue("home.selectCountry"),
+        "US",
+      );
+      await user.type(screen.getByPlaceholderText("home.zipCode"), "90210");
+      await user.click(screen.getByRole("button", { name: /home\.signUp/i }));
+
+      await waitFor(() => {
+        expect(screen.getByText("home.success")).toBeInTheDocument();
+      });
+      expect(localStorage.getItem("newsletterSubscribed")).toBeNull();
     });
   });
 });

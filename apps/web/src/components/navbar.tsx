@@ -1,41 +1,43 @@
 "use client";
 
-import Link from "next/link";
 import { useTranslation } from "react-i18next";
+import {
+  Navbar as BaseNavbar,
+  LanguageSelector,
+} from "@mapyourhealth/landing-ui";
+import type { NavbarLogo } from "@mapyourhealth/landing-ui";
 import { useLogoVariant } from "@/context/logo-context";
-import { LanguageSelector } from "./language-selector";
+
+const LANGUAGES = [
+  { code: "en", label: "En" },
+  { code: "fr", label: "Fr" },
+];
 
 export function Navbar() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const variant = useLogoVariant();
   const fallbackText = t("appName");
+  const current = (i18n.resolvedLanguage ?? i18n.language) ?? "en";
+
+  const logo: NavbarLogo =
+    variant.mode === "image" && variant.imageUrl
+      ? { kind: "image", src: variant.imageUrl, alt: variant.imageAlt ?? fallbackText }
+      : {
+          kind: "text",
+          text: variant.text?.trim() || fallbackText,
+          color: variant.textColor ?? undefined,
+        };
 
   return (
-    <header className="relative z-10">
-      <nav className="flex w-full items-center justify-between px-4 py-4 md:px-6">
-        <Link
-          href="/"
-          className="font-[family-name:var(--font-netflix-bold)] text-2xl sm:text-3xl inline-flex items-center"
-          style={
-            variant.mode === "text"
-              ? { color: variant.textColor ?? undefined }
-              : undefined
-          }
-        >
-          {variant.mode === "image" && variant.imageUrl ? (
-            <img
-              src={variant.imageUrl}
-              alt={variant.imageAlt ?? fallbackText}
-              className="h-8 sm:h-10 w-auto"
-            />
-          ) : (
-            <span className={variant.textColor ? undefined : "text-primary-500"}>
-              {variant.text?.trim() || fallbackText}
-            </span>
-          )}
-        </Link>
-        <LanguageSelector />
-      </nav>
-    </header>
+    <BaseNavbar
+      logo={logo}
+      right={
+        <LanguageSelector
+          languages={LANGUAGES}
+          current={current}
+          onChange={(code) => i18n.changeLanguage(code)}
+        />
+      }
+    />
   );
 }

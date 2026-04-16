@@ -32,6 +32,7 @@ export function Footer({ content, images, imageBase = "/images/", usePlaceholder
           <img
             src={desktop}
             alt=""
+            referrerPolicy="no-referrer"
             className="absolute inset-0 h-[880px] w-full object-cover object-bottom"
           />
         </picture>
