@@ -169,10 +169,12 @@ export function NewsletterForm({
   };
 
   const inputStyle = {
-    backgroundColor: "var(--mh-surface-alt)",
-    borderColor: "var(--mh-surface-alt)",
+    backgroundColor: "var(--mh-input-bg)",
+    borderColor: "var(--mh-input-border)",
     color: "var(--mh-text)",
   };
+  const inputClass =
+    "h-11 rounded-md border px-3 placeholder:text-[var(--mh-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--mh-accent)]";
 
   return (
     <div className="mt-4 flex flex-1 flex-col items-center xs:mt-12">
@@ -263,7 +265,7 @@ export function NewsletterForm({
                   placeholder={t("home.enterEmail")}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 rounded-md border px-3 focus:outline-none"
+                  className={inputClass}
                   style={inputStyle}
                 />
                 {errorMessage && (
@@ -280,7 +282,7 @@ export function NewsletterForm({
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
                 data-testid="newsletter-country"
-                className="h-11 w-[200px] rounded-md border px-2 focus:outline-none"
+                className="h-11 w-[200px] rounded-md border px-2 focus:outline-none focus:ring-2 focus:ring-[var(--mh-accent)]"
                 style={inputStyle}
               >
                 <option value="">{t("home.selectCountry")}</option>
@@ -296,7 +298,7 @@ export function NewsletterForm({
                 placeholder={t("home.zipCode")}
                 value={zipCode}
                 onChange={(e) => setZipCode(e.target.value)}
-                className="h-11 rounded-md border px-3 focus:outline-none"
+                className={inputClass}
                 style={inputStyle}
               />
             </div>

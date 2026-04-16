@@ -2,6 +2,10 @@
  * Default CSS variables for @mapyourhealth/landing-ui.
  * Consumers can override any of these at any scope (e.g. :root for global,
  * or on a container to scope to a preview pane).
+ *
+ * Font variables are intentionally NOT defined here. Consumers (apps/web) bind
+ * them on `body` so they resolve where next/font's `--font-*` vars are scoped;
+ * the admin preview leaves them unset and inherits the host's fonts.
  */
 :where(:root) {
   --mh-accent: #9db835;
@@ -10,10 +14,10 @@
   --mh-bg: #000000;
   --mh-card-bg: #1c1c1c;
   --mh-surface-alt: #2e2e2e;
+  --mh-faq-row-bg: #1f2937;
+  --mh-faq-row-bg-hover: #374151;
+  --mh-input-bg: #262626;
+  --mh-input-border: #404040;
   --mh-text: #ffffff;
   --mh-text-muted: #a3a3a3;
-  --mh-font-bold: inherit;
-  --mh-font-medium: inherit;
-  --mh-font-regular: inherit;
-  --mh-font-light: inherit;
 }
