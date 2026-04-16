@@ -83,6 +83,14 @@ function throwIfErrors(errors: readonly { message: string }[] | undefined) {
   }
 }
 
+function errorMessage(err: unknown, fallback: string): string {
+  if (err instanceof Error && err.message) return err.message;
+  return fallback;
+}
+
+// Accepts #rgb, #rgba, #rrggbb, #rrggbbaa.
+const THEME_HEX_RE = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
+
 export default function LandingPageContentPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("en");
   const [themePreviewLocale, setThemePreviewLocale] = useState<Locale>("en");
@@ -111,7 +119,17 @@ export default function LandingPageContentPage() {
   );
   const [themeOverrides, setThemeOverrides] = useState<LandingThemeTokens>({});
   const [themeDirty, setThemeDirty] = useState(false);
+  const [themeErrors, setThemeErrors] = useState<Record<string, string>>({});
   const [savingTheme, setSavingTheme] = useState(false);
+
+  // Re-entrancy guards: protect against rapid double-clicks that would
+  // otherwise issue two AppSync mutations and allow the later one to silently
+  // overwrite the first (last-write-wins with no version check).
+  const savingLocaleRef = useRef<Record<Locale, boolean>>({ en: false, fr: false });
+  const savingThemeRef = useRef(false);
+  // Mirror of LogoSection's dirty flag, threaded through a ref so we can
+  // include it in the tab-switch confirmation without prop-drilling state.
+  const logoDirtyRef = useRef(false);
 
   // Debounced mirrors used by the preview to avoid re-rendering on every keystroke.
   const [previewValues, setPreviewValues] = useState(values);
@@ -220,6 +238,8 @@ export default function LandingPageContentPage() {
   };
 
   const handleSave = async (locale: Locale) => {
+    if (savingLocaleRef.current[locale]) return;
+    savingLocaleRef.current[locale] = true;
     try {
       setSaving(locale);
       const next = computeOverrides(values[locale], bundledFlat[locale]);
@@ -259,8 +279,9 @@ export default function LandingPageContentPage() {
       );
     } catch (err) {
       console.error("Failed to save:", err);
-      toast.error("Failed to save changes");
+      toast.error(`Failed to save changes: ${errorMessage(err, "unknown error")}`);
     } finally {
+      savingLocaleRef.current[locale] = false;
       setSaving(null);
     }
   };
@@ -268,6 +289,15 @@ export default function LandingPageContentPage() {
   const handleThemeChange = (tokenKey: string, value: string) => {
     setThemeTokens((prev) => ({ ...prev, [tokenKey]: value }));
     setThemeDirty(true);
+    setThemeErrors((prev) => {
+      const next = { ...prev };
+      if (value && !THEME_HEX_RE.test(value)) {
+        next[tokenKey] = "Use a hex colour like #9db835";
+      } else {
+        delete next[tokenKey];
+      }
+      return next;
+    });
   };
 
   const handleResetToken = (tokenKey: string) => {
@@ -275,9 +305,23 @@ export default function LandingPageContentPage() {
     if (!def) return;
     setThemeTokens((prev) => ({ ...prev, [tokenKey]: def.default }));
     setThemeDirty(true);
+    setThemeErrors((prev) => {
+      if (!prev[tokenKey]) return prev;
+      const next = { ...prev };
+      delete next[tokenKey];
+      return next;
+    });
   };
 
+  const themeHasErrors = Object.keys(themeErrors).length > 0;
+
   const handleSaveTheme = async () => {
+    if (savingThemeRef.current) return;
+    if (themeHasErrors) {
+      toast.error("Fix invalid colour values before saving");
+      return;
+    }
+    savingThemeRef.current = true;
     try {
       setSavingTheme(true);
       const next = computeThemeOverrides(themeTokens);
@@ -317,8 +361,9 @@ export default function LandingPageContentPage() {
       );
     } catch (err) {
       console.error("Failed to save theme:", err);
-      toast.error("Failed to save theme");
+      toast.error(`Failed to save theme: ${errorMessage(err, "unknown error")}`);
     } finally {
+      savingThemeRef.current = false;
       setSavingTheme(false);
     }
   };
@@ -345,6 +390,15 @@ export default function LandingPageContentPage() {
         return;
       }
     }
+    if (logoDirtyRef.current) {
+      if (
+        !window.confirm(
+          "You have unsaved logo changes. Switch tab and lose them?",
+        )
+      ) {
+        return;
+      }
+    }
     setActiveTab(next as TabKey);
   };
 
@@ -358,7 +412,11 @@ export default function LandingPageContentPage() {
         </p>
       </div>
 
-      <LogoSection />
+      <LogoSection
+        onDirtyChange={(d) => {
+          logoDirtyRef.current = d;
+        }}
+      />
 
       {loading ? (
         <div className="flex items-center justify-center py-20">
@@ -512,7 +570,7 @@ export default function LandingPageContentPage() {
                     </div>
                     <Button
                       onClick={handleSaveTheme}
-                      disabled={!themeDirty || savingTheme}
+                      disabled={!themeDirty || savingTheme || themeHasErrors}
                     >
                       {savingTheme ? (
                         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -568,7 +626,14 @@ export default function LandingPageContentPage() {
                             <input
                               id={`theme-${token.key}`}
                               type="color"
-                              value={value}
+                              // <input type="color"> needs a 6-char hex; fall
+                              // back to the default if the user typed something
+                              // invalid, otherwise the picker quietly resets.
+                              value={
+                                THEME_HEX_RE.test(value) && value.length === 7
+                                  ? value
+                                  : token.default
+                              }
                               onChange={(e) =>
                                 handleThemeChange(token.key, e.target.value)
                               }
@@ -580,8 +645,14 @@ export default function LandingPageContentPage() {
                                 handleThemeChange(token.key, e.target.value)
                               }
                               className="font-mono"
+                              aria-invalid={Boolean(themeErrors[token.key])}
                             />
                           </div>
+                          {themeErrors[token.key] && (
+                            <p className="text-xs text-destructive">
+                              {themeErrors[token.key]}
+                            </p>
+                          )}
                         </div>
                       );
                     })}
