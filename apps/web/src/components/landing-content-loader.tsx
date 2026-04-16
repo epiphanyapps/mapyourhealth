@@ -7,6 +7,7 @@ import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 import {
   SUPPORTED_LOCALES,
   expandFlatContent,
+  parseContent,
 } from "@mapyourhealth/backend/shared/landing-page-content";
 
 export function LandingContentLoader() {
@@ -25,7 +26,8 @@ export function LandingContentLoader() {
                 locale,
               });
               if (cancelled || !data?.content) return;
-              const flat = data.content as Record<string, string>;
+              const flat = parseContent(data.content);
+              if (Object.keys(flat).length === 0) return;
               const expanded = expandFlatContent(flat);
               i18n.addResourceBundle(
                 locale,

@@ -1,5 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@mapyourhealth/landing-ui/styles.css";
+
+@source "../../../../packages/landing-ui/src";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -41,6 +44,21 @@
   --radius: 0.625rem;
   --background: #000000;
   --foreground: #ffffff;
+
+  /* Bind landing-ui CSS vars to existing web tokens (LandingThemeLoader overrides at runtime). */
+  --mh-accent: #9db835;
+  --mh-accent-soft: #c4d779;
+  --mh-accent-fg: #ffffff;
+  --mh-bg: #000000;
+  --mh-card-bg: #1c1c1c;
+  --mh-surface-alt: #2e2e2e;
+  --mh-text: #ffffff;
+  --mh-text-muted: #a3a3a3;
+  --mh-font-bold: var(--font-netflix-bold);
+  --mh-font-medium: var(--font-netflix-medium);
+  --mh-font-regular: var(--font-netflix-regular);
+  --mh-font-light: var(--font-netflix-light);
+
   --card: #1c1c1c;
   --card-foreground: #ffffff;
   --popover: #1c1c1c;

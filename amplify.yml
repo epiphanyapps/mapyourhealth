@@ -64,6 +64,9 @@ applications:
           commands:
             - corepack enable
             - corepack prepare yarn@4.5.3 --activate
+            # Drop cached internal workspace packages so Yarn relinks them
+            # from the fresh checkout (cache otherwise masks workspace edits).
+            - rm -rf ../../node_modules/@mapyourhealth apps/web/node_modules/@mapyourhealth
             - cd ../.. && yarn install --immutable && cd apps/web
             - npx ampx generate outputs --branch $AWS_BRANCH --app-id d3jl0ykn4qgj9r
         build:
@@ -75,7 +78,6 @@ applications:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/*
           - ../../node_modules/**/*
           - .next/cache/**/*
 
@@ -87,6 +89,9 @@ applications:
           commands:
             - corepack enable
             - corepack prepare yarn@4.5.3 --activate
+            # Drop cached internal workspace packages so Yarn relinks them
+            # from the fresh checkout (cache otherwise masks workspace edits).
+            - rm -rf ../../node_modules/@mapyourhealth apps/admin/node_modules/@mapyourhealth
             # Install from monorepo root, then return to admin dir
             - cd ../.. && yarn install --immutable && cd apps/admin
             # Generate Amplify outputs from backend app (ca-central-1)
@@ -100,6 +105,5 @@ applications:
           - '**/*'
       cache:
         paths:
-          - node_modules/**/*
           - ../../node_modules/**/*
           - .next/cache/**/*

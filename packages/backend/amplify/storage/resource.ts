@@ -17,5 +17,12 @@ export const storage = defineStorage({
       allow.authenticated.to(['read']),
       allow.guest.to(['read']),
     ],
+    // Tenant-scoped landing-page assets uploaded from the admin CMS.
+    // Readable by the world (used on the public landing page).
+    'tenants/*': [
+      allow.guest.to(['read']),
+      allow.authenticated.to(['read']),
+      allow.groups(['admin']).to(['read', 'write', 'delete']),
+    ],
   }),
 });

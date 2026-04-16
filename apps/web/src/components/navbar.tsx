@@ -1,20 +1,43 @@
 "use client";
 
-import Link from "next/link";
-import { LanguageSelector } from "./language-selector";
+import { useTranslation } from "react-i18next";
+import {
+  Navbar as BaseNavbar,
+  LanguageSelector,
+} from "@mapyourhealth/landing-ui";
+import type { NavbarLogo } from "@mapyourhealth/landing-ui";
+import { useLogoVariant } from "@/context/logo-context";
+
+const LANGUAGES = [
+  { code: "en", label: "En" },
+  { code: "fr", label: "Fr" },
+];
 
 export function Navbar() {
+  const { t, i18n } = useTranslation();
+  const variant = useLogoVariant();
+  const fallbackText = t("appName");
+  const current = (i18n.resolvedLanguage ?? i18n.language) ?? "en";
+
+  const logo: NavbarLogo =
+    variant.mode === "image" && variant.imageUrl
+      ? { kind: "image", src: variant.imageUrl, alt: variant.imageAlt ?? fallbackText }
+      : {
+          kind: "text",
+          text: variant.text?.trim() || fallbackText,
+          color: variant.textColor ?? undefined,
+        };
+
   return (
-    <header className="relative z-10">
-      <nav className="flex w-full items-center justify-between px-4 py-4 md:px-6">
-        <Link
-          href="/"
-          className="font-[family-name:var(--font-netflix-bold)] text-2xl text-primary-500 sm:text-3xl"
-        >
-          MapYourHealth
-        </Link>
-        <LanguageSelector />
-      </nav>
-    </header>
+    <BaseNavbar
+      logo={logo}
+      right={
+        <LanguageSelector
+          languages={LANGUAGES}
+          current={current}
+          onChange={(code) => i18n.changeLanguage(code)}
+        />
+      }
+    />
   );
 }

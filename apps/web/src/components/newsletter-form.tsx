@@ -1,222 +1,48 @@
 "use client";
 
-import { useState, useSyncExternalStore } from "react";
 import { useTranslation } from "react-i18next";
 import { generateClient } from "aws-amplify/api";
-import { CheckCircle, ChevronRight } from "lucide-react";
-import { countries } from "@/lib/countries";
+import {
+  NewsletterForm as BaseNewsletterForm,
+  COUNTRIES,
+} from "@mapyourhealth/landing-ui";
+import type { SubscribeArgs, SubscribeResult } from "@mapyourhealth/landing-ui";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 
-const SUBSCRIBED_KEY = "newsletterSubscribed";
-
-function subscribeToStorage(onChange: () => void) {
-  window.addEventListener("storage", onChange);
-  return () => window.removeEventListener("storage", onChange);
-}
-
-function getSubscribedSnapshot() {
-  return localStorage.getItem(SUBSCRIBED_KEY) === "true";
-}
-
-function getServerSnapshot() {
-  return false;
-}
+const APP_URL = "https://app.mapyourhealth.info";
 
 export function NewsletterForm() {
   const { t, i18n } = useTranslation();
-  const [email, setEmail] = useState("");
-  const [country, setCountry] = useState("");
-  const [zipCode, setZipCode] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const subscribed = useSyncExternalStore(
-    subscribeToStorage,
-    getSubscribedSnapshot,
-    getServerSnapshot,
-  );
-  const [localSuccess, setSuccess] = useState(false);
-  const success = subscribed || localSuccess;
-  const [successMessage, setSuccessMessage] = useState("");
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
-    setErrorMessage(null);
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      setErrorMessage(t("home.invalidEmail"));
-      setLoading(false);
-      return;
-    }
-
-    if (!country) {
-      setErrorMessage(t("home.selectCountry"));
-      setLoading(false);
-      return;
-    }
-
-    if (!zipCode) {
-      setErrorMessage(t("home.enterZipCode"));
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      const result = await client.mutations.subscribeToNewsletter(
-        {
-          email,
-          country: country || undefined,
-          zip: zipCode || undefined,
-          lang: i18n.language,
-          callbackURL: window.location.host,
-        },
-        { authMode: "iam" },
-      );
-
-      if (!result.data?.success) {
-        const msg = result.data?.message;
-        if (msg?.includes("already been subscribed")) {
-          setSuccess(true);
-          setSuccessMessage(t("home.successAlreadyRegistered"));
-          localStorage.setItem(SUBSCRIBED_KEY, "true");
-        } else {
-          setErrorMessage(msg || t("home.errorMessage"));
-        }
-      } else {
-        setSuccess(true);
-        setSuccessMessage(t("home.success"));
-        localStorage.setItem(SUBSCRIBED_KEY, "true");
-      }
-    } catch {
-      setErrorMessage(t("home.errorMessage"));
-    }
-    setLoading(false);
+  const onSubscribe = async (args: SubscribeArgs): Promise<SubscribeResult> => {
+    const client = generateClient<Schema>();
+    const result = await client.mutations.subscribeToNewsletter(
+      {
+        email: args.email,
+        country: args.country,
+        zip: args.zip,
+        lang: args.lang,
+        callbackURL: args.callbackURL,
+      },
+      { authMode: "iam" },
+    );
+    return {
+      success: Boolean(result.data?.success),
+      message: result.data?.message ?? undefined,
+    };
   };
 
   return (
-    <div className="mt-4 flex flex-1 flex-col items-center xs:mt-12">
-      <div className="my-14 max-w-5xl px-2">
-        <h1 className="px-8 text-center font-[family-name:var(--font-netflix-bold)] text-4xl text-primary-500 sm:px-16 sm:text-5xl">
-          {t("home.title")}
-        </h1>
-        <p className="mt-2 px-8 text-center font-[family-name:var(--font-netflix-bold)] text-2xl text-white sm:px-16 sm:text-3xl">
-          {t("home.subtitle")}
-        </p>
-        <p className="mt-4 px-8 text-center text-xl sm:px-20">
-          <span className="font-[family-name:var(--font-netflix-light)] text-xl text-white">
-            {t("home.CTA1")}
-          </span>
-          <span className="font-[family-name:var(--font-netflix-bold)] text-xl text-primary-500">
-            {t("appName")}
-          </span>
-          <span className="font-[family-name:var(--font-netflix-light)] text-xl text-white">
-            {t("home.CTA2")}
-          </span>
-        </p>
-
-        {success ? (
-          <div
-            data-testid="newsletter-success"
-            className="mt-8 flex w-full animate-in fade-in items-center justify-center gap-4 duration-1000"
-          >
-            <CheckCircle className="size-12 text-primary-550" />
-            <span className="font-[family-name:var(--font-netflix-regular)] text-3xl text-white">
-              {successMessage || t("home.success")}
-            </span>
-            <a
-              href="https://app.mapyourhealth.info"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="ml-6 rounded-md bg-primary-550 px-6 py-3 font-[family-name:var(--font-netflix-bold)] text-lg text-white transition-colors hover:bg-primary-550/90"
-            >
-              {t("home.tryWebBeta")} &rarr;
-            </a>
-          </div>
-        ) : (
-          <form
-            onSubmit={handleSubmit}
-            data-testid="newsletter-form"
-            className="mt-4 flex flex-col items-center justify-center gap-4 md:mt-0 md:h-48 md:flex-row"
-          >
-            <div className="mt-8 flex flex-col items-center justify-evenly gap-4 md:mt-0 md:flex-row">
-              <div className="flex flex-col">
-                <input
-                  type="email"
-                  autoComplete="email"
-                  data-testid="newsletter-email"
-                  placeholder={t("home.enterEmail")}
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="h-11 rounded-md border border-neutral-700 bg-neutral-800 px-3 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-primary-550 focus:outline-none"
-                />
-                {errorMessage && (
-                  <span
-                    data-testid="newsletter-error"
-                    className="mt-1 text-sm text-red-400"
-                  >
-                    {errorMessage}
-                  </span>
-                )}
-              </div>
-              <select
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-                data-testid="newsletter-country"
-                className="h-11 w-[200px] rounded-md border border-neutral-700 bg-neutral-800 px-2 text-white focus:ring-2 focus:ring-primary-550 focus:outline-none"
-              >
-                <option value="">{t("home.selectCountry")}</option>
-                {countries.map((c) => (
-                  <option key={c.code} value={c.code}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-              <input
-                type="text"
-                data-testid="newsletter-zip"
-                placeholder={t("home.zipCode")}
-                value={zipCode}
-                onChange={(e) => setZipCode(e.target.value)}
-                className="h-11 rounded-md border border-neutral-700 bg-neutral-800 px-3 text-white placeholder:text-neutral-400 focus:ring-2 focus:ring-primary-550 focus:outline-none"
-              />
-            </div>
-            <button
-              type="submit"
-              data-testid="newsletter-submit"
-              disabled={loading}
-              className="flex h-11 items-center gap-2 rounded-md bg-primary-550 px-6 font-[family-name:var(--font-netflix-bold)] text-xl text-white transition-colors hover:bg-primary-550/90 disabled:opacity-50"
-            >
-              {loading ? (
-                <span className="size-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-              ) : (
-                <>
-                  {t("home.signUp")}
-                  <ChevronRight className="size-6" />
-                </>
-              )}
-            </button>
-          </form>
-        )}
-
-        <div className="mt-8 flex flex-col items-center">
-          <p className="mb-4 text-center font-[family-name:var(--font-netflix-regular)] text-lg text-white">
-            {t("home.alreadyKnow")}
-          </p>
-          <a
-            href="https://app.mapyourhealth.info"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="rounded-md border-2 border-primary-550 bg-white px-8 py-3 font-[family-name:var(--font-netflix-bold)] text-lg text-primary-550 transition-colors hover:bg-neutral-100"
-          >
-            {t("home.tryWebBeta")} &rarr;
-          </a>
-          <p className="mt-2 text-center font-[family-name:var(--font-netflix-light)] text-sm text-neutral-400">
-            {t("home.mobileComingSoon")}
-          </p>
-        </div>
-      </div>
-    </div>
+    <BaseNewsletterForm
+      t={(key, fallback) => {
+        const value = t(key);
+        if (typeof value === "string" && value.length > 0 && value !== key) return value;
+        return fallback ?? value;
+      }}
+      lang={i18n.language}
+      onSubscribe={onSubscribe}
+      appUrl={APP_URL}
+      countries={COUNTRIES}
+    />
   );
 }
