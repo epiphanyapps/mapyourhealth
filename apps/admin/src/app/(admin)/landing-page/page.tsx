@@ -35,7 +35,6 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Loader2, RotateCcw, Save } from "lucide-react";
 import { toast } from "sonner";
 import { LogoSection } from "./logo-section";
-import { LandingPreview } from "./landing-preview";
 
 const BUNDLED: Record<Locale, Record<string, unknown>> = {
   en: enBundled as Record<string, unknown>,
@@ -50,10 +49,7 @@ function lastSegment(key: string): string {
   return parts[parts.length - 1] ?? key;
 }
 
-function computeOverrides(
-  values: FieldState,
-  bundled: FieldState,
-): FieldState {
+function computeOverrides(values: FieldState, bundled: FieldState): FieldState {
   const out: FieldState = {};
   for (const [key, value] of Object.entries(values)) {
     const defaultValue = bundled[key] ?? "";
@@ -93,7 +89,6 @@ const THEME_HEX_RE = /^#([0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})$/i;
 
 export default function LandingPageContentPage() {
   const [activeTab, setActiveTab] = useState<TabKey>("en");
-  const [themePreviewLocale, setThemePreviewLocale] = useState<Locale>("en");
   const [bundledFlat, setBundledFlat] = useState<Record<Locale, FieldState>>({
     en: {},
     fr: {},
@@ -114,9 +109,8 @@ export default function LandingPageContentPage() {
   const [saving, setSaving] = useState<Locale | null>(null);
 
   // Theme state
-  const [themeTokens, setThemeTokens] = useState<LandingThemeTokens>(
-    defaultThemeTokens(),
-  );
+  const [themeTokens, setThemeTokens] =
+    useState<LandingThemeTokens>(defaultThemeTokens());
   const [themeOverrides, setThemeOverrides] = useState<LandingThemeTokens>({});
   const [themeDirty, setThemeDirty] = useState(false);
   const [themeErrors, setThemeErrors] = useState<Record<string, string>>({});
@@ -125,33 +119,14 @@ export default function LandingPageContentPage() {
   // Re-entrancy guards: protect against rapid double-clicks that would
   // otherwise issue two AppSync mutations and allow the later one to silently
   // overwrite the first (last-write-wins with no version check).
-  const savingLocaleRef = useRef<Record<Locale, boolean>>({ en: false, fr: false });
+  const savingLocaleRef = useRef<Record<Locale, boolean>>({
+    en: false,
+    fr: false,
+  });
   const savingThemeRef = useRef(false);
   // Mirror of LogoSection's dirty flag, threaded through a ref so we can
   // include it in the tab-switch confirmation without prop-drilling state.
   const logoDirtyRef = useRef(false);
-
-  // Debounced mirrors used by the preview to avoid re-rendering on every keystroke.
-  const [previewValues, setPreviewValues] = useState(values);
-  const [previewTheme, setPreviewTheme] = useState(themeTokens);
-  const valuesTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const themeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(() => {
-    if (valuesTimer.current) clearTimeout(valuesTimer.current);
-    valuesTimer.current = setTimeout(() => setPreviewValues(values), 100);
-    return () => {
-      if (valuesTimer.current) clearTimeout(valuesTimer.current);
-    };
-  }, [values]);
-
-  useEffect(() => {
-    if (themeTimer.current) clearTimeout(themeTimer.current);
-    themeTimer.current = setTimeout(() => setPreviewTheme(themeTokens), 100);
-    return () => {
-      if (themeTimer.current) clearTimeout(themeTimer.current);
-    };
-  }, [themeTokens]);
 
   useEffect(() => {
     const flat: Record<Locale, FieldState> = {
@@ -175,12 +150,10 @@ export default function LandingPageContentPage() {
           }),
         );
         setOverrides(fetched);
-        const merged = {
+        setValues({
           en: { ...flat.en, ...fetched.en },
           fr: { ...flat.fr, ...fetched.fr },
-        };
-        setValues(merged);
-        setPreviewValues(merged);
+        });
 
         // Load theme
         try {
@@ -193,9 +166,7 @@ export default function LandingPageContentPage() {
                 ? (JSON.parse(themeData.tokens) as LandingThemeTokens)
                 : (themeData.tokens as LandingThemeTokens);
             setThemeOverrides(loaded);
-            const next = { ...defaultThemeTokens(), ...loaded };
-            setThemeTokens(next);
-            setPreviewTheme(next);
+            setThemeTokens({ ...defaultThemeTokens(), ...loaded });
           }
         } catch (err) {
           console.warn("Failed to load theme:", err);
@@ -204,7 +175,6 @@ export default function LandingPageContentPage() {
         console.error("Failed to load landing content:", err);
         toast.error("Failed to load landing content");
         setValues(flat);
-        setPreviewValues(flat);
       } finally {
         setLoading(false);
       }
@@ -212,8 +182,7 @@ export default function LandingPageContentPage() {
     load();
   }, []);
 
-  const activeLocale: Locale =
-    activeTab === "theme" ? themePreviewLocale : activeTab;
+  const activeLocale: Locale = activeTab === "theme" ? "en" : activeTab;
 
   const sections = useMemo(
     () => groupKeysBySection(Object.keys(bundledFlat[activeLocale])),
@@ -279,7 +248,9 @@ export default function LandingPageContentPage() {
       );
     } catch (err) {
       console.error("Failed to save:", err);
-      toast.error(`Failed to save changes: ${errorMessage(err, "unknown error")}`);
+      toast.error(
+        `Failed to save changes: ${errorMessage(err, "unknown error")}`,
+      );
     } finally {
       savingLocaleRef.current[locale] = false;
       setSaving(null);
@@ -361,7 +332,9 @@ export default function LandingPageContentPage() {
       );
     } catch (err) {
       console.error("Failed to save theme:", err);
-      toast.error(`Failed to save theme: ${errorMessage(err, "unknown error")}`);
+      toast.error(
+        `Failed to save theme: ${errorMessage(err, "unknown error")}`,
+      );
     } finally {
       savingThemeRef.current = false;
       setSavingTheme(false);
@@ -374,9 +347,7 @@ export default function LandingPageContentPage() {
   const handleTabChange = (next: string) => {
     if (activeTab !== "theme" && dirty[activeTab as Locale]) {
       if (
-        !window.confirm(
-          "You have unsaved changes. Switch tab and lose them?",
-        )
+        !window.confirm("You have unsaved changes. Switch tab and lose them?")
       ) {
         return;
       }
@@ -423,186 +394,59 @@ export default function LandingPageContentPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,760px)]">
-          <div>
-            <Tabs value={activeTab} onValueChange={handleTabChange}>
-              <TabsList>
-                <TabsTrigger value="en">English</TabsTrigger>
-                <TabsTrigger value="fr">Français</TabsTrigger>
-                <TabsTrigger value="theme">Theme</TabsTrigger>
-              </TabsList>
+        <Tabs value={activeTab} onValueChange={handleTabChange}>
+          <TabsList>
+            <TabsTrigger value="en">English</TabsTrigger>
+            <TabsTrigger value="fr">Français</TabsTrigger>
+            <TabsTrigger value="theme">Theme</TabsTrigger>
+          </TabsList>
 
-              {SUPPORTED_LOCALES.map((locale) => (
-                <TabsContent
-                  key={locale}
-                  value={locale}
-                  className="space-y-6 mt-4"
+          {SUPPORTED_LOCALES.map((locale) => (
+            <TabsContent key={locale} value={locale} className="space-y-6 mt-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm text-muted-foreground">
+                  {Object.keys(overrides[locale]).length} override
+                  {Object.keys(overrides[locale]).length === 1 ? "" : "s"}{" "}
+                  persisted.
+                </p>
+                <Button
+                  onClick={() => handleSave(locale)}
+                  disabled={!dirty[locale] || saving === locale}
                 >
-                  <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
-                      {Object.keys(overrides[locale]).length} override
-                      {Object.keys(overrides[locale]).length === 1 ? "" : "s"}{" "}
-                      persisted.
-                    </p>
-                    <Button
-                      onClick={() => handleSave(locale)}
-                      disabled={!dirty[locale] || saving === locale}
-                    >
-                      {saving === locale ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 mr-2" />
-                      )}
-                      Save {locale.toUpperCase()}
-                    </Button>
-                  </div>
+                  {saving === locale ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <Save className="h-4 w-4 mr-2" />
+                  )}
+                  Save {locale.toUpperCase()}
+                </Button>
+              </div>
 
-                  {sections.map(({ section, keys }) => (
-                    <Card key={section}>
-                      <CardHeader>
-                        <CardTitle>{section}</CardTitle>
-                        <CardDescription>
-                          {keys.length} field{keys.length === 1 ? "" : "s"}
-                        </CardDescription>
-                      </CardHeader>
-                      <CardContent className="space-y-4">
-                        {keys.map((key) => {
-                          const value = values[locale][key] ?? "";
-                          const multiline =
-                            isLikelyMultiline(
-                              bundledFlat[locale][key] ?? "",
-                            ) || isLikelyMultiline(value);
-                          const overridden = isOverridden(locale, key);
-                          return (
-                            <div key={key} className="space-y-1.5">
-                              <div className="flex items-center justify-between">
-                                <Label
-                                  htmlFor={`${locale}-${key}`}
-                                  className="font-mono text-xs"
-                                >
-                                  {lastSegment(key)}
-                                  <span className="ml-2 text-muted-foreground">
-                                    {key}
-                                  </span>
-                                  {overridden && (
-                                    <span className="ml-2 text-amber-600">
-                                      • edited
-                                    </span>
-                                  )}
-                                </Label>
-                                {overridden && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() =>
-                                      handleResetField(locale, key)
-                                    }
-                                  >
-                                    <RotateCcw className="h-3 w-3 mr-1" />
-                                    Reset
-                                  </Button>
-                                )}
-                              </div>
-                              {multiline ? (
-                                <Textarea
-                                  id={`${locale}-${key}`}
-                                  value={value}
-                                  onChange={(e) =>
-                                    handleChange(locale, key, e.target.value)
-                                  }
-                                  rows={Math.min(
-                                    8,
-                                    Math.max(2, value.split("\n").length),
-                                  )}
-                                />
-                              ) : (
-                                <Input
-                                  id={`${locale}-${key}`}
-                                  value={value}
-                                  onChange={(e) =>
-                                    handleChange(locale, key, e.target.value)
-                                  }
-                                />
-                              )}
-                            </div>
-                          );
-                        })}
-                      </CardContent>
-                    </Card>
-                  ))}
-                </TabsContent>
-              ))}
-
-              <TabsContent value="theme" className="space-y-6 mt-4">
-                <div className="flex items-center justify-between gap-3 flex-wrap">
-                  <p className="text-sm text-muted-foreground">
-                    {Object.keys(themeOverrides).length} theme token
-                    {Object.keys(themeOverrides).length === 1 ? "" : "s"}{" "}
-                    persisted.
-                  </p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground">
-                      Preview locale:
-                    </span>
-                    <div
-                      role="tablist"
-                      aria-label="Preview locale"
-                      className="inline-flex rounded-md border"
-                    >
-                      {SUPPORTED_LOCALES.map((locale) => (
-                        <button
-                          key={locale}
-                          type="button"
-                          role="tab"
-                          aria-selected={themePreviewLocale === locale}
-                          onClick={() => setThemePreviewLocale(locale)}
-                          className={
-                            "px-3 py-1 text-xs transition-colors " +
-                            (themePreviewLocale === locale
-                              ? "bg-muted font-medium"
-                              : "text-muted-foreground hover:bg-muted/50")
-                          }
-                        >
-                          {locale.toUpperCase()}
-                        </button>
-                      ))}
-                    </div>
-                    <Button
-                      onClick={handleSaveTheme}
-                      disabled={!themeDirty || savingTheme || themeHasErrors}
-                    >
-                      {savingTheme ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Save className="h-4 w-4 mr-2" />
-                      )}
-                      Save theme
-                    </Button>
-                  </div>
-                </div>
-
-                <Card>
+              {sections.map(({ section, keys }) => (
+                <Card key={section}>
                   <CardHeader>
-                    <CardTitle>Colours</CardTitle>
+                    <CardTitle>{section}</CardTitle>
                     <CardDescription>
-                      Applies to the live landing page across every locale.
+                      {keys.length} field{keys.length === 1 ? "" : "s"}
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    {THEME_TOKENS.map((token) => {
-                      const value = themeTokens[token.key] ?? token.default;
-                      const overridden = value !== token.default;
+                    {keys.map((key) => {
+                      const value = values[locale][key] ?? "";
+                      const multiline =
+                        isLikelyMultiline(bundledFlat[locale][key] ?? "") ||
+                        isLikelyMultiline(value);
+                      const overridden = isOverridden(locale, key);
                       return (
-                        <div key={token.key} className="space-y-1.5">
+                        <div key={key} className="space-y-1.5">
                           <div className="flex items-center justify-between">
                             <Label
-                              htmlFor={`theme-${token.key}`}
+                              htmlFor={`${locale}-${key}`}
                               className="font-mono text-xs"
                             >
-                              {token.label}
+                              {lastSegment(key)}
                               <span className="ml-2 text-muted-foreground">
-                                {token.key}
+                                {key}
                               </span>
                               {overridden && (
                                 <span className="ml-2 text-amber-600">
@@ -615,61 +459,140 @@ export default function LandingPageContentPage() {
                                 type="button"
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleResetToken(token.key)}
+                                onClick={() => handleResetField(locale, key)}
                               >
                                 <RotateCcw className="h-3 w-3 mr-1" />
                                 Reset
                               </Button>
                             )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <input
-                              id={`theme-${token.key}`}
-                              type="color"
-                              // <input type="color"> needs a 6-char hex; fall
-                              // back to the default if the user typed something
-                              // invalid, otherwise the picker quietly resets.
-                              value={
-                                THEME_HEX_RE.test(value) && value.length === 7
-                                  ? value
-                                  : token.default
-                              }
-                              onChange={(e) =>
-                                handleThemeChange(token.key, e.target.value)
-                              }
-                              className="h-10 w-14 cursor-pointer rounded border"
-                            />
-                            <Input
+                          {multiline ? (
+                            <Textarea
+                              id={`${locale}-${key}`}
                               value={value}
                               onChange={(e) =>
-                                handleThemeChange(token.key, e.target.value)
+                                handleChange(locale, key, e.target.value)
                               }
-                              className="font-mono"
-                              aria-invalid={Boolean(themeErrors[token.key])}
+                              rows={Math.min(
+                                8,
+                                Math.max(2, value.split("\n").length),
+                              )}
                             />
-                          </div>
-                          {themeErrors[token.key] && (
-                            <p className="text-xs text-destructive">
-                              {themeErrors[token.key]}
-                            </p>
+                          ) : (
+                            <Input
+                              id={`${locale}-${key}`}
+                              value={value}
+                              onChange={(e) =>
+                                handleChange(locale, key, e.target.value)
+                              }
+                            />
                           )}
                         </div>
                       );
                     })}
                   </CardContent>
                 </Card>
-              </TabsContent>
-            </Tabs>
-          </div>
+              ))}
+            </TabsContent>
+          ))}
 
-          <div className="lg:sticky lg:top-6 lg:self-start">
-            <LandingPreview
-              content={previewValues[activeLocale]}
-              theme={previewTheme}
-              locale={activeLocale}
-            />
-          </div>
-        </div>
+          <TabsContent value="theme" className="space-y-6 mt-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="text-sm text-muted-foreground">
+                {Object.keys(themeOverrides).length} theme token
+                {Object.keys(themeOverrides).length === 1 ? "" : "s"} persisted.
+              </p>
+              <Button
+                onClick={handleSaveTheme}
+                disabled={!themeDirty || savingTheme || themeHasErrors}
+              >
+                {savingTheme ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save theme
+              </Button>
+            </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Colours</CardTitle>
+                <CardDescription>
+                  Applies to the live landing page across every locale.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {THEME_TOKENS.map((token) => {
+                  const value = themeTokens[token.key] ?? token.default;
+                  const overridden = value !== token.default;
+                  return (
+                    <div key={token.key} className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <Label
+                          htmlFor={`theme-${token.key}`}
+                          className="font-mono text-xs"
+                        >
+                          {token.label}
+                          <span className="ml-2 text-muted-foreground">
+                            {token.key}
+                          </span>
+                          {overridden && (
+                            <span className="ml-2 text-amber-600">
+                              • edited
+                            </span>
+                          )}
+                        </Label>
+                        {overridden && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleResetToken(token.key)}
+                          >
+                            <RotateCcw className="h-3 w-3 mr-1" />
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <input
+                          id={`theme-${token.key}`}
+                          type="color"
+                          // <input type="color"> needs a 6-char hex; fall
+                          // back to the default if the user typed something
+                          // invalid, otherwise the picker quietly resets.
+                          value={
+                            THEME_HEX_RE.test(value) && value.length === 7
+                              ? value
+                              : token.default
+                          }
+                          onChange={(e) =>
+                            handleThemeChange(token.key, e.target.value)
+                          }
+                          className="h-10 w-14 cursor-pointer rounded border"
+                        />
+                        <Input
+                          value={value}
+                          onChange={(e) =>
+                            handleThemeChange(token.key, e.target.value)
+                          }
+                          className="font-mono"
+                          aria-invalid={Boolean(themeErrors[token.key])}
+                        />
+                      </div>
+                      {themeErrors[token.key] && (
+                        <p className="text-xs text-destructive">
+                          {themeErrors[token.key]}
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       )}
     </div>
   );
