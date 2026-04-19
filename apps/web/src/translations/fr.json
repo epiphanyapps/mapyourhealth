@@ -7,8 +7,8 @@
     "success": "Merci d'avoir confirmé votre abonnement !"
   },
   "home": {
-    "CTA1": "Elle est responsable d'un décès sur six dans le monde, causant des cancers, des maladies cardiaques et respiratoires, l'hypersensibilité chimique et de nombreuses autres maladies chroniques. La seule plateforme de détection des polluants toxiques présents dans votre environnement.\n\nProtégez votre santé dès maintenant. Inscrivez-vous à ",
-    "CTA2": " et identifiez toutes les menaces environnementales dans votre localité. Protégez-vous, ainsi que vos proches.",
+    "CTA1": "Exposez les polluants toxiques dans votre région avec la seule plateforme de suivi environnement-santé au monde. Inscrivez-vous à ",
+    "CTA2": ". Protégez-vous, ainsi que vos proches.",
     "benefits": {
       "content1": "Suivez en temps réel la présence de produits chimiques permanents (PFAS), de radon, de perturbateurs endocriniens, d'agents pathogènes, de dioxyde de soufre (SO2), de composés organiques volatils (COV), de métaux lourds, d'ozone, de particules fines et plus encore.",
       "content2": "Évaluez la qualité du traitement de l'eau, des soins de santé, des services d'incendie, de l'approvisionnement en énergie, de l'application de la loi et de la protection de l'environnement dans votre ville.",
@@ -20,7 +20,7 @@
       "title4": "Planifiez vos voyages et votre déménagement"
     },
     "benefitsTitle": "Plus d'avantages à ",
-    "description": "Elle est responsable d'un décès sur six dans le monde, causant des cancers, des maladies cardiaques et respiratoires, l'hypersensibilité chimique et de nombreuses autres maladies chroniques.",
+    "description": "Exposez les polluants toxiques dans votre région avec la seule plateforme de suivi environnement-santé au monde. Protégez-vous et ceux que vous aimez.",
     "enterEmail": "Entrez votre email",
     "enterZipCode": "Veuillez saisir votre code postal",
     "errorMessage": "Une erreur s'est produite. Veuillez réessayer.",
@@ -44,8 +44,8 @@
     "signUp": "s'inscrire",
     "success": "Merci de vous être inscrit",
     "successAlreadyRegistered": "Cet email a déjà été enregistré",
-    "title": "La pollution environnementale est votre nouveau voisin",
-    "subtitle": "Inscrivez-vous à MapYourHealth !",
+    "title": "Inscrivez-vous à MapYourHealth.",
+    "subtitle": "",
     "zipCode": "Code postal",
     "alreadyKnow": "Vous connaissez déjà les risques sanitaires dans votre région ?",
     "tryWebBeta": "Essayer la version Web",

@@ -7,8 +7,8 @@
     "success": "Thank you for confirming your subscription!"
   },
   "home": {
-    "CTA1": "It is responsible for one in six deaths worldwide, causing cancer, heart and respiratory diseases, multiple chemical sensitivity and more chronic illnesses. And expose the toxic pollutants in your area with the world's only environmental-health tracking platform.\n\nProtect your health now. Sign up to ",
-    "CTA2": " and learn about all health hazards in your surroundings. Protect yourself and the people you love.",
+    "CTA1": "Expose the toxic pollutants in your area with the world's only environmental-health tracking platform. Sign up to ",
+    "CTA2": ". Protect yourself and the people you love.",
     "benefits": {
       "content1": "Track in real time the presence of Forever Chemicals (PFAS), Radon, endocrine disruptors, Pathogens, Sulfur Dioxide (SO2), Volatile Organic Compounds (VOCs), Heavy Metals, Ozone, Particulate Matter and more.",
       "content2": "Assess the quality of water treatment, healthcare, fire department, energy supply, law enforcement and environment protection in your city.",
@@ -20,7 +20,7 @@
       "title4": "Plan Travels and Relocation"
     },
     "benefitsTitle": "More benefits to ",
-    "description": "It is responsible for one in six deaths worldwide, causing cancer, heart and respiratory diseases, multiple chemical sensitivity and more chronic illnesses.",
+    "description": "Expose the toxic pollutants in your area with the world's only environmental-health tracking platform. Protect yourself and the people you love.",
     "enterEmail": "Enter your email",
     "enterZipCode": "Please enter your zip code",
     "errorMessage": "Something went wrong. Please try again.",
@@ -44,8 +44,8 @@
     "signUp": "Sign Up",
     "success": "Thank you for signing up.",
     "successAlreadyRegistered": "This email has already been registered.",
-    "title": "Toxic pollution is your new neighbor",
-    "subtitle": "Sign Up to MapYourHealth Today!",
+    "title": "Sign up to MapYourHealth.",
+    "subtitle": "",
     "zipCode": "Zip Code",
     "alreadyKnow": "Already know about health risks in your area?",
     "tryWebBeta": "Try Web Beta",
