@@ -211,10 +211,22 @@ export default function LocationDetailPage({
       const value = parseFloat(formData.value);
       const now = new Date().toISOString();
 
+      // Inherit state/country from any existing measurement for this city,
+      // or from the row being edited. Schema (#123) requires `country`, so
+      // surface a clear error if neither is available rather than failing
+      // opaquely on create.
+      const reference = editingMeasurement ?? measurements[0];
+      if (!reference?.country) {
+        toast.error(
+          "Cannot infer country for this city — add a measurement via the import page first.",
+        );
+        setIsSaving(false);
+        return;
+      }
       const measurementData = {
         city: cityName,
-        state: "",
-        country: "",
+        state: reference.state ?? null,
+        country: reference.country,
         contaminantId: formData.contaminantId,
         value,
         measuredAt: now,

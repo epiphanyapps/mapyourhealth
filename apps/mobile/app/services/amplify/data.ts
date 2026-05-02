@@ -414,6 +414,25 @@ export async function getLocationMeasurementsByState(
 }
 
 /**
+ * Fetch measurements for a specific country (#123 cascade fallback)
+ */
+export async function getLocationMeasurementsByCountry(
+  country: string,
+): Promise<AmplifyLocationMeasurement[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByCountry(
+    {
+      country,
+    },
+  )
+  if (errors) {
+    console.error("Error fetching location measurements by country:", errors)
+    throw new Error("Failed to fetch location measurements by country")
+  }
+  return data
+}
+
+/**
  * Fetch measurements for a specific contaminant across all locations
  */
 export async function getMeasurementsByContaminant(
@@ -801,6 +820,23 @@ export async function getPollutionSourcesByState(state: string): Promise<Amplify
   if (errors) {
     console.error("Error fetching pollution sources by state:", errors)
     throw new Error("Failed to fetch pollution sources by state")
+  }
+  return data
+}
+
+/**
+ * Fetch pollution sources for a specific country (#123 cascade fallback)
+ */
+export async function getPollutionSourcesByCountry(
+  country: string,
+): Promise<AmplifyPollutionSource[]> {
+  const client = await getPublicClient()
+  const { data, errors } = await client.models.PollutionSource.listPollutionSourceByCountry({
+    country,
+  })
+  if (errors) {
+    console.error("Error fetching pollution sources by country:", errors)
+    throw new Error("Failed to fetch pollution sources by country")
   }
   return data
 }

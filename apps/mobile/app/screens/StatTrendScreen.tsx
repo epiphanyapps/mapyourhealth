@@ -90,8 +90,9 @@ export function StatTrendScreen() {
 
   const { statId, city, state, country } = route.params
 
-  // Fetch data for this location (uses React Query caching — likely already cached from CategoryDetail)
-  const { cityData, isLoading } = useLocationData(city)
+  // Fetch data for this location (uses React Query caching — likely already cached from CategoryDetail).
+  // Cascades city → state → country per #123.
+  const { cityData, isLoading } = useLocationData(city, state, country)
 
   // Look up the contaminant definition
   const definition = contaminantMap.get(statId)

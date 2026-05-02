@@ -21,6 +21,7 @@ import {
   SubCategoryStatusResult,
 } from "@/components/ExpandableCategoryCard"
 import { LocationHeader } from "@/components/LocationHeader"
+import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
 import { ProfileMenu } from "@/components/ProfileMenu"
@@ -129,8 +130,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     return null
   }, [route.params?.city, route.params?.state, route.params?.country, route.params?.address])
 
-  // Fetch data for current location from Amplify (with caching and offline support)
-  const locationData = useLocationData(currentLocation?.city || "")
+  // Fetch data for current location from Amplify (with caching, offline support,
+  // and city → state → country cascading per #123).
+  const locationData = useLocationData(
+    currentLocation?.city || "",
+    currentLocation?.state || "",
+    currentLocation?.country || "",
+  )
 
   const {
     cityData,
@@ -140,6 +146,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     isCachedData = false,
     lastUpdated = null,
     isOffline,
+    scope,
     refresh,
   } = locationData
 
@@ -717,8 +724,9 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
-        {/* Pollution Sources Card */}
-        {renderPollutionSourcesCard()}
+        {/* Pollution Sources Card — gated on a real location to avoid landing on
+            an empty PollutionSourcesScreen when no city/state is set. */}
+        {currentLocation && renderPollutionSourcesCard()}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons
             name="map-marker-question"
@@ -804,6 +812,15 @@ View details: ${shareUrl}`
           currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+      />
+
+      {/* Cascade-scope provenance: only renders for state/country fallback (#123) */}
+      <LocationScopeBadge
+        scope={scope}
+        state={currentLocation?.state}
+        country={currentLocation?.country}
+        // eslint-disable-next-line react-native/no-inline-styles
+        style={{ marginHorizontal: 16, marginBottom: 8 }}
       />
 
       {/* Searched Address Banner - shown when user searched for a specific address */}
