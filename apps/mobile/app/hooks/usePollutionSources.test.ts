@@ -13,10 +13,12 @@ import { renderHook, waitFor } from "@testing-library/react-native"
 
 const mockGetPollutionSourcesByCity = jest.fn()
 const mockGetPollutionSourcesByState = jest.fn()
+const mockGetPollutionSourcesByCountry = jest.fn()
 
 jest.mock("../services/amplify/data", () => ({
   getPollutionSourcesByCity: (...args: unknown[]) => mockGetPollutionSourcesByCity(...args),
   getPollutionSourcesByState: (...args: unknown[]) => mockGetPollutionSourcesByState(...args),
+  getPollutionSourcesByCountry: (...args: unknown[]) => mockGetPollutionSourcesByCountry(...args),
 }))
 
 let mockIsOffline = false
@@ -82,6 +84,7 @@ describe("usePollutionSources", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockIsOffline = false
+    mockGetPollutionSourcesByCountry.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -212,6 +215,81 @@ describe("usePollutionSources", () => {
       )
 
       expect(result.current.isOffline).toBe(true)
+    })
+  })
+
+  // ── Cascade through location hierarchy (#123) ──────────────────────────────
+
+  describe("cascade fallback (#123)", () => {
+    const countrySource = {
+      id: "src-3",
+      name: "National Industrial Site",
+      sourceType: "industrial",
+      city: null,
+      state: null,
+      country: "CA",
+      latitude: 50,
+      longitude: -100,
+      impactRadius: 10000,
+      severity: "high",
+      status: "active",
+    }
+
+    it("reports city scope when city has data", async () => {
+      mockGetPollutionSourcesByCity.mockResolvedValue([citySource])
+
+      const { result } = renderHook(
+        () => usePollutionSources({ city: "Sorel-Tracy", state: "QC", country: "CA" }),
+        { wrapper: createWrapper() },
+      )
+
+      await waitFor(() => expect(result.current.sources).toHaveLength(1))
+      expect(result.current.scope).toBe("city")
+    })
+
+    it("reports state scope when falling back to state", async () => {
+      mockGetPollutionSourcesByCity.mockResolvedValue([])
+      mockGetPollutionSourcesByState.mockResolvedValue([stateSource])
+
+      const { result } = renderHook(
+        () => usePollutionSources({ city: "Sorel-Tracy", state: "QC", country: "CA" }),
+        { wrapper: createWrapper() },
+      )
+
+      await waitFor(() => expect(result.current.sources).toHaveLength(1))
+      expect(result.current.scope).toBe("state")
+      // Country fetcher must not run when state had data.
+      expect(mockGetPollutionSourcesByCountry).not.toHaveBeenCalled()
+    })
+
+    it("falls back to country when state is also empty", async () => {
+      mockGetPollutionSourcesByCity.mockResolvedValue([])
+      mockGetPollutionSourcesByState.mockResolvedValue([])
+      mockGetPollutionSourcesByCountry.mockResolvedValue([countrySource])
+
+      const { result } = renderHook(
+        () => usePollutionSources({ city: "Sorel-Tracy", state: "QC", country: "CA" }),
+        { wrapper: createWrapper() },
+      )
+
+      await waitFor(() => expect(result.current.sources).toHaveLength(1))
+      expect(result.current.scope).toBe("country")
+      expect(mockGetPollutionSourcesByCountry).toHaveBeenCalledWith("CA")
+    })
+
+    it('reports scope "none" when every level is empty', async () => {
+      mockGetPollutionSourcesByCity.mockResolvedValue([])
+      mockGetPollutionSourcesByState.mockResolvedValue([])
+      mockGetPollutionSourcesByCountry.mockResolvedValue([])
+
+      const { result } = renderHook(
+        () => usePollutionSources({ city: "Sorel-Tracy", state: "QC", country: "CA" }),
+        { wrapper: createWrapper() },
+      )
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(result.current.sources).toEqual([])
+      expect(result.current.scope).toBe("none")
     })
   })
 })

@@ -174,15 +174,23 @@ export default function PollutionSourcesPage() {
         
         toast.success("Pollution source updated successfully");
       } else {
-        // Create new source
+        // Create new source. Location hierarchy (#123): country is required;
+        // city/state are optional and determine the cascade scope of the
+        // record (city-, state-, or country-scoped).
+        if (!sourceData.country) {
+          throw new Error("Country is required for pollution sources");
+        }
+        if (sourceData.city && !sourceData.state) {
+          throw new Error("State is required when city is provided");
+        }
         const result = await client.models.PollutionSource.create({
           name: sourceData.name || "Unnamed Source",
           latitude: sourceData.latitude || 0,
           longitude: sourceData.longitude || 0,
           impactRadius: sourceData.impactRadius || 500,
-          city: sourceData.city || "",
-          state: sourceData.state || "",
-          country: sourceData.country || "",
+          city: sourceData.city || null,
+          state: sourceData.state || null,
+          country: sourceData.country,
           sourceId: `PS_${Date.now()}`,
           sourceType: sourceData.sourceType,
           address: sourceData.address,

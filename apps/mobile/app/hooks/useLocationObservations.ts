@@ -14,9 +14,11 @@ import {
   calculateObservationStatus,
 } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
+import { fetchWithLocationFallback, type LocationScope } from "@/lib/locationFallback"
 import { queryKeys } from "@/lib/queryKeys"
 import {
   getLocationObservations,
+  getLocationObservationsByCountry,
   getLocationObservationsByState,
   getObservedProperties,
   getPropertyThresholdsForJurisdiction,
@@ -42,7 +44,15 @@ interface UseLocationObservationsResult {
   worstStatus: "danger" | "warning" | "safe"
   /** Count of danger/warning observations */
   alertCount: number
-  /** Whether data is from state-level fallback (not city-specific) */
+  /**
+   * Which level of the location hierarchy resolved the data (#123).
+   * "city" = city-specific record exists; "state"/"country" = inherited.
+   */
+  scope: LocationScope
+  /**
+   * @deprecated Prefer `scope === "state"`. Retained for callers that
+   * haven't migrated to the unified scope flag.
+   */
   isStateLevelFallback: boolean
 }
 
@@ -50,6 +60,8 @@ interface LocationParams {
   city: string
   state: string
   jurisdictionCode: string
+  /** Country anchor for country-level cascade fallback (#123). Optional for backward compat. */
+  country?: string
 }
 
 /**
@@ -73,8 +85,9 @@ function mapAmplifyObservation(obs: AmplifyLocationObservation): {
   notes?: string
 } {
   return {
-    city: obs.city,
-    state: obs.state,
+    // city/state may be null on state-/country-anchored records (#123).
+    city: obs.city ?? "",
+    state: obs.state ?? "",
     country: obs.country,
     county: obs.county ?? undefined,
     propertyId: obs.propertyId,
@@ -180,24 +193,29 @@ function deduplicateByWorstStatus(observations: ObservationWithStatus[]): Observ
 }
 
 /**
- * Hook to fetch and process location observations
+ * Hook to fetch and process location observations.
+ *
+ * Cascades city → state → country (#123) via the shared
+ * `fetchWithLocationFallback` util and exposes the resolved `scope` so
+ * callers can render provenance.
  */
 export function useLocationObservations(params: LocationParams): UseLocationObservationsResult {
-  const { city, state, jurisdictionCode } = params
+  const { city, state, jurisdictionCode, country = "" } = params
   const { isOffline } = useNetworkStatus()
   const qc = useQueryClient()
 
-  // Fetch observations for the city (fallback to state if no city data)
+  // Fetch observations cascading city → state → country.
   const observationsQuery = useQuery({
     queryKey: queryKeys.observations.byCity(city),
-    queryFn: async () => {
-      const cityObs = await getLocationObservations(city)
-      if (cityObs.length > 0) return { data: cityObs, isStateFallback: false }
-
-      // Fallback to state-level observations (dedup happens in useMemo after status calc)
-      const stateObs = await getLocationObservationsByState(state)
-      return { data: stateObs, isStateFallback: stateObs.length > 0 }
-    },
+    queryFn: async () =>
+      fetchWithLocationFallback(
+        { city, state, country },
+        {
+          byCity: getLocationObservations,
+          byState: getLocationObservationsByState,
+          byCountry: getLocationObservationsByCountry,
+        },
+      ),
     enabled: !!city && !!state,
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
@@ -251,8 +269,10 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
       })
       .filter((obs): obs is ObservationWithStatus => obs !== null)
 
-    // Deduplicate state-level fallback data by propertyId, keeping worst status
-    if (observationsQuery.data.isStateFallback) {
+    // Deduplicate fallback data (state or country scope) by propertyId,
+    // keeping worst status. City-scoped data is one row per property by
+    // construction so dedup is unnecessary.
+    if (observationsQuery.data.scope === "state" || observationsQuery.data.scope === "country") {
       return deduplicateByWorstStatus(enriched)
     }
 
@@ -279,19 +299,22 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     return observations.filter((obs) => obs.status === "danger" || obs.status === "warning").length
   }, [observations])
 
-  // Refresh function - invalidate both city and state queries since we may have fallen back to state data
+  // Refresh function — invalidate every cascade level since the fallback
+  // may have resolved at any of them.
   const refresh = useCallback(async () => {
     await Promise.all([
       qc.invalidateQueries({ queryKey: queryKeys.observations.byCity(city) }),
       qc.invalidateQueries({ queryKey: queryKeys.observations.byState(state) }),
+      qc.invalidateQueries({ queryKey: queryKeys.observations.byCountry(country) }),
       qc.invalidateQueries({ queryKey: queryKeys.observedProperties.list() }),
       qc.invalidateQueries({
         queryKey: queryKeys.propertyThresholds.byJurisdiction(jurisdictionCode),
       }),
     ])
-  }, [qc, city, state, jurisdictionCode])
+  }, [qc, city, state, country, jurisdictionCode])
 
-  const isStateLevelFallback = observationsQuery.data?.isStateFallback ?? false
+  const scope = observationsQuery.data?.scope ?? "none"
+  const isStateLevelFallback = scope === "state"
 
   // Combine loading states
   const isLoading =
@@ -313,6 +336,7 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     getByCategory,
     worstStatus,
     alertCount,
+    scope,
     isStateLevelFallback,
   }
 }

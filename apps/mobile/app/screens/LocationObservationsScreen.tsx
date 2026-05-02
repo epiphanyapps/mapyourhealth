@@ -21,6 +21,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { EmptyState } from "@/components/EmptyState"
 import { ExpandableCard } from "@/components/ExpandableCard"
 import { Header } from "@/components/Header"
+import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { ObservationCard } from "@/components/ObservationCard"
 import { Screen } from "@/components/Screen"
 import { StatusIndicator } from "@/components/StatusIndicator"
@@ -111,10 +112,12 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       refresh,
       worstStatus,
       alertCount,
+      scope,
       isStateLevelFallback,
     } = useLocationObservations({
       city,
       state,
+      country,
       jurisdictionCode,
     })
 
@@ -268,22 +271,18 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
             </View>
           </View>
 
-          {/* State-level fallback banner */}
-          {isStateLevelFallback && (
-            <View
-              style={[styles.stateFallbackBanner, { backgroundColor: theme.colors.accentBlueBg }]}
-              testID="state-fallback-banner"
-            >
-              <MaterialCommunityIcons
-                name="information-outline"
-                size={16}
-                color={theme.colors.tint}
-              />
-              <Text style={[styles.stateFallbackText, { color: theme.colors.tint }]}>
-                Based on {state} provincial data
-              </Text>
-            </View>
-          )}
+          {/* Cascade-scope provenance (#123): renders for state and country
+              fallback. Replaces the prior state-only banner so country-level
+              records are surfaced too. testID retained for E2E continuity. */}
+          <View testID={isStateLevelFallback ? "state-fallback-banner" : undefined}>
+            <LocationScopeBadge
+              scope={scope}
+              state={state}
+              country={country}
+              // eslint-disable-next-line react-native/no-inline-styles
+              style={{ marginHorizontal: 16, marginBottom: 12 }}
+            />
+          </View>
 
           {/* Offline Banner */}
           {isOffline && (
@@ -450,22 +449,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600",
   } as TextStyle,
-  stateFallbackBanner: {
-    alignItems: "center",
-    borderRadius: 6,
-    flexDirection: "row",
-    gap: 8,
-    justifyContent: "center",
-    marginHorizontal: 16,
-    marginTop: 8,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-  } as ViewStyle,
-  stateFallbackText: {
-    flex: 1,
-    fontSize: 12,
-    textAlign: "center",
-  } as TextStyle,
+  // stateFallbackBanner / stateFallbackText removed: replaced by the unified
+  // LocationScopeBadge component (#123), which also covers country fallback.
   summaryCard: {
     alignItems: "center",
     borderLeftWidth: 4,

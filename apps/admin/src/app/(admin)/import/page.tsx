@@ -87,9 +87,9 @@ Beverly Hills,CA,US,nitrate,8500,EPA
 Beverly Hills,CA,US,lead,4.2,Local Lab
 New York,NY,US,arsenic,3.1,EPA`,
     fields: [
-      "city",
-      "state",
-      "country",
+      "city (optional — leave blank for state/country-level row)",
+      "state (optional if city blank — leave blank for country-level row)",
+      "country (required)",
       "contaminantId",
       "value",
       "source (optional)",
@@ -98,12 +98,12 @@ New York,NY,US,arsenic,3.1,EPA`,
   air: {
     example: `city,state,country,contaminantId,value,source
 Beverly Hills,CA,US,radon,2.8,EPA
-New York,NY,US,radon,1.5,State Survey
-Montreal,QC,CA,radon,3.2,Health Canada`,
+,QC,CA,radon,3.0,Health Canada
+,,CA,radon,2.5,Federal Average`,
     fields: [
-      "city",
-      "state",
-      "country",
+      "city (optional — leave blank for state/country-level row)",
+      "state (optional if city blank — leave blank for country-level row)",
+      "country (required)",
       "contaminantId (e.g., radon)",
       "value (pCi/L)",
       "source (optional)",
@@ -165,16 +165,17 @@ export default function ImportPage() {
   ): ImportRow => {
     const errors: string[] = [];
 
-    if (!row.city || row.city.length < 1) {
-      errors.push("City is required");
-    }
-
-    if (!row.state || row.state.length < 1) {
-      errors.push("State is required");
-    }
-
+    // Location hierarchy (#123): country is the only required location level.
+    // - city + state + country → city-scoped record
+    // - state + country (no city) → state-scoped (cascades to every city)
+    // - country only (no city/state) → country-scoped (cascades to every city)
+    // City-without-state is rejected as ambiguous.
     if (!row.country || row.country.length < 1) {
       errors.push("Country is required");
+    }
+
+    if (row.city && row.city.length > 0 && (!row.state || row.state.length < 1)) {
+      errors.push("State is required when city is provided");
     }
 
     if (!row.contaminantId) {
@@ -445,9 +446,11 @@ export default function ImportPage() {
 
       for (const row of validRows) {
         try {
+          // Location hierarchy (#123): pass null for omitted city/state so
+          // the row is anchored at the appropriate cascade level.
           await client.models.LocationMeasurement.create({
-            city: row.city,
-            state: row.state,
+            city: row.city || null,
+            state: row.state || null,
             country: row.country,
             contaminantId: row.contaminantId,
             value: row.value,
@@ -459,8 +462,13 @@ export default function ImportPage() {
           result.success++;
         } catch (error) {
           result.failed++;
+          const scopeLabel = row.city
+            ? `${row.city}, ${row.state}`
+            : row.state
+              ? `${row.state}, ${row.country}`
+              : row.country;
           result.errors.push(
-            `${row.city}, ${row.state}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`,
+            `${scopeLabel}/${row.contaminantId}: ${error instanceof Error ? error.message : "Unknown error"}`,
           );
         }
       }

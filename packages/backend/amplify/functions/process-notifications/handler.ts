@@ -36,13 +36,26 @@ const USER_POOL_ID = process.env.USER_POOL_ID!
 type TriggerType = 'data_update' | 'data_available' | 'status_change' | 'manual_alert'
 type NotificationStatus = 'danger' | 'warning' | 'safe'
 
+/**
+ * Which level of the location hierarchy this notification originated from
+ * (#123). Drives subscriber fan-out: city-scope notifies that city only;
+ * state-scope notifies every subscriber in that state; country-scope
+ * notifies every subscriber in that country.
+ */
+type LocationScope = 'city' | 'state' | 'country'
+
 interface ProcessNotificationsEvent {
-  /** City name */
-  city: string
-  /** State/province code */
-  state?: string
-  /** Country code */
-  country?: string
+  /** City name (null when the source record was state- or country-scoped). */
+  city: string | null
+  /** State/province code (null when the record was country-scoped). */
+  state?: string | null
+  /** Country code — required as the lowest cascade anchor. */
+  country?: string | null
+  /**
+   * Which scope to fan out to. Optional for backward compatibility — if
+   * omitted, derived from which location fields are populated.
+   */
+  scope?: LocationScope
   /** What triggered this notification */
   triggerType: TriggerType
   /** Whether this was manually triggered by admin */
@@ -100,6 +113,85 @@ async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
 
   const result = await dynamoClient.send(command)
   return (result.Items || []).map((item) => unmarshall(item) as Subscription)
+}
+
+/**
+ * Query subscriptions by state via the state GSI (#123 cascade fan-out).
+ * Used when the source record is state-scoped: every subscriber in that
+ * state should be notified, regardless of their specific city.
+ */
+async function getSubscriptionsByState(state: string): Promise<Subscription[]> {
+  const command = new QueryCommand({
+    TableName: SUBSCRIPTIONS_TABLE_NAME,
+    IndexName: 'userSubscriptionsByState',
+    KeyConditionExpression: '#state = :state',
+    ExpressionAttributeNames: { '#state': 'state' },
+    ExpressionAttributeValues: {
+      ':state': { S: state },
+    },
+  })
+
+  const result = await dynamoClient.send(command)
+  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
+}
+
+/**
+ * Query subscriptions by country via the country GSI (#123 cascade fan-out).
+ * Used when the source record is country-scoped.
+ */
+async function getSubscriptionsByCountry(country: string): Promise<Subscription[]> {
+  const command = new QueryCommand({
+    TableName: SUBSCRIPTIONS_TABLE_NAME,
+    IndexName: 'userSubscriptionsByCountry',
+    KeyConditionExpression: 'country = :country',
+    ExpressionAttributeValues: {
+      ':country': { S: country },
+    },
+  })
+
+  const result = await dynamoClient.send(command)
+  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
+}
+
+/**
+ * Fan out to every subscriber whose location matches the source record's
+ * cascade scope. Deduplicates so a subscriber whose city, state, AND
+ * country all matched a hypothetical record only gets one notification.
+ */
+async function getSubscriptionsForScope(
+  scope: LocationScope,
+  city: string | null,
+  state: string | null | undefined,
+  country: string | null | undefined,
+): Promise<Subscription[]> {
+  switch (scope) {
+    case 'city':
+      if (!city) return []
+      return getSubscriptionsByCity(city)
+    case 'state':
+      if (!state) return []
+      return getSubscriptionsByState(state)
+    case 'country':
+      if (!country) return []
+      return getSubscriptionsByCountry(country)
+  }
+}
+
+/**
+ * Derive cascade scope from which location fields are populated. Used as
+ * the fallback when an upstream caller didn't supply `scope` explicitly.
+ */
+function deriveScope(
+  city: string | null,
+  state: string | null | undefined,
+  country: string | null | undefined,
+): LocationScope {
+  if (city) return 'city'
+  if (state) return 'state'
+  if (country) return 'country'
+  // Default — preserves legacy single-city behaviour for callers that pass
+  // city only.
+  return 'city'
 }
 
 /**
@@ -298,7 +390,9 @@ async function sendEmailNotification(
   const payload = {
     statId: event.contaminantId || 'water-quality',
     statName: event.contaminantName || 'Water Quality',
-    city: event.city,
+    // city may be null on state-/country-scoped events (#123); send empty
+    // string so downstream email Lambda doesn't break on null.
+    city: event.city ?? '',
     state: event.state || '',
     country: event.country || '',
     oldStatus: event.oldStatus || 'safe',
@@ -373,26 +467,32 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
   event
 ) => {
   const { city, state, country, triggerType } = event
+  const scope = event.scope ?? deriveScope(city, state, country)
   const errors: string[] = []
   let emailsSent = 0
   let pushSent = 0
 
-  if (!city) {
-    console.error('No city provided in event')
+  // At least one location anchor must be present for fan-out to make sense.
+  if (!city && !state && !country) {
+    console.error('Event has no location anchor (city/state/country all empty)')
     return {
       success: false,
       subscribersNotified: 0,
       emailsSent: 0,
       pushSent: 0,
-      errors: ['No city provided'],
+      errors: ['No location anchor provided'],
     }
   }
 
-  console.log(`Processing notifications for ${city}, ${state || ''}, ${country || ''} (trigger: ${triggerType})`)
+  console.log(
+    `Processing notifications (${scope}-scope) for ${city ?? '-'}, ${state ?? '-'}, ${country ?? '-'} (trigger: ${triggerType})`,
+  )
 
-  // Get all subscribers for this city
-  const subscriptions = await getSubscriptionsByCity(city)
-  console.log(`Found ${subscriptions.length} subscribers`)
+  // Fan out to every subscriber matching the cascade scope (#123). A
+  // state-scoped record reaches every subscriber in that state; a
+  // country-scoped record reaches every subscriber in that country.
+  const subscriptions = await getSubscriptionsForScope(scope, city, state, country)
+  console.log(`Found ${subscriptions.length} ${scope}-scope subscribers`)
 
   if (subscriptions.length === 0) {
     return {
@@ -406,13 +506,6 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
 
   // Build notification content
   const { title, body } = buildNotificationContent(event)
-  const deepLinkData = {
-    screen: 'Dashboard',
-    city,
-    state: state || '',
-    country: country || '',
-    contaminantId: event.contaminantId,
-  }
 
   // Collect recipients based on preferences
   const emailRecipients: { email: string; subscription: Subscription }[] = []
@@ -454,46 +547,88 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
     const emailResult = await sendEmailNotification(emails, event)
     emailsSent = emailResult.sentCount
 
-    // Log email notifications
-    for (const { email, subscription } of emailRecipients) {
+    // Log email notifications. For state/country fan-out (#123), record the
+    // subscriber's own city so existing per-city audit queries on
+    // NotificationLog still group correctly.
+    for (const { subscription } of emailRecipients) {
       await logNotification(
         subscription.id,
         subscription.owner,
-        city,
-        state || '',
-        country || '',
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
         'email',
         emailResult.success ? 'sent' : 'failed',
         title,
         body,
-        triggerType
+        triggerType,
       )
     }
   }
 
-  // Send push notifications
+  // Send push notifications. Each push gets a deep-link tailored to that
+  // subscriber's own location so tapping it opens the user's dashboard.
+  // Mobile cascade then resolves the data the user should actually see.
   if (pushRecipients.length > 0) {
-    const tokens = pushRecipients.map((r) => r.token)
-    console.log(`Sending push to ${tokens.length} devices`)
+    console.log(`Sending push to ${pushRecipients.length} devices`)
 
-    const pushResult = await sendPushNotifications(tokens, title, body, deepLinkData)
+    // For city scope, every recipient shares the same deep-link target
+    // (the originating city). For state/country (#123), each recipient
+    // gets their own city in the link so tapping the notification opens
+    // their personal dashboard, where the cascade resolves what to show.
+    const sharedDeepLinkData = {
+      screen: 'Dashboard',
+      city: city ?? '',
+      state: state ?? '',
+      country: country ?? '',
+      contaminantId: event.contaminantId,
+    }
+    const deepLinkForSubscriber = (sub: Subscription) =>
+      scope === 'city'
+        ? sharedDeepLinkData
+        : {
+            screen: 'Dashboard',
+            city: sub.city,
+            state: sub.state ?? '',
+            country: sub.country ?? '',
+            contaminantId: event.contaminantId,
+          }
+
+    // Send one push per subscriber so each gets a personalised deep-link.
+    const pushResult: { success: boolean; sentCount: number; invalidTokens: string[] } = {
+      success: true,
+      sentCount: 0,
+      invalidTokens: [],
+    }
+    for (const { token, subscription } of pushRecipients) {
+      const single = await sendPushNotifications(
+        [token],
+        title,
+        body,
+        deepLinkForSubscriber(subscription),
+      )
+      pushResult.success = pushResult.success && single.success
+      pushResult.sentCount += single.sentCount
+      pushResult.invalidTokens.push(...single.invalidTokens)
+    }
     pushSent = pushResult.sentCount
 
-    // Log push notifications
+    // Log push notifications. Subscriber city/state/country wins so log
+    // queries by city continue to work for fan-out notifications (#123).
     for (const { subscription } of pushRecipients) {
       const failed = pushResult.invalidTokens.includes(subscription.expoPushToken!)
       await logNotification(
         subscription.id,
         subscription.owner,
-        city,
-        state || '',
-        country || '',
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
         'push',
         failed ? 'failed' : 'sent',
         title,
         body,
         triggerType,
-        failed ? 'Invalid or expired token' : undefined
+        failed ? 'Invalid or expired token' : undefined,
       )
     }
 

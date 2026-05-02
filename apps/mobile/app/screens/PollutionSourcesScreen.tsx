@@ -21,6 +21,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons"
 
 import { EmptyState } from "@/components/EmptyState"
 import { Header } from "@/components/Header"
+import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { usePollutionSources } from "@/hooks/usePollutionSources"
@@ -150,10 +151,14 @@ function SourceCard({
 export const PollutionSourcesScreen: FC<PollutionSourcesScreenProps> =
   function PollutionSourcesScreen(props) {
     const { navigation, route } = props
-    const { city, state } = route.params
+    const { city, state, country } = route.params
     const { theme } = useAppTheme()
 
-    const { sources, isLoading, error, refresh } = usePollutionSources({ city, state })
+    const { sources, isLoading, error, scope, refresh } = usePollutionSources({
+      city,
+      state,
+      country,
+    })
     const [isRefreshing, setIsRefreshing] = useState(false)
 
     const onRefresh = useCallback(async () => {
@@ -253,6 +258,13 @@ export const PollutionSourcesScreen: FC<PollutionSourcesScreenProps> =
           <Text style={[styles.$subtitle, { color: theme.colors.textDim }]}>
             {sources.length} source{sources.length !== 1 ? "s" : ""} near {city}
           </Text>
+          <LocationScopeBadge
+            scope={scope}
+            state={state}
+            country={country}
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{ marginBottom: 12 }}
+          />
           {sources.map((source) => (
             <SourceCard key={source.id} source={source} theme={theme} />
           ))}

@@ -34,6 +34,8 @@ export const queryKeys = {
     byLocation: (city: string) => [...queryKeys.measurements.all, "location", city] as const,
     byCity: (city: string, state: string) =>
       [...queryKeys.measurements.all, "city", city, state] as const,
+    byState: (state: string) => [...queryKeys.measurements.all, "state", state] as const,
+    byCountry: (country: string) => [...queryKeys.measurements.all, "country", country] as const,
     multiLocation: (cities: string[]) =>
       [...queryKeys.measurements.all, "multi", ...cities.sort()] as const,
   },
@@ -84,5 +86,7 @@ export const queryKeys = {
     all: ["pollutionSources"] as const,
     byCity: (city: string) => [...queryKeys.pollutionSources.all, "city", city] as const,
     byState: (state: string) => [...queryKeys.pollutionSources.all, "state", state] as const,
+    byCountry: (country: string) =>
+      [...queryKeys.pollutionSources.all, "country", country] as const,
   },
 } as const
