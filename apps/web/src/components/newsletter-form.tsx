@@ -9,7 +9,7 @@ import {
 import type { SubscribeArgs, SubscribeResult } from "@mapyourhealth/landing-ui";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 
-const APP_URL = "https://app.mapyourhealth.info";
+const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "https://app.mapyourhealth.info";
 
 export function NewsletterForm() {
   const { t, i18n } = useTranslation();
