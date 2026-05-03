@@ -13,6 +13,7 @@ import {
   DynamoDBClient,
   QueryCommand,
   PutItemCommand,
+  type AttributeValue,
 } from '@aws-sdk/client-dynamodb'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import {
@@ -36,13 +37,26 @@ const USER_POOL_ID = process.env.USER_POOL_ID!
 type TriggerType = 'data_update' | 'data_available' | 'status_change' | 'manual_alert'
 type NotificationStatus = 'danger' | 'warning' | 'safe'
 
+/**
+ * Which level of the location hierarchy this notification originated from
+ * (#123). Drives subscriber fan-out: city-scope notifies that city only;
+ * state-scope notifies every subscriber in that state; country-scope
+ * notifies every subscriber in that country.
+ */
+export type LocationScope = 'city' | 'state' | 'country'
+
 interface ProcessNotificationsEvent {
-  /** City name */
-  city: string
-  /** State/province code */
-  state?: string
-  /** Country code */
-  country?: string
+  /** City name (null when the source record was state- or country-scoped). */
+  city: string | null
+  /** State/province code (null when the record was country-scoped). */
+  state?: string | null
+  /** Country code — required as the lowest cascade anchor. */
+  country?: string | null
+  /**
+   * Which scope to fan out to. Optional for backward compatibility — if
+   * omitted, derived from which location fields are populated.
+   */
+  scope?: LocationScope
   /** What triggered this notification */
   triggerType: TriggerType
   /** Whether this was manually triggered by admin */
@@ -69,7 +83,7 @@ interface ProcessNotificationsResult {
   errors: string[]
 }
 
-interface Subscription {
+export interface Subscription {
   id: string
   owner: string // Cognito user ID
   city: string
@@ -85,11 +99,150 @@ interface Subscription {
   expoPushToken?: string
 }
 
+export interface PushDeliveryGroup {
+  tokens: string[]
+  data: Record<string, unknown>
+  subscriptions: Subscription[]
+}
+
 /**
- * Query subscriptions by city using GSI
+ * Group push recipients by their deep-link target so we can issue one
+ * batched send per unique target rather than one Lambda invocation per
+ * recipient. State/country fan-out (#123) can reach thousands of
+ * subscribers — sequential per-subscriber sends would exceed Lambda's
+ * 15-minute timeout long before completion.
+ *
+ * - city-scope: every recipient shares the originating city's deep-link,
+ *   so all tokens collapse into a single group.
+ * - state-/country-scope: each subscriber's deep-link points at their
+ *   own city. Group by `(subscriber city, state, country)` so every
+ *   batch carries one consistent payload. In practice this collapses to
+ *   a small number of groups (≤ number of distinct subscriber cities).
+ *
+ * Pure: exported for unit testing; no side effects.
+ */
+export function groupPushRecipients(
+  recipients: { token: string; subscription: Subscription }[],
+  scope: LocationScope,
+  origin: {
+    city: string | null
+    state: string | null | undefined
+    country: string | null | undefined
+  },
+  contaminantId: string | undefined,
+): PushDeliveryGroup[] {
+  if (recipients.length === 0) return []
+
+  if (scope === 'city') {
+    return [
+      {
+        tokens: recipients.map((r) => r.token),
+        data: {
+          screen: 'Dashboard',
+          city: origin.city ?? '',
+          state: origin.state ?? '',
+          country: origin.country ?? '',
+          contaminantId,
+        },
+        subscriptions: recipients.map((r) => r.subscription),
+      },
+    ]
+  }
+
+  // Use JSON.stringify so unusual city names containing the previous
+  // pipe separator (rare bilingual entries like
+  // "Sault Ste. Marie | Sainte-Sault-Marie") don't collide on the key.
+  const byKey = new Map<string, { token: string; subscription: Subscription }[]>()
+  for (const r of recipients) {
+    const key = JSON.stringify([
+      r.subscription.city,
+      r.subscription.state ?? '',
+      r.subscription.country ?? '',
+    ])
+    const arr = byKey.get(key) ?? []
+    arr.push(r)
+    byKey.set(key, arr)
+  }
+  return Array.from(byKey.values()).map((group) => ({
+    tokens: group.map((r) => r.token),
+    data: {
+      screen: 'Dashboard',
+      city: group[0].subscription.city,
+      state: group[0].subscription.state ?? '',
+      country: group[0].subscription.country ?? '',
+      contaminantId,
+    },
+    subscriptions: group.map((r) => r.subscription),
+  }))
+}
+
+/**
+ * Cap on concurrent NotificationLog PutItem calls. State/country fan-out
+ * (#123) can reach thousands of subscribers; an unbounded `Promise.all`
+ * would issue thousands of parallel writes, hitting DynamoDB write
+ * throttling and risking Lambda OOM. 25 matches the BatchWriteItem cap
+ * and keeps tail latency bounded.
+ */
+const LOG_WRITE_CONCURRENCY = 25
+
+/**
+ * Run an async map with a fixed concurrency cap. Used for NotificationLog
+ * writes; the order of results doesn't matter and individual failures are
+ * already swallowed by `logNotification` itself.
+ */
+async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  let cursor = 0
+  const runNext = async (): Promise<void> => {
+    while (true) {
+      const i = cursor
+      cursor += 1
+      if (i >= items.length) return
+      await worker(items[i])
+    }
+  }
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => runNext(),
+  )
+  await Promise.all(workers)
+}
+
+/**
+ * Page through a DynamoDB Query call until LastEvaluatedKey is exhausted.
+ * Required for state/country fan-out (#123): a single Query response is
+ * capped at 1MB, so a country with thousands of subscribers would
+ * silently miss the rest of the fan-out without pagination.
+ *
+ * Exported for unit testing — production callers go through the
+ * subscription helpers below.
+ */
+export async function querySubscriptionsAllPages(
+  baseInput: Omit<ConstructorParameters<typeof QueryCommand>[0], 'ExclusiveStartKey'>,
+): Promise<Subscription[]> {
+  const out: Subscription[] = []
+  let ExclusiveStartKey: Record<string, AttributeValue> | undefined
+  do {
+    const result = await dynamoClient.send(
+      new QueryCommand({ ...baseInput, ExclusiveStartKey }),
+    )
+    for (const item of result.Items ?? []) {
+      out.push(unmarshall(item) as Subscription)
+    }
+    ExclusiveStartKey = result.LastEvaluatedKey
+  } while (ExclusiveStartKey)
+  return out
+}
+
+/**
+ * Query subscriptions by city using GSI. Paginated so a single very-popular
+ * city doesn't silently drop subscribers past the 1MB Query response cap.
  */
 async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
-  const command = new QueryCommand({
+  return querySubscriptionsAllPages({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
     IndexName: 'userSubscriptionsByCity',
     KeyConditionExpression: 'city = :city',
@@ -97,9 +250,84 @@ async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
       ':city': { S: city },
     },
   })
+}
 
-  const result = await dynamoClient.send(command)
-  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
+/**
+ * Query subscriptions by state via the state GSI (#123 cascade fan-out).
+ * Used when the source record is state-scoped: every subscriber in that
+ * state should be notified, regardless of their specific city. Paginated.
+ */
+async function getSubscriptionsByState(state: string): Promise<Subscription[]> {
+  return querySubscriptionsAllPages({
+    TableName: SUBSCRIPTIONS_TABLE_NAME,
+    IndexName: 'userSubscriptionsByState',
+    KeyConditionExpression: '#state = :state',
+    ExpressionAttributeNames: { '#state': 'state' },
+    ExpressionAttributeValues: {
+      ':state': { S: state },
+    },
+  })
+}
+
+/**
+ * Query subscriptions by country via the country GSI (#123 cascade fan-out).
+ * Used when the source record is country-scoped. Paginated — a country
+ * with thousands of subscribers needs every page or the cascade reaches
+ * only the first 1MB of subscribers.
+ */
+async function getSubscriptionsByCountry(country: string): Promise<Subscription[]> {
+  return querySubscriptionsAllPages({
+    TableName: SUBSCRIPTIONS_TABLE_NAME,
+    IndexName: 'userSubscriptionsByCountry',
+    KeyConditionExpression: 'country = :country',
+    ExpressionAttributeValues: {
+      ':country': { S: country },
+    },
+  })
+}
+
+/**
+ * Fan out to every subscriber whose location matches the source record's
+ * cascade scope. Deduplicates so a subscriber whose city, state, AND
+ * country all matched a hypothetical record only gets one notification.
+ */
+async function getSubscriptionsForScope(
+  scope: LocationScope,
+  city: string | null,
+  state: string | null | undefined,
+  country: string | null | undefined,
+): Promise<Subscription[]> {
+  switch (scope) {
+    case 'city':
+      if (!city) return []
+      return getSubscriptionsByCity(city)
+    case 'state':
+      if (!state) return []
+      return getSubscriptionsByState(state)
+    case 'country':
+      if (!country) return []
+      return getSubscriptionsByCountry(country)
+  }
+}
+
+/**
+ * Derive cascade scope from which location fields are populated. Used as
+ * the fallback when an upstream caller didn't supply `scope` explicitly.
+ *
+ * Throws when no location field is set — silently defaulting masks
+ * upstream bugs (e.g. a future caller forgetting to thread `scope`
+ * through). Callers must guard the empty-anchor case before reaching
+ * this helper; the handler does so at the entry point.
+ */
+function deriveScope(
+  city: string | null,
+  state: string | null | undefined,
+  country: string | null | undefined,
+): LocationScope {
+  if (city) return 'city'
+  if (state) return 'state'
+  if (country) return 'country'
+  throw new Error('deriveScope: no location anchor (city/state/country all empty)')
 }
 
 /**
@@ -298,7 +526,9 @@ async function sendEmailNotification(
   const payload = {
     statId: event.contaminantId || 'water-quality',
     statName: event.contaminantName || 'Water Quality',
-    city: event.city,
+    // city may be null on state-/country-scoped events (#123); send empty
+    // string so downstream email Lambda doesn't break on null.
+    city: event.city ?? '',
     state: event.state || '',
     country: event.country || '',
     oldStatus: event.oldStatus || 'safe',
@@ -373,26 +603,32 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
   event
 ) => {
   const { city, state, country, triggerType } = event
+  const scope = event.scope ?? deriveScope(city, state, country)
   const errors: string[] = []
   let emailsSent = 0
   let pushSent = 0
 
-  if (!city) {
-    console.error('No city provided in event')
+  // At least one location anchor must be present for fan-out to make sense.
+  if (!city && !state && !country) {
+    console.error('Event has no location anchor (city/state/country all empty)')
     return {
       success: false,
       subscribersNotified: 0,
       emailsSent: 0,
       pushSent: 0,
-      errors: ['No city provided'],
+      errors: ['No location anchor provided'],
     }
   }
 
-  console.log(`Processing notifications for ${city}, ${state || ''}, ${country || ''} (trigger: ${triggerType})`)
+  console.log(
+    `Processing notifications (${scope}-scope) for ${city ?? '-'}, ${state ?? '-'}, ${country ?? '-'} (trigger: ${triggerType})`,
+  )
 
-  // Get all subscribers for this city
-  const subscriptions = await getSubscriptionsByCity(city)
-  console.log(`Found ${subscriptions.length} subscribers`)
+  // Fan out to every subscriber matching the cascade scope (#123). A
+  // state-scoped record reaches every subscriber in that state; a
+  // country-scoped record reaches every subscriber in that country.
+  const subscriptions = await getSubscriptionsForScope(scope, city, state, country)
+  console.log(`Found ${subscriptions.length} ${scope}-scope subscribers`)
 
   if (subscriptions.length === 0) {
     return {
@@ -406,40 +642,28 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
 
   // Build notification content
   const { title, body } = buildNotificationContent(event)
-  const deepLinkData = {
-    screen: 'Dashboard',
-    city,
-    state: state || '',
-    country: country || '',
-    contaminantId: event.contaminantId,
-  }
 
-  // Collect recipients based on preferences
-  const emailRecipients: { email: string; subscription: Subscription }[] = []
-  const pushRecipients: { token: string; subscription: Subscription }[] = []
+  // Filter by preferences first, then resolve emails in parallel.
+  // State/country fan-out (#123) can hit thousands of subscribers — a
+  // sequential `getUserEmail` loop hits Cognito serially and dominates
+  // wall time before any notification goes out.
+  const eligible = subscriptions.filter((s) => shouldNotify(s, event))
+  const emailEligible = eligible.filter((s) => s.enableEmail)
+  const pushRecipients = eligible
+    .filter((s) => s.enablePush && !!s.expoPushToken)
+    .map((s) => ({ token: s.expoPushToken!, subscription: s }))
 
-  for (const subscription of subscriptions) {
-    // Check if this subscriber should be notified
-    if (!shouldNotify(subscription, event)) {
-      console.log(`Skipping ${subscription.id} - preferences don't match`)
-      continue
-    }
-
-    // Collect email recipients
-    if (subscription.enableEmail) {
-      const email = await getUserEmail(subscription.owner)
-      if (email) {
-        emailRecipients.push({ email, subscription })
-      } else {
-        console.warn(`No email found for user ${subscription.owner}`)
-      }
-    }
-
-    // Collect push recipients
-    if (subscription.enablePush && subscription.expoPushToken) {
-      pushRecipients.push({ token: subscription.expoPushToken, subscription })
-    }
-  }
+  const emailLookups = await Promise.all(
+    emailEligible.map(async (subscription) => ({
+      subscription,
+      email: await getUserEmail(subscription.owner),
+    })),
+  )
+  const emailRecipients = emailLookups.flatMap(({ subscription, email }) => {
+    if (email) return [{ email, subscription }]
+    console.warn(`No email found for user ${subscription.owner}`)
+    return []
+  })
 
   const subscribersNotified = new Set([
     ...emailRecipients.map((r) => r.subscription.id),
@@ -454,52 +678,81 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
     const emailResult = await sendEmailNotification(emails, event)
     emailsSent = emailResult.sentCount
 
-    // Log email notifications
-    for (const { email, subscription } of emailRecipients) {
-      await logNotification(
+    // Log email notifications with bounded concurrency (#123 fan-out can
+    // hit thousands of subscribers — unbounded Promise.all would throttle
+    // DynamoDB and risk OOM). Subscriber city/state/country wins so
+    // existing per-city audit queries still group correctly.
+    await runWithConcurrency(emailRecipients, LOG_WRITE_CONCURRENCY, ({ subscription }) =>
+      logNotification(
         subscription.id,
         subscription.owner,
-        city,
-        state || '',
-        country || '',
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
         'email',
         emailResult.success ? 'sent' : 'failed',
         title,
         body,
-        triggerType
-      )
-    }
+        triggerType,
+      ),
+    )
   }
 
-  // Send push notifications
+  // Send push notifications. For city scope every recipient shares the same
+  // deep-link target, so all tokens go in one batched Lambda call. For
+  // state/country fan-out (#123) we group by subscriber's own city so each
+  // group still carries a single consistent deep-link — this collapses
+  // potentially-thousands of sequential Lambda invocations down to a small
+  // number of parallel batches (one per distinct subscriber city).
   if (pushRecipients.length > 0) {
-    const tokens = pushRecipients.map((r) => r.token)
-    console.log(`Sending push to ${tokens.length} devices`)
+    console.log(`Sending push to ${pushRecipients.length} devices`)
 
-    const pushResult = await sendPushNotifications(tokens, title, body, deepLinkData)
-    pushSent = pushResult.sentCount
+    const groups = groupPushRecipients(
+      pushRecipients,
+      scope,
+      { city, state, country },
+      event.contaminantId,
+    )
+    console.log(`Push fan-out: ${groups.length} batched group(s)`)
 
-    // Log push notifications
-    for (const { subscription } of pushRecipients) {
-      const failed = pushResult.invalidTokens.includes(subscription.expoPushToken!)
-      await logNotification(
+    const groupResults = await Promise.all(
+      groups.map((g) => sendPushNotifications(g.tokens, title, body, g.data)),
+    )
+
+    const allInvalidTokens = new Set<string>()
+    let allSuccess = true
+    for (const r of groupResults) {
+      pushSent += r.sentCount
+      r.invalidTokens.forEach((t) => allInvalidTokens.add(t))
+      allSuccess = allSuccess && r.success
+    }
+
+    // Log push notifications with bounded concurrency (#123 fan-out can
+    // hit thousands of subscribers). Subscriber city/state/country wins
+    // so log queries by city continue to work for fan-out.
+    await runWithConcurrency(pushRecipients, LOG_WRITE_CONCURRENCY, ({ subscription }) => {
+      const failed = allInvalidTokens.has(subscription.expoPushToken!)
+      return logNotification(
         subscription.id,
         subscription.owner,
-        city,
-        state || '',
-        country || '',
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
         'push',
         failed ? 'failed' : 'sent',
         title,
         body,
         triggerType,
-        failed ? 'Invalid or expired token' : undefined
+        failed ? 'Invalid or expired token' : undefined,
       )
-    }
+    })
 
     // TODO: Clean up invalid tokens from subscriptions
-    if (pushResult.invalidTokens.length > 0) {
-      console.warn(`${pushResult.invalidTokens.length} invalid push tokens need cleanup`)
+    if (allInvalidTokens.size > 0) {
+      console.warn(`${allInvalidTokens.size} invalid push tokens need cleanup`)
+    }
+    if (!allSuccess) {
+      errors.push('At least one push batch reported a partial failure')
     }
   }
 

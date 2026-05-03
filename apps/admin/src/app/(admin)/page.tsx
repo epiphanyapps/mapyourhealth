@@ -63,12 +63,15 @@ export default function AdminDashboard() {
         // Count contaminants
         const contaminants = contaminantsResult.data?.length || 0;
 
-        // Count unique cities with data
+        // Count unique cities with data. Cascade scope (#123) means
+        // city/state may be null on state-/country-anchored records — skip
+        // those so the count reflects actual distinct city locations
+        // rather than collapsing every null row into one bogus bucket.
         const uniqueCities = new Set(
-          measurementsResult.data?.map((m) => {
-            const measurement = m as LocationMeasurementWithLocation;
-            return `${measurement.city}|${measurement.state}`;
-          }) || [],
+          measurementsResult.data
+            ?.map((m) => m as LocationMeasurementWithLocation)
+            .filter((m) => m.city && m.state)
+            .map((m) => `${m.city}|${m.state}`) || [],
         );
         const locationsWithData = uniqueCities.size;
 

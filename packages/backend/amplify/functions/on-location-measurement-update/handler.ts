@@ -16,10 +16,12 @@ const lambdaClient = new LambdaClient({})
 // Environment variables (set in backend.ts)
 const PROCESS_NOTIFICATIONS_FUNCTION_NAME = process.env.PROCESS_NOTIFICATIONS_FUNCTION_NAME!
 
-interface LocationMeasurementRecord {
+export interface LocationMeasurementRecord {
   id: string
-  city: string
-  state: string
+  // Location hierarchy (#123): city/state may be null on state- or country-
+  // anchored records. country is the only field guaranteed to be set.
+  city?: string | null
+  state?: string | null
   country: string
   contaminantId: string
   value: number
@@ -28,6 +30,21 @@ interface LocationMeasurementRecord {
   sourceUrl?: string
   notes?: string
   silentImport?: boolean
+}
+
+/**
+ * Determine which level of the location hierarchy this record was anchored
+ * at. Drives notification fan-out: city-scope notifies one city's
+ * subscribers, state-scope notifies every subscriber in that state, etc.
+ *
+ * Exported for unit testing — production callers go through `processRecord`.
+ */
+export function deriveScope(
+  record: LocationMeasurementRecord,
+): 'city' | 'state' | 'country' {
+  if (record.city) return 'city'
+  if (record.state) return 'state'
+  return 'country'
 }
 
 /**
@@ -51,22 +68,34 @@ async function processRecord(record: DynamoDBRecord): Promise<void> {
 
   const { city, state, country, contaminantId, value, silentImport } = newItem
 
-  // Skip notification for silent imports (bulk imports, data corrections, etc.)
-  if (silentImport === true) {
-    console.log(`Skipping notification for silent import: ${city}, ${state}, ${contaminantId}`)
+  if (!country) {
+    console.log('Record missing country anchor, skipping')
     return
   }
 
-  // Determine trigger type based on event
-  const triggerType = record.eventName === 'INSERT' ? 'data_update' : 'data_update'
+  // Skip notification for silent imports (bulk imports, data corrections, etc.)
+  if (silentImport === true) {
+    console.log(
+      `Skipping notification for silent import: ${city ?? ''}, ${state ?? ''}, ${country}, ${contaminantId}`,
+    )
+    return
+  }
 
-  console.log(`Processing ${record.eventName} for ${city}, ${state}/${contaminantId} (value: ${value})`)
+  const scope = deriveScope(newItem)
+  const triggerType = 'data_update'
+  const locationLabel = `${city ?? '-'}, ${state ?? '-'}, ${country}`
 
-  // Build payload for process-notifications Lambda
+  console.log(
+    `Processing ${record.eventName} (${scope}-scope) for ${locationLabel}/${contaminantId} (value: ${value})`,
+  )
+
+  // Build payload for process-notifications Lambda. `scope` tells the
+  // downstream Lambda which subscriber set to fan out to (#123).
   const payload = {
-    city,
-    state,
+    city: city ?? null,
+    state: state ?? null,
     country,
+    scope,
     contaminantId,
     triggerType,
     currentValue: value,
@@ -81,7 +110,9 @@ async function processRecord(record: DynamoDBRecord): Promise<void> {
     })
 
     await lambdaClient.send(command)
-    console.log(`Successfully invoked process-notifications for ${city}, ${state}/${contaminantId}`)
+    console.log(
+      `Successfully invoked process-notifications (${scope}) for ${locationLabel}/${contaminantId}`,
+    )
   } catch (error) {
     console.error(`Error invoking process-notifications:`, error)
     throw error // Re-throw to trigger retry
@@ -89,24 +120,36 @@ async function processRecord(record: DynamoDBRecord): Promise<void> {
 }
 
 /**
- * Lambda handler for DynamoDB Stream events
+ * Lambda handler for DynamoDB Stream events.
+ *
+ * Records in a stream batch are independent — each fans out to its own
+ * async invocation of process-notifications — so they're processed in
+ * parallel via Promise.allSettled. batchItemFailures is order-
+ * independent, so this doesn't change retry semantics.
  */
 export const handler: DynamoDBStreamHandler = async (event) => {
   console.log(`Processing ${event.Records.length} DynamoDB stream records`)
 
-  const batchItemFailures: { itemIdentifier: string }[] = []
+  const results = await Promise.allSettled(
+    event.Records.map(async (record) => {
+      try {
+        await processRecord(record)
+      } catch (error) {
+        console.error(`Error processing record ${record.eventID}:`, error)
+        throw error
+      }
+    }),
+  )
 
-  for (const record of event.Records) {
-    try {
-      await processRecord(record)
-    } catch (error) {
-      console.error(`Error processing record ${record.eventID}:`, error)
-      // Add to failures for retry
-      if (record.eventID) {
-        batchItemFailures.push({ itemIdentifier: record.eventID })
+  const batchItemFailures: { itemIdentifier: string }[] = []
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      const eventID = event.Records[i].eventID
+      if (eventID) {
+        batchItemFailures.push({ itemIdentifier: eventID })
       }
     }
-  }
+  })
 
   console.log(`Processed ${event.Records.length - batchItemFailures.length} records successfully`)
 

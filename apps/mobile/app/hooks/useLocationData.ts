@@ -11,8 +11,14 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useContaminants } from "@/context/ContaminantsContext"
 import { type CityData, type CityStat, type StatStatus, StatCategory } from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
+import { fetchWithLocationFallback, type LocationScope } from "@/lib/locationFallback"
 import { queryKeys } from "@/lib/queryKeys"
-import { getLocationMeasurements, AmplifyLocationMeasurement } from "@/services/amplify/data"
+import {
+  getLocationMeasurements,
+  getLocationMeasurementsByCountry,
+  getLocationMeasurementsByState,
+  AmplifyLocationMeasurement,
+} from "@/services/amplify/data"
 import { load, save, remove } from "@/utils/storage"
 
 /** Cache key prefix for location stats */
@@ -25,6 +31,8 @@ const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
 interface CachedLocationData {
   data: CityData
   cachedAt: number
+  /** Scope this data resolved at, for provenance display after rehydration. */
+  scope?: LocationScope
 }
 
 interface UseLocationDataResult {
@@ -42,15 +50,31 @@ interface UseLocationDataResult {
   lastUpdated: number | null
   /** Whether the device is offline */
   isOffline: boolean
+  /**
+   * Which level of the location hierarchy resolved the data (#123).
+   * "city" = city-specific record exists; "state"/"country" = inherited;
+   * "none" = no data at any level.
+   */
+  scope: LocationScope
   /** Refresh data from the backend */
   refresh: () => Promise<void>
 }
 
 /**
+ * Build the MMKV cache key. Includes state/country alongside city
+ * because the cascading hook resolves data based on all three (#123) —
+ * keying on city alone would alias same-named cities in different
+ * states, or serve a stale result when state/country change.
+ */
+function locationCacheKey(city: string, state: string, country: string): string {
+  return `${CACHE_KEY_PREFIX}${city}|${state}|${country}`
+}
+
+/**
  * Get cached data for a city from MMKV storage.
  */
-function getCachedData(city: string): CachedLocationData | null {
-  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
+function getCachedData(city: string, state: string, country: string): CachedLocationData | null {
+  const cacheKey = locationCacheKey(city, state, country)
   const cached = load<CachedLocationData>(cacheKey)
 
   if (!cached) return null
@@ -64,24 +88,46 @@ function getCachedData(city: string): CachedLocationData | null {
 }
 
 /**
- * Save city data to MMKV cache with timestamp.
+ * Save city data to MMKV cache with timestamp + cascade scope.
  */
-function setCachedData(city: string, data: CityData): void {
-  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
-  save(cacheKey, { data, cachedAt: Date.now() })
+function setCachedData(
+  city: string,
+  state: string,
+  country: string,
+  data: CityData,
+  scope: LocationScope,
+): void {
+  save(locationCacheKey(city, state, country), { data, cachedAt: Date.now(), scope })
 }
 
 /**
- * Clear cached data for a specific city.
+ * Clear cached data for a specific city. Accepts the legacy single-arg
+ * form (clears every state/country variant for that city) or the full
+ * triple. The single-arg form is retained for callers that don't yet
+ * thread state/country through.
  */
-export function clearCachedLocationData(city: string): void {
+export function clearCachedLocationData(city: string, state?: string, country?: string): void {
+  if (state !== undefined && country !== undefined) {
+    remove(locationCacheKey(city, state, country))
+    return
+  }
+  // No state/country supplied — fall back to the legacy bare-city key.
   remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
 /**
- * Hook to fetch city safety data with caching support
+ * Hook to fetch city safety data with caching support.
+ *
+ * Cascades through the location hierarchy (#123): if no city-specific
+ * measurements exist, falls back to state-level, then country-level.
+ * `state` and `country` are optional for backward compatibility but
+ * required to actually cascade past the city level.
  */
-export function useLocationData(city: string): UseLocationDataResult {
+export function useLocationData(
+  city: string,
+  state: string = "",
+  country: string = "",
+): UseLocationDataResult {
   const {
     contaminants,
     getThreshold,
@@ -126,13 +172,15 @@ export function useLocationData(city: string): UseLocationDataResult {
   )
 
   /**
-   * Core query function that fetches measurements and builds CityData
+   * Core query function that fetches measurements (with location-hierarchy
+   * cascading per #123) and builds CityData.
    */
   const queryFn = useCallback(async (): Promise<{
     cityData: CityData | null
     isMockData: boolean
     isCachedData: boolean
     lastUpdated: number | null
+    scope: LocationScope
     warning: string | null
   }> => {
     if (!city) {
@@ -141,55 +189,78 @@ export function useLocationData(city: string): UseLocationDataResult {
         isMockData: false,
         isCachedData: false,
         lastUpdated: null,
+        scope: "none",
         warning: null,
       }
     }
 
     // If offline, use MMKV cache
     if (isOffline) {
-      const cached = getCachedData(city)
+      const cached = getCachedData(city, state, country)
       if (cached) {
         return {
           cityData: cached.data,
           isMockData: false,
           isCachedData: true,
           lastUpdated: cached.cachedAt,
+          scope: cached.scope ?? "city",
           warning: null,
         }
       }
       throw new Error("You're offline and no cached data is available")
     }
 
-    // Online: fetch from API
-    const measurements = await getLocationMeasurements(city)
+    // Online: cascade city → state → country via the shared util.
+    const { data: measurements, scope } = await fetchWithLocationFallback(
+      { city, state, country },
+      {
+        byCity: getLocationMeasurements,
+        byState: getLocationMeasurementsByState,
+        byCountry: getLocationMeasurementsByCountry,
+      },
+    )
 
     if (measurements.length > 0) {
-      // Extract state/country from API response (measurements have full location data)
+      // Prefer the caller's state/country (drives cascading + jurisdiction).
+      // For city-scope hits without a caller-provided state/country (legacy
+      // call sites + tests), fall back to the record's own state/country so
+      // jurisdiction resolution still works. State-/country-scope rows may
+      // have null city/state on the record, so the caller's input is the
+      // only reliable source there.
       const firstMeasurement = measurements[0]
-      const cityName = firstMeasurement.city ?? city
-      const state = firstMeasurement.state ?? ""
-      const country = firstMeasurement.country ?? ""
-      const jurisdictionCode = getJurisdictionForLocation(state, country)?.code || "WHO"
+      const effectiveState = state || firstMeasurement.state || ""
+      const effectiveCountry = country || firstMeasurement.country || ""
+      const cityName = scope === "city" ? (firstMeasurement.city ?? city) : city
+      const jurisdictionCode =
+        getJurisdictionForLocation(effectiveState, effectiveCountry)?.code || "WHO"
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
-      const newData: CityData = { city, cityName, state, country, stats }
-      setCachedData(city, newData)
+      const newData: CityData = {
+        city,
+        cityName,
+        state: effectiveState,
+        country: effectiveCountry,
+        stats,
+      }
+      setCachedData(city, state, country, newData, scope)
       return {
         cityData: newData,
         isMockData: false,
         isCachedData: false,
         lastUpdated: Date.now(),
+        scope,
         warning: null,
       }
     }
 
     // No data from backend - keep cache as fallback for offline use
-    const cached = getCachedData(city)
+    const cached = getCachedData(city, state, country)
     if (cached) {
       return {
         cityData: cached.data,
         isMockData: false,
         isCachedData: true,
         lastUpdated: cached.cachedAt,
+        scope: cached.scope ?? "none",
         warning: null,
       }
     }
@@ -199,25 +270,27 @@ export function useLocationData(city: string): UseLocationDataResult {
       isMockData: false,
       isCachedData: false,
       lastUpdated: null,
+      scope: "none",
       warning: null,
     }
-  }, [city, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
+  }, [city, state, country, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
 
   const query = useQuery({
-    queryKey: queryKeys.measurements.byLocation(city),
+    queryKey: queryKeys.measurements.byLocation(city, state, country),
     queryFn,
     enabled: !!city && !defsLoading,
     staleTime: 5 * 60 * 1000,
     // Use MMKV cached data as initialData if available
     initialData: () => {
       if (!city) return undefined
-      const cached = getCachedData(city)
+      const cached = getCachedData(city, state, country)
       if (cached) {
         return {
           cityData: cached.data,
           isMockData: false,
           isCachedData: true,
           lastUpdated: cached.cachedAt,
+          scope: cached.scope ?? "city",
           warning: null,
         }
       }
@@ -228,9 +301,12 @@ export function useLocationData(city: string): UseLocationDataResult {
 
   const result = query.data
 
+  // Invalidate every measurements query so sibling cities sharing the
+  // same state/country cascade source also refetch (#123). The per-city
+  // byLocation key alone wouldn't reach them.
   const refresh = useCallback(async () => {
-    await qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(city) })
-  }, [qc, city])
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.all })
+  }, [qc])
 
   // Determine error: use query error or warning from the result
   const error = query.error?.message ?? result?.warning ?? null
@@ -243,6 +319,7 @@ export function useLocationData(city: string): UseLocationDataResult {
     isCachedData: result?.isCachedData ?? false,
     lastUpdated: result?.lastUpdated ?? null,
     isOffline,
+    scope: result?.scope ?? "none",
     refresh,
   }
 }

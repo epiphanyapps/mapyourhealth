@@ -19,6 +19,7 @@ import { ContaminantTable, ContaminantTableRow } from "@/components/ContaminantT
 import { ExpandableCard } from "@/components/ExpandableCard"
 import { Header } from "@/components/Header"
 import { LinkedText } from "@/components/LinkedText"
+import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
 import { StatItem } from "@/components/StatItem"
@@ -55,9 +56,19 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { getWHOThreshold, getThreshold, getJurisdictionForLocation } = useContaminants()
   const { getCategoryName, getCategoryColor } = useCategories()
 
-  // Fetch data for the passed city from Amplify (with caching and offline support)
-  const { cityData, isLoading, error, isMockData, isCachedData, lastUpdated, isOffline, refresh } =
-    useLocationData(city)
+  // Fetch data for the passed city from Amplify (with caching, offline support,
+  // and city → state → country cascading per #123).
+  const {
+    cityData,
+    isLoading,
+    error,
+    isMockData,
+    isCachedData,
+    lastUpdated,
+    isOffline,
+    scope,
+    refresh,
+  } = useLocationData(city, state, country)
 
   // State for pull-to-refresh
   const [isRefreshing, setIsRefreshing] = useState(false)
@@ -459,6 +470,14 @@ View details: ${shareUrl}`
           </View>
           <Text style={$categoryName}>{categoryName}</Text>
         </View>
+
+        {/* Cascade-scope provenance (#123): only renders for state/country fallback. */}
+        <LocationScopeBadge
+          scope={scope}
+          state={state}
+          country={country}
+          style={{ marginHorizontal: 16, marginBottom: 8 }}
+        />
 
         {/* Category Description */}
         <View style={$descriptionContainer}>

@@ -1,0 +1,147 @@
+# flow: E2E-123 Location Hierarchy Cascade (#123)
+# intent:
+#   Verify the city → state → country cascade end-to-end:
+#   1. Search a Quebec city that has no city-specific data
+#      (Sorel-Tracy is documented in PR #278 as a state-fallback target).
+#   2. Confirm the Dashboard surfaces inherited data instead of the
+#      no-data empty state.
+#   3. Confirm the LocationScopeBadge renders provenance ("Showing QC
+#      data" or similar) so the user knows the data is inherited.
+#   4. Drill into the Health Observations screen and confirm the
+#      legacy `state-fallback-banner` testID still resolves there.
+#
+# Pre-requisites (staging):
+#   - LocationMeasurement rows seeded with `state: "QC", country: "CA",
+#     city: null` for at least one contaminant.
+#   - LocationObservation rows seeded with `state: "QC", country: "CA",
+#     city: null` for at least one observed property.
+#
+# When this flow runs against a backend that has not been seeded with
+# state-anchored rows, the assertions on the badge / banner are
+# expected to fail — the dashboard would correctly show the "no data"
+# empty state instead. That's the verification we want.
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Search a no-data Quebec city
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar visible at app start"
+
+- tapOn:
+    text: "Search city or.*"
+    label: "Tap on search bar"
+
+- inputText: "Sorel-Tracy"
+
+# Wait for Google Places autocomplete suggestions
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: ".*Sorel-Tracy.*QC.*"
+    index: 0
+    label: "Select Sorel-Tracy from autocomplete"
+
+# Allow the dashboard to fetch and resolve the cascade
+- waitForAnimationToEnd:
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible: "Sorel-Tracy"
+    timeout: 10000
+
+# ========================================
+# Part 2: Confirm cascade resolved (badge present)
+# ========================================
+# Cascade resolved → provenance badge is rendered.
+# Accept either label form (state name or generic fallback).
+- assertVisible:
+    id: "location-scope-badge"
+    optional: false
+    label: "Cascade-scope badge is rendered for state-level fallback"
+
+# Belt-and-suspenders text assertion — fails only if the badge is
+# rendered for some non-cascade reason. Both QC and "Showing"
+# substrings tolerate copy variations.
+- assertVisible:
+    text: "Showing.*QC.*"
+    label: "Badge label mentions the resolved scope (QC)"
+    optional: true
+
+# ========================================
+# Part 3: Cascade should hide the no-data empty state
+# ========================================
+# The dashboard should NOT be in its empty / "Find out how safe..."
+# state because the cascade resolved. If this assertion fires it
+# means the inherited data path didn't kick in.
+- assertNotVisible:
+    text: "Find out how safe your location is"
+    label: "Dashboard renders inherited data, not the guest empty state"
+
+- assertNotVisible:
+    text: "Search above to get safety insights"
+    optional: true
+    label: "No-data hint is not shown when cascade resolved"
+
+# ========================================
+# Part 4: Verify legacy testID survives on the observations screen
+# ========================================
+# The LocationScopeBadge in LocationObservationsScreen carries the
+# legacy `state-fallback-banner` testID specifically when scope is
+# state. This is a regression test for I4 — the prior wrapper-with-
+# conditional-testID would always have rendered an empty wrapper here
+# even for city-scope data.
+- runFlow:
+    when:
+      visible: "Health Observations"
+    commands:
+      - tapOn:
+          text: "Health Observations"
+          label: "Open Health Observations from the dashboard"
+      - waitForAnimationToEnd:
+          timeout: 5000
+      - assertVisible:
+          id: "state-fallback-banner"
+          label: "Legacy state-fallback-banner testID resolves on observations screen"
+      - back
+      - waitForAnimationToEnd:
+          timeout: 2000
+
+# ========================================
+# Part 5: Sanity — searching a city WITH data should NOT show a badge
+# ========================================
+# Beverly Hills (US-CA) has city-specific data; the badge must not
+# render for the common case so we don't clutter the UI.
+- tapOn:
+    text: "Sorel-Tracy.*"
+    label: "Tap search bar again"
+
+- inputText: "Beverly Hills"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: ".*Beverly Hills.*CA.*"
+    index: 0
+    label: "Select Beverly Hills from autocomplete"
+
+- waitForAnimationToEnd:
+    timeout: 8000
+
+- extendedWaitUntil:
+    visible: "Beverly Hills"
+    timeout: 10000
+
+# Badge should NOT render for city-scope data (this is the
+# behaviour LocationScopeBadge implements: returns null for
+# `scope === "city"`).
+- assertNotVisible:
+    id: "location-scope-badge"
+    label: "No cascade badge for city-specific data (regression check)"

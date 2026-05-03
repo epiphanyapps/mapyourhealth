@@ -70,8 +70,10 @@ const sourceFormSchema = z.object({
   longitude: z.number().min(-180).max(180),
   impactRadius: z.number().min(1, "Radius must be at least 1 meter").max(50000, "Radius cannot exceed 50km"),
   address: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  state: z.string().min(1, "State/Province is required"),
+  // Location hierarchy (#123): country is required; city/state are optional
+  // and define the cascade scope. City without state is rejected as ambiguous.
+  city: z.string().optional(),
+  state: z.string().optional(),
   country: z.string().min(1, "Country is required"),
   jurisdictionCode: z.string().min(1, "Jurisdiction is required"),
   primaryContaminants: z.array(z.string()).min(0),
@@ -79,7 +81,10 @@ const sourceFormSchema = z.object({
   status: z.enum(["active", "monitored", "remediated", "closed"]),
   description: z.string().optional(),
   notes: z.string().optional(),
-});
+}).refine(
+  (data) => !(data.city && !data.state),
+  { message: "State is required when city is provided", path: ["state"] },
+);
 
 type FormData = z.infer<typeof sourceFormSchema>;
 
@@ -431,13 +436,21 @@ export default function PollutionSourceMap({
                   />
                 </div>
 
+                {/* Location hierarchy (#123): country is required; city/state
+                    are optional and set the cascade scope of this source. */}
+                <p className="text-xs text-muted-foreground">
+                  Tip: leave city blank for a state-wide source, or both city
+                  and state blank for a country-wide source. The mobile app
+                  will surface higher-scope sources to every city in the same
+                  state/country that lacks its own data.
+                </p>
                 <div className="grid grid-cols-3 gap-3">
                   <div>
-                    <Label htmlFor="city">City *</Label>
+                    <Label htmlFor="city">City</Label>
                     <Input
                       id="city"
                       {...register("city")}
-                      placeholder="Montreal"
+                      placeholder="Montreal (optional)"
                     />
                     {errors.city && (
                       <p className="text-sm text-red-500 mt-1">{errors.city.message}</p>
@@ -445,11 +458,11 @@ export default function PollutionSourceMap({
                   </div>
 
                   <div>
-                    <Label htmlFor="state">State/Province *</Label>
+                    <Label htmlFor="state">State/Province</Label>
                     <Input
                       id="state"
                       {...register("state")}
-                      placeholder="QC"
+                      placeholder="QC (optional)"
                     />
                     {errors.state && (
                       <p className="text-sm text-red-500 mt-1">{errors.state.message}</p>

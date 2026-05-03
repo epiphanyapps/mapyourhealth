@@ -31,9 +31,19 @@ export const queryKeys = {
   // ── Measurements / Location data ──
   measurements: {
     all: ["measurements"] as const,
-    byLocation: (city: string) => [...queryKeys.measurements.all, "location", city] as const,
+    /**
+     * Cascade-aware location key. Includes state/country because the
+     * cascading hook resolves data based on all three (#123) — keying on
+     * city alone would serve a stale result when the same-named city in
+     * a different state was previously queried, or when state/country
+     * change without the city changing.
+     */
+    byLocation: (city: string, state: string, country: string) =>
+      [...queryKeys.measurements.all, "location", city, state, country] as const,
     byCity: (city: string, state: string) =>
       [...queryKeys.measurements.all, "city", city, state] as const,
+    byState: (state: string) => [...queryKeys.measurements.all, "state", state] as const,
+    byCountry: (country: string) => [...queryKeys.measurements.all, "country", country] as const,
     multiLocation: (cities: string[]) =>
       [...queryKeys.measurements.all, "multi", ...cities.sort()] as const,
   },
@@ -59,6 +69,13 @@ export const queryKeys = {
   // ── O&M Observations ──
   observations: {
     all: ["observations"] as const,
+    /**
+     * Cascade-aware location key (#123). City alone aliases distinct
+     * (state, country) inputs once `city === ""` (state-/country-only
+     * cascade), so the key must carry all three.
+     */
+    byLocation: (city: string, state: string, country: string) =>
+      [...queryKeys.observations.all, "location", city, state, country] as const,
     byCity: (city: string) => [...queryKeys.observations.all, "city", city] as const,
     byState: (state: string) => [...queryKeys.observations.all, "state", state] as const,
     byCountry: (country: string) => [...queryKeys.observations.all, "country", country] as const,
@@ -82,7 +99,16 @@ export const queryKeys = {
   // ── Pollution Sources ──
   pollutionSources: {
     all: ["pollutionSources"] as const,
+    /**
+     * Cascade-aware location key (#123). City alone aliases distinct
+     * (state, country) inputs once `city === ""` (state-/country-only
+     * cascade), so the key must carry all three.
+     */
+    byLocation: (city: string, state: string, country: string) =>
+      [...queryKeys.pollutionSources.all, "location", city, state, country] as const,
     byCity: (city: string) => [...queryKeys.pollutionSources.all, "city", city] as const,
     byState: (state: string) => [...queryKeys.pollutionSources.all, "state", state] as const,
+    byCountry: (country: string) =>
+      [...queryKeys.pollutionSources.all, "country", country] as const,
   },
 } as const
