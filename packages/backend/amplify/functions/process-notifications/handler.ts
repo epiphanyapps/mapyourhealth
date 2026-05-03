@@ -216,8 +216,11 @@ async function runWithConcurrency<T>(
  * Required for state/country fan-out (#123): a single Query response is
  * capped at 1MB, so a country with thousands of subscribers would
  * silently miss the rest of the fan-out without pagination.
+ *
+ * Exported for unit testing — production callers go through the
+ * subscription helpers below.
  */
-async function querySubscriptionsAllPages(
+export async function querySubscriptionsAllPages(
   baseInput: Omit<ConstructorParameters<typeof QueryCommand>[0], 'ExclusiveStartKey'>,
 ): Promise<Subscription[]> {
   const out: Subscription[] = []

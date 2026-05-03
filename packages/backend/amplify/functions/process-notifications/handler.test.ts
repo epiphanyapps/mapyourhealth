@@ -12,12 +12,17 @@
  */
 
 // Mock AWS SDK clients so the handler module can be imported without
-// touching the network. We're not exercising the I/O paths here.
-jest.mock("@aws-sdk/client-dynamodb", () => ({
-  DynamoDBClient: jest.fn(() => ({ send: jest.fn() })),
-  QueryCommand: jest.fn(),
-  PutItemCommand: jest.fn(),
-}))
+// touching the network. The dynamo `send` is exposed so tests of the
+// pagination loop (#123) can program multi-page responses.
+jest.mock("@aws-sdk/client-dynamodb", () => {
+  const send = jest.fn()
+  return {
+    __dynamoSend: send,
+    DynamoDBClient: jest.fn(() => ({ send })),
+    QueryCommand: jest.fn((input: unknown) => ({ input })),
+    PutItemCommand: jest.fn((input: unknown) => ({ input })),
+  }
+})
 jest.mock("@aws-sdk/client-lambda", () => ({
   LambdaClient: jest.fn(() => ({ send: jest.fn() })),
   InvokeCommand: jest.fn(),
@@ -26,12 +31,19 @@ jest.mock("@aws-sdk/client-cognito-identity-provider", () => ({
   CognitoIdentityProviderClient: jest.fn(() => ({ send: jest.fn() })),
   AdminGetUserCommand: jest.fn(),
 }))
+// Identity unmarshall — pagination tests feed already-plain Subscription
+// objects, so we don't need DynamoDB's AttributeValue → JS coercion.
 jest.mock("@aws-sdk/util-dynamodb", () => ({
-  unmarshall: jest.fn(),
+  unmarshall: (item: unknown) => item,
   marshall: jest.fn(),
 }))
 
-import { groupPushRecipients, type Subscription } from "./handler"
+import { groupPushRecipients, querySubscriptionsAllPages, type Subscription } from "./handler"
+
+// Grab the dynamo `send` mock injected via the jest.mock factory above.
+const dynamoSendMock = (
+  jest.requireMock("@aws-sdk/client-dynamodb") as { __dynamoSend: jest.Mock }
+).__dynamoSend
 
 function makeSub(overrides: Partial<Subscription>): Subscription {
   return {
@@ -214,6 +226,8 @@ describe("groupPushRecipients (#123 fan-out batching)", () => {
     expect(groups).toHaveLength(2)
   })
 
+  // Pagination loop tests live in their own describe below.
+
   it("scales to thousands of recipients with bounded group count", () => {
     // Country-scope fan-out is the worst case. 10,000 subscribers
     // distributed across 50 cities → 50 groups, NOT 10,000 sequential
@@ -239,5 +253,89 @@ describe("groupPushRecipients (#123 fan-out batching)", () => {
     expect(groups).toHaveLength(50)
     const total = groups.reduce((sum, g) => sum + g.tokens.length, 0)
     expect(total).toBe(10_000)
+  })
+})
+
+// ─────────────────────────────────────────────────────────────────────────
+// querySubscriptionsAllPages — DynamoDB LastEvaluatedKey loop (#123 C3)
+// ─────────────────────────────────────────────────────────────────────────
+//
+// Critical: a single DynamoDB Query response is capped at 1MB. Without
+// the LastEvaluatedKey loop, country-scope fan-out would silently drop
+// every subscriber past the first ~1MB page. These tests pin the loop
+// behaviour so a future refactor can't quietly regress it.
+
+describe("querySubscriptionsAllPages (#123 fan-out pagination)", () => {
+  beforeEach(() => {
+    dynamoSendMock.mockReset()
+  })
+
+  it("returns the single page when DynamoDB has no LastEvaluatedKey", async () => {
+    dynamoSendMock.mockResolvedValueOnce({
+      Items: [{ id: "s1" }, { id: "s2" }],
+      LastEvaluatedKey: undefined,
+    })
+
+    const subs = await querySubscriptionsAllPages({
+      TableName: "x",
+      IndexName: "userSubscriptionsByCountry",
+      KeyConditionExpression: "country = :c",
+      ExpressionAttributeValues: { ":c": { S: "CA" } },
+    })
+
+    expect(subs).toHaveLength(2)
+    expect(dynamoSendMock).toHaveBeenCalledTimes(1)
+  })
+
+  it("aggregates results across multiple pages until LastEvaluatedKey is exhausted", async () => {
+    // Three pages: 2 + 2 + 1 = 5 subscriptions. The loop must call
+    // dynamo.send() three times, threading LastEvaluatedKey forward.
+    dynamoSendMock
+      .mockResolvedValueOnce({
+        Items: [{ id: "s1" }, { id: "s2" }],
+        LastEvaluatedKey: { id: { S: "s2" } },
+      })
+      .mockResolvedValueOnce({
+        Items: [{ id: "s3" }, { id: "s4" }],
+        LastEvaluatedKey: { id: { S: "s4" } },
+      })
+      .mockResolvedValueOnce({
+        Items: [{ id: "s5" }],
+        LastEvaluatedKey: undefined,
+      })
+
+    const subs = await querySubscriptionsAllPages({
+      TableName: "x",
+      IndexName: "userSubscriptionsByCountry",
+      KeyConditionExpression: "country = :c",
+      ExpressionAttributeValues: { ":c": { S: "CA" } },
+    })
+
+    expect(subs.map((s) => s.id)).toEqual(["s1", "s2", "s3", "s4", "s5"])
+    expect(dynamoSendMock).toHaveBeenCalledTimes(3)
+
+    // The second and third QueryCommands must carry the previous page's
+    // LastEvaluatedKey as ExclusiveStartKey, otherwise the loop would
+    // re-fetch page 1 forever (or never advance, depending on DDB).
+    const secondInput = (dynamoSendMock.mock.calls[1][0] as { input: { ExclusiveStartKey?: unknown } })
+      .input
+    const thirdInput = (dynamoSendMock.mock.calls[2][0] as { input: { ExclusiveStartKey?: unknown } })
+      .input
+    expect(secondInput.ExclusiveStartKey).toEqual({ id: { S: "s2" } })
+    expect(thirdInput.ExclusiveStartKey).toEqual({ id: { S: "s4" } })
+  })
+
+  it("handles an empty result set without spinning", async () => {
+    dynamoSendMock.mockResolvedValueOnce({ Items: [], LastEvaluatedKey: undefined })
+
+    const subs = await querySubscriptionsAllPages({
+      TableName: "x",
+      IndexName: "userSubscriptionsByCountry",
+      KeyConditionExpression: "country = :c",
+      ExpressionAttributeValues: { ":c": { S: "ZZ" } },
+    })
+
+    expect(subs).toEqual([])
+    expect(dynamoSendMock).toHaveBeenCalledTimes(1)
   })
 })

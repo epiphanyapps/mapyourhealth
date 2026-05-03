@@ -120,24 +120,36 @@ async function processRecord(record: DynamoDBRecord): Promise<void> {
 }
 
 /**
- * Lambda handler for DynamoDB Stream events
+ * Lambda handler for DynamoDB Stream events.
+ *
+ * Records in a stream batch are independent — each fans out to its own
+ * async invocation of process-notifications — so they're processed in
+ * parallel via Promise.allSettled. batchItemFailures is order-
+ * independent, so this doesn't change retry semantics.
  */
 export const handler: DynamoDBStreamHandler = async (event) => {
   console.log(`Processing ${event.Records.length} DynamoDB stream records`)
 
-  const batchItemFailures: { itemIdentifier: string }[] = []
+  const results = await Promise.allSettled(
+    event.Records.map(async (record) => {
+      try {
+        await processRecord(record)
+      } catch (error) {
+        console.error(`Error processing record ${record.eventID}:`, error)
+        throw error
+      }
+    }),
+  )
 
-  for (const record of event.Records) {
-    try {
-      await processRecord(record)
-    } catch (error) {
-      console.error(`Error processing record ${record.eventID}:`, error)
-      // Add to failures for retry
-      if (record.eventID) {
-        batchItemFailures.push({ itemIdentifier: record.eventID })
+  const batchItemFailures: { itemIdentifier: string }[] = []
+  results.forEach((r, i) => {
+    if (r.status === 'rejected') {
+      const eventID = event.Records[i].eventID
+      if (eventID) {
+        batchItemFailures.push({ itemIdentifier: eventID })
       }
     }
-  }
+  })
 
   console.log(`Processed ${event.Records.length - batchItemFailures.length} records successfully`)
 
