@@ -51,6 +51,57 @@ function getPrivateClient() {
 }
 
 // =============================================================================
+// Pagination helper (#123)
+// =============================================================================
+
+/** Page size for cascade fetchers — Amplify upper bound per call. */
+const CASCADE_PAGE_LIMIT = 1000
+
+/**
+ * Safety cap to bound runaway pagination on the mobile client. A country
+ * with more than this many records in the GSI almost certainly indicates
+ * a data-modeling problem, not a legitimate request.
+ */
+const CASCADE_MAX_PAGES = 20
+
+interface AmplifyListResponse<T> {
+  data: T[] | null | undefined
+  errors?: unknown
+  nextToken?: string | null
+}
+
+/**
+ * Page through an Amplify GSI list call until exhausted (or the safety cap
+ * is hit). Used by the cascade fetchers (#123) so a country with hundreds
+ * of measurements doesn't silently truncate at Amplify's 100-row default.
+ */
+async function paginateList<T>(
+  label: string,
+  fetchPage: (nextToken: string | undefined) => Promise<AmplifyListResponse<T>>,
+): Promise<T[]> {
+  const out: T[] = []
+  let token: string | undefined
+  let pages = 0
+  do {
+    const { data, errors, nextToken } = await fetchPage(token)
+    if (errors) {
+      console.error(`Error fetching ${label}:`, errors)
+      throw new Error(`Failed to fetch ${label}`)
+    }
+    if (data) out.push(...data)
+    token = nextToken ?? undefined
+    pages += 1
+    if (pages >= CASCADE_MAX_PAGES && token) {
+      console.warn(
+        `paginateList(${label}) hit the ${CASCADE_MAX_PAGES}-page safety cap with results still pending`,
+      )
+      break
+    }
+  } while (token)
+  return out
+}
+
+// =============================================================================
 // New Model Types
 // =============================================================================
 
@@ -397,20 +448,37 @@ export async function getLocationMeasurements(city: string): Promise<AmplifyLoca
 }
 
 /**
- * Fetch measurements for a specific state
+ * Fetch measurements for a specific state — paginated so country/state
+ * cascade fetches don't silently truncate at Amplify's 100-row default (#123).
  */
 export async function getLocationMeasurementsByState(
   state: string,
 ): Promise<AmplifyLocationMeasurement[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.LocationMeasurement.listLocationMeasurementByState({
-    state,
-  })
-  if (errors) {
-    console.error("Error fetching location measurements by state:", errors)
-    throw new Error("Failed to fetch location measurements by state")
-  }
-  return data
+  return paginateList("location measurements by state", (nextToken) =>
+    client.models.LocationMeasurement.listLocationMeasurementByState({
+      state,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
+}
+
+/**
+ * Fetch measurements for a specific country (#123 cascade fallback) —
+ * paginated, see getLocationMeasurementsByState.
+ */
+export async function getLocationMeasurementsByCountry(
+  country: string,
+): Promise<AmplifyLocationMeasurement[]> {
+  const client = await getPublicClient()
+  return paginateList("location measurements by country", (nextToken) =>
+    client.models.LocationMeasurement.listLocationMeasurementByCountry({
+      country,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
 }
 
 /**
@@ -699,20 +767,20 @@ export async function getLocationObservations(city: string): Promise<AmplifyLoca
 }
 
 /**
- * Fetch observations for a specific state/province
+ * Fetch observations for a specific state/province — paginated so
+ * country/state cascade fetches don't silently truncate (#123).
  */
 export async function getLocationObservationsByState(
   state: string,
 ): Promise<AmplifyLocationObservation[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.LocationObservation.listLocationObservationByState({
-    state,
-  })
-  if (errors) {
-    console.error("Error fetching location observations by state:", errors)
-    throw new Error("Failed to fetch location observations by state")
-  }
-  return data
+  return paginateList("location observations by state", (nextToken) =>
+    client.models.LocationObservation.listLocationObservationByState({
+      state,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
 }
 
 /**
@@ -734,22 +802,20 @@ export async function getObservationsByProperty(
 }
 
 /**
- * Fetch observations for a specific country
+ * Fetch observations for a specific country — paginated, see
+ * getLocationObservationsByState (#123).
  */
 export async function getLocationObservationsByCountry(
   country: string,
 ): Promise<AmplifyLocationObservation[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.LocationObservation.listLocationObservationByCountry(
-    {
+  return paginateList("location observations by country", (nextToken) =>
+    client.models.LocationObservation.listLocationObservationByCountry({
       country,
-    },
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
   )
-  if (errors) {
-    console.error("Error fetching location observations by country:", errors)
-    throw new Error("Failed to fetch location observations by country")
-  }
-  return data
 }
 
 // =============================================================================
@@ -791,18 +857,35 @@ export async function getPollutionSourcesByCity(city: string): Promise<AmplifyPo
 }
 
 /**
- * Fetch pollution sources for a specific state/province
+ * Fetch pollution sources for a specific state/province — paginated so
+ * country/state cascade fetches don't silently truncate (#123).
  */
 export async function getPollutionSourcesByState(state: string): Promise<AmplifyPollutionSource[]> {
   const client = await getPublicClient()
-  const { data, errors } = await client.models.PollutionSource.listPollutionSourceByState({
-    state,
-  })
-  if (errors) {
-    console.error("Error fetching pollution sources by state:", errors)
-    throw new Error("Failed to fetch pollution sources by state")
-  }
-  return data
+  return paginateList("pollution sources by state", (nextToken) =>
+    client.models.PollutionSource.listPollutionSourceByState({
+      state,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
+}
+
+/**
+ * Fetch pollution sources for a specific country (#123 cascade fallback)
+ * — paginated, see getPollutionSourcesByState.
+ */
+export async function getPollutionSourcesByCountry(
+  country: string,
+): Promise<AmplifyPollutionSource[]> {
+  const client = await getPublicClient()
+  return paginateList("pollution sources by country", (nextToken) =>
+    client.models.PollutionSource.listPollutionSourceByCountry({
+      country,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
 }
 
 // =============================================================================

@@ -12,9 +12,13 @@ import { renderHook, waitFor } from "@testing-library/react-native"
 // ── Mocks ────────────────────────────────────────────────────────────────────
 
 const mockGetLocationMeasurements = jest.fn()
+const mockGetLocationMeasurementsByState = jest.fn()
+const mockGetLocationMeasurementsByCountry = jest.fn()
 
 jest.mock("../services/amplify/data", () => ({
   getLocationMeasurements: (...args) => mockGetLocationMeasurements(...args),
+  getLocationMeasurementsByState: (...args) => mockGetLocationMeasurementsByState(...args),
+  getLocationMeasurementsByCountry: (...args) => mockGetLocationMeasurementsByCountry(...args),
 }))
 
 const mockGetThreshold = jest.fn()
@@ -118,6 +122,10 @@ describe("useLocationData", () => {
     jest.clearAllMocks()
     mockIsOffline = false
     mockLoad.mockReturnValue(null)
+    // Default cascading fetchers to empty so legacy tests that only mock
+    // the city fetcher don't accidentally match the wrong scope.
+    mockGetLocationMeasurementsByState.mockResolvedValue([])
+    mockGetLocationMeasurementsByCountry.mockResolvedValue([])
   })
 
   afterEach(() => {
@@ -297,8 +305,11 @@ describe("useLocationData", () => {
         expect(result.current.cityData).not.toBeNull()
       })
 
+      // Cache key now includes state/country (#123, I1) so same-named
+      // cities in different states don't alias each other in the cache.
+      // Legacy single-arg form (city only) appears as `_Montreal||`.
       expect(mockSave).toHaveBeenCalledWith(
-        "location_stats_Montreal",
+        "location_stats_Montreal||",
         expect.objectContaining({
           data: expect.objectContaining({ cityName: "Montreal" }),
           cachedAt: expect.any(Number),
@@ -367,6 +378,109 @@ describe("useLocationData", () => {
 
       expect(result.current.cityData).toBeNull()
       expect(result.current.isMockData).toBe(false)
+    })
+  })
+
+  // ── Cascade through location hierarchy (#123) ──────────────────────────────
+
+  describe("cascade fallback (#123)", () => {
+    const stateRecord = {
+      city: null,
+      state: "QC",
+      country: "CA",
+      contaminantId: "chlorite",
+      value: 750,
+      measuredAt: "2026-04-01T00:00:00Z",
+    }
+    const countryRecord = {
+      city: null,
+      state: null,
+      country: "CA",
+      contaminantId: "chlorite",
+      value: 600,
+      measuredAt: "2026-04-01T00:00:00Z",
+    }
+
+    it("returns city scope when city-level data exists", async () => {
+      mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
+      mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
+      mockGetThreshold.mockReturnValue(caQcThreshold)
+
+      const { result } = renderHook(() => useLocationData("Montreal", "QC", "CA"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => expect(result.current.cityData).not.toBeNull())
+      expect(result.current.scope).toBe("city")
+      expect(mockGetLocationMeasurementsByState).not.toHaveBeenCalled()
+      expect(mockGetLocationMeasurementsByCountry).not.toHaveBeenCalled()
+    })
+
+    it("falls back to state when city has no records", async () => {
+      mockGetLocationMeasurements.mockResolvedValue([])
+      mockGetLocationMeasurementsByState.mockResolvedValue([stateRecord])
+      mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
+      mockGetThreshold.mockReturnValue(caQcThreshold)
+
+      const { result } = renderHook(() => useLocationData("Sorel-Tracy", "QC", "CA"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => expect(result.current.cityData).not.toBeNull())
+      expect(result.current.scope).toBe("state")
+      // The user's input city/state/country wins over the record's null fields.
+      expect(result.current.cityData!.city).toBe("Sorel-Tracy")
+      expect(result.current.cityData!.state).toBe("QC")
+      expect(result.current.cityData!.country).toBe("CA")
+      // Jurisdiction lookup uses the user's location, not the record's.
+      expect(mockGetJurisdictionForLocation).toHaveBeenCalledWith("QC", "CA")
+      expect(mockGetLocationMeasurementsByCountry).not.toHaveBeenCalled()
+    })
+
+    it("falls back to country when city and state are both empty", async () => {
+      mockGetLocationMeasurements.mockResolvedValue([])
+      mockGetLocationMeasurementsByState.mockResolvedValue([])
+      mockGetLocationMeasurementsByCountry.mockResolvedValue([countryRecord])
+      mockGetJurisdictionForLocation.mockReturnValue({ code: "CA" })
+      mockGetThreshold.mockReturnValue(caQcThreshold)
+
+      const { result } = renderHook(() => useLocationData("Sorel-Tracy", "QC", "CA"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => expect(result.current.cityData).not.toBeNull())
+      expect(result.current.scope).toBe("country")
+      expect(result.current.cityData!.city).toBe("Sorel-Tracy")
+      expect(result.current.cityData!.country).toBe("CA")
+    })
+
+    it('reports scope "none" when every level is empty', async () => {
+      mockGetLocationMeasurements.mockResolvedValue([])
+      mockGetLocationMeasurementsByState.mockResolvedValue([])
+      mockGetLocationMeasurementsByCountry.mockResolvedValue([])
+
+      const { result } = renderHook(() => useLocationData("UnknownCity", "QC", "CA"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(result.current.cityData).toBeNull()
+      expect(result.current.scope).toBe("none")
+    })
+
+    it("does not cascade when caller omits state/country (backward compat)", async () => {
+      mockGetLocationMeasurements.mockResolvedValue([])
+      mockGetLocationMeasurementsByState.mockResolvedValue([stateRecord])
+
+      const { result } = renderHook(() => useLocationData("Sorel-Tracy"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      // No state/country supplied → state-level fetcher must not run.
+      expect(mockGetLocationMeasurementsByState).not.toHaveBeenCalled()
+      expect(result.current.cityData).toBeNull()
+      expect(result.current.scope).toBe("none")
     })
   })
 })

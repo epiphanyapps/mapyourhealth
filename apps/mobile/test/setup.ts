@@ -40,6 +40,31 @@ jest.mock("expo-localization", () => ({
   getLocales: () => [{ languageTag: "en-US", textDirection: "ltr" }],
 }))
 
+// `@expo-google-fonts/space-grotesk` requires `expo-font`, which is not
+// installed in this monorepo. Any test that transitively imports the
+// theme system (Text, useAppTheme, anything that touches typography.ts)
+// will throw "Cannot find module 'expo-font'" at import time. Mock the
+// font package so those tests can render. Returning a no-op `useFonts`
+// hook is sufficient — production app code only reads the fonts-loaded
+// boolean from it.
+jest.mock("@expo-google-fonts/space-grotesk", () => ({
+  useFonts: () => [true, null],
+  SpaceGrotesk_300Light: null,
+  SpaceGrotesk_400Regular: null,
+  SpaceGrotesk_500Medium: null,
+  SpaceGrotesk_600SemiBold: null,
+  SpaceGrotesk_700Bold: null,
+}))
+
+// `aws-amplify/analytics` (Pinpoint) tries to load `@aws-amplify/react-native`
+// at module init. Tests that import `app/utils/analytics.ts` (or anything
+// that uses `trackEvent`) hit "Cannot find module '@aws-amplify/react-native'"
+// before any test runs. A no-op `record` is sufficient for everything the
+// test suite actually exercises.
+jest.mock("aws-amplify/analytics", () => ({
+  record: jest.fn(),
+}))
+
 jest.mock("../app/i18n/index.ts", () => ({
   i18n: {
     isInitialized: true,

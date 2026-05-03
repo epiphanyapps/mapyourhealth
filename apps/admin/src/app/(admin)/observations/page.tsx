@@ -148,8 +148,9 @@ export default function ObservationsPage() {
   const openEditDialog = (observation: LocationObservation) => {
     setEditingObservation(observation);
     setFormData({
-      city: observation.city,
-      state: observation.state,
+      // city/state may be null on state-/country-anchored records (#123).
+      city: observation.city ?? "",
+      state: observation.state ?? "",
       country: observation.country,
       county: observation.county || "",
       propertyId: observation.propertyId,
@@ -172,14 +173,15 @@ export default function ObservationsPage() {
   };
 
   const handleSave = async () => {
-    if (
-      !formData.city ||
-      !formData.state ||
-      !formData.country ||
-      !formData.propertyId ||
-      !formData.observedAt
-    ) {
-      toast.error("Please fill in all required fields");
+    // Location hierarchy (#123): country is the only required location level.
+    // Allow city- (city + state + country), state- (state + country), or
+    // country-scoped (country only) records. Reject city without state.
+    if (!formData.country || !formData.propertyId || !formData.observedAt) {
+      toast.error("Country, property, and observed-at are required");
+      return;
+    }
+    if (formData.city && !formData.state) {
+      toast.error("State is required when city is provided");
       return;
     }
 
@@ -188,8 +190,10 @@ export default function ObservationsPage() {
       const client = generateClient<Schema>();
 
       const observationData = {
-        city: formData.city,
-        state: formData.state,
+        // Pass null for omitted city/state so the row is anchored at the
+        // appropriate cascade level.
+        city: formData.city || null,
+        state: formData.state || null,
         country: formData.country,
         county: formData.county || null,
         propertyId: formData.propertyId,
@@ -237,9 +241,14 @@ export default function ObservationsPage() {
     const propertyName =
       properties.find((p) => p.propertyId === observation.propertyId)?.name ||
       observation.propertyId;
+    // Cascade scope (#123): city/state may be null on state-/country-anchored records.
+    const locationLabel =
+      [observation.city, observation.state, observation.country]
+        .filter(Boolean)
+        .join(", ") || "this location";
     if (
       !confirm(
-        `Are you sure you want to delete the "${propertyName}" observation for ${observation.city}, ${observation.state}?`
+        `Are you sure you want to delete the "${propertyName}" observation for ${locationLabel}?`
       )
     ) {
       return;
@@ -266,13 +275,16 @@ export default function ObservationsPage() {
     ? getProperty(formData.propertyId)
     : null;
 
-  // Get unique countries and states for filters
+  // Get unique countries and states for filters. With cascade scope (#123),
+  // state may be null on country-anchored records — drop those from the
+  // state filter rather than crashing.
   const countries = [...new Set(observations.map((o) => o.country))].sort();
   const states = [
     ...new Set(
       observations
         .filter((o) => filterCountry === "all" || o.country === filterCountry)
         .map((o) => o.state)
+        .filter((s): s is string => Boolean(s))
     ),
   ].sort();
 
@@ -341,13 +353,22 @@ export default function ObservationsPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              {/* Location */}
+              {/* Location hierarchy (#123): country is required; city + state
+                  are optional. Leaving city blank → state-scoped record;
+                  leaving city + state blank → country-scoped. */}
+              <p className="text-xs text-muted-foreground">
+                Tip: leave <strong>city</strong> blank for a state-level
+                observation, or leave both <strong>city</strong> and
+                <strong> state</strong> blank for a country-level observation.
+                The mobile app will cascade city → state → country
+                automatically.
+              </p>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City *</Label>
+                  <Label htmlFor="city">City</Label>
                   <Input
                     id="city"
-                    placeholder="e.g., Montreal"
+                    placeholder="e.g., Montreal (blank = state/country-level)"
                     value={formData.city}
                     onChange={(e) =>
                       setFormData({ ...formData, city: e.target.value })
@@ -369,10 +390,10 @@ export default function ObservationsPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="state">State/Province *</Label>
+                  <Label htmlFor="state">State/Province</Label>
                   <Input
                     id="state"
-                    placeholder="e.g., QC"
+                    placeholder="e.g., QC (blank = country-level)"
                     value={formData.state}
                     onChange={(e) =>
                       setFormData({ ...formData, state: e.target.value })
@@ -693,13 +714,23 @@ export default function ObservationsPage() {
               <TableBody>
                 {filteredObservations.map((observation) => {
                   const property = getProperty(observation.propertyId);
+                  // Cascade scope (#123): city/state may be null. Show the
+                  // most-specific populated level on the primary line and
+                  // the rest of the location chain on the secondary line.
+                  const primary =
+                    observation.city || observation.state || observation.country;
+                  const secondary = observation.city
+                    ? [observation.state, observation.country].filter(Boolean).join(", ")
+                    : observation.state
+                      ? observation.country ?? ""
+                      : "";
                   return (
                     <TableRow key={observation.id}>
                       <TableCell>
-                        <div className="font-medium">{observation.city}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {observation.state}, {observation.country}
-                        </div>
+                        <div className="font-medium">{primary}</div>
+                        {secondary && (
+                          <div className="text-sm text-muted-foreground">{secondary}</div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {property ? (

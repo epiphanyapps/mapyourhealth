@@ -326,14 +326,20 @@ const schema = a.schema({
 
   /**
    * LocationMeasurement - actual contaminant measurements for locations
-   * Keyed by city+state instead of postal code
-   * Public read, admin write
+   *
+   * Location hierarchy (#123):
+   *   - city + state + country → city-scoped record
+   *   - state + country (city omitted) → applies to every city in that state
+   *   - country only (city + state omitted) → applies to every city in that country
+   *
+   * Mobile resolves data city → state → country at query time. `country` is
+   * still required so every record is anchored to at least one hierarchy level.
    */
   LocationMeasurement: a
     .model({
-      city: a.string().required(), // City name
-      state: a.string().required(), // State/province code
-      country: a.string().required(), // "US", "CA"
+      city: a.string(), // City name (omit for state-/country-level records)
+      state: a.string(), // State/province code (omit for country-level records)
+      country: a.string().required(), // "US", "CA" — anchor for every record
       contaminantId: a.string().required(),
       value: a.float().required(),
       measuredAt: a.datetime().required(),
@@ -350,6 +356,7 @@ const schema = a.schema({
     .secondaryIndexes((index) => [
       index("city"),
       index("state"),
+      index("country"), // Country-level cascade fallback (#123)
       index("contaminantId"),
     ]),
 
@@ -377,7 +384,11 @@ const schema = a.schema({
       expoPushToken: a.string(),
     })
     .authorization((allow) => [allow.owner()])
-    .secondaryIndexes((index) => [index("city"), index("state")]),
+    .secondaryIndexes((index) => [
+      index("city"),
+      index("state"),
+      index("country"), // Country-scoped notification fan-out (#123)
+    ]),
 
   /**
    * NotificationLog - audit trail for sent notifications
@@ -565,8 +576,10 @@ const schema = a.schema({
       longitude: a.float().required(),
       impactRadius: a.float().required(), // meters
       address: a.string(),
-      city: a.string().required(),
-      state: a.string().required(),
+      // Location hierarchy (#123): city-/state-/country-scoped records.
+      // `country` is required so every source is anchored to at least one level.
+      city: a.string(),
+      state: a.string(),
       country: a.string().required(),
       jurisdictionCode: a.string(),
       primaryContaminants: a.string().array(), // contaminant IDs
@@ -582,7 +595,11 @@ const schema = a.schema({
       allow.authenticated().to(["read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
     ])
-    .secondaryIndexes((index) => [index("city"), index("state")]),
+    .secondaryIndexes((index) => [
+      index("city"),
+      index("state"),
+      index("country"), // Country-level cascade fallback (#123)
+    ]),
 
   // =========================================================================
   // Newsletter Subscriptions (Landing Page)
@@ -752,9 +769,11 @@ const schema = a.schema({
    */
   LocationObservation: a
     .model({
-      // Location identification (matches Location model pattern)
-      city: a.string().required(),
-      state: a.string().required(),
+      // Location identification (matches Location model pattern).
+      // Location hierarchy (#123): city/state may be omitted for state- or
+      // country-level observations; mobile cascades city → state → country.
+      city: a.string(),
+      state: a.string(),
       country: a.string().required(),
       county: a.string(),
       // What's being observed
