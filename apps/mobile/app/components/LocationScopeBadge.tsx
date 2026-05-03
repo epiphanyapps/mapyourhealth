@@ -21,6 +21,13 @@ interface LocationScopeBadgeProps {
   country?: string
   /** Optional style override (e.g. margins). */
   style?: ViewStyle
+  /**
+   * Optional testID override. Defaults to "location-scope-badge". Screens
+   * pass scope-specific values (e.g. "state-fallback-banner",
+   * "country-fallback-banner") so E2E selectors can distinguish provenance
+   * without inspecting copy.
+   */
+  testID?: string
 }
 
 export const LocationScopeBadge: FC<LocationScopeBadgeProps> = ({
@@ -28,6 +35,7 @@ export const LocationScopeBadge: FC<LocationScopeBadgeProps> = ({
   state,
   country,
   style,
+  testID = "location-scope-badge",
 }) => {
   const { theme } = useAppTheme()
   const label = describeScope(scope, { state, country })
@@ -46,7 +54,7 @@ export const LocationScopeBadge: FC<LocationScopeBadgeProps> = ({
       ]}
       accessibilityRole="text"
       accessibilityLabel={label}
-      testID="location-scope-badge"
+      testID={testID}
     >
       <MaterialCommunityIcons
         name="map-marker-radius-outline"

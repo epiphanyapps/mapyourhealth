@@ -104,22 +104,13 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
       route.params.jurisdictionCode ?? getJurisdictionForLocation(state, country)?.code ?? "WHO"
     const { theme } = useAppTheme()
 
-    const {
-      observations,
-      isLoading,
-      error,
-      isOffline,
-      refresh,
-      worstStatus,
-      alertCount,
-      scope,
-      isStateLevelFallback,
-    } = useLocationObservations({
-      city,
-      state,
-      country,
-      jurisdictionCode,
-    })
+    const { observations, isLoading, error, isOffline, refresh, worstStatus, alertCount, scope } =
+      useLocationObservations({
+        city,
+        state,
+        country,
+        jurisdictionCode,
+      })
 
     const [isRefreshing, setIsRefreshing] = useState(false)
 
@@ -273,16 +264,24 @@ export const LocationObservationsScreen: FC<LocationObservationsScreenProps> =
 
           {/* Cascade-scope provenance (#123): renders for state and country
               fallback. Replaces the prior state-only banner so country-level
-              records are surfaced too. testID retained for E2E continuity. */}
-          <View testID={isStateLevelFallback ? "state-fallback-banner" : undefined}>
-            <LocationScopeBadge
-              scope={scope}
-              state={state}
-              country={country}
-              // eslint-disable-next-line react-native/no-inline-styles
-              style={{ marginHorizontal: 16, marginBottom: 12 }}
-            />
-          </View>
+              records are surfaced too. The badge carries a scope-specific
+              testID so E2E selectors can distinguish provenance — and so the
+              legacy `state-fallback-banner` testID still resolves only when
+              state-scope data is actually displayed (no orphan wrapper). */}
+          <LocationScopeBadge
+            scope={scope}
+            state={state}
+            country={country}
+            testID={
+              scope === "state"
+                ? "state-fallback-banner"
+                : scope === "country"
+                  ? "country-fallback-banner"
+                  : undefined
+            }
+            // eslint-disable-next-line react-native/no-inline-styles
+            style={{ marginHorizontal: 16, marginBottom: 12 }}
+          />
 
           {/* Offline Banner */}
           {isOffline && (

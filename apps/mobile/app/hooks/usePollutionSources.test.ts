@@ -147,22 +147,30 @@ describe("usePollutionSources", () => {
   })
 
   describe("disabled state", () => {
-    it("returns empty sources when city is empty", () => {
-      const { result } = renderHook(() => usePollutionSources({ city: "", state: "QC" }), {
-        wrapper: createWrapper(),
-      })
-
-      expect(result.current.sources).toEqual([])
-      expect(mockGetPollutionSourcesByCity).not.toHaveBeenCalled()
-    })
-
-    it("returns empty sources when state is empty", () => {
+    it("city-only input still runs the city fetcher (I2: country-only path must remain reachable)", async () => {
+      // I2 fix: the hook is enabled whenever any cascade level has a value.
+      // Previously it required city + state, which silently disabled the
+      // country fallback even though that's the cascade's whole purpose.
+      mockGetPollutionSourcesByCity.mockResolvedValue([])
       const { result } = renderHook(() => usePollutionSources({ city: "Sorel-Tracy", state: "" }), {
         wrapper: createWrapper(),
       })
 
+      await waitFor(() => expect(result.current.isLoading).toBe(false))
+      expect(mockGetPollutionSourcesByCity).toHaveBeenCalledWith("Sorel-Tracy")
+      expect(result.current.sources).toEqual([])
+    })
+
+    it("hook is disabled only when city, state, AND country are all empty", () => {
+      const { result } = renderHook(
+        () => usePollutionSources({ city: "", state: "", country: "" }),
+        { wrapper: createWrapper() },
+      )
+
       expect(result.current.sources).toEqual([])
       expect(mockGetPollutionSourcesByCity).not.toHaveBeenCalled()
+      expect(mockGetPollutionSourcesByState).not.toHaveBeenCalled()
+      expect(mockGetPollutionSourcesByCountry).not.toHaveBeenCalled()
     })
   })
 

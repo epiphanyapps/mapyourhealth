@@ -52,6 +52,9 @@ export function usePollutionSources(params: LocationParams): UsePollutionSources
   const { isOffline } = useNetworkStatus()
   const qc = useQueryClient()
 
+  // Cascade city → state → country (#123). Enabled whenever any cascade
+  // level has a value so the country-only path remains reachable; the
+  // shared util internally skips levels with empty input.
   const sourcesQuery = useQuery({
     queryKey: queryKeys.pollutionSources.byCity(city),
     queryFn: async () =>
@@ -63,7 +66,7 @@ export function usePollutionSources(params: LocationParams): UsePollutionSources
           byCountry: getPollutionSourcesByCountry,
         },
       ),
-    enabled: !!city && !!state,
+    enabled: !!(city || state || country),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 

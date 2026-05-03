@@ -204,7 +204,10 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
   const { isOffline } = useNetworkStatus()
   const qc = useQueryClient()
 
-  // Fetch observations cascading city → state → country.
+  // Fetch observations cascading city → state → country (#123).
+  // Enabled whenever any cascade level has a value — `country` alone is a
+  // legitimate input. The shared util internally skips levels with empty
+  // input, so requiring all three would gate out the country-only path.
   const observationsQuery = useQuery({
     queryKey: queryKeys.observations.byCity(city),
     queryFn: async () =>
@@ -216,7 +219,7 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
           byCountry: getLocationObservationsByCountry,
         },
       ),
-    enabled: !!city && !!state,
+    enabled: !!(city || state || country),
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 

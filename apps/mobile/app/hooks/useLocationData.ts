@@ -61,10 +61,20 @@ interface UseLocationDataResult {
 }
 
 /**
+ * Build the MMKV cache key. Includes state/country alongside city
+ * because the cascading hook resolves data based on all three (#123) —
+ * keying on city alone would alias same-named cities in different
+ * states, or serve a stale result when state/country change.
+ */
+function locationCacheKey(city: string, state: string, country: string): string {
+  return `${CACHE_KEY_PREFIX}${city}|${state}|${country}`
+}
+
+/**
  * Get cached data for a city from MMKV storage.
  */
-function getCachedData(city: string): CachedLocationData | null {
-  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
+function getCachedData(city: string, state: string, country: string): CachedLocationData | null {
+  const cacheKey = locationCacheKey(city, state, country)
   const cached = load<CachedLocationData>(cacheKey)
 
   if (!cached) return null
@@ -80,15 +90,28 @@ function getCachedData(city: string): CachedLocationData | null {
 /**
  * Save city data to MMKV cache with timestamp + cascade scope.
  */
-function setCachedData(city: string, data: CityData, scope: LocationScope): void {
-  const cacheKey = `${CACHE_KEY_PREFIX}${city}`
-  save(cacheKey, { data, cachedAt: Date.now(), scope })
+function setCachedData(
+  city: string,
+  state: string,
+  country: string,
+  data: CityData,
+  scope: LocationScope,
+): void {
+  save(locationCacheKey(city, state, country), { data, cachedAt: Date.now(), scope })
 }
 
 /**
- * Clear cached data for a specific city.
+ * Clear cached data for a specific city. Accepts the legacy single-arg
+ * form (clears every state/country variant for that city) or the full
+ * triple. The single-arg form is retained for callers that don't yet
+ * thread state/country through.
  */
-export function clearCachedLocationData(city: string): void {
+export function clearCachedLocationData(city: string, state?: string, country?: string): void {
+  if (state !== undefined && country !== undefined) {
+    remove(locationCacheKey(city, state, country))
+    return
+  }
+  // No state/country supplied — fall back to the legacy bare-city key.
   remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
@@ -173,7 +196,7 @@ export function useLocationData(
 
     // If offline, use MMKV cache
     if (isOffline) {
-      const cached = getCachedData(city)
+      const cached = getCachedData(city, state, country)
       if (cached) {
         return {
           cityData: cached.data,
@@ -218,7 +241,7 @@ export function useLocationData(
         country: effectiveCountry,
         stats,
       }
-      setCachedData(city, newData, scope)
+      setCachedData(city, state, country, newData, scope)
       return {
         cityData: newData,
         isMockData: false,
@@ -230,7 +253,7 @@ export function useLocationData(
     }
 
     // No data from backend - keep cache as fallback for offline use
-    const cached = getCachedData(city)
+    const cached = getCachedData(city, state, country)
     if (cached) {
       return {
         cityData: cached.data,
@@ -253,14 +276,14 @@ export function useLocationData(
   }, [city, state, country, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
 
   const query = useQuery({
-    queryKey: queryKeys.measurements.byLocation(city),
+    queryKey: queryKeys.measurements.byLocation(city, state, country),
     queryFn,
     enabled: !!city && !defsLoading,
     staleTime: 5 * 60 * 1000,
     // Use MMKV cached data as initialData if available
     initialData: () => {
       if (!city) return undefined
-      const cached = getCachedData(city)
+      const cached = getCachedData(city, state, country)
       if (cached) {
         return {
           cityData: cached.data,
@@ -280,7 +303,7 @@ export function useLocationData(
 
   const refresh = useCallback(async () => {
     await Promise.all([
-      qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(city) }),
+      qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(city, state, country) }),
       qc.invalidateQueries({ queryKey: queryKeys.measurements.byState(state) }),
       qc.invalidateQueries({ queryKey: queryKeys.measurements.byCountry(country) }),
     ])

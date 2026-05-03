@@ -42,7 +42,7 @@ type NotificationStatus = 'danger' | 'warning' | 'safe'
  * state-scope notifies every subscriber in that state; country-scope
  * notifies every subscriber in that country.
  */
-type LocationScope = 'city' | 'state' | 'country'
+export type LocationScope = 'city' | 'state' | 'country'
 
 interface ProcessNotificationsEvent {
   /** City name (null when the source record was state- or country-scoped). */
@@ -82,7 +82,7 @@ interface ProcessNotificationsResult {
   errors: string[]
 }
 
-interface Subscription {
+export interface Subscription {
   id: string
   owner: string // Cognito user ID
   city: string
@@ -96,6 +96,76 @@ interface Subscription {
   watchContaminants?: string[]
   notifyWhenDataAvailable: boolean
   expoPushToken?: string
+}
+
+export interface PushDeliveryGroup {
+  tokens: string[]
+  data: Record<string, unknown>
+  subscriptions: Subscription[]
+}
+
+/**
+ * Group push recipients by their deep-link target so we can issue one
+ * batched send per unique target rather than one Lambda invocation per
+ * recipient. State/country fan-out (#123) can reach thousands of
+ * subscribers — sequential per-subscriber sends would exceed Lambda's
+ * 15-minute timeout long before completion.
+ *
+ * - city-scope: every recipient shares the originating city's deep-link,
+ *   so all tokens collapse into a single group.
+ * - state-/country-scope: each subscriber's deep-link points at their
+ *   own city. Group by `(subscriber city, state, country)` so every
+ *   batch carries one consistent payload. In practice this collapses to
+ *   a small number of groups (≤ number of distinct subscriber cities).
+ *
+ * Pure: exported for unit testing; no side effects.
+ */
+export function groupPushRecipients(
+  recipients: { token: string; subscription: Subscription }[],
+  scope: LocationScope,
+  origin: {
+    city: string | null
+    state: string | null | undefined
+    country: string | null | undefined
+  },
+  contaminantId: string | undefined,
+): PushDeliveryGroup[] {
+  if (recipients.length === 0) return []
+
+  if (scope === 'city') {
+    return [
+      {
+        tokens: recipients.map((r) => r.token),
+        data: {
+          screen: 'Dashboard',
+          city: origin.city ?? '',
+          state: origin.state ?? '',
+          country: origin.country ?? '',
+          contaminantId,
+        },
+        subscriptions: recipients.map((r) => r.subscription),
+      },
+    ]
+  }
+
+  const byKey = new Map<string, { token: string; subscription: Subscription }[]>()
+  for (const r of recipients) {
+    const key = `${r.subscription.city}|${r.subscription.state ?? ''}|${r.subscription.country ?? ''}`
+    const arr = byKey.get(key) ?? []
+    arr.push(r)
+    byKey.set(key, arr)
+  }
+  return Array.from(byKey.values()).map((group) => ({
+    tokens: group.map((r) => r.token),
+    data: {
+      screen: 'Dashboard',
+      city: group[0].subscription.city,
+      state: group[0].subscription.state ?? '',
+      country: group[0].subscription.country ?? '',
+      contaminantId,
+    },
+    subscriptions: group.map((r) => r.subscription),
+  }))
 }
 
 /**
@@ -507,32 +577,27 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
   // Build notification content
   const { title, body } = buildNotificationContent(event)
 
-  // Collect recipients based on preferences
-  const emailRecipients: { email: string; subscription: Subscription }[] = []
-  const pushRecipients: { token: string; subscription: Subscription }[] = []
+  // Filter by preferences first, then resolve emails in parallel.
+  // State/country fan-out (#123) can hit thousands of subscribers — a
+  // sequential `getUserEmail` loop hits Cognito serially and dominates
+  // wall time before any notification goes out.
+  const eligible = subscriptions.filter((s) => shouldNotify(s, event))
+  const emailEligible = eligible.filter((s) => s.enableEmail)
+  const pushRecipients = eligible
+    .filter((s) => s.enablePush && !!s.expoPushToken)
+    .map((s) => ({ token: s.expoPushToken!, subscription: s }))
 
-  for (const subscription of subscriptions) {
-    // Check if this subscriber should be notified
-    if (!shouldNotify(subscription, event)) {
-      console.log(`Skipping ${subscription.id} - preferences don't match`)
-      continue
-    }
-
-    // Collect email recipients
-    if (subscription.enableEmail) {
-      const email = await getUserEmail(subscription.owner)
-      if (email) {
-        emailRecipients.push({ email, subscription })
-      } else {
-        console.warn(`No email found for user ${subscription.owner}`)
-      }
-    }
-
-    // Collect push recipients
-    if (subscription.enablePush && subscription.expoPushToken) {
-      pushRecipients.push({ token: subscription.expoPushToken, subscription })
-    }
-  }
+  const emailLookups = await Promise.all(
+    emailEligible.map(async (subscription) => ({
+      subscription,
+      email: await getUserEmail(subscription.owner),
+    })),
+  )
+  const emailRecipients = emailLookups.flatMap(({ subscription, email }) => {
+    if (email) return [{ email, subscription }]
+    console.warn(`No email found for user ${subscription.owner}`)
+    return []
+  })
 
   const subscribersNotified = new Set([
     ...emailRecipients.map((r) => r.subscription.id),
@@ -547,94 +612,83 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
     const emailResult = await sendEmailNotification(emails, event)
     emailsSent = emailResult.sentCount
 
-    // Log email notifications. For state/country fan-out (#123), record the
-    // subscriber's own city so existing per-city audit queries on
+    // Log email notifications in parallel. For state/country fan-out (#123),
+    // record the subscriber's own city so existing per-city audit queries on
     // NotificationLog still group correctly.
-    for (const { subscription } of emailRecipients) {
-      await logNotification(
-        subscription.id,
-        subscription.owner,
-        subscription.city || city || '',
-        subscription.state || state || '',
-        subscription.country || country || '',
-        'email',
-        emailResult.success ? 'sent' : 'failed',
-        title,
-        body,
-        triggerType,
-      )
-    }
+    await Promise.all(
+      emailRecipients.map(({ subscription }) =>
+        logNotification(
+          subscription.id,
+          subscription.owner,
+          subscription.city || city || '',
+          subscription.state || state || '',
+          subscription.country || country || '',
+          'email',
+          emailResult.success ? 'sent' : 'failed',
+          title,
+          body,
+          triggerType,
+        ),
+      ),
+    )
   }
 
-  // Send push notifications. Each push gets a deep-link tailored to that
-  // subscriber's own location so tapping it opens the user's dashboard.
-  // Mobile cascade then resolves the data the user should actually see.
+  // Send push notifications. For city scope every recipient shares the same
+  // deep-link target, so all tokens go in one batched Lambda call. For
+  // state/country fan-out (#123) we group by subscriber's own city so each
+  // group still carries a single consistent deep-link — this collapses
+  // potentially-thousands of sequential Lambda invocations down to a small
+  // number of parallel batches (one per distinct subscriber city).
   if (pushRecipients.length > 0) {
     console.log(`Sending push to ${pushRecipients.length} devices`)
 
-    // For city scope, every recipient shares the same deep-link target
-    // (the originating city). For state/country (#123), each recipient
-    // gets their own city in the link so tapping the notification opens
-    // their personal dashboard, where the cascade resolves what to show.
-    const sharedDeepLinkData = {
-      screen: 'Dashboard',
-      city: city ?? '',
-      state: state ?? '',
-      country: country ?? '',
-      contaminantId: event.contaminantId,
-    }
-    const deepLinkForSubscriber = (sub: Subscription) =>
-      scope === 'city'
-        ? sharedDeepLinkData
-        : {
-            screen: 'Dashboard',
-            city: sub.city,
-            state: sub.state ?? '',
-            country: sub.country ?? '',
-            contaminantId: event.contaminantId,
-          }
+    const groups = groupPushRecipients(
+      pushRecipients,
+      scope,
+      { city, state, country },
+      event.contaminantId,
+    )
+    console.log(`Push fan-out: ${groups.length} batched group(s)`)
 
-    // Send one push per subscriber so each gets a personalised deep-link.
-    const pushResult: { success: boolean; sentCount: number; invalidTokens: string[] } = {
-      success: true,
-      sentCount: 0,
-      invalidTokens: [],
-    }
-    for (const { token, subscription } of pushRecipients) {
-      const single = await sendPushNotifications(
-        [token],
-        title,
-        body,
-        deepLinkForSubscriber(subscription),
-      )
-      pushResult.success = pushResult.success && single.success
-      pushResult.sentCount += single.sentCount
-      pushResult.invalidTokens.push(...single.invalidTokens)
-    }
-    pushSent = pushResult.sentCount
+    const groupResults = await Promise.all(
+      groups.map((g) => sendPushNotifications(g.tokens, title, body, g.data)),
+    )
 
-    // Log push notifications. Subscriber city/state/country wins so log
-    // queries by city continue to work for fan-out notifications (#123).
-    for (const { subscription } of pushRecipients) {
-      const failed = pushResult.invalidTokens.includes(subscription.expoPushToken!)
-      await logNotification(
-        subscription.id,
-        subscription.owner,
-        subscription.city || city || '',
-        subscription.state || state || '',
-        subscription.country || country || '',
-        'push',
-        failed ? 'failed' : 'sent',
-        title,
-        body,
-        triggerType,
-        failed ? 'Invalid or expired token' : undefined,
-      )
+    const allInvalidTokens = new Set<string>()
+    let allSuccess = true
+    for (const r of groupResults) {
+      pushSent += r.sentCount
+      r.invalidTokens.forEach((t) => allInvalidTokens.add(t))
+      allSuccess = allSuccess && r.success
     }
+
+    // Log push notifications in parallel. Subscriber city/state/country
+    // wins so log queries by city continue to work for fan-out (#123).
+    await Promise.all(
+      pushRecipients.map(({ subscription }) => {
+        const failed = allInvalidTokens.has(subscription.expoPushToken!)
+        return logNotification(
+          subscription.id,
+          subscription.owner,
+          subscription.city || city || '',
+          subscription.state || state || '',
+          subscription.country || country || '',
+          'push',
+          failed ? 'failed' : 'sent',
+          title,
+          body,
+          triggerType,
+          failed ? 'Invalid or expired token' : undefined,
+        )
+      }),
+    )
 
     // TODO: Clean up invalid tokens from subscriptions
-    if (pushResult.invalidTokens.length > 0) {
-      console.warn(`${pushResult.invalidTokens.length} invalid push tokens need cleanup`)
+    if (allInvalidTokens.size > 0) {
+      console.warn(`${allInvalidTokens.size} invalid push tokens need cleanup`)
+    }
+    if (!allSuccess) {
+      errors.push('At least one push batch reported a partial failure')
     }
   }
 

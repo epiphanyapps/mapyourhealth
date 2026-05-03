@@ -219,14 +219,32 @@ describe("useLocationObservations cascade fallback (#123)", () => {
     expect(propertyIds).toEqual(["lyme", "radon"])
   })
 
-  it("does not cascade when state is empty (hook is gated on city + state)", async () => {
-    mockGetLocationObservations.mockResolvedValue([cityRadon])
+  it("still resolves when state is empty: city → country (state level skipped)", async () => {
+    // I2 fix: the hook is enabled whenever any cascade level has a value,
+    // so a missing state must NOT silently disable the country fallback.
+    // The shared util skips the state level internally.
+    mockGetLocationObservations.mockResolvedValue([])
+    mockGetLocationObservationsByCountry.mockResolvedValue([countryRadon])
 
     const { result } = renderHook(() => useLocationObservations({ ...baseParams, state: "" }), {
       wrapper: createWrapper(),
     })
 
-    // Hook is disabled when state is empty; no fetcher should run.
+    await waitFor(() => expect(result.current.observations.length).toBeGreaterThan(0))
+    // City fetcher ran (city is set), state fetcher was skipped (state empty),
+    // country fetcher ran on the empty city result and resolved the cascade.
+    expect(mockGetLocationObservations).toHaveBeenCalledWith("Sorel-Tracy")
+    expect(mockGetLocationObservationsByState).not.toHaveBeenCalled()
+    expect(mockGetLocationObservationsByCountry).toHaveBeenCalledWith("CA")
+    expect(result.current.scope).toBe("country")
+  })
+
+  it("hook is fully disabled only when city, state, AND country are all empty", async () => {
+    const { result } = renderHook(
+      () => useLocationObservations({ ...baseParams, city: "", state: "", country: "" }),
+      { wrapper: createWrapper() },
+    )
+
     await waitFor(() => expect(result.current.isLoading).toBe(false))
     expect(mockGetLocationObservations).not.toHaveBeenCalled()
     expect(mockGetLocationObservationsByState).not.toHaveBeenCalled()
