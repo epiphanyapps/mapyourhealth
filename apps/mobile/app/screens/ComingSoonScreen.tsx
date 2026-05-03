@@ -43,20 +43,23 @@ const $root: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 const $topSection: ThemedStyle<ViewStyle> = ({ spacing }) => ({
   flex: 1,
   justifyContent: "center",
-  alignItems: "center",
+  alignItems: "stretch",
   paddingTop: spacing.xxl,
 })
 
 const $logo: ThemedStyle<ViewStyle> = ({ spacing }) => ({
+  alignSelf: "center",
   marginBottom: spacing.lg,
 })
 
 const $heading: ThemedStyle<TextStyle> = ({ spacing }) => ({
+  alignSelf: "stretch",
   textAlign: "center",
   marginBottom: spacing.sm,
 })
 
 const $preparing: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  width: "100%",
   textAlign: "center",
   color: colors.textDim,
   marginBottom: spacing.md,
@@ -67,6 +70,7 @@ const $bottomSection: ThemedStyle<ViewStyle> = ({ spacing }) => ({
 })
 
 const $description: ThemedStyle<TextStyle> = ({ colors, spacing }) => ({
+  width: "100%",
   textAlign: "center",
   color: colors.textDim,
   marginBottom: spacing.xl,
