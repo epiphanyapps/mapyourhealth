@@ -192,6 +192,28 @@ describe("groupPushRecipients (#123 fan-out batching)", () => {
     expect(groups[0].tokens.sort()).toEqual(["tok-1", "tok-2"])
   })
 
+  it("does NOT collide when subscriber city contains the legacy pipe separator", () => {
+    // Regression: the previous key `${city}|${state}|${country}` would
+    // collide for the rare bilingual cities like
+    // "Sault Ste. Marie | Sainte-Sault-Marie". JSON.stringify keying
+    // disambiguates even when the literal field value contains `|`.
+    const recipients = [
+      makeRecipient("tok-pipe", { id: "s1", city: "A|B", state: "X", country: "CA" }),
+      // Naively concatenating with `|` would produce the same key as the row above.
+      makeRecipient("tok-shadow", { id: "s2", city: "A", state: "B|X", country: "CA" }),
+    ]
+
+    const groups = groupPushRecipients(
+      recipients,
+      "country",
+      { city: null, state: null, country: "CA" },
+      undefined,
+    )
+
+    // Two distinct (city, state) tuples → two batches.
+    expect(groups).toHaveLength(2)
+  })
+
   it("scales to thousands of recipients with bounded group count", () => {
     // Country-scope fan-out is the worst case. 10,000 subscribers
     // distributed across 50 cities → 50 groups, NOT 10,000 sequential

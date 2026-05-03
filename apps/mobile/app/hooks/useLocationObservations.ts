@@ -208,8 +208,11 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
   // Enabled whenever any cascade level has a value — `country` alone is a
   // legitimate input. The shared util internally skips levels with empty
   // input, so requiring all three would gate out the country-only path.
+  // Key carries all three inputs because the cascade resolves on (city,
+  // state, country) — a city-only key aliases distinct (state, country)
+  // pairs once `city === ""` (state-/country-only cascade).
   const observationsQuery = useQuery({
-    queryKey: queryKeys.observations.byCity(city),
+    queryKey: queryKeys.observations.byLocation(city, state, country),
     queryFn: async () =>
       fetchWithLocationFallback(
         { city, state, country },
@@ -302,19 +305,18 @@ export function useLocationObservations(params: LocationParams): UseLocationObse
     return observations.filter((obs) => obs.status === "danger" || obs.status === "warning").length
   }, [observations])
 
-  // Refresh function — invalidate every cascade level since the fallback
-  // may have resolved at any of them.
+  // Refresh function — invalidate every observations query so sibling
+  // cities under the same state/country cascade source also refetch
+  // (#123), plus the supporting property/threshold caches.
   const refresh = useCallback(async () => {
     await Promise.all([
-      qc.invalidateQueries({ queryKey: queryKeys.observations.byCity(city) }),
-      qc.invalidateQueries({ queryKey: queryKeys.observations.byState(state) }),
-      qc.invalidateQueries({ queryKey: queryKeys.observations.byCountry(country) }),
+      qc.invalidateQueries({ queryKey: queryKeys.observations.all }),
       qc.invalidateQueries({ queryKey: queryKeys.observedProperties.list() }),
       qc.invalidateQueries({
         queryKey: queryKeys.propertyThresholds.byJurisdiction(jurisdictionCode),
       }),
     ])
-  }, [qc, city, state, country, jurisdictionCode])
+  }, [qc, jurisdictionCode])
 
   const scope = observationsQuery.data?.scope ?? "none"
   const isStateLevelFallback = scope === "state"

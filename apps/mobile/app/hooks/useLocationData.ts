@@ -301,13 +301,12 @@ export function useLocationData(
 
   const result = query.data
 
+  // Invalidate every measurements query so sibling cities sharing the
+  // same state/country cascade source also refetch (#123). The per-city
+  // byLocation key alone wouldn't reach them.
   const refresh = useCallback(async () => {
-    await Promise.all([
-      qc.invalidateQueries({ queryKey: queryKeys.measurements.byLocation(city, state, country) }),
-      qc.invalidateQueries({ queryKey: queryKeys.measurements.byState(state) }),
-      qc.invalidateQueries({ queryKey: queryKeys.measurements.byCountry(country) }),
-    ])
-  }, [qc, city, state, country])
+    await qc.invalidateQueries({ queryKey: queryKeys.measurements.all })
+  }, [qc])
 
   // Determine error: use query error or warning from the result
   const error = query.error?.message ?? result?.warning ?? null

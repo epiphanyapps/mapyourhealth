@@ -69,6 +69,13 @@ export const queryKeys = {
   // ── O&M Observations ──
   observations: {
     all: ["observations"] as const,
+    /**
+     * Cascade-aware location key (#123). City alone aliases distinct
+     * (state, country) inputs once `city === ""` (state-/country-only
+     * cascade), so the key must carry all three.
+     */
+    byLocation: (city: string, state: string, country: string) =>
+      [...queryKeys.observations.all, "location", city, state, country] as const,
     byCity: (city: string) => [...queryKeys.observations.all, "city", city] as const,
     byState: (state: string) => [...queryKeys.observations.all, "state", state] as const,
     byCountry: (country: string) => [...queryKeys.observations.all, "country", country] as const,
@@ -92,6 +99,13 @@ export const queryKeys = {
   // ── Pollution Sources ──
   pollutionSources: {
     all: ["pollutionSources"] as const,
+    /**
+     * Cascade-aware location key (#123). City alone aliases distinct
+     * (state, country) inputs once `city === ""` (state-/country-only
+     * cascade), so the key must carry all three.
+     */
+    byLocation: (city: string, state: string, country: string) =>
+      [...queryKeys.pollutionSources.all, "location", city, state, country] as const,
     byCity: (city: string) => [...queryKeys.pollutionSources.all, "city", city] as const,
     byState: (state: string) => [...queryKeys.pollutionSources.all, "state", state] as const,
     byCountry: (country: string) =>

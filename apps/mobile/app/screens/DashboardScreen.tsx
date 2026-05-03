@@ -806,10 +806,16 @@ View details: ${shareUrl}`
         />
       </View>
 
-      {/* Location Header */}
+      {/* Location Header. Tolerates missing city/state for country-only
+          cascade inputs (#123) — joining ", " when both are blank would
+          render a stray comma. */}
       <LocationHeader
         locationName={
-          currentLocation ? `${currentLocation.city}, ${currentLocation.state}` : "Unknown"
+          currentLocation
+            ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+              currentLocation.country ||
+              "Unknown"
+            : "Unknown"
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
       />

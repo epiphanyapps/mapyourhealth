@@ -55,8 +55,11 @@ export function usePollutionSources(params: LocationParams): UsePollutionSources
   // Cascade city → state → country (#123). Enabled whenever any cascade
   // level has a value so the country-only path remains reachable; the
   // shared util internally skips levels with empty input.
+  // Key carries all three inputs because the cascade resolves on (city,
+  // state, country) — a city-only key aliases distinct (state, country)
+  // pairs once `city === ""` (state-/country-only cascade).
   const sourcesQuery = useQuery({
-    queryKey: queryKeys.pollutionSources.byCity(city),
+    queryKey: queryKeys.pollutionSources.byLocation(city, state, country),
     queryFn: async () =>
       fetchWithLocationFallback(
         { city, state, country },
@@ -70,13 +73,11 @@ export function usePollutionSources(params: LocationParams): UsePollutionSources
     staleTime: 5 * 60 * 1000, // 5 minutes
   })
 
+  // Invalidate every pollution-sources query so sibling cities sharing
+  // the same state/country cascade source also refetch (#123).
   const refresh = useCallback(async () => {
-    await Promise.all([
-      qc.invalidateQueries({ queryKey: queryKeys.pollutionSources.byCity(city) }),
-      qc.invalidateQueries({ queryKey: queryKeys.pollutionSources.byState(state) }),
-      qc.invalidateQueries({ queryKey: queryKeys.pollutionSources.byCountry(country) }),
-    ])
-  }, [qc, city, state, country])
+    await qc.invalidateQueries({ queryKey: queryKeys.pollutionSources.all })
+  }, [qc])
 
   return {
     sources: sourcesQuery.data?.data ?? [],

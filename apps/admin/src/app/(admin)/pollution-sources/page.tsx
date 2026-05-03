@@ -401,7 +401,11 @@ export default function PollutionSourcesPage() {
                           {source.name}
                         </div>
                         <div className="text-xs text-muted-foreground">
-                          {source.city}, {source.state}
+                          {/* Cascade scope (#123): city/state may be null
+                              on state-/country-anchored records. */}
+                          {[source.city, source.state, source.country]
+                            .filter(Boolean)
+                            .join(", ") || "—"}
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge

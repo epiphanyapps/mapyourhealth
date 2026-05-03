@@ -241,9 +241,14 @@ export default function ObservationsPage() {
     const propertyName =
       properties.find((p) => p.propertyId === observation.propertyId)?.name ||
       observation.propertyId;
+    // Cascade scope (#123): city/state may be null on state-/country-anchored records.
+    const locationLabel =
+      [observation.city, observation.state, observation.country]
+        .filter(Boolean)
+        .join(", ") || "this location";
     if (
       !confirm(
-        `Are you sure you want to delete the "${propertyName}" observation for ${observation.city}, ${observation.state}?`
+        `Are you sure you want to delete the "${propertyName}" observation for ${locationLabel}?`
       )
     ) {
       return;
@@ -709,13 +714,23 @@ export default function ObservationsPage() {
               <TableBody>
                 {filteredObservations.map((observation) => {
                   const property = getProperty(observation.propertyId);
+                  // Cascade scope (#123): city/state may be null. Show the
+                  // most-specific populated level on the primary line and
+                  // the rest of the location chain on the secondary line.
+                  const primary =
+                    observation.city || observation.state || observation.country;
+                  const secondary = observation.city
+                    ? [observation.state, observation.country].filter(Boolean).join(", ")
+                    : observation.state
+                      ? observation.country ?? ""
+                      : "";
                   return (
                     <TableRow key={observation.id}>
                       <TableCell>
-                        <div className="font-medium">{observation.city}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {observation.state}, {observation.country}
-                        </div>
+                        <div className="font-medium">{primary}</div>
+                        {secondary && (
+                          <div className="text-sm text-muted-foreground">{secondary}</div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {property ? (

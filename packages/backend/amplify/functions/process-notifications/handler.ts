@@ -13,6 +13,7 @@ import {
   DynamoDBClient,
   QueryCommand,
   PutItemCommand,
+  type AttributeValue,
 } from '@aws-sdk/client-dynamodb'
 import { LambdaClient, InvokeCommand } from '@aws-sdk/client-lambda'
 import {
@@ -148,9 +149,16 @@ export function groupPushRecipients(
     ]
   }
 
+  // Use JSON.stringify so unusual city names containing the previous
+  // pipe separator (rare bilingual entries like
+  // "Sault Ste. Marie | Sainte-Sault-Marie") don't collide on the key.
   const byKey = new Map<string, { token: string; subscription: Subscription }[]>()
   for (const r of recipients) {
-    const key = `${r.subscription.city}|${r.subscription.state ?? ''}|${r.subscription.country ?? ''}`
+    const key = JSON.stringify([
+      r.subscription.city,
+      r.subscription.state ?? '',
+      r.subscription.country ?? '',
+    ])
     const arr = byKey.get(key) ?? []
     arr.push(r)
     byKey.set(key, arr)
@@ -169,10 +177,69 @@ export function groupPushRecipients(
 }
 
 /**
- * Query subscriptions by city using GSI
+ * Cap on concurrent NotificationLog PutItem calls. State/country fan-out
+ * (#123) can reach thousands of subscribers; an unbounded `Promise.all`
+ * would issue thousands of parallel writes, hitting DynamoDB write
+ * throttling and risking Lambda OOM. 25 matches the BatchWriteItem cap
+ * and keeps tail latency bounded.
+ */
+const LOG_WRITE_CONCURRENCY = 25
+
+/**
+ * Run an async map with a fixed concurrency cap. Used for NotificationLog
+ * writes; the order of results doesn't matter and individual failures are
+ * already swallowed by `logNotification` itself.
+ */
+async function runWithConcurrency<T>(
+  items: T[],
+  limit: number,
+  worker: (item: T) => Promise<void>,
+): Promise<void> {
+  let cursor = 0
+  const runNext = async (): Promise<void> => {
+    while (true) {
+      const i = cursor
+      cursor += 1
+      if (i >= items.length) return
+      await worker(items[i])
+    }
+  }
+  const workers = Array.from(
+    { length: Math.min(limit, items.length) },
+    () => runNext(),
+  )
+  await Promise.all(workers)
+}
+
+/**
+ * Page through a DynamoDB Query call until LastEvaluatedKey is exhausted.
+ * Required for state/country fan-out (#123): a single Query response is
+ * capped at 1MB, so a country with thousands of subscribers would
+ * silently miss the rest of the fan-out without pagination.
+ */
+async function querySubscriptionsAllPages(
+  baseInput: Omit<ConstructorParameters<typeof QueryCommand>[0], 'ExclusiveStartKey'>,
+): Promise<Subscription[]> {
+  const out: Subscription[] = []
+  let ExclusiveStartKey: Record<string, AttributeValue> | undefined
+  do {
+    const result = await dynamoClient.send(
+      new QueryCommand({ ...baseInput, ExclusiveStartKey }),
+    )
+    for (const item of result.Items ?? []) {
+      out.push(unmarshall(item) as Subscription)
+    }
+    ExclusiveStartKey = result.LastEvaluatedKey
+  } while (ExclusiveStartKey)
+  return out
+}
+
+/**
+ * Query subscriptions by city using GSI. Paginated so a single very-popular
+ * city doesn't silently drop subscribers past the 1MB Query response cap.
  */
 async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
-  const command = new QueryCommand({
+  return querySubscriptionsAllPages({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
     IndexName: 'userSubscriptionsByCity',
     KeyConditionExpression: 'city = :city',
@@ -180,18 +247,15 @@ async function getSubscriptionsByCity(city: string): Promise<Subscription[]> {
       ':city': { S: city },
     },
   })
-
-  const result = await dynamoClient.send(command)
-  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
 }
 
 /**
  * Query subscriptions by state via the state GSI (#123 cascade fan-out).
  * Used when the source record is state-scoped: every subscriber in that
- * state should be notified, regardless of their specific city.
+ * state should be notified, regardless of their specific city. Paginated.
  */
 async function getSubscriptionsByState(state: string): Promise<Subscription[]> {
-  const command = new QueryCommand({
+  return querySubscriptionsAllPages({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
     IndexName: 'userSubscriptionsByState',
     KeyConditionExpression: '#state = :state',
@@ -200,17 +264,16 @@ async function getSubscriptionsByState(state: string): Promise<Subscription[]> {
       ':state': { S: state },
     },
   })
-
-  const result = await dynamoClient.send(command)
-  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
 }
 
 /**
  * Query subscriptions by country via the country GSI (#123 cascade fan-out).
- * Used when the source record is country-scoped.
+ * Used when the source record is country-scoped. Paginated — a country
+ * with thousands of subscribers needs every page or the cascade reaches
+ * only the first 1MB of subscribers.
  */
 async function getSubscriptionsByCountry(country: string): Promise<Subscription[]> {
-  const command = new QueryCommand({
+  return querySubscriptionsAllPages({
     TableName: SUBSCRIPTIONS_TABLE_NAME,
     IndexName: 'userSubscriptionsByCountry',
     KeyConditionExpression: 'country = :country',
@@ -218,9 +281,6 @@ async function getSubscriptionsByCountry(country: string): Promise<Subscription[
       ':country': { S: country },
     },
   })
-
-  const result = await dynamoClient.send(command)
-  return (result.Items || []).map((item) => unmarshall(item) as Subscription)
 }
 
 /**
@@ -250,6 +310,11 @@ async function getSubscriptionsForScope(
 /**
  * Derive cascade scope from which location fields are populated. Used as
  * the fallback when an upstream caller didn't supply `scope` explicitly.
+ *
+ * Throws when no location field is set — silently defaulting masks
+ * upstream bugs (e.g. a future caller forgetting to thread `scope`
+ * through). Callers must guard the empty-anchor case before reaching
+ * this helper; the handler does so at the entry point.
  */
 function deriveScope(
   city: string | null,
@@ -259,9 +324,7 @@ function deriveScope(
   if (city) return 'city'
   if (state) return 'state'
   if (country) return 'country'
-  // Default — preserves legacy single-city behaviour for callers that pass
-  // city only.
-  return 'city'
+  throw new Error('deriveScope: no location anchor (city/state/country all empty)')
 }
 
 /**
@@ -612,23 +675,22 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
     const emailResult = await sendEmailNotification(emails, event)
     emailsSent = emailResult.sentCount
 
-    // Log email notifications in parallel. For state/country fan-out (#123),
-    // record the subscriber's own city so existing per-city audit queries on
-    // NotificationLog still group correctly.
-    await Promise.all(
-      emailRecipients.map(({ subscription }) =>
-        logNotification(
-          subscription.id,
-          subscription.owner,
-          subscription.city || city || '',
-          subscription.state || state || '',
-          subscription.country || country || '',
-          'email',
-          emailResult.success ? 'sent' : 'failed',
-          title,
-          body,
-          triggerType,
-        ),
+    // Log email notifications with bounded concurrency (#123 fan-out can
+    // hit thousands of subscribers — unbounded Promise.all would throttle
+    // DynamoDB and risk OOM). Subscriber city/state/country wins so
+    // existing per-city audit queries still group correctly.
+    await runWithConcurrency(emailRecipients, LOG_WRITE_CONCURRENCY, ({ subscription }) =>
+      logNotification(
+        subscription.id,
+        subscription.owner,
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
+        'email',
+        emailResult.success ? 'sent' : 'failed',
+        title,
+        body,
+        triggerType,
       ),
     )
   }
@@ -662,26 +724,25 @@ export const handler: Handler<ProcessNotificationsEvent, ProcessNotificationsRes
       allSuccess = allSuccess && r.success
     }
 
-    // Log push notifications in parallel. Subscriber city/state/country
-    // wins so log queries by city continue to work for fan-out (#123).
-    await Promise.all(
-      pushRecipients.map(({ subscription }) => {
-        const failed = allInvalidTokens.has(subscription.expoPushToken!)
-        return logNotification(
-          subscription.id,
-          subscription.owner,
-          subscription.city || city || '',
-          subscription.state || state || '',
-          subscription.country || country || '',
-          'push',
-          failed ? 'failed' : 'sent',
-          title,
-          body,
-          triggerType,
-          failed ? 'Invalid or expired token' : undefined,
-        )
-      }),
-    )
+    // Log push notifications with bounded concurrency (#123 fan-out can
+    // hit thousands of subscribers). Subscriber city/state/country wins
+    // so log queries by city continue to work for fan-out.
+    await runWithConcurrency(pushRecipients, LOG_WRITE_CONCURRENCY, ({ subscription }) => {
+      const failed = allInvalidTokens.has(subscription.expoPushToken!)
+      return logNotification(
+        subscription.id,
+        subscription.owner,
+        subscription.city || city || '',
+        subscription.state || state || '',
+        subscription.country || country || '',
+        'push',
+        failed ? 'failed' : 'sent',
+        title,
+        body,
+        triggerType,
+        failed ? 'Invalid or expired token' : undefined,
+      )
+    })
 
     // TODO: Clean up invalid tokens from subscriptions
     if (allInvalidTokens.size > 0) {
