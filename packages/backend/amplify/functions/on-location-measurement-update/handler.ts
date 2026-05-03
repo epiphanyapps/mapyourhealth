@@ -16,7 +16,7 @@ const lambdaClient = new LambdaClient({})
 // Environment variables (set in backend.ts)
 const PROCESS_NOTIFICATIONS_FUNCTION_NAME = process.env.PROCESS_NOTIFICATIONS_FUNCTION_NAME!
 
-interface LocationMeasurementRecord {
+export interface LocationMeasurementRecord {
   id: string
   // Location hierarchy (#123): city/state may be null on state- or country-
   // anchored records. country is the only field guaranteed to be set.
@@ -36,8 +36,10 @@ interface LocationMeasurementRecord {
  * Determine which level of the location hierarchy this record was anchored
  * at. Drives notification fan-out: city-scope notifies one city's
  * subscribers, state-scope notifies every subscriber in that state, etc.
+ *
+ * Exported for unit testing — production callers go through `processRecord`.
  */
-function deriveScope(
+export function deriveScope(
   record: LocationMeasurementRecord,
 ): 'city' | 'state' | 'country' {
   if (record.city) return 'city'
