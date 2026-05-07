@@ -8,7 +8,8 @@
   "userInterfaceStyle": "automatic",
   "icon": "./assets/images/app-icon-all.png",
   "updates": {
-    "fallbackToCacheTimeout": 0
+    "fallbackToCacheTimeout": 0,
+    "url": "https://u.expo.dev/2d5329f5-5724-4814-a718-86011c93c9e3"
   },
   "newArchEnabled": true,
   "jsEngine": "hermes",
@@ -39,6 +40,16 @@
     },
     "config": {
       "googleMapsApiKey": ""
+    },
+    "privacyManifests": {
+      "NSPrivacyAccessedAPITypes": [
+        {
+          "NSPrivacyAccessedAPIType": "NSPrivacyAccessedAPICategoryUserDefaults",
+          "NSPrivacyAccessedAPITypeReasons": [
+            "CA92.1"
+          ]
+        }
+      ]
     }
   },
   "web": {
@@ -79,5 +90,8 @@
     "eas": {
       "projectId": "2d5329f5-5724-4814-a718-86011c93c9e3"
     }
+  },
+  "runtimeVersion": {
+    "policy": "appVersion"
   }
 }
