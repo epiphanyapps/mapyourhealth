@@ -21,6 +21,14 @@
  *   - `Sorel-Tracy, QC` → "Showing QC data" (state cascade)
  *   - any non-QC, non-ON Canadian city → "Showing CA data" (country cascade)
  *
+ * Caveat: `getLocationMeasurementsByCountry` is a GSI scan on `country`
+ * and returns every row tagged with that country, including the
+ * city-anchored rows seeded from Risks.xlsx. So the country-cascade badge
+ * fires even without these fixtures on a populated env — the fixture's
+ * unique value is in adding visibly-distinguishable rows (uranium-238
+ * with `source = "cascade-coverage-fixture"`) you can pick out in the
+ * dashboard and admin portal as cascade-test data.
+ *
  * Cleanup later with the same script + the --remove flag.
  */
 
@@ -64,53 +72,70 @@ interface FixtureRow {
   notes: string;
 }
 
-// Small, deliberately distinctive set. Values are obviously synthetic
-// (whole numbers; threshold-mid range) so they're recognisable in the
-// admin portal as test data, not real measurements.
+// Deliberately uses `uranium-238` (a real seeded radioactive Contaminant
+// with WHO/CA-QC/EU thresholds) rather than `radon` — `radon` exists as
+// an O&M ObservedProperty but NOT as a Contaminant, so a row with
+// `contaminantId: "radon"` would be an orphan that mobile's stat
+// mapping can't resolve to a category. Different values per row so an
+// operator inspecting the dashboard can identify which fixture got
+// returned (warning vs safe status under WHO's 1.0 Bq/L limit).
 const FIXTURES: FixtureRow[] = [
   // State-scoped: applies to every QC city without its own row.
-  // Confirms the city → state cascade leg.
+  // Confirms the city → state cascade leg. Value 0.9 sits above the
+  // 0.8 warningRatio of WHO's 1.0 limit → renders as "warning".
   {
     city: null,
     state: "QC",
     country: "CA",
-    contaminantId: "radon",
-    value: 100,
-    unit: "Bq/m³",
-    notes: "Cascade coverage fixture: QC state-level row.",
+    contaminantId: "uranium-238",
+    value: 0.9,
+    unit: "Bq/L",
+    notes: "Cascade coverage fixture: QC state-level row (warning status).",
   },
   // Country-scoped: applies to every CA city without state-level data.
-  // Confirms the city → state → country cascade leg.
+  // Confirms the city → state → country cascade leg. Value 0.3 is below
+  // warning threshold → renders as "safe".
   {
     city: null,
     state: null,
     country: "CA",
-    contaminantId: "radon",
-    value: 80,
-    unit: "Bq/m³",
-    notes: "Cascade coverage fixture: CA country-level row.",
+    contaminantId: "uranium-238",
+    value: 0.3,
+    unit: "Bq/L",
+    notes: "Cascade coverage fixture: CA country-level row (safe status).",
   },
 ];
 
 async function findFixtureRows(): Promise<{ id: string }[]> {
   const found: { id: string }[] = [];
   let lastKey: Record<string, unknown> | undefined;
-  do {
-    const result = await docClient.send(
-      new ScanCommand({
-        TableName: TABLE_NAME,
-        FilterExpression: "#src = :src",
-        ExpressionAttributeNames: { "#src": "source" },
-        ExpressionAttributeValues: { ":src": FIXTURE_SOURCE },
-        ProjectionExpression: "id",
-        ExclusiveStartKey: lastKey as Record<string, never> | undefined,
-      }),
-    );
-    for (const item of result.Items ?? []) {
-      if (typeof item.id === "string") found.push({ id: item.id });
+  try {
+    do {
+      const result = await docClient.send(
+        new ScanCommand({
+          TableName: TABLE_NAME,
+          FilterExpression: "#src = :src",
+          ExpressionAttributeNames: { "#src": "source" },
+          ExpressionAttributeValues: { ":src": FIXTURE_SOURCE },
+          ProjectionExpression: "id",
+          ExclusiveStartKey: lastKey as Record<string, never> | undefined,
+        }),
+      );
+      for (const item of result.Items ?? []) {
+        if (typeof item.id === "string") found.push({ id: item.id });
+      }
+      lastKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
+    } while (lastKey);
+  } catch (err: unknown) {
+    // Mirror wipe-all-data.ts:104–110 — a fresh sandbox where the
+    // schema hasn't deployed yet means there are no fixtures to find.
+    // Skip cleanly rather than crashing on ResourceNotFoundException.
+    if (err instanceof Error && err.name === "ResourceNotFoundException") {
+      console.log(`Table ${TABLE_NAME} not found (skipping fixture lookup).`);
+      return [];
     }
-    lastKey = result.LastEvaluatedKey as Record<string, unknown> | undefined;
-  } while (lastKey);
+    throw err;
+  }
   return found;
 }
 
