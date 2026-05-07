@@ -218,12 +218,64 @@ GitHub Actions workflows in `.github/workflows/`:
 | `backend-ci.yml` | PR to main | Backend CI |
 | `backend-seed.yml` | Manual | Seed database |
 | `admin-deploy.yml` | Push to main | Deploy admin dashboard |
-| `mobile-deploy.yml` | Push to main | Deploy mobile web |
+| `mobile-deploy.yml` | Push to main/staging | Deploy mobile web + publish EAS Update OTA |
 | `e2e-tests.yml` | PR, manual | E2E test suite |
 | `e2e-ios.yml` | Manual | iOS E2E tests |
 | `playwright-tests.yml` | PR | Web Playwright tests |
 
 Deployments are managed via AWS Amplify Hosting — pushes to `main` auto-deploy backend, mobile web, and admin dashboard.
+
+## Mobile OTA Updates (EAS Update)
+
+The native mobile app receives JavaScript / asset changes over-the-air via [EAS Update](https://docs.expo.dev/eas-update/introduction/), so most fixes ship to installed devices without a new App Store / Play Store binary.
+
+### How it works
+
+```
+git push staging  ──►  mobile-deploy.yml  ──►  eas update --branch staging      ──►  staging channel    ──►  installs on staging build
+git push main     ──►  mobile-deploy.yml  ──►  eas update --branch production  ──►  production channel ──►  installs on production build
+```
+
+- **Project:** `@epiphanyapps/MapYourHealth`
+- **Branches:** `staging`, `production` (created on EAS — these are EAS Update branches, not git branches)
+- **Channels:** `staging` → `staging` branch, `production` → `production` branch
+- **Runtime version policy:** `appVersion` — the JS bundle delivered to a device must match the device binary's `version` in `app.json`. Bumping `version` requires a new native build.
+- **Auto-update behavior:** `expo-updates` checks on every cold start (`checkAutomatically: ON_LOAD`, the default). Updates download in the background and apply on the next launch.
+
+### Auto-publish on merge
+
+`.github/workflows/mobile-deploy.yml` runs an `ota-update` job that publishes automatically when `apps/mobile/**` changes:
+
+| Git branch | EAS branch / channel | URL |
+| ---------- | -------------------- | --- |
+| `staging` → merge | `staging` | https://staging.d2z5ddqhlc1q5.amplifyapp.com (web mirror) |
+| `main` → merge | `production` | https://app.mapyourhealth.info (web mirror) |
+
+The job needs the `EXPO_TOKEN` repository secret (set once at https://expo.dev/accounts/epiphanyapps/settings/access-tokens).
+
+### Manual publish
+
+```bash
+cd apps/mobile
+eas update --branch staging    --message "fix: ..."   # smoke-test before promoting
+eas update --branch production --message "release: ..."
+```
+
+### When you must rebuild the native binary
+
+OTA can ship JS, assets, and config — it cannot ship native code. Trigger a fresh `eas build` whenever you:
+
+- Bump `version` in `app.json` (runtimeVersion changes)
+- Add / remove a native module or Expo plugin
+- Change anything under `ios/` / `android/` config (icons, entitlements, Info.plist, gradle)
+
+```bash
+cd apps/mobile
+eas build --profile staging    --platform all
+eas build --profile production --platform all
+```
+
+After the new binary is on a device, every merge afterwards reaches it via OTA.
 
 ## Project URLs
 
