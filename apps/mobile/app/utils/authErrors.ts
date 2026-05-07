@@ -55,6 +55,19 @@ const LOGIN_ERROR_MESSAGES: Record<string, string> = {
 }
 
 /**
+ * User-friendly error messages for the new-password challenge that
+ * Cognito raises when an admin-invited user (FORCE_CHANGE_PASSWORD)
+ * signs in with their temporary password.
+ */
+const NEW_PASSWORD_ERROR_MESSAGES: Record<string, string> = {
+  InvalidPasswordException:
+    "Password doesn't meet the security requirements. Try a longer password with a mix of letters, numbers, and symbols.",
+  LimitExceededException: "Too many attempts. Please wait a moment and try again.",
+  TooManyRequestsException: "Too many requests. Please wait a moment and try again.",
+  NotAuthorizedException: "Your sign-in session has expired. Please sign in again.",
+}
+
+/**
  * Extract error code from Cognito error
  */
 function getErrorCode(error: unknown): CognitoErrorCode | null {
@@ -111,6 +124,30 @@ export function getLoginErrorMessage(error: unknown): string {
   }
 
   return "Login failed. Please check your credentials and try again."
+}
+
+/**
+ * Get user-friendly message for the new-password challenge.
+ *
+ * Used when an admin-invited user (Cognito FORCE_CHANGE_PASSWORD state)
+ * is required to set a permanent password before reaching their session.
+ */
+export function getNewPasswordErrorMessage(error: unknown): string {
+  const code = getErrorCode(error)
+  if (code && NEW_PASSWORD_ERROR_MESSAGES[code]) {
+    return NEW_PASSWORD_ERROR_MESSAGES[code]
+  }
+
+  // Cognito sometimes surfaces password-policy violations as
+  // InvalidParameterException when the password is malformed (e.g.,
+  // includes characters outside the allowed set). Pattern-match the
+  // message to give a useful hint rather than a generic string.
+  const message = error instanceof Error ? error.message : ""
+  if (message.toLowerCase().includes("password")) {
+    return "Password doesn't meet the security requirements. Try a longer password with a mix of letters, numbers, and symbols."
+  }
+
+  return "Failed to set new password. Please try again."
 }
 
 /**
