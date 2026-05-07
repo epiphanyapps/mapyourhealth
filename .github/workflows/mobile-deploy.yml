@@ -155,3 +155,41 @@ jobs:
             --commit-id ${{ github.sha }} \
             --commit-message "$COMMIT_MSG" \
             --commit-time "$COMMIT_TIME"
+
+  ota-update:
+    name: Publish EAS Update
+    runs-on: ubuntu-latest
+    needs: [detect-changes, wait-for-backend]
+    if: (needs.detect-changes.outputs.mobile_changed == 'true' || github.event_name == 'workflow_dispatch') && (github.ref_name == 'main' || github.ref_name == 'staging')
+    environment:
+      name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Sync amplify_outputs.json
+        run: yarn sync:amplify
+        continue-on-error: true
+
+      - name: Publish update
+        working-directory: apps/mobile
+        run: |
+          BRANCH=${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+          COMMIT_MSG=$(git log -1 --pretty=%s "${{ github.sha }}")
+          eas update --branch "$BRANCH" --message "$COMMIT_MSG" --non-interactive
