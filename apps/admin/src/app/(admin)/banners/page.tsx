@@ -33,7 +33,27 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Eye,
+  EyeOff,
+  AlertOctagon,
+  AlertTriangle,
+  Info,
+  Clock,
+  CalendarX2,
+} from "lucide-react";
+import type { LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { z } from "zod";
 
@@ -51,6 +71,26 @@ const SEVERITY_COLORS: Record<Severity, string> = {
   critical: "bg-red-100 text-red-800",
   warning: "bg-amber-100 text-amber-800",
   info: "bg-blue-100 text-blue-800",
+};
+
+const SEVERITY_ICONS: Record<Severity, LucideIcon> = {
+  critical: AlertOctagon,
+  warning: AlertTriangle,
+  info: Info,
+};
+
+type DisplayStatus = "active" | "scheduled" | "expired" | "inactive";
+
+const getDisplayStatus = (banner: WarningBanner): DisplayStatus => {
+  if (!banner.isActive) return "inactive";
+  const now = Date.now();
+  const start = new Date(banner.startsAt).getTime();
+  if (Number.isFinite(start) && start > now) return "scheduled";
+  if (banner.expiresAt) {
+    const end = new Date(banner.expiresAt).getTime();
+    if (Number.isFinite(end) && end <= now) return "expired";
+  }
+  return "active";
 };
 
 const bannerFormSchema = z
@@ -126,6 +166,10 @@ export default function BannersPage() {
   );
   const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState<FormData>(defaultFormData);
+  const [bannerToDelete, setBannerToDelete] = useState<WarningBanner | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const fetchBanners = async () => {
     try {
@@ -242,19 +286,21 @@ export default function BannersPage() {
     }
   };
 
-  const handleDelete = async (banner: WarningBanner) => {
-    if (!confirm(`Are you sure you want to delete "${banner.title}"?`)) {
-      return;
-    }
+  const confirmDelete = async () => {
+    if (!bannerToDelete) return;
 
+    setIsDeleting(true);
     try {
       const client = generateClient<Schema>();
-      await client.models.WarningBanner.delete({ id: banner.id });
+      await client.models.WarningBanner.delete({ id: bannerToDelete.id });
       toast.success("Banner deleted");
+      setBannerToDelete(null);
       fetchBanners();
     } catch (error) {
       console.error("Error deleting banner:", error);
       toast.error("Failed to delete banner");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -360,25 +406,31 @@ export default function BannersPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="severity">Severity *</Label>
-                <select
-                  id="severity"
-                  required
-                  aria-required="true"
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                <Select
                   value={formData.severity}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      severity: e.target.value as Severity,
-                    })
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, severity: value as Severity })
                   }
                 >
-                  {SEVERITY_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger
+                    id="severity"
+                    aria-required="true"
+                    className="w-full"
+                  >
+                    <SelectValue placeholder="Select severity" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {SEVERITY_OPTIONS.map((opt) => {
+                      const Icon = SEVERITY_ICONS[opt.value];
+                      return (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          <Icon className="h-4 w-4" />
+                          {opt.label}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -520,16 +572,15 @@ export default function BannersPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {banners.map((banner) => (
+                {banners.map((banner) => {
+                  const severity = (banner.severity as Severity) || "warning";
+                  const SeverityIcon = SEVERITY_ICONS[severity];
+                  const status = getDisplayStatus(banner);
+                  return (
                   <TableRow key={banner.id}>
                     <TableCell>
-                      <Badge
-                        className={
-                          SEVERITY_COLORS[
-                            (banner.severity as Severity) || "warning"
-                          ]
-                        }
-                      >
+                      <Badge className={SEVERITY_COLORS[severity]}>
+                        <SeverityIcon className="h-3 w-3 mr-1" />
                         {banner.severity || "warning"}
                       </Badge>
                     </TableCell>
@@ -551,10 +602,20 @@ export default function BannersPage() {
                         : "Never"}
                     </TableCell>
                     <TableCell>
-                      {banner.isActive ? (
+                      {status === "active" ? (
                         <Badge className="bg-green-100 text-green-800">
                           <Eye className="h-3 w-3 mr-1" />
                           Active
+                        </Badge>
+                      ) : status === "scheduled" ? (
+                        <Badge className="bg-blue-100 text-blue-800">
+                          <Clock className="h-3 w-3 mr-1" />
+                          Scheduled
+                        </Badge>
+                      ) : status === "expired" ? (
+                        <Badge variant="secondary">
+                          <CalendarX2 className="h-3 w-3 mr-1" />
+                          Expired
                         </Badge>
                       ) : (
                         <Badge variant="secondary">
@@ -577,20 +638,63 @@ export default function BannersPage() {
                           variant="ghost"
                           size="icon"
                           aria-label={`Delete banner: ${banner.title}`}
-                          onClick={() => handleDelete(banner)}
+                          onClick={() => setBannerToDelete(banner)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>
                   </TableRow>
-                ))}
+                  );
+                })}
               </TableBody>
             </Table>
             </div>
           )}
         </CardContent>
       </Card>
+
+      <Dialog
+        open={bannerToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open) setBannerToDelete(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-[440px]">
+          <DialogHeader>
+            <DialogTitle>Delete banner?</DialogTitle>
+            <DialogDescription>
+              This will permanently remove
+              {bannerToDelete ? ` "${bannerToDelete.title}"` : " this banner"}.
+              Mobile users will stop seeing it on their next refresh. This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setBannerToDelete(null)}
+              disabled={isDeleting}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={confirmDelete}
+              disabled={isDeleting}
+            >
+              {isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Deleting…
+                </>
+              ) : (
+                "Delete banner"
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
