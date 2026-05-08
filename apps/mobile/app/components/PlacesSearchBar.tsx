@@ -98,15 +98,20 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
   const [showSuggestions, setShowSuggestions] = useState(false)
   // Track whether user is actively editing (to hide selected location display)
   const [isEditing, setIsEditing] = useState(false)
+  // While resolvePlace is in flight after a tap, show the suggestion label so
+  // the user gets immediate feedback instead of an empty/frozen-feeling input.
+  const [resolvingLabel, setResolvingLabel] = useState<string | null>(null)
 
-  // Display value: show input when editing, otherwise show selected location
-  const displayValue = isEditing
-    ? inputValue
-    : selectedLocation?.city
-      ? `${selectedLocation.city}, ${selectedLocation.state}`
-      : ""
+  // Display value: resolving label > active input > selected location
+  const displayValue =
+    resolvingLabel ??
+    (isEditing
+      ? inputValue
+      : selectedLocation?.city
+        ? `${selectedLocation.city}, ${selectedLocation.state}`
+        : "")
 
-  const { suggestions, isSearching, search, clearSuggestions, resolvePlace, error } =
+  const { suggestions, isSearching, search, clearSuggestions, resolvePlace, prefetchPlace, error } =
     useLocationSearch()
 
   /**
@@ -127,6 +132,17 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
     [search, clearSuggestions],
   )
 
+  // Fire a background resolve on press-in so the result is ready (or in flight)
+  // by the time the user releases the press.
+  const handleSuggestionPrefetch = useCallback(
+    (suggestion: SearchSuggestion) => {
+      if (suggestion.placeId) {
+        prefetchPlace(suggestion.placeId)
+      }
+    },
+    [prefetchPlace],
+  )
+
   const handleSuggestionSelect = useCallback(
     async (suggestion: SearchSuggestion) => {
       setShowSuggestions(false)
@@ -136,8 +152,11 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
       setInputValue("")
 
       if (suggestion.placeId) {
-        // Resolve the Google Places result to city/state/country
+        // Show the suggestion text in the input while we wait so the tap
+        // does not feel like a freeze.
+        setResolvingLabel(suggestion.displayText)
         const resolved = await resolvePlace(suggestion.placeId)
+        setResolvingLabel(null)
         if (resolved) {
           onLocationSelect(resolved.city, resolved.state, resolved.country, suggestion.displayText)
         } else {
@@ -318,6 +337,7 @@ export function PlacesSearchBar(props: PlacesSearchBarProps) {
         suggestions={suggestions}
         visible={showSuggestions}
         onSelect={handleSuggestionSelect}
+        onPrefetch={handleSuggestionPrefetch}
         onDismiss={handleDismiss}
         isLoading={isSearching}
         error={error}
