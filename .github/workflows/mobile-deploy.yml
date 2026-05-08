@@ -168,6 +168,13 @@ jobs:
         with:
           fetch-depth: 1
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
       - uses: actions/setup-node@v4
         with:
           node-version: 20
@@ -183,9 +190,19 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
-      - name: Sync amplify_outputs.json
-        run: yarn sync:amplify
-        continue-on-error: true
+      # Generate the prod amplify_outputs.json from the live Amplify backend.
+      # The mobile app imports it at module load (apps/mobile/app/app.tsx) and
+      # bundling fails without it. Mirrors the equivalent step in amplify.yml.
+      # The staging override file (apps/mobile/amplify_outputs.staging.json)
+      # is committed and already present in the checkout.
+      - name: Generate amplify_outputs.json (prod)
+        working-directory: packages/backend
+        run: |
+          AWS_REGION=ca-central-1 npx @aws-amplify/backend-cli@latest generate outputs \
+            --branch main \
+            --app-id d3jl0ykn4qgj9r
+          cp amplify_outputs.json ../../apps/mobile/amplify_outputs.json
+          cp amplify_outputs.json ../../amplify_outputs.json
 
       - name: Publish update
         working-directory: apps/mobile
