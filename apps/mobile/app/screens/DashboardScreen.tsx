@@ -579,6 +579,18 @@ View details: ${shareUrl}`
     marginTop: 8,
   }
 
+  // Admin warning banners — rendered in every branch (populated, empty-data,
+  // error) so emergency advisories reach users for cities that haven't been
+  // seeded with measurement data yet, not just on populated dashboards.
+  const adminBannersJsx =
+    adminBanners.length > 0
+      ? adminBanners.map((banner) => (
+          <View key={banner.id} style={$warningBannerContainer}>
+            <AdminWarningBanner banner={banner} />
+          </View>
+        ))
+      : null
+
   // Empty state for guests - prompt to search for a location
   if (!currentLocation) {
     return (
@@ -674,6 +686,7 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        {adminBannersJsx}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
           <Text style={$emptyStateTitle}>Unable to load data</Text>
@@ -724,6 +737,7 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        {adminBannersJsx}
         {/* Pollution Sources Card — gated on a real location to avoid landing on
             an empty PollutionSourcesScreen when no city/state is set. */}
         {currentLocation && renderPollutionSourcesCard()}
@@ -900,12 +914,7 @@ View details: ${shareUrl}`
       </View>
 
       {/* Admin Warning Banners */}
-      {adminBanners.length > 0 &&
-        adminBanners.map((banner) => (
-          <View key={banner.id} style={$warningBannerContainer}>
-            <AdminWarningBanner banner={banner} />
-          </View>
-        ))}
+      {adminBannersJsx}
 
       {/* Category Cards */}
       <View style={$categoriesContainer}>

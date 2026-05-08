@@ -16,7 +16,21 @@ import propertyThresholdsData from "./property-thresholds.json";
 import measurementsData from "./seed-measurements.json";
 
 const REGION = "ca-central-1";
-const TABLE_SUFFIX = process.env.TABLE_SUFFIX || "uusoeozunzdy5biliji7vxbjcy-NONE";
+
+// Refuse to run without an explicit TABLE_SUFFIX. The previous default
+// pointed at production; running this script without setting the env
+// var would have re-seeded main rather than the intended environment.
+// Force the caller to spell out which environment they're targeting.
+const TABLE_SUFFIX = process.env.TABLE_SUFFIX;
+if (!TABLE_SUFFIX) {
+  console.error(
+    "\nERROR: TABLE_SUFFIX env var is required. There is no safe default.\n" +
+      "Set it to the AppSync data suffix for the environment you intend to seed.\n" +
+      "  staging: TABLE_SUFFIX=dwz5zs2ghrc5xplczomoh4fzke-NONE\n" +
+      "  main:    TABLE_SUFFIX=uusoeozunzdy5biliji7vxbjcy-NONE  (PRODUCTION — confirm twice)\n",
+  );
+  process.exit(1);
+}
 
 const TABLES = {
   Jurisdiction: `Jurisdiction-${TABLE_SUFFIX}`,

@@ -1,13 +1,33 @@
 #!/bin/bash
 # Wipe all data, re-parse Risks.xlsx, and re-seed from scratch
 #
-# Usage: cd packages/backend && bash scripts/reseed-all.sh
+# Usage: TABLE_SUFFIX=<env-suffix>-NONE \
+#        COGNITO_EMAIL=<email> COGNITO_PASSWORD=<password> \
+#        bash scripts/reseed-all.sh
 #
-# Steps 4 & 5 require: COGNITO_EMAIL and COGNITO_PASSWORD env vars
+# TABLE_SUFFIX picks which environment to wipe + reseed. There is no
+# default; the underlying scripts will refuse to run without it. Look it
+# up via `aws dynamodb list-tables` for the chosen Amplify branch.
+#   staging: dwz5zs2ghrc5xplczomoh4fzke-NONE
+#   main:    uusoeozunzdy5biliji7vxbjcy-NONE  (PRODUCTION — confirm twice)
+#
+# Steps 4 & 5 require: COGNITO_EMAIL and COGNITO_PASSWORD env vars.
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR/.."
+
+# Validate TABLE_SUFFIX up-front so we fail before doing anything (rather
+# than wiping nothing because step 1 errors out, which would leave the
+# operator unsure where the failure originated).
+if [ -z "$TABLE_SUFFIX" ]; then
+  echo "ERROR: TABLE_SUFFIX must be set so we know which environment to wipe + reseed."
+  echo ""
+  echo "  staging: TABLE_SUFFIX=dwz5zs2ghrc5xplczomoh4fzke-NONE"
+  echo "  main:    TABLE_SUFFIX=uusoeozunzdy5biliji7vxbjcy-NONE  (PRODUCTION — confirm twice)"
+  exit 1
+fi
+export TABLE_SUFFIX
 
 # Validate Cognito credentials for steps 4 & 5
 if [ -z "$COGNITO_EMAIL" ] || [ -z "$COGNITO_PASSWORD" ]; then

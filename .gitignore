@@ -5,6 +5,10 @@
 # Amplify
 .amplify/
 amplify_outputs.json
+# Backend's staging copy is local-only — the canonical bundled copy lives at
+# apps/mobile/amplify_outputs.staging.json and IS tracked so prod builds can
+# ship it to power the in-app staging-backend switcher.
+packages/backend/amplify_outputs.staging.json
 
 # Yarn
 .yarn/*
