@@ -29,6 +29,12 @@ interface SearchSuggestionsDropdownProps {
   visible: boolean
   /** Callback when a suggestion is selected */
   onSelect: (suggestion: SearchSuggestion) => void
+  /**
+   * Optional callback fired the moment the user presses on a suggestion
+   * (touch-down on native, mouse-down on web), before they release. Lets
+   * the parent prefetch the resolution so the eventual select feels instant.
+   */
+  onPrefetch?: (suggestion: SearchSuggestion) => void
   /** Callback when the dropdown should be dismissed (unused, kept for API compatibility) */
   onDismiss?: () => void
   /** Whether search is in progress — shows skeleton loaders */
@@ -68,10 +74,12 @@ function getIconForType(
 function WebSuggestionItem({
   item,
   onSelect,
+  onPrefetch,
   theme,
 }: {
   item: SearchSuggestion
   onSelect: (item: SearchSuggestion) => void
+  onPrefetch?: (item: SearchSuggestion) => void
   theme: ReturnType<typeof useAppTheme>["theme"]
 }) {
   const buttonStyle: React.CSSProperties = {
@@ -104,6 +112,7 @@ function WebSuggestionItem({
     <button
       type="button"
       onClick={() => onSelect(item)}
+      onMouseDown={() => onPrefetch?.(item)}
       aria-label={`Select ${item.displayText}`}
       style={buttonStyle}
       onMouseEnter={(e) => {
@@ -151,6 +160,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
     suggestions,
     visible,
     onSelect,
+    onPrefetch,
     isLoading = false,
     error = null,
     headerText = null,
@@ -223,6 +233,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
       return (
         <Pressable
           onPress={() => onSelect(item)}
+          onPressIn={() => onPrefetch?.(item)}
           style={({ pressed }) => [
             $itemContainer,
             pressed && { backgroundColor: theme.colors.palette.neutral200 },
@@ -246,7 +257,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
         </Pressable>
       )
     },
-    [theme, onSelect],
+    [theme, onSelect, onPrefetch],
   )
 
   const keyExtractor = useCallback(
@@ -370,6 +381,7 @@ export function SearchSuggestionsDropdown(props: SearchSuggestionsDropdownProps)
                 key={keyExtractor(item, index)}
                 item={item}
                 onSelect={onSelect}
+                onPrefetch={onPrefetch}
                 theme={theme}
               />
             ))

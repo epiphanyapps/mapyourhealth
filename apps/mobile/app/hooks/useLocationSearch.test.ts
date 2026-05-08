@@ -353,6 +353,139 @@ describe("useLocationSearch", () => {
     })
   })
 
+  describe("prefetchPlace", () => {
+    it("kicks off resolution in the background", async () => {
+      mockResolveLocationByPlaceId.mockResolvedValue({
+        city: "New York",
+        state: "NY",
+        country: "US",
+        jurisdictionCode: "US-NY",
+        hasData: true,
+        isNew: false,
+      })
+
+      const { result } = renderHook(() => useLocationSearch())
+
+      act(() => {
+        result.current.prefetchPlace("place-ny")
+      })
+
+      await waitFor(() => {
+        expect(mockResolveLocationByPlaceId).toHaveBeenCalledWith("place-ny", expect.any(String))
+      })
+    })
+
+    it("resolvePlace reuses the prefetched result without re-calling the API", async () => {
+      mockResolveLocationByPlaceId.mockResolvedValue({
+        city: "New York",
+        state: "NY",
+        country: "US",
+        jurisdictionCode: "US-NY",
+        hasData: true,
+        isNew: false,
+      })
+
+      const { result } = renderHook(() => useLocationSearch())
+
+      act(() => {
+        result.current.prefetchPlace("place-ny")
+      })
+
+      let resolved: Awaited<ReturnType<typeof result.current.resolvePlace>>
+      await act(async () => {
+        resolved = await result.current.resolvePlace("place-ny")
+      })
+
+      expect(mockResolveLocationByPlaceId).toHaveBeenCalledTimes(1)
+      expect(resolved!).not.toBeNull()
+      expect(resolved!.city).toBe("New York")
+    })
+
+    it("triggers a separate resolve for each unique placeId", async () => {
+      mockResolveLocationByPlaceId
+        .mockResolvedValueOnce({
+          city: "New York",
+          state: "NY",
+          country: "US",
+          jurisdictionCode: "US-NY",
+          hasData: true,
+          isNew: false,
+        })
+        .mockResolvedValueOnce({
+          city: "Newark",
+          state: "NJ",
+          country: "US",
+          jurisdictionCode: "US",
+          hasData: false,
+          isNew: true,
+        })
+
+      const { result } = renderHook(() => useLocationSearch())
+
+      act(() => {
+        result.current.prefetchPlace("place-ny")
+        result.current.prefetchPlace("place-newark")
+      })
+
+      await waitFor(() => {
+        expect(mockResolveLocationByPlaceId).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    it("clears the cache entry on failure so a retry can succeed", async () => {
+      mockResolveLocationByPlaceId
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValueOnce({
+          city: "Toronto",
+          state: "ON",
+          country: "CA",
+          jurisdictionCode: "CA-ON",
+          hasData: true,
+          isNew: false,
+        })
+
+      const { result } = renderHook(() => useLocationSearch())
+
+      let firstResolved: Awaited<ReturnType<typeof result.current.resolvePlace>>
+      await act(async () => {
+        result.current.prefetchPlace("place-toronto")
+        firstResolved = await result.current.resolvePlace("place-toronto")
+      })
+      expect(firstResolved).toBeNull()
+
+      let secondResolved: Awaited<ReturnType<typeof result.current.resolvePlace>>
+      await act(async () => {
+        secondResolved = await result.current.resolvePlace("place-toronto")
+      })
+
+      expect(secondResolved).not.toBeNull()
+      expect(secondResolved!.city).toBe("Toronto")
+      expect(mockResolveLocationByPlaceId).toHaveBeenCalledTimes(2)
+    })
+
+    it("dedupes concurrent resolvePlace calls for the same placeId", async () => {
+      mockResolveLocationByPlaceId.mockResolvedValue({
+        city: "New York",
+        state: "NY",
+        country: "US",
+        jurisdictionCode: "US-NY",
+        hasData: true,
+        isNew: false,
+      })
+
+      const { result } = renderHook(() => useLocationSearch())
+
+      await act(async () => {
+        await Promise.all([
+          result.current.resolvePlace("place-ny"),
+          result.current.resolvePlace("place-ny"),
+        ])
+      })
+
+      expect(mockResolveLocationByPlaceId).toHaveBeenCalledTimes(1)
+    })
+  })
+
   describe("resolveAddressToNearestCity (backward compat)", () => {
     it("delegates to resolvePlace and returns legacy format", async () => {
       mockResolveLocationByPlaceId.mockResolvedValue({
