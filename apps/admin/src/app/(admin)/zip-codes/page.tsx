@@ -29,15 +29,29 @@ type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 type Contaminant = Schema["Contaminant"]["type"];
 
-// Extended type for LocationMeasurement with city/state fields from schema
-type LocationMeasurementWithLocation = LocationMeasurement & {
-  city: string;
-  state: string;
-};
-
+// Aggregation results, one per scope. The cascade introduced in #278
+// allows a `LocationMeasurement` to be anchored at city, state, or
+// country level (city/state nullable, country required). The admin
+// page surfaces all three via separate sections so admins can verify
+// what data lives at each scope without a DynamoDB scan.
 interface LocationStats {
   city: string;
   state: string;
+  measurementCount: number;
+  worstStatus: StatStatus;
+  lastUpdated: string;
+}
+
+interface StateStats {
+  state: string;
+  country: string;
+  measurementCount: number;
+  worstStatus: StatStatus;
+  lastUpdated: string;
+}
+
+interface CountryStats {
+  country: string;
   measurementCount: number;
   worstStatus: StatStatus;
   lastUpdated: string;
@@ -73,9 +87,53 @@ function calculateStatus(
   }
 }
 
+/**
+ * Shared aggregator: contributes one measurement to a running aggregate.
+ * Mutates and returns the aggregate so callers can use the
+ * `map.set(key, contribute(map.get(key) ?? init, m))` idiom in three
+ * scope-specific loops without three copies of the same code.
+ */
+function contributeMeasurement<
+  T extends {
+    measurementCount: number;
+    worstStatus: StatStatus;
+    lastUpdated: string;
+  },
+>(
+  agg: T,
+  measurement: LocationMeasurement,
+  thresholdMap: Map<string, ContaminantThreshold>,
+  contaminantMap: Map<string, Contaminant>,
+): T {
+  agg.measurementCount += 1;
+
+  const threshold =
+    thresholdMap.get(`${measurement.contaminantId}:WHO`) ||
+    thresholdMap.get(`${measurement.contaminantId}:US`);
+  const contaminant = contaminantMap.get(measurement.contaminantId);
+  const higherIsBad = contaminant?.higherIsBad ?? true;
+  const status = calculateStatus(measurement.value, threshold, higherIsBad);
+
+  if (status === "danger") {
+    agg.worstStatus = "danger";
+  } else if (status === "warning" && agg.worstStatus !== "danger") {
+    agg.worstStatus = "warning";
+  }
+
+  const measurementDate = new Date(measurement.measuredAt ?? 0);
+  const existingDate = new Date(agg.lastUpdated);
+  if (measurementDate > existingDate) {
+    agg.lastUpdated = measurement.measuredAt ?? agg.lastUpdated;
+  }
+
+  return agg;
+}
+
 export default function ZipCodesPage() {
   const router = useRouter();
   const [locationStats, setLocationStats] = useState<LocationStats[]>([]);
+  const [stateStats, setStateStats] = useState<StateStats[]>([]);
+  const [countryStats, setCountryStats] = useState<CountryStats[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [newCity, setNewCity] = useState("");
@@ -116,75 +174,74 @@ export default function ZipCodesPage() {
         contaminantMap.set(c.contaminantId, c);
       }
 
-      // Group by city+state and calculate status
-      const locationMap = new Map<
-        string,
-        {
-          city: string;
-          state: string;
-          measurements: LocationMeasurement[];
-          worstStatus: StatStatus;
-          lastUpdated: string;
+      // Aggregate measurements into three Maps keyed by anchor scope.
+      // Classification mirrors the cascade lambda's deriveScope at
+      // packages/backend/amplify/functions/on-location-measurement-update/handler.ts
+      // — city wins, then state, then country. country is required by the
+      // schema so the else-branch is always reachable when a row has no
+      // city/state. Rows missing all three are dropped defensively.
+      const cityMap = new Map<string, LocationStats>();
+      const stateMapAgg = new Map<string, StateStats>();
+      const countryMapAgg = new Map<string, CountryStats>();
+
+      for (const m of measurements) {
+        if (!m.country) continue;
+        const fallbackTimestamp = m.measuredAt ?? new Date().toISOString();
+
+        if (m.city) {
+          const key = `${m.city}|${m.state ?? ""}`;
+          const init: LocationStats = cityMap.get(key) ?? {
+            city: m.city,
+            state: m.state ?? "",
+            measurementCount: 0,
+            worstStatus: "safe",
+            lastUpdated: fallbackTimestamp,
+          };
+          cityMap.set(
+            key,
+            contributeMeasurement(init, m, thresholdMap, contaminantMap),
+          );
+        } else if (m.state) {
+          const key = `${m.state}|${m.country}`;
+          const init: StateStats = stateMapAgg.get(key) ?? {
+            state: m.state,
+            country: m.country,
+            measurementCount: 0,
+            worstStatus: "safe",
+            lastUpdated: fallbackTimestamp,
+          };
+          stateMapAgg.set(
+            key,
+            contributeMeasurement(init, m, thresholdMap, contaminantMap),
+          );
+        } else {
+          const key = m.country;
+          const init: CountryStats = countryMapAgg.get(key) ?? {
+            country: m.country,
+            measurementCount: 0,
+            worstStatus: "safe",
+            lastUpdated: fallbackTimestamp,
+          };
+          countryMapAgg.set(
+            key,
+            contributeMeasurement(init, m, thresholdMap, contaminantMap),
+          );
         }
-      >();
-
-      for (const measurement of measurements) {
-        const m = measurement as LocationMeasurementWithLocation;
-        const city = m.city ?? "Unknown";
-        const state = m.state ?? "";
-        const key = `${city}|${state}`;
-        const existing = locationMap.get(key) || {
-          city,
-          state,
-          measurements: [] as LocationMeasurement[],
-          worstStatus: "safe" as StatStatus,
-          lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
-        };
-
-        existing.measurements.push(measurement);
-
-        // Calculate status for this measurement
-        const threshold =
-          thresholdMap.get(`${measurement.contaminantId}:WHO`) ||
-          thresholdMap.get(`${measurement.contaminantId}:US`);
-        const contaminant = contaminantMap.get(measurement.contaminantId);
-        const higherIsBad = contaminant?.higherIsBad ?? true;
-        const status = calculateStatus(
-          measurement.value,
-          threshold,
-          higherIsBad,
-        );
-
-        if (status === "danger") {
-          existing.worstStatus = "danger";
-        } else if (status === "warning" && existing.worstStatus !== "danger") {
-          existing.worstStatus = "warning";
-        }
-
-        const measurementDate = new Date(measurement.measuredAt ?? 0);
-        const existingDate = new Date(existing.lastUpdated);
-        if (measurementDate > existingDate) {
-          existing.lastUpdated = measurement.measuredAt ?? existing.lastUpdated;
-        }
-
-        locationMap.set(key, existing);
       }
 
-      const result: LocationStats[] = Array.from(locationMap.values()).map(
-        ({ city, state, measurements: m, worstStatus, lastUpdated }) => ({
-          city,
-          state,
-          measurementCount: m.length,
-          worstStatus,
-          lastUpdated,
-        }),
-      );
-
-      result.sort((a, b) =>
+      const cityResult = Array.from(cityMap.values()).sort((a, b) =>
         `${a.city}, ${a.state}`.localeCompare(`${b.city}, ${b.state}`),
       );
+      const stateResult = Array.from(stateMapAgg.values()).sort((a, b) =>
+        `${a.state}, ${a.country}`.localeCompare(`${b.state}, ${b.country}`),
+      );
+      const countryResult = Array.from(countryMapAgg.values()).sort((a, b) =>
+        a.country.localeCompare(b.country),
+      );
 
-      setLocationStats(result);
+      setLocationStats(cityResult);
+      setStateStats(stateResult);
+      setCountryStats(countryResult);
     } catch (error) {
       console.error("Error fetching data:", error);
     } finally {
@@ -196,10 +253,19 @@ export default function ZipCodesPage() {
     fetchData();
   }, []);
 
+  // Each section gets its own filter so a single search box matches
+  // across all three: typing "QC" surfaces Boucherville/Montreal in the
+  // city section AND the QC row in the state section; "CA" matches
+  // Canadian cities AND the country-wide row.
+  const lowerQuery = searchQuery.toLowerCase();
   const filteredLocations = locationStats.filter((loc) =>
-    `${loc.city}, ${loc.state}`
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase()),
+    `${loc.city}, ${loc.state}`.toLowerCase().includes(lowerQuery),
+  );
+  const filteredStateStats = stateStats.filter((s) =>
+    `${s.state}, ${s.country}`.toLowerCase().includes(lowerQuery),
+  );
+  const filteredCountryStats = countryStats.filter((c) =>
+    c.country.toLowerCase().includes(lowerQuery),
   );
 
   const handleAddLocation = () => {
@@ -215,7 +281,8 @@ export default function ZipCodesPage() {
           Location Measurements
         </h1>
         <p className="text-muted-foreground">
-          View and manage contaminant measurements by city
+          View and manage contaminant measurements by city, state/province, or
+          country
         </p>
       </div>
 
@@ -223,7 +290,7 @@ export default function ZipCodesPage() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by city..."
+            placeholder="Search city, state, or country..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-10"
@@ -245,10 +312,10 @@ export default function ZipCodesPage() {
 
       <Card>
         <CardHeader>
-          <CardTitle>All Locations</CardTitle>
+          <CardTitle>By city</CardTitle>
           <CardDescription>
             {locationStats.length} cit{locationStats.length !== 1 ? "ies" : "y"}{" "}
-            with measurements
+            with measurements anchored at city level
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -259,8 +326,8 @@ export default function ZipCodesPage() {
           ) : filteredLocations.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               {searchQuery
-                ? "No locations match your search."
-                : "No measurement data yet. Add a location to get started."}
+                ? "No cities match your search."
+                : "No city-anchored measurement data yet. Add a location to get started."}
             </div>
           ) : (
             <Table>
@@ -310,6 +377,126 @@ export default function ZipCodesPage() {
                       >
                         Manage
                       </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>By state / province</CardTitle>
+          <CardDescription>
+            {stateStats.length} state-wide record
+            {stateStats.length !== 1 ? "s" : ""} — apply to every city in the
+            state without its own data (#123 cascade fallback)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredStateStats.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {searchQuery
+                ? "No state-wide records match your search."
+                : "No state-anchored measurements yet. Use the Import page and leave the city column blank to add one."}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>State / Province</TableHead>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Measurements</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredStateStats.map((s) => (
+                  <TableRow key={`${s.state}-${s.country}`}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{s.state}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{s.country}</TableCell>
+                    <TableCell>{s.measurementCount} measurements</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={statStatusColors[s.worstStatus]}
+                      >
+                        {s.worstStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(s.lastUpdated).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>By country</CardTitle>
+          <CardDescription>
+            {countryStats.length} country-wide record
+            {countryStats.length !== 1 ? "s" : ""} — apply to every city in the
+            country without its own (or its state&apos;s) data
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {isLoading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : filteredCountryStats.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              {searchQuery
+                ? "No country-wide records match your search."
+                : "No country-anchored measurements yet. Use the Import page and leave the city + state columns blank to add one."}
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Country</TableHead>
+                  <TableHead>Measurements</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Last Updated</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCountryStats.map((c) => (
+                  <TableRow key={c.country}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">{c.country}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{c.measurementCount} measurements</TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="secondary"
+                        className={statStatusColors[c.worstStatus]}
+                      >
+                        {c.worstStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(c.lastUpdated).toLocaleDateString()}
                     </TableCell>
                   </TableRow>
                 ))}
