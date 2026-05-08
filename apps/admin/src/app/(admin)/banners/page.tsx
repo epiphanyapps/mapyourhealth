@@ -94,6 +94,15 @@ interface FormData {
   isActive: boolean;
 }
 
+// Format a Date as `YYYY-MM-DDTHH:mm` in the user's LOCAL timezone, suitable
+// for an <input type="datetime-local">. Using `toISOString()` would emit UTC
+// wall-clock and the input would parse it back as local time, shifting the
+// stored timestamp by the user's UTC offset on every save.
+const formatLocalDateTime = (date: Date) => {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+};
+
 const defaultFormData: FormData = {
   title: "",
   titleFr: "",
@@ -103,7 +112,7 @@ const defaultFormData: FormData = {
   city: "",
   state: "",
   country: "",
-  startsAt: new Date().toISOString().slice(0, 16),
+  startsAt: formatLocalDateTime(new Date()),
   expiresAt: "",
   isActive: true,
 };
@@ -172,10 +181,10 @@ export default function BannersPage() {
       state: banner.state || "",
       country: banner.country || "",
       startsAt: banner.startsAt
-        ? new Date(banner.startsAt).toISOString().slice(0, 16)
+        ? formatLocalDateTime(new Date(banner.startsAt))
         : "",
       expiresAt: banner.expiresAt
-        ? new Date(banner.expiresAt).toISOString().slice(0, 16)
+        ? formatLocalDateTime(new Date(banner.expiresAt))
         : "",
       isActive: banner.isActive ?? true,
     });
@@ -185,8 +194,8 @@ export default function BannersPage() {
   const handleSave = async () => {
     const result = bannerFormSchema.safeParse(formData);
     if (!result.success) {
-      const firstError = result.error.issues[0]?.message;
-      toast.error(firstError || "Please fix the form errors");
+      const messages = result.error.issues.map((i) => i.message).join(". ");
+      toast.error(messages || "Please fix the form errors");
       return;
     }
 
@@ -299,6 +308,8 @@ export default function BannersPage() {
                   <Label htmlFor="title">Title (English) *</Label>
                   <Input
                     id="title"
+                    required
+                    aria-required="true"
                     placeholder="e.g., Boil Water Advisory"
                     value={formData.title}
                     onChange={(e) =>
@@ -323,6 +334,8 @@ export default function BannersPage() {
                 <Label htmlFor="description">Description (English) *</Label>
                 <Textarea
                   id="description"
+                  required
+                  aria-required="true"
                   placeholder="Describe the warning..."
                   value={formData.description}
                   onChange={(e) =>
@@ -349,6 +362,8 @@ export default function BannersPage() {
                 <Label htmlFor="severity">Severity *</Label>
                 <select
                   id="severity"
+                  required
+                  aria-required="true"
                   className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
                   value={formData.severity}
                   onChange={(e) =>
@@ -412,6 +427,8 @@ export default function BannersPage() {
                   <Input
                     id="startsAt"
                     type="datetime-local"
+                    required
+                    aria-required="true"
                     value={formData.startsAt}
                     onChange={(e) =>
                       setFormData({ ...formData, startsAt: e.target.value })
@@ -474,7 +491,9 @@ export default function BannersPage() {
         <CardHeader>
           <CardTitle>All Banners</CardTitle>
           <CardDescription>
-            {banners.length} banner{banners.length !== 1 ? "s" : ""} configured
+            {isLoading
+              ? "Loading…"
+              : `${banners.length} banner${banners.length !== 1 ? "s" : ""} configured`}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -487,6 +506,7 @@ export default function BannersPage() {
               No banners yet. Click &quot;Add Banner&quot; to create one.
             </div>
           ) : (
+            <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -548,6 +568,7 @@ export default function BannersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Edit banner: ${banner.title}`}
                           onClick={() => openEditDialog(banner)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -555,6 +576,7 @@ export default function BannersPage() {
                         <Button
                           variant="ghost"
                           size="icon"
+                          aria-label={`Delete banner: ${banner.title}`}
                           onClick={() => handleDelete(banner)}
                         >
                           <Trash2 className="h-4 w-4 text-red-500" />
@@ -565,6 +587,7 @@ export default function BannersPage() {
                 ))}
               </TableBody>
             </Table>
+            </div>
           )}
         </CardContent>
       </Card>
