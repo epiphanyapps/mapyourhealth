@@ -112,10 +112,10 @@ export function AdminWarningBanner(props: AdminWarningBannerProps) {
         <View style={$textContainer}>
           <Text style={themedStyles.labelText}>
             {severity === "critical"
-              ? i18n.t("warningBanner.critical")
+              ? i18n.t("warningBanner:critical")
               : severity === "warning"
-                ? i18n.t("warningBanner.warning")
-                : i18n.t("warningBanner.info")}
+                ? i18n.t("warningBanner:warning")
+                : i18n.t("warningBanner:info")}
           </Text>
           <Text style={themedStyles.titleText}>{title}</Text>
           <Text style={themedStyles.descriptionText}>{description}</Text>
