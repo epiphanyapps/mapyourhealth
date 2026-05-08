@@ -314,8 +314,12 @@ export default function ZipCodesPage() {
         <CardHeader>
           <CardTitle>By city</CardTitle>
           <CardDescription>
-            {locationStats.length} cit{locationStats.length !== 1 ? "ies" : "y"}{" "}
+            {filteredLocations.length} cit
+            {filteredLocations.length !== 1 ? "ies" : "y"}{" "}
             with measurements anchored at city level
+            {searchQuery && filteredLocations.length !== locationStats.length
+              ? ` (of ${locationStats.length} total)`
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -352,7 +356,8 @@ export default function ZipCodesPage() {
                     </TableCell>
                     <TableCell>{location.state}</TableCell>
                     <TableCell>
-                      {location.measurementCount} measurements
+                      {location.measurementCount} measurement
+                      {location.measurementCount !== 1 ? "s" : ""}
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -390,9 +395,12 @@ export default function ZipCodesPage() {
         <CardHeader>
           <CardTitle>By state / province</CardTitle>
           <CardDescription>
-            {stateStats.length} state-wide record
-            {stateStats.length !== 1 ? "s" : ""} — apply to every city in the
-            state without its own data (#123 cascade fallback)
+            {filteredStateStats.length} state-wide record
+            {filteredStateStats.length !== 1 ? "s" : ""} — apply to every city
+            in the state without its own data (#123 cascade fallback)
+            {searchQuery && filteredStateStats.length !== stateStats.length
+              ? ` (of ${stateStats.length} total)`
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -427,7 +435,10 @@ export default function ZipCodesPage() {
                       </div>
                     </TableCell>
                     <TableCell>{s.country}</TableCell>
-                    <TableCell>{s.measurementCount} measurements</TableCell>
+                    <TableCell>
+                      {s.measurementCount} measurement
+                      {s.measurementCount !== 1 ? "s" : ""}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
@@ -451,9 +462,12 @@ export default function ZipCodesPage() {
         <CardHeader>
           <CardTitle>By country</CardTitle>
           <CardDescription>
-            {countryStats.length} country-wide record
-            {countryStats.length !== 1 ? "s" : ""} — apply to every city in the
-            country without its own (or its state&apos;s) data
+            {filteredCountryStats.length} country-wide record
+            {filteredCountryStats.length !== 1 ? "s" : ""} — apply to every city
+            in the country without its own (or its state&apos;s) data
+            {searchQuery && filteredCountryStats.length !== countryStats.length
+              ? ` (of ${countryStats.length} total)`
+              : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -486,7 +500,10 @@ export default function ZipCodesPage() {
                         <span className="font-medium">{c.country}</span>
                       </div>
                     </TableCell>
-                    <TableCell>{c.measurementCount} measurements</TableCell>
+                    <TableCell>
+                      {c.measurementCount} measurement
+                      {c.measurementCount !== 1 ? "s" : ""}
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"
