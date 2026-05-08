@@ -17,9 +17,12 @@ import {
 import { confirmSignIn, signIn } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
+import { EnvBadge } from "@/components/EnvBadge"
+import { EnvSwitchDialog } from "@/components/EnvSwitchDialog"
 import { Header } from "@/components/Header"
 import { Icon, PressableIcon } from "@/components/Icon"
 import { Screen } from "@/components/Screen"
+import { SecretEnvTrigger } from "@/components/SecretEnvTrigger"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
 import { useAuth } from "@/context/AuthContext"
@@ -60,6 +63,7 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
   // NEW_PASSWORD_REQUIRED (after Cognito raises the
   // CONFIRM_SIGN_IN_WITH_NEW_PASSWORD_REQUIRED challenge).
   const [authStep, setAuthStep] = useState<AuthStep>("SIGN_IN")
+  const [envDialogOpen, setEnvDialogOpen] = useState(false)
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
   const [isNewPasswordHidden, setIsNewPasswordHidden] = useState(true)
@@ -277,10 +281,18 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
         safeAreaEdges={[]}
       />
 
-      {/* Welcome Icon */}
-      <View style={themed($iconContainer)}>
+      <EnvBadge />
+
+      {/* Welcome Icon — hidden 5-tap gesture opens the staging-backend switcher.
+          Mounted above the authStep branch so the same trigger covers both the
+          SIGN_IN form and the NEW_PASSWORD_REQUIRED admin gate. */}
+      <SecretEnvTrigger
+        onTrigger={() => setEnvDialogOpen(true)}
+        style={themed($iconContainer)}
+        testID="login-secret-env-trigger"
+      >
         <Icon icon="lock" size={32} color={colors.tint} />
-      </View>
+      </SecretEnvTrigger>
 
       {authStep === "NEW_PASSWORD_REQUIRED" ? (
         <>
@@ -464,6 +476,8 @@ export const LoginScreen: FC<LoginScreenProps> = ({ navigation, route }) => {
           </Pressable>
         </View>
       )}
+
+      <EnvSwitchDialog visible={envDialogOpen} onClose={() => setEnvDialogOpen(false)} />
     </Screen>
   )
 }

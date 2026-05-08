@@ -16,10 +16,13 @@ import {
 import { signUp } from "aws-amplify/auth"
 
 import { Button } from "@/components/Button"
+import { EnvBadge } from "@/components/EnvBadge"
+import { EnvSwitchDialog } from "@/components/EnvSwitchDialog"
 import { Header } from "@/components/Header"
 import { PressableIcon } from "@/components/Icon"
 import { PasswordRequirements, isPasswordValid } from "@/components/PasswordRequirements"
 import { Screen } from "@/components/Screen"
+import { SecretEnvTrigger } from "@/components/SecretEnvTrigger"
 import { Text } from "@/components/Text"
 import { TextField, type TextFieldAccessoryProps } from "@/components/TextField"
 import { usePendingAction, type PendingAction } from "@/context/PendingActionContext"
@@ -55,6 +58,7 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
   const [passwordError, setPasswordError] = useState("")
   const [generalError, setGeneralError] = useState("")
   const [showLoginLink, setShowLoginLink] = useState(false)
+  const [envDialogOpen, setEnvDialogOpen] = useState(false)
 
   const { pendingAction } = usePendingAction()
 
@@ -150,7 +154,12 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
     >
       <Header title="" leftIcon="back" onLeftPress={() => navigation.goBack()} safeAreaEdges={[]} />
 
-      <Text text="Create Account" preset="heading" style={themed($heading)} />
+      <EnvBadge />
+
+      {/* Hidden 5-tap gesture on the heading opens the staging-backend switcher. */}
+      <SecretEnvTrigger onTrigger={() => setEnvDialogOpen(true)} testID="signup-secret-env-trigger">
+        <Text text="Create Account" preset="heading" style={themed($heading)} />
+      </SecretEnvTrigger>
       {pendingAction && (
         <Text
           text={getContextMessage(pendingAction)}
@@ -249,6 +258,8 @@ export const SignupScreen: FC<SignupScreenProps> = ({ navigation }) => {
         preset="default"
         onPress={() => navigation.navigate("Login")}
       />
+
+      <EnvSwitchDialog visible={envDialogOpen} onClose={() => setEnvDialogOpen(false)} />
     </Screen>
   )
 }
