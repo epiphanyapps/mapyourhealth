@@ -19,10 +19,17 @@ if (__DEV__) {
 import "./utils/gestureHandler"
 
 import { Amplify } from "aws-amplify"
-import outputs from "../amplify_outputs.json" // eslint-disable-line import/no-unresolved
+import prodOutputs from "../amplify_outputs.json" // eslint-disable-line import/no-unresolved
+import stagingOutputs from "../amplify_outputs.staging.json" // eslint-disable-line import/no-unresolved
+
+import { getEnvOverride } from "./utils/envOverride"
+
+const envOverride = getEnvOverride()
+const outputs = envOverride === "staging" ? stagingOutputs : prodOutputs
 
 if (__DEV__) {
   console.log("=== AMPLIFY CONFIG ===")
+  console.log("Env override:", envOverride)
   console.log("Region:", outputs.auth?.aws_region)
   console.log("GraphQL URL:", outputs.data?.url)
 }
