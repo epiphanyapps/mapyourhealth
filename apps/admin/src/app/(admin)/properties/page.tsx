@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { OrphanBanner } from "@/components/orphan-banner";
 import {
   OBSERVED_PROPERTY_CATEGORIES,
   OBSERVATION_TYPES,
@@ -129,8 +130,10 @@ export default function PropertiesPage() {
       propertyId: property.propertyId,
       name: property.name,
       nameFr: property.nameFr || "",
-      category: (property.category as ObservedPropertyCategory) || "water_quality",
-      observationType: (property.observationType as ObservationType) || "numeric",
+      category:
+        (property.category as ObservedPropertyCategory) || "water_quality",
+      observationType:
+        (property.observationType as ObservationType) || "numeric",
       unit: property.unit || "",
       description: property.description || "",
       descriptionFr: property.descriptionFr || "",
@@ -186,7 +189,7 @@ export default function PropertiesPage() {
   const handleDelete = async (property: ObservedProperty) => {
     if (
       !confirm(
-        `Are you sure you want to delete "${property.name}"? This will also affect any thresholds and observations using this property.`
+        `Are you sure you want to delete "${property.name}"? This will also affect any thresholds and observations using this property.`,
       )
     ) {
       return;
@@ -237,6 +240,7 @@ export default function PropertiesPage() {
 
   return (
     <div className="space-y-6">
+      <OrphanBanner pageLabel="observed properties" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -263,173 +267,176 @@ export default function PropertiesPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingProperty ? "Edit Property" : "Create Property"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingProperty
-                  ? "Update the property details below."
-                  : "Add a new observed property."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyId">Property ID *</Label>
-                  <Input
-                    id="propertyId"
-                    placeholder="e.g., air_quality_index"
-                    value={formData.propertyId}
-                    onChange={(e) =>
-                      setFormData({ ...formData, propertyId: e.target.value })
-                    }
-                    disabled={!!editingProperty}
-                  />
+              <DialogHeader>
+                <DialogTitle>
+                  {editingProperty ? "Edit Property" : "Create Property"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingProperty
+                    ? "Update the property details below."
+                    : "Add a new observed property."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="propertyId">Property ID *</Label>
+                    <Input
+                      id="propertyId"
+                      placeholder="e.g., air_quality_index"
+                      value={formData.propertyId}
+                      onChange={(e) =>
+                        setFormData({ ...formData, propertyId: e.target.value })
+                      }
+                      disabled={!!editingProperty}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="unit">Unit</Label>
+                    <Input
+                      id="unit"
+                      placeholder="e.g., μg/L, AQI"
+                      value={formData.unit}
+                      onChange={(e) =>
+                        setFormData({ ...formData, unit: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="unit">Unit</Label>
-                  <Input
-                    id="unit"
-                    placeholder="e.g., μg/L, AQI"
-                    value={formData.unit}
-                    onChange={(e) =>
-                      setFormData({ ...formData, unit: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name (English) *</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., Air Quality Index"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name (English) *</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g., Air Quality Index"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nameFr">Name (French)</Label>
+                    <Input
+                      id="nameFr"
+                      placeholder="e.g., Indice de qualité de l'air"
+                      value={formData.nameFr}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nameFr: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nameFr">Name (French)</Label>
-                  <Input
-                    id="nameFr"
-                    placeholder="e.g., Indice de qualité de l'air"
-                    value={formData.nameFr}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nameFr: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="category">Category *</Label>
+                    <Select
+                      value={formData.category}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          category: value as ObservedPropertyCategory,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OBSERVED_PROPERTY_CATEGORIES.map((cat) => (
+                          <SelectItem key={cat} value={cat}>
+                            {observedPropertyCategoryNames[cat]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="observationType">Observation Type *</Label>
+                    <Select
+                      value={formData.observationType}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          observationType: value as ObservationType,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OBSERVATION_TYPES.map((type) => (
+                          <SelectItem key={type} value={type}>
+                            {observationTypeNames[type]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(value) =>
+                  <Label htmlFor="description">Description (English)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Describe what this property measures..."
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="descriptionFr">Description (French)</Label>
+                  <Textarea
+                    id="descriptionFr"
+                    placeholder="Description en français..."
+                    value={formData.descriptionFr}
+                    onChange={(e) =>
                       setFormData({
                         ...formData,
-                        category: value as ObservedPropertyCategory,
+                        descriptionFr: e.target.value,
                       })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OBSERVED_PROPERTY_CATEGORIES.map((cat) => (
-                        <SelectItem key={cat} value={cat}>
-                          {observedPropertyCategoryNames[cat]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="observationType">Observation Type *</Label>
-                  <Select
-                    value={formData.observationType}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        observationType: value as ObservationType,
-                      })
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="higherIsBad"
+                    checked={formData.higherIsBad}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, higherIsBad: checked })
                     }
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {OBSERVATION_TYPES.map((type) => (
-                        <SelectItem key={type} value={type}>
-                          {observationTypeNames[type]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  />
+                  <Label htmlFor="higherIsBad">Higher values are worse</Label>
                 </div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="description">Description (English)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Describe what this property measures..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="descriptionFr">Description (French)</Label>
-                <Textarea
-                  id="descriptionFr"
-                  placeholder="Description en français..."
-                  value={formData.descriptionFr}
-                  onChange={(e) =>
-                    setFormData({ ...formData, descriptionFr: e.target.value })
-                  }
-                />
-              </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="higherIsBad"
-                  checked={formData.higherIsBad}
-                  onCheckedChange={(checked) =>
-                    setFormData({ ...formData, higherIsBad: checked })
-                  }
-                />
-                <Label htmlFor="higherIsBad">Higher values are worse</Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : editingProperty ? (
-                  "Update"
-                ) : (
-                  "Create"
-                )}
-              </Button>
-            </DialogFooter>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : editingProperty ? (
+                    "Update"
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

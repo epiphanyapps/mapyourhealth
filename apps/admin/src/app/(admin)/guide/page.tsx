@@ -77,14 +77,16 @@ const capabilityRows: CapabilityRow[] = [
   {
     section: "Jurisdictions",
     route: "/jurisdictions",
-    whatYouCanDo: "Add or rename regulatory regions (countries, states, EU, WHO).",
+    whatYouCanDo:
+      "Add or rename regulatory regions (countries, states, EU, WHO).",
     bulk: "No",
     mobile: "Drives WHO vs. local column on water table",
   },
   {
     section: "Categories",
     route: "/categories",
-    whatYouCanDo: "Top-level dashboard groupings (Water, Air, …): name, icon, color, isActive.",
+    whatYouCanDo:
+      "Top-level dashboard groupings (Water, Air, …): name, icon, color, isActive.",
     bulk: "No",
     mobile: "Dashboard category cards",
   },
@@ -123,7 +125,8 @@ const capabilityRows: CapabilityRow[] = [
   {
     section: "Landing Page",
     route: "/landing-page",
-    whatYouCanDo: "Edit the marketing landing page (hero copy, logo, CTA, theme preview).",
+    whatYouCanDo:
+      "Edit the marketing landing page (hero copy, logo, CTA, theme preview).",
     bulk: "No",
     mobile: "—  (web landing only)",
   },
@@ -147,19 +150,22 @@ const capabilityRows: CapabilityRow[] = [
     whatYouCanDo:
       "Plot industrial sites / landfills / spills on a map with severity, impact radius, status.",
     bulk: "No",
-    mobile: "Not surfaced — consumer card removed in #309",
+    mobile:
+      "Orphan — consumer card removed in #309. Decision pending on EPI-25.",
   },
   {
     section: "Testing Guide",
     route: "/testing",
-    whatYouCanDo: "Internal QA reference: staging URLs, test accounts, smoke checklist.",
+    whatYouCanDo:
+      "Internal QA reference: staging URLs, test accounts, smoke checklist.",
     bulk: "No",
     mobile: "—",
   },
   {
     section: "Guide",
     route: "/guide",
-    whatYouCanDo: "This page — what each admin section does and how it reaches mobile.",
+    whatYouCanDo:
+      "This page — what each admin section does and how it reaches mobile.",
     bulk: "No",
     mobile: "—",
   },
@@ -177,7 +183,7 @@ const capabilityRows: CapabilityRow[] = [
     whatYouCanDo:
       "Define observed-property catalog (radon, lyme_disease, …): zone / endemic / numeric / incidence / binary.",
     bulk: "Export only",
-    mobile: "—  (admin-curated catalog)",
+    mobile: "Orphan — no mobile consumer. Decision pending on EPI-25.",
   },
   {
     section: "Property Thresholds",
@@ -185,7 +191,7 @@ const capabilityRows: CapabilityRow[] = [
     whatYouCanDo:
       "Per-jurisdiction rules per property (zone-mapping JSON, endemic-is-danger flag, incidence cutoffs).",
     bulk: "No",
-    mobile: "—  (admin-curated catalog)",
+    mobile: "Orphan — no mobile consumer. Decision pending on EPI-25.",
   },
   {
     section: "Observations",
@@ -193,7 +199,8 @@ const capabilityRows: CapabilityRow[] = [
     whatYouCanDo:
       "Per-location observation (radon zone for a county, Lyme endemic status for a province, …).",
     bulk: "No",
-    mobile: "Not surfaced — consumer card removed in #309",
+    mobile:
+      "Orphan — consumer card removed in #309. Decision pending on EPI-25.",
   },
 ];
 
@@ -211,10 +218,11 @@ const dataPatterns = [
     bulk: "Yes — Water Quality + Air Pollution tabs accept CSV / JSON / Excel.",
   },
   {
-    pattern: "Reference catalog",
-    examples: "EPA radon zones, INSPQ Lyme endemic status, landfill location + impact radius.",
+    pattern: "Reference catalog (orphan — see EPI-25)",
+    examples:
+      "EPA radon zones, INSPQ Lyme endemic status, landfill location + impact radius.",
     where: "/observations (per-record) or /pollution-sources (map-pin)",
-    bulk: "No bulk path today — coordinate before loading large datasets.",
+    bulk: "No bulk path today, and the mobile consumer cards were removed in #309 — do not enter data here until EPI-25 closes.",
   },
 ];
 
@@ -237,8 +245,8 @@ export default function GuidePage() {
             Capabilities at a glance
           </CardTitle>
           <CardDescription>
-            Every admin section in one row: what you can do, whether bulk
-            upload exists, and how a mobile user feels your change.
+            Every admin section in one row: what you can do, whether bulk upload
+            exists, and how a mobile user feels your change.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -255,7 +263,10 @@ export default function GuidePage() {
               </thead>
               <tbody>
                 {capabilityRows.map((row) => (
-                  <tr key={row.route} className="border-b last:border-0 align-top">
+                  <tr
+                    key={row.route}
+                    className="border-b last:border-0 align-top"
+                  >
                     <td className="py-2 pr-4 font-medium whitespace-nowrap">
                       {row.section}
                     </td>
@@ -313,9 +324,14 @@ export default function GuidePage() {
               </thead>
               <tbody>
                 {dataPatterns.map((row) => (
-                  <tr key={row.pattern} className="border-b last:border-0 align-top">
+                  <tr
+                    key={row.pattern}
+                    className="border-b last:border-0 align-top"
+                  >
                     <td className="py-2 pr-4 font-medium">{row.pattern}</td>
-                    <td className="py-2 pr-4 text-muted-foreground">{row.examples}</td>
+                    <td className="py-2 pr-4 text-muted-foreground">
+                      {row.examples}
+                    </td>
                     <td className="py-2 pr-4">
                       <code className="px-1 py-0.5 bg-muted rounded text-xs">
                         {row.where}
@@ -432,9 +448,7 @@ export default function GuidePage() {
               be headers.
             </p>
             <pre className="bg-muted p-4 rounded-lg overflow-x-auto text-sm">
-              <code>
-                city,state,country,contaminantId,value,source
-              </code>
+              <code>city,state,country,contaminantId,value,source</code>
             </pre>
           </div>
 
@@ -460,9 +474,9 @@ export default function GuidePage() {
           <div>
             <h3 className="font-semibold mb-2">Excel Format</h3>
             <p className="text-sm text-muted-foreground mb-2">
-              Upload an Excel file (<code className="px-1 py-0.5 bg-muted rounded">.xlsx</code>)
-              with the same column structure as CSV. The first sheet will be
-              read.
+              Upload an Excel file (
+              <code className="px-1 py-0.5 bg-muted rounded">.xlsx</code>) with
+              the same column structure as CSV. The first sheet will be read.
             </p>
           </div>
 
@@ -470,30 +484,42 @@ export default function GuidePage() {
             <h3 className="font-semibold mb-2">Required Fields</h3>
             <ul className="text-sm space-y-1 list-disc ml-6 text-muted-foreground">
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">city</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  city
+                </code>{" "}
                 — City name (e.g., &quot;Beverly Hills&quot;)
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">state</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  state
+                </code>{" "}
                 — State or province code (e.g., &quot;CA&quot;, &quot;QC&quot;)
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">country</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  country
+                </code>{" "}
                 — Country code (e.g., &quot;US&quot;, &quot;CA&quot;)
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">contaminantId</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  contaminantId
+                </code>{" "}
                 — ID of the contaminant (e.g.,{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">lead</code>,{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">nitrate</code>,{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">radon</code>)
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">value</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  value
+                </code>{" "}
                 — Numeric measurement value
               </li>
               <li>
-                <code className="px-1 py-0.5 bg-muted rounded text-foreground">source</code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded text-foreground">
+                  source
+                </code>{" "}
                 — Data source attribution (optional, e.g., &quot;EPA Report
                 2026&quot;)
               </li>
@@ -521,8 +547,7 @@ export default function GuidePage() {
               tracked by the system. There are 172+ contaminant types, each with
               a unique ID, name, unit of measurement, and category (e.g., Water,
               Air, Health, Disaster). Managed from the{" "}
-              <code className="px-1 py-0.5 bg-muted rounded">/stats</code>{" "}
-              page.
+              <code className="px-1 py-0.5 bg-muted rounded">/stats</code> page.
             </p>
           </div>
 
@@ -680,9 +705,7 @@ export default function GuidePage() {
             </div>
 
             <div>
-              <h3 className="font-semibold mb-1">
-                Location → Measurements
-              </h3>
+              <h3 className="font-semibold mb-1">Location → Measurements</h3>
               <p className="text-muted-foreground">
                 Measurements are recorded against a specific Location and
                 Contaminant. Each measurement has a value, unit, timestamp, and
@@ -745,17 +768,15 @@ export default function GuidePage() {
               </li>
               <li>
                 Use the{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">
-                  measuredAt
-                </code>{" "}
+                <code className="px-1 py-0.5 bg-muted rounded">measuredAt</code>{" "}
                 field accurately — it determines the temporal ordering of
                 measurements and which one is considered &quot;current.&quot;
               </li>
               <li>
                 Include a meaningful{" "}
                 <code className="px-1 py-0.5 bg-muted rounded">source</code>{" "}
-                value for traceability (e.g., &quot;EPA Annual Report
-                2026&quot; rather than just &quot;EPA&quot;).
+                value for traceability (e.g., &quot;EPA Annual Report 2026&quot;
+                rather than just &quot;EPA&quot;).
               </li>
               <li>
                 When updating measurements, import the corrected data with
@@ -779,18 +800,15 @@ export default function GuidePage() {
                 <span className="font-medium text-foreground">
                   Mismatched location fields
                 </span>{" "}
-                — The{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">city</code>,{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">state</code>,
+                — The <code className="px-1 py-0.5 bg-muted rounded">city</code>
+                , <code className="px-1 py-0.5 bg-muted rounded">state</code>,
                 and{" "}
-                <code className="px-1 py-0.5 bg-muted rounded">country</code>{" "}
-                in your import file must match existing Location records. Check
-                for typos and case sensitivity.
+                <code className="px-1 py-0.5 bg-muted rounded">country</code> in
+                your import file must match existing Location records. Check for
+                typos and case sensitivity.
               </li>
               <li>
-                <span className="font-medium text-foreground">
-                  Wrong units
-                </span>{" "}
+                <span className="font-medium text-foreground">Wrong units</span>{" "}
                 — Ensure the unit matches what the contaminant expects. For
                 example, lead is measured in ppb, not mg/L. Using wrong units
                 will produce incorrect safety assessments.
