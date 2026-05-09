@@ -290,6 +290,17 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [navigation],
   )
 
+  // Clear the selected location — drops route params so the dashboard falls
+  // back to its empty state and (on web) the ?city=… query param is removed.
+  const handleClearLocation = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Dashboard", params: undefined }],
+      }),
+    )
+  }, [navigation])
+
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
     const location = await getLocationFromGPS()
@@ -846,6 +857,7 @@ View details: ${shareUrl}`
             : "Unknown"
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+        onClear={handleClearLocation}
       />
 
       {/* Cascade-scope provenance: only renders for state/country fallback (#123) */}
