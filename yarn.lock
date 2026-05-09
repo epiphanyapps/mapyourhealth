@@ -8621,6 +8621,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@chenglou/pretext@npm:^0.0.5":
+  version: 0.0.5
+  resolution: "@chenglou/pretext@npm:0.0.5"
+  checksum: 10c0/5139b39a166fbe7d1e0cf31c95f83125cc0658d8951b19dff3ac14b94d08c2bb53e954801c0325dac79c5b2b21157fa7763e0c561d46773baa37253f1a526242
+  languageName: node
+  linkType: hard
+
 "@dotenvx/dotenvx@npm:^1.48.4":
   version: 1.52.0
   resolution: "@dotenvx/dotenvx@npm:1.52.0"
@@ -11118,6 +11125,7 @@ __metadata:
     apisauce: "npm:3.1.1"
     aws-amplify: "npm:^6.13.0"
     babel-jest: "npm:^29.2.1"
+    boneyard-js: "npm:^1.8.1"
     date-fns: "npm:^4.1.0"
     dependency-cruiser: "npm:^17.0.2"
     eslint: "npm:^8.57.0"
@@ -17896,6 +17904,44 @@ __metadata:
     raw-body: "npm:^3.0.1"
     type-is: "npm:^2.0.1"
   checksum: 10c0/95a830a003b38654b75166ca765358aa92ee3d561bf0e41d6ccdde0e1a0c9783cab6b90b20eb635d23172c010b59d3563a137a738e74da4ba714463510d05137
+  languageName: node
+  linkType: hard
+
+"boneyard-js@npm:^1.8.1":
+  version: 1.8.1
+  resolution: "boneyard-js@npm:1.8.1"
+  dependencies:
+    "@chenglou/pretext": "npm:^0.0.5"
+    playwright: "npm:^1.58.2"
+  peerDependencies:
+    "@angular/core": ">=14"
+    preact: ">=10"
+    react: ">=18"
+    react-native: ">=0.71"
+    svelte: ">=5.29"
+    vite: ">=5"
+    vue: ">=3"
+  dependenciesMeta:
+    "@chenglou/pretext":
+      optional: true
+  peerDependenciesMeta:
+    "@angular/core":
+      optional: true
+    preact:
+      optional: true
+    react:
+      optional: true
+    react-native:
+      optional: true
+    svelte:
+      optional: true
+    vite:
+      optional: true
+    vue:
+      optional: true
+  bin:
+    boneyard-js: bin/cli.js
+  checksum: 10c0/07e70cb1edd2b22c7c46952916e061bd72d09e20cb2a7360de9ec044ac025cdb6061ce2fc6eaaee5b4855ce199f3f414e21e4af99d658083dd573f1cf1a51f62
   languageName: node
   linkType: hard
 
@@ -26672,6 +26718,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"playwright-core@npm:1.59.1":
+  version: 1.59.1
+  resolution: "playwright-core@npm:1.59.1"
+  bin:
+    playwright-core: cli.js
+  checksum: 10c0/d41a74d9681ce3beb3d5239e9ed577710b4ad099a6ca2476219c6599d51e9cb4b80bd72ed82c528da6a5d929c18ae3b872cf02bb83f78fa1c2cb9199c501abee
+  languageName: node
+  linkType: hard
+
 "playwright@npm:1.57.0":
   version: 1.57.0
   resolution: "playwright@npm:1.57.0"
@@ -26699,6 +26754,21 @@ __metadata:
   bin:
     playwright: cli.js
   checksum: 10c0/d060d9b7cc124bd8b5dffebaab5e84f6b34654a553758fe7b19cc598dfbee93f6ecfbdc1832b40a6380ae04eade86ef3285ba03aa0b136799e83402246dc0727
+  languageName: node
+  linkType: hard
+
+"playwright@npm:^1.58.2":
+  version: 1.59.1
+  resolution: "playwright@npm:1.59.1"
+  dependencies:
+    fsevents: "npm:2.3.2"
+    playwright-core: "npm:1.59.1"
+  dependenciesMeta:
+    fsevents:
+      optional: true
+  bin:
+    playwright: cli.js
+  checksum: 10c0/dfe38396e616e5c4f98825ce90037bb96e477c5a2bd9258a24854f8ce72a8a41427b19098863866f85aa0216e70287dd537c4438d761aca93995e31ae099c533
   languageName: node
   linkType: hard
 
