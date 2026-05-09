@@ -211,12 +211,16 @@ export function useLocationData(
     }
 
     // Online: cascade city → state → country via the shared util.
+    // getRowAnchor restricts state/country fallback to anchored rows so a
+    // by-state fetch for QC does not leak Sorel-Tracy-keyed measurements
+    // onto a Montreal user's screen (EPI-17 / EPI-18 cross-city bleed).
     const { data: measurements, scope } = await fetchWithLocationFallback(
       { city, state, country },
       {
         byCity: getLocationMeasurements,
         byState: getLocationMeasurementsByState,
         byCountry: getLocationMeasurementsByCountry,
+        getRowAnchor: (m) => ({ city: m.city, state: m.state }),
       },
     )
 
