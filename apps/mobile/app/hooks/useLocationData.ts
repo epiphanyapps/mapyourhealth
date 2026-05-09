@@ -21,8 +21,17 @@ import {
 } from "@/services/amplify/data"
 import { load, save, remove } from "@/utils/storage"
 
-/** Cache key prefix for location stats */
-const CACHE_KEY_PREFIX = "location_stats_"
+/**
+ * Cache key prefix for location stats.
+ *
+ * Bumped to `_v2_` alongside the EPI-17 / EPI-18 cascade-bleed fix so any
+ * MMKV entries written under the old `location_stats_` prefix — which may
+ * contain leaked sibling-city data from the pre-fix cascade — are
+ * orphaned rather than served to offline users for up to 24 hours after
+ * the fix deploys. Old entries remain in storage until MMKV evicts them
+ * naturally; the cost is negligible (each entry is a few KB).
+ */
+const CACHE_KEY_PREFIX = "location_stats_v2_"
 
 /** Cache duration in milliseconds (24 hours) */
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -211,12 +220,16 @@ export function useLocationData(
     }
 
     // Online: cascade city → state → country via the shared util.
+    // getRowAnchor restricts state/country fallback to anchored rows so a
+    // by-state fetch for QC does not leak Sorel-Tracy-keyed measurements
+    // onto a Montreal user's screen (EPI-17 / EPI-18 cross-city bleed).
     const { data: measurements, scope } = await fetchWithLocationFallback(
       { city, state, country },
       {
         byCity: getLocationMeasurements,
         byState: getLocationMeasurementsByState,
         byCountry: getLocationMeasurementsByCountry,
+        getRowAnchor: (m) => ({ city: m.city, state: m.state }),
       },
     )
 
