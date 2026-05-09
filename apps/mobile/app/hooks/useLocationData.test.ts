@@ -484,3 +484,49 @@ describe("useLocationData", () => {
     })
   })
 })
+
+describe("filterStatsBySubCategory (EPI-18 sub-bug A)", () => {
+  // Re-import to get the helper without going through the hook.
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { filterStatsBySubCategory } = require("./useLocationData")
+
+  type Item = {
+    stat: { statId: string; value: number; status: string; lastUpdated: string }
+    definition: { id: string; category: string }
+  }
+
+  const items: Item[] = [
+    {
+      stat: { statId: "nitrate", value: 10000, status: "warning", lastUpdated: "" },
+      definition: { id: "nitrate", category: "fertilizer" },
+    },
+    {
+      stat: { statId: "atrazine", value: 5, status: "danger", lastUpdated: "" },
+      definition: { id: "atrazine", category: "pesticide" },
+    },
+    {
+      stat: { statId: "lead", value: 5, status: "danger", lastUpdated: "" },
+      definition: { id: "lead", category: "inorganic" },
+    },
+  ]
+
+  it("filters to a single sub-category when subCategoryId is provided", () => {
+    const result = filterStatsBySubCategory(items, "fertilizer")
+    expect(result.map((i: Item) => i.stat.statId)).toEqual(["nitrate"])
+  })
+
+  it("returns the input unchanged when subCategoryId is undefined", () => {
+    const result = filterStatsBySubCategory(items, undefined)
+    expect(result).toBe(items)
+  })
+
+  it("returns the input unchanged when subCategoryId is an empty string", () => {
+    const result = filterStatsBySubCategory(items, "")
+    expect(result).toBe(items)
+  })
+
+  it("returns an empty array when no contaminant matches", () => {
+    const result = filterStatsBySubCategory(items, "microbiological")
+    expect(result).toEqual([])
+  })
+})

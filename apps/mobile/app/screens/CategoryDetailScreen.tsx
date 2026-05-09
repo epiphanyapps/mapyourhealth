@@ -33,7 +33,11 @@ import {
   getLocalStandardsLink,
 } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
-import { useLocationData, getRiskStatsForCategory } from "@/hooks/useLocationData"
+import {
+  useLocationData,
+  getRiskStatsForCategory,
+  filterStatsBySubCategory,
+} from "@/hooks/useLocationData"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
@@ -86,11 +90,15 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
     }
   }, [refresh])
 
-  // Get risk stats for this category (only warning/danger, no safe stats)
-  const stats = useMemo(
-    () => (cityData ? getRiskStatsForCategory(cityData, category, statDefinitions) : []),
-    [cityData, category, statDefinitions],
-  )
+  // Get risk stats for this category (only warning/danger, no safe stats).
+  // When the user landed here by tapping a sub-category on the dashboard,
+  // `subCategoryId` is set in the route params — narrow the rows to the
+  // contaminants that actually belong to that sub-category (EPI-18 sub-bug A).
+  const stats = useMemo(() => {
+    if (!cityData) return []
+    const all = getRiskStatsForCategory(cityData, category, statDefinitions)
+    return filterStatsBySubCategory(all, subCategoryId)
+  }, [cityData, category, statDefinitions, subCategoryId])
 
   // Get category display info - try dynamic first, then fallback to hardcoded
   const categoryId = String(category)

@@ -440,3 +440,25 @@ export function getRiskStatsForCategory(
     ({ stat }) => stat.status === "danger" || stat.status === "warning",
   )
 }
+
+/**
+ * Filter a stats array to a single sub-category (Fertilizers, Pesticides,
+ * Heavy Metals & Inorganics, etc.) by matching the contaminant's own
+ * `category` field against the sub-category id from the route.
+ *
+ * Used when CategoryDetailScreen is opened from a sub-category tap on the
+ * dashboard so that "Fertilizers" surfaces only fertilizer contaminants
+ * instead of every water contaminant. EPI-18 sub-bug A.
+ *
+ * `subCategoryId` is the value carried in the route param — lowercased and
+ * singular, matching the storage shape of `Contaminant.category` (e.g.
+ * "fertilizer", "pesticide", "radioactive", "inorganic", "organic",
+ * "disinfectant", "microbiological").
+ */
+export function filterStatsBySubCategory<T extends { definition: { category?: string | null } }>(
+  stats: T[],
+  subCategoryId: string | undefined,
+): T[] {
+  if (!subCategoryId) return stats
+  return stats.filter(({ definition }) => definition.category === subCategoryId)
+}
