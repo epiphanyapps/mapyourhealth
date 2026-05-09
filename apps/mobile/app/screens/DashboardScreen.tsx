@@ -37,7 +37,11 @@ import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useAppConfig } from "@/hooks/useAppConfig"
 import { useLocation } from "@/hooks/useLocation"
-import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
+import {
+  useLocationData,
+  getWorstStatusForCategory,
+  getRiskStatsForCategory,
+} from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
@@ -940,6 +944,9 @@ View details: ${shareUrl}`
               categoryName={getCategoryDisplayName(category)}
               status={getStatusForCategory(category)}
               getSubCategoryStatus={getSubCategoryStatusForCategory}
+              riskCount={
+                cityData ? getRiskStatsForCategory(cityData, category, statDefinitions).length : 0
+              }
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {
                   category,

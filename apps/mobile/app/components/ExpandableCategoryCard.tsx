@@ -57,6 +57,11 @@ export interface ExpandableCategoryCardProps {
    */
   getSubCategoryStatus?: (subCategoryId: string) => SubCategoryStatusResult
   /**
+   * Number of contaminants exceeding thresholds for this category. Used to
+   * interpolate the `{count}` placeholder in the info-button description.
+   */
+  riskCount?: number
+  /**
    * Optional style override for the container
    */
   style?: StyleProp<ViewStyle>
@@ -79,13 +84,20 @@ export interface ExpandableCategoryCardProps {
  * />
  */
 export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
-  const { category, categoryName, status, onPress, getSubCategoryStatus, style } = props
+  const { category, categoryName, status, onPress, getSubCategoryStatus, riskCount, style } = props
   const { theme } = useAppTheme()
-  const { getCategoryById, getSubCategoriesByCategoryId } = useCategories()
+  const { getCategoryById, getSubCategoriesByCategoryId, getCategoryDescription } = useCategories()
 
   // Get category ID as string (handles both enum and string)
   const categoryId = String(category)
   const categoryData = getCategoryById(categoryId)
+  // Resolve the {count} placeholder when we know the risk count for this category;
+  // otherwise fall back to the raw template so we don't render "{count}" verbatim
+  // for callers that haven't been updated.
+  const resolvedDescription =
+    riskCount !== undefined
+      ? getCategoryDescription(categoryId, { count: riskCount })
+      : categoryData?.description
 
   // Try dynamic sub-categories first, fallback to legacy config
   const dynamicSubCategories = getSubCategoriesByCategoryId(categoryId)
@@ -309,8 +321,8 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
         <View style={$textContainer}>
           <Text style={$categoryNameText}>{categoryName}</Text>
         </View>
-        {categoryData?.description && (
-          <CategoryInfoButton name={categoryName} description={categoryData.description} />
+        {resolvedDescription && (
+          <CategoryInfoButton name={categoryName} description={resolvedDescription} />
         )}
         {hasSubCategories ? (
           <Animated.View style={[$chevronContainer, animatedChevronStyle]}>
