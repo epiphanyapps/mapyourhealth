@@ -311,6 +311,34 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [cityData, contaminants, getThreshold, getWHOThreshold, currentJurisdictionCode],
   )
 
+  // Build the contaminant rows shown when a sub-category is expanded inline
+  // on the dashboard. Joins `cityData.stats` to the contaminant catalog by
+  // statId and filters by `contaminant.category === subCategoryId`.
+  const getSubCategoryContent = useCallback(
+    (subCategoryId: string) => {
+      if (!cityData) return []
+
+      const subCategoryContaminantIds = new Set(
+        contaminants.filter((c) => c.category === subCategoryId).map((c) => c.id),
+      )
+      if (subCategoryContaminantIds.size === 0) return []
+
+      return cityData.stats
+        .filter((stat) => subCategoryContaminantIds.has(stat.statId))
+        .map((stat) => {
+          const definition = statDefinitions.find((d) => d.id === stat.statId)
+          return {
+            statId: stat.statId,
+            name: definition?.name ?? stat.statId,
+            value: stat.value,
+            unit: definition?.unit ?? "",
+            status: stat.status,
+          }
+        })
+    },
+    [cityData, contaminants, statDefinitions],
+  )
+
   // Categories to display (water and air only - health and disaster removed per issue #126)
   const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
 
@@ -959,6 +987,7 @@ View details: ${shareUrl}`
               riskCount={
                 cityData ? getRiskStatsForCategory(cityData, category, statDefinitions).length : 0
               }
+              getSubCategoryContent={getSubCategoryContent}
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {
                   category,
