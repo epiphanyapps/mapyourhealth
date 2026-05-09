@@ -35,7 +35,11 @@ import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
-import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
+import {
+  useLocationData,
+  getWorstStatusForCategory,
+  getRiskStatsForCategory,
+} from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
@@ -275,6 +279,17 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     },
     [navigation],
   )
+
+  // Clear the selected location — drops route params so the dashboard falls
+  // back to its empty state and (on web) the ?city=… query param is removed.
+  const handleClearLocation = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Dashboard", params: undefined }],
+      }),
+    )
+  }, [navigation])
 
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
@@ -659,6 +674,17 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
@@ -710,6 +736,17 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons
@@ -802,6 +839,7 @@ View details: ${shareUrl}`
             : "Unknown"
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+        onClear={handleClearLocation}
       />
 
       {/* Cascade-scope provenance: only renders for state/country fallback (#123) */}
@@ -896,6 +934,9 @@ View details: ${shareUrl}`
               categoryName={getCategoryDisplayName(category)}
               status={getStatusForCategory(category)}
               getSubCategoryStatus={getSubCategoryStatusForCategory}
+              riskCount={
+                cityData ? getRiskStatsForCategory(cityData, category, statDefinitions).length : 0
+              }
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {
                   category,
