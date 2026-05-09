@@ -70,7 +70,6 @@
     "@tanstack/react-query": "^5.90.21",
     "apisauce": "3.1.1",
     "aws-amplify": "^6.13.0",
-    "boneyard-js": "^1.8.1",
     "date-fns": "^4.1.0",
     "expo": "^54.0.33",
     "expo-application": "~7.0.7",

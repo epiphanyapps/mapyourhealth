@@ -14,8 +14,8 @@ interface DashboardSkeletonProps {
 /**
  * DashboardSkeleton — placeholder that mirrors DashboardScreen's loaded layout
  * (LocationHeader, scope badge, action buttons, two category cards, Report
- * Hazard CTA). Used as the boneyard `fallback` while bones haven't been
- * captured yet, and as the standalone loading view in the meantime.
+ * Hazard CTA). Rendered in the loading branch in place of the previous
+ * ActivityIndicator + "Loading safety data..." text.
  *
  * All blocks pulse via SkeletonBlock; reduced-motion is honored at the
  * primitive level so callers don't need to handle it.

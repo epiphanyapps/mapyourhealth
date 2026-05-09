@@ -46,17 +46,6 @@ export type AppStackParamList = {
     state: string
     country: string
   }
-  LocationObservations: {
-    city: string
-    state: string
-    country: string
-    jurisdictionCode?: string
-  }
-  PollutionSources: {
-    city: string
-    state: string
-    country: string
-  }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST
 }
