@@ -49,8 +49,6 @@ export function ContaminantTable(props: ContaminantTableProps) {
   const { rows, unit, onWhoHeaderPress, onLocalHeaderPress } = props
   const { theme } = useAppTheme()
 
-  const displayUnit = unit || (rows.length > 0 ? rows[0].unit : "")
-
   const $container: ViewStyle = {
     marginTop: 16,
   }
@@ -143,13 +141,20 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
   const localJurisdictionLabel = rows.length > 0 ? rows[0].localJurisdictionName : "LOCAL"
 
+  // EPI-18 sub-bug C: render each row's own unit instead of the first
+  // row's unit (or the optional `unit` prop). The previous behavior caused
+  // every cell to render with "Bq/L" — the first row's unit, since radioactive
+  // contaminants tend to sort first — so Lead and Mercury (μg/L) showed up
+  // labeled in becquerels.
   const formatValue = (
     value: number | null,
+    rowUnit: string,
     options?: { isUnregulated?: boolean; isLocal?: boolean },
   ): string => {
     if (options?.isUnregulated) return "UNREGULATED"
     if (value === null) return options?.isLocal ? "N/A" : "NO STANDARD"
-    return `${value} ${displayUnit}`
+    const effectiveUnit = unit || rowUnit
+    return `${value} ${effectiveUnit}`
   }
 
   return (
@@ -200,12 +205,15 @@ export function ContaminantTable(props: ContaminantTableProps) {
             <Text
               style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
             >
-              {formatValue(row.localLimit, { isUnregulated: row.isUnregulated, isLocal: true })}
+              {formatValue(row.localLimit, row.unit, {
+                isUnregulated: row.isUnregulated,
+                isLocal: true,
+              })}
             </Text>
           </View>
           <View style={$valueCell}>
             <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
-              {formatValue(row.whoLimit)}
+              {formatValue(row.whoLimit, row.unit)}
             </Text>
           </View>
           <View style={$statusCell}>
