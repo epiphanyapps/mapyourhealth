@@ -1,20 +1,12 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
 import { FC, useCallback, useEffect, useMemo, useState } from "react"
-import {
-  View,
-  ViewStyle,
-  Pressable,
-  TextStyle,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-  Share,
-} from "react-native"
+import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl, Share } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
 
 import { AdminWarningBanner } from "@/components/AdminWarningBanner"
+import { DashboardSkeleton } from "@/components/DashboardSkeleton"
 import {
   ExpandableCategoryCard,
   SubCategoryStatusResult,
@@ -40,6 +32,7 @@ import {
   getWorstStatusForCategory,
   getRiskStatsForCategory,
 } from "@/hooks/useLocationData"
+import { useMinimumDuration } from "@/hooks/useMinimumDuration"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
@@ -143,7 +136,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   const {
     cityData,
-    isLoading,
+    isLoading: isLoadingRaw,
     error,
     isMockData = false,
     isCachedData = false,
@@ -152,6 +145,10 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     scope,
     refresh,
   } = locationData
+
+  // Hold the loading state for at least 250ms so the skeleton does not flash
+  // on warm-cache rehydration (where isLoading flips false in <50ms).
+  const isLoading = useMinimumDuration(isLoadingRaw, 250)
 
   // Track city view for analytics
   useEffect(() => {
@@ -473,13 +470,6 @@ View details: ${shareUrl}`
     marginBottom: 16,
   }
 
-  const $loadingContainer: ViewStyle = {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-  }
-
   const $retryButton: ViewStyle = {
     paddingHorizontal: 24,
     paddingVertical: 12,
@@ -638,10 +628,7 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
-        <View style={$loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.tint} />
-          <Text style={{ marginTop: 12, color: theme.colors.textDim }}>Loading safety data...</Text>
-        </View>
+        <DashboardSkeleton />
         <ProfileMenu
           visible={isProfileMenuVisible}
           onClose={() => setIsProfileMenuVisible(false)}
