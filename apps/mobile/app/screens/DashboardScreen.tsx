@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl, Share } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
@@ -43,6 +43,38 @@ import { trackEvent } from "@/utils/analytics"
 
 /** Orange color for WHO-only exceedances */
 const WHO_EXCEEDANCE_COLOR = "#F97316"
+
+// Survives the screen remount that `CommonActions.reset` triggers on every
+// city change. `useLocationData` rehydrates from MMKV via `initialData`, so
+// cached cities land in `success` state with `isLoading: false` and the
+// skeleton would otherwise never show. `resetDashboardToLocation` stamps
+// this on dispatch; the next mount consumes it to seed an initial loading
+// state. All city-changing reset paths (search, GPS, primarySubscription
+// auto-redirect) must go through the helper to stay consistent — the bare
+// "clear location" path intentionally bypasses it.
+let pendingSearchAt: number | null = null
+const SEARCH_HANDOFF_WINDOW_MS = 1000
+const SEARCH_SKELETON_HOLD_MS = 400
+
+interface DashboardResetParams {
+  city: string
+  state: string
+  country: string
+  address?: string
+}
+
+function resetDashboardToLocation(
+  navigation: AppStackScreenProps<"Dashboard">["navigation"],
+  params: DashboardResetParams,
+): void {
+  pendingSearchAt = Date.now()
+  navigation.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: "Dashboard", params }],
+    }),
+  )
+}
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -95,21 +127,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Sync primary subscription to route params when no location is set yet
   useEffect(() => {
     if (!route.params?.city && isAuthenticated && primarySubscription && !subsLoading) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Dashboard",
-              params: {
-                city: primarySubscription.city,
-                state: primarySubscription.state,
-                country: primarySubscription.country,
-              },
-            },
-          ],
-        }),
-      )
+      resetDashboardToLocation(navigation, {
+        city: primarySubscription.city,
+        state: primarySubscription.state,
+        country: primarySubscription.country,
+      })
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])
 
@@ -146,9 +168,37 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     refresh,
   } = locationData
 
+  // Force-show the skeleton on every search. MMKV-cached cities rehydrate
+  // through `initialData` with `isLoading: false`, which otherwise leaves
+  // search with no visual feedback. Two paths cover both navigation modes:
+  //   1. Module-level handoff for `CommonActions.reset` (remounts the screen).
+  //   2. City-change ref for the same-instance case (e.g., setParams).
+  const [isSearching, setIsSearching] = useState<boolean>(() => {
+    if (pendingSearchAt !== null && Date.now() - pendingSearchAt < SEARCH_HANDOFF_WINDOW_MS) {
+      pendingSearchAt = null
+      return true
+    }
+    return false
+  })
+  const prevCityRef = useRef<string | undefined>(currentLocation?.city)
+
+  useEffect(() => {
+    const newCity = currentLocation?.city
+    if (newCity && newCity !== prevCityRef.current) {
+      setIsSearching(true)
+    }
+    prevCityRef.current = newCity
+  }, [currentLocation?.city])
+
+  useEffect(() => {
+    if (!isSearching) return
+    const timer = setTimeout(() => setIsSearching(false), SEARCH_SKELETON_HOLD_MS)
+    return () => clearTimeout(timer)
+  }, [isSearching])
+
   // Hold the loading state for at least 250ms so the skeleton does not flash
   // on warm-cache rehydration (where isLoading flips false in <50ms).
-  const isLoading = useMinimumDuration(isLoadingRaw, 250)
+  const isLoading = useMinimumDuration(isLoadingRaw || isSearching, 250)
 
   // Track city view for analytics
   useEffect(() => {
@@ -267,12 +317,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
     (city: string, state: string, country: string, addr?: string) => {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "Dashboard", params: { city, state, country, address: addr } }],
-        }),
-      )
+      resetDashboardToLocation(navigation, { city, state, country, address: addr })
     },
     [navigation],
   )
@@ -292,21 +337,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const handleLocationPress = useCallback(async () => {
     const location = await getLocationFromGPS()
     if (location) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Dashboard",
-              params: {
-                city: location.city,
-                state: location.state,
-                country: location.country,
-              },
-            },
-          ],
-        }),
-      )
+      resetDashboardToLocation(navigation, {
+        city: location.city,
+        state: location.state,
+        country: location.country,
+      })
     }
   }, [getLocationFromGPS, navigation])
 
