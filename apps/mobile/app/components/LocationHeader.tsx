@@ -65,12 +65,25 @@ export function LocationHeader(props: LocationHeaderProps) {
     marginTop: 2,
   }
 
+  // Pill chip: tinted background with a hairline border, small letter-spaced
+  // label preceded by a × glyph. Reads as part of the page's design language
+  // rather than a discovered close affordance.
   const $clearButton: ViewStyle = {
-    marginLeft: 8,
-    padding: 8,
-    borderRadius: 999,
+    marginLeft: 12,
+    flexDirection: "row",
     alignItems: "center",
-    justifyContent: "center",
+    gap: 6,
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: `${theme.colors.tint}40`, // ~25% alpha hairline
+    backgroundColor: `${theme.colors.tint}1A`, // ~10% alpha tint wash
+  }
+
+  const $clearButtonHover: ViewStyle = {
+    backgroundColor: `${theme.colors.tint}33`, // ~20% alpha on hover
+    borderColor: `${theme.colors.tint}80`, // ~50% alpha hairline
   }
 
   const $clearButtonWeb: ViewStyle | null =
@@ -79,6 +92,9 @@ export function LocationHeader(props: LocationHeaderProps) {
           touchAction: "manipulation",
           WebkitTapHighlightColor: "transparent",
           cursor: "pointer",
+          transitionProperty: "background-color, border-color, transform, opacity",
+          transitionDuration: "120ms",
+          transitionTimingFunction: "cubic-bezier(0.4, 0, 0.2, 1)",
         } as ViewStyle)
       : null
 
@@ -92,7 +108,27 @@ export function LocationHeader(props: LocationHeaderProps) {
         } as ViewStyle)
       : null
 
-  const $clearButtonPressed: ViewStyle = { opacity: 0.6 }
+  // Compositor-only feedback (transform + opacity) — safe under reduced motion.
+  const $clearButtonPressed: ViewStyle = {
+    opacity: 0.85,
+    transform: [{ scale: 0.97 }],
+  }
+
+  const $clearGlyph: TextStyle = {
+    fontSize: 15,
+    lineHeight: 15,
+    fontWeight: "400",
+    color: theme.colors.tint,
+  }
+
+  const $clearLabel: TextStyle = {
+    fontSize: 13,
+    fontWeight: "500",
+    letterSpacing: 0.4,
+    color: theme.colors.tint,
+    // Slight optical alignment with the glyph
+    lineHeight: 15,
+  }
 
   return (
     <View style={[$container, style]}>
@@ -114,32 +150,35 @@ export function LocationHeader(props: LocationHeaderProps) {
         <Pressable
           onPress={onClear}
           accessibilityRole="button"
-          accessibilityLabel="Clear location"
+          accessibilityLabel="Clear Location"
           accessibilityHint="Returns to the search screen"
           hitSlop={{ top: 8, right: 8, bottom: 8, left: 8 }}
           style={(state) => {
+            const hovered = (state as { hovered?: boolean }).hovered === true
             const focused = (state as { focused?: boolean }).focused === true
             return [
               $clearButton,
               $clearButtonWeb,
+              hovered && $clearButtonHover,
               state.pressed && $clearButtonPressed,
               focused && $clearButtonFocusedWeb,
             ]
           }}
         >
-          {(state) => {
-            const hovered = (state as { hovered?: boolean }).hovered === true
-            const focused = (state as { focused?: boolean }).focused === true
-            return (
-              <MaterialCommunityIcons
-                name="close"
-                size={20}
-                color={hovered || focused ? theme.colors.text : theme.colors.textDim}
-                accessibilityElementsHidden
-                importantForAccessibility="no-hide-descendants"
-              />
-            )
-          }}
+          <Text
+            style={$clearGlyph}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            ×
+          </Text>
+          <Text
+            style={$clearLabel}
+            accessibilityElementsHidden
+            importantForAccessibility="no-hide-descendants"
+          >
+            Clear
+          </Text>
         </Pressable>
       ) : null}
     </View>
