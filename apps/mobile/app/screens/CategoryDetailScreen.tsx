@@ -143,6 +143,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
         localLimit: hasLocalThreshold ? (localThreshold.limitValue ?? null) : null,
         localJurisdictionName,
         status: stat.status,
+        whoStatus: stat.whoStatus ?? stat.status,
+        localStatus: stat.localStatus ?? stat.status,
         isUnregulated: hasLocalThreshold && localThreshold.status === "not_controlled",
       }
     })

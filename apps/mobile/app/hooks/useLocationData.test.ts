@@ -22,6 +22,7 @@ jest.mock("../services/amplify/data", () => ({
 }))
 
 const mockGetThreshold = jest.fn()
+const mockGetWHOThreshold = jest.fn()
 const mockGetJurisdictionForLocation = jest.fn()
 
 jest.mock("../context/ContaminantsContext", () => ({
@@ -29,6 +30,7 @@ jest.mock("../context/ContaminantsContext", () => ({
     contaminants: mockContaminants,
     isLoading: false,
     getThreshold: mockGetThreshold,
+    getWHOThreshold: mockGetWHOThreshold,
     getJurisdictionForLocation: mockGetJurisdictionForLocation,
   }),
 }))
@@ -168,10 +170,7 @@ describe("useLocationData", () => {
     it("falls back to WHO when jurisdiction not found", async () => {
       mockGetLocationMeasurements.mockResolvedValue([newYorkMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue(undefined)
-      mockGetThreshold.mockImplementation((_contId, jCode) => {
-        if (jCode === "WHO") return whoThreshold
-        return null
-      })
+      mockGetWHOThreshold.mockReturnValue(whoThreshold)
 
       const { result } = renderHook(() => useLocationData("New York"), {
         wrapper: createWrapper(),
@@ -181,8 +180,13 @@ describe("useLocationData", () => {
         expect(result.current.cityData).not.toBeNull()
       })
 
-      // getThreshold should have been called with WHO fallback
-      expect(mockGetThreshold).toHaveBeenCalledWith("chlorite", "WHO")
+      // EPI-18 sub-bug B: WHO threshold is now resolved through the
+      // dedicated getWHOThreshold() helper rather than getThreshold(_, "WHO")
+      // so we always have it available alongside the local-jurisdiction
+      // threshold for the dual-status pills.
+      expect(mockGetWHOThreshold).toHaveBeenCalledWith("chlorite")
+      // And the local lookup is skipped — there is no local jurisdiction.
+      expect(mockGetThreshold).not.toHaveBeenCalledWith("chlorite", "WHO")
     })
   })
 
@@ -252,6 +256,11 @@ describe("useLocationData", () => {
       mockGetLocationMeasurements.mockResolvedValue([montrealMeasurement])
       mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
       mockGetThreshold.mockReturnValue(null)
+      // EPI-18 sub-bug B: status now considers both WHO and local thresholds.
+      // Explicitly null both so this test exercises the "no threshold at all"
+      // path rather than inheriting a leftover whoThreshold mock from a prior
+      // test (jest.clearAllMocks() clears history but not implementations).
+      mockGetWHOThreshold.mockReturnValue(null)
 
       const { result } = renderHook(() => useLocationData("Montreal"), {
         wrapper: createWrapper(),
@@ -262,6 +271,49 @@ describe("useLocationData", () => {
       })
 
       expect(result.current.cityData!.stats[0].status).toBe("safe")
+    })
+
+    it("splits status into whoStatus + localStatus when local is tighter than WHO (EPI-18 sub-bug B)", async () => {
+      // Realistic Boucherville case: Lead 5 µg/L is at the QC limit (5)
+      // but well under the WHO limit (10). Pre-fix the row read as a
+      // single "danger" badge that hid the WHO-vs-local distinction;
+      // post-fix the table can render whoStatus=safe + localStatus=danger.
+      const leadMeasurement = {
+        ...montrealMeasurement,
+        contaminantId: "lead",
+        value: 5,
+      }
+      const leadLocal = {
+        contaminantId: "lead",
+        jurisdictionCode: "CA-QC",
+        limitValue: 5,
+        warningRatio: 0.8,
+        status: "regulated",
+      }
+      const leadWho = {
+        contaminantId: "lead",
+        jurisdictionCode: "WHO",
+        limitValue: 10,
+        warningRatio: 0.8,
+        status: "regulated",
+      }
+      mockGetLocationMeasurements.mockResolvedValue([leadMeasurement])
+      mockGetJurisdictionForLocation.mockReturnValue({ code: "CA-QC" })
+      mockGetThreshold.mockReturnValue(leadLocal)
+      mockGetWHOThreshold.mockReturnValue(leadWho)
+
+      const { result } = renderHook(() => useLocationData("Montreal"), {
+        wrapper: createWrapper(),
+      })
+
+      await waitFor(() => {
+        expect(result.current.cityData).not.toBeNull()
+      })
+
+      const stat = result.current.cityData!.stats[0]
+      expect(stat.whoStatus).toBe("safe") // 5 < WHO warning (10*0.8=8)
+      expect(stat.localStatus).toBe("danger") // 5 >= QC limit (5)
+      expect(stat.status).toBe("danger") // worst-of-the-two
     })
   })
 
