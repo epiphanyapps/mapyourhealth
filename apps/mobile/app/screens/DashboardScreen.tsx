@@ -35,6 +35,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
+import { useAppConfig } from "@/hooks/useAppConfig"
 import { useLocation } from "@/hooks/useLocation"
 import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
@@ -79,6 +80,18 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     state: route.params?.state,
     country: route.params?.country,
   })
+  // Admin-controlled visibility for the Environmental Health and Pollution
+  // Sources cards. Fail-closed: hide while loading or on fetch error so the
+  // cards never appear without an explicit admin toggle.
+  const {
+    isEnabled: environmentalHealthCardEnabled,
+    isLoading: environmentalHealthCardConfigLoading,
+  } = useAppConfig("dashboard.environmentalHealth.enabled")
+  const { isEnabled: pollutionSourcesCardEnabled, isLoading: pollutionSourcesCardConfigLoading } =
+    useAppConfig("dashboard.pollutionSources.enabled")
+  const showEnvironmentalHealthCard =
+    environmentalHealthCardEnabled && !environmentalHealthCardConfigLoading
+  const showPollutionSourcesCard = pollutionSourcesCardEnabled && !pollutionSourcesCardConfigLoading
 
   // Helper to get display name from dynamic categories with fallback
   const getCategoryDisplayName = useCallback(
@@ -738,9 +751,10 @@ View details: ${shareUrl}`
           />
         </View>
         {adminBannersJsx}
-        {/* Pollution Sources Card — gated on a real location to avoid landing on
-            an empty PollutionSourcesScreen when no city/state is set. */}
-        {currentLocation && renderPollutionSourcesCard()}
+        {/* Pollution Sources Card — admin-gated via AppConfig flag and gated on
+            a real location to avoid landing on an empty PollutionSourcesScreen
+            when no city/state is set. */}
+        {currentLocation && showPollutionSourcesCard && renderPollutionSourcesCard()}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons
             name="map-marker-question"
@@ -940,39 +954,41 @@ View details: ${shareUrl}`
         ))}
       </View>
 
-      {/* Environmental Observations Card */}
-      <View style={$observationsCardContainer}>
-        <Card
-          heading="Environmental Health"
-          content="View radon zones, disease endemic status, and other environmental health observations for this area."
-          onPress={() => {
-            const jurisdictionCode =
-              getJurisdictionForLocation(
-                currentLocation?.state || "",
-                currentLocation?.country || "",
-              )?.code || "WHO"
-            navigation.navigate("LocationObservations", {
-              city: currentLocation?.city || "",
-              state: currentLocation?.state || "",
-              country: currentLocation?.country || "",
-              jurisdictionCode,
-            })
-          }}
-          RightComponent={
-            <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
-          }
-          LeftComponent={
-            <View
-              style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
-            >
-              <MaterialCommunityIcons name="leaf" size={24} color={theme.colors.tint} />
-            </View>
-          }
-        />
-      </View>
+      {/* Environmental Observations Card — admin-gated via AppConfig flag */}
+      {showEnvironmentalHealthCard && (
+        <View style={$observationsCardContainer}>
+          <Card
+            heading="Environmental Health"
+            content="View radon zones, disease endemic status, and other environmental health observations for this area."
+            onPress={() => {
+              const jurisdictionCode =
+                getJurisdictionForLocation(
+                  currentLocation?.state || "",
+                  currentLocation?.country || "",
+                )?.code || "WHO"
+              navigation.navigate("LocationObservations", {
+                city: currentLocation?.city || "",
+                state: currentLocation?.state || "",
+                country: currentLocation?.country || "",
+                jurisdictionCode,
+              })
+            }}
+            RightComponent={
+              <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
+            }
+            LeftComponent={
+              <View
+                style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
+              >
+                <MaterialCommunityIcons name="leaf" size={24} color={theme.colors.tint} />
+              </View>
+            }
+          />
+        </View>
+      )}
 
-      {/* Pollution Sources Card */}
-      {renderPollutionSourcesCard()}
+      {/* Pollution Sources Card — admin-gated via AppConfig flag */}
+      {showPollutionSourcesCard && renderPollutionSourcesCard()}
 
       {/* Report Hazard Button */}
       <Pressable
