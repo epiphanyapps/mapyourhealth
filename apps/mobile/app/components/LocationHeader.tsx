@@ -77,13 +77,16 @@ export function LocationHeader(props: LocationHeaderProps) {
     paddingHorizontal: 12,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: `${theme.colors.tint}40`, // ~25% alpha hairline
-    backgroundColor: `${theme.colors.tint}1A`, // ~10% alpha tint wash
+    // Light-mode tint (primary500 ≈ #9db835) is too pale at low alpha to read
+    // against the off-white screen background, so the chip and outline run a
+    // bit stronger to clear WCAG AA at default page contrast.
+    borderColor: `${theme.colors.tint}66`, // ~40% alpha hairline
+    backgroundColor: `${theme.colors.tint}26`, // ~15% alpha tint wash
   }
 
   const $clearButtonHover: ViewStyle = {
-    backgroundColor: `${theme.colors.tint}33`, // ~20% alpha on hover
-    borderColor: `${theme.colors.tint}80`, // ~50% alpha hairline
+    backgroundColor: `${theme.colors.tint}40`, // ~25% alpha on hover
+    borderColor: `${theme.colors.tint}99`, // ~60% alpha hairline
   }
 
   const $clearButtonWeb: ViewStyle | null =
@@ -114,18 +117,21 @@ export function LocationHeader(props: LocationHeaderProps) {
     transform: [{ scale: 0.97 }],
   }
 
+  // Glyph and label use the theme text color so contrast clears WCAG AA in
+  // both light and dark modes; the chip's tint background and border carry
+  // the "tinted action" identity instead.
   const $clearGlyph: TextStyle = {
     fontSize: 15,
     lineHeight: 15,
     fontWeight: "400",
-    color: theme.colors.tint,
+    color: theme.colors.text,
   }
 
   const $clearLabel: TextStyle = {
     fontSize: 13,
     fontWeight: "500",
     letterSpacing: 0.4,
-    color: theme.colors.tint,
+    color: theme.colors.text,
     // Slight optical alignment with the glyph
     lineHeight: 15,
   }

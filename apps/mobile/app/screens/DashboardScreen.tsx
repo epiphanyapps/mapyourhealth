@@ -710,6 +710,17 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
@@ -761,6 +772,17 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
         {/* Pollution Sources Card — admin-gated via AppConfig flag and gated on
             a real location to avoid landing on an empty PollutionSourcesScreen
