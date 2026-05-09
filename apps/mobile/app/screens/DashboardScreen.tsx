@@ -1,5 +1,5 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl, Share } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
@@ -43,6 +43,15 @@ import { trackEvent } from "@/utils/analytics"
 
 /** Orange color for WHO-only exceedances */
 const WHO_EXCEEDANCE_COLOR = "#F97316"
+
+// Survives the screen remount that `CommonActions.reset` triggers on search.
+// `useLocationData` rehydrates from MMKV via `initialData`, so cached cities
+// land in `success` state with `isLoading: false` and the skeleton would
+// otherwise never show. The search handler stamps this on dispatch and the
+// next mount consumes it to seed an initial loading state.
+let pendingSearchAt: number | null = null
+const SEARCH_HANDOFF_WINDOW_MS = 1000
+const SEARCH_SKELETON_HOLD_MS = 400
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -146,9 +155,37 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     refresh,
   } = locationData
 
+  // Force-show the skeleton on every search. MMKV-cached cities rehydrate
+  // through `initialData` with `isLoading: false`, which otherwise leaves
+  // search with no visual feedback. Two paths cover both navigation modes:
+  //   1. Module-level handoff for `CommonActions.reset` (remounts the screen).
+  //   2. City-change ref for the same-instance case (e.g., setParams).
+  const [isSearching, setIsSearching] = useState<boolean>(() => {
+    if (pendingSearchAt !== null && Date.now() - pendingSearchAt < SEARCH_HANDOFF_WINDOW_MS) {
+      pendingSearchAt = null
+      return true
+    }
+    return false
+  })
+  const prevCityRef = useRef<string | undefined>(currentLocation?.city)
+
+  useEffect(() => {
+    const newCity = currentLocation?.city
+    if (newCity && newCity !== prevCityRef.current) {
+      setIsSearching(true)
+    }
+    prevCityRef.current = newCity
+  }, [currentLocation?.city])
+
+  useEffect(() => {
+    if (!isSearching) return
+    const timer = setTimeout(() => setIsSearching(false), SEARCH_SKELETON_HOLD_MS)
+    return () => clearTimeout(timer)
+  }, [isSearching])
+
   // Hold the loading state for at least 250ms so the skeleton does not flash
   // on warm-cache rehydration (where isLoading flips false in <50ms).
-  const isLoading = useMinimumDuration(isLoadingRaw, 250)
+  const isLoading = useMinimumDuration(isLoadingRaw || isSearching, 250)
 
   // Track city view for analytics
   useEffect(() => {
@@ -267,6 +304,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
     (city: string, state: string, country: string, addr?: string) => {
+      pendingSearchAt = Date.now()
       navigation.dispatch(
         CommonActions.reset({
           index: 0,
