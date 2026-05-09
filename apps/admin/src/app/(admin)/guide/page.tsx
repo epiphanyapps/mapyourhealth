@@ -8,12 +8,26 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import {
+  Compass,
   Database,
   FileSpreadsheet,
   GitBranch,
   Lightbulb,
   VolumeX,
 } from "lucide-react";
+import {
+  navigationSections,
+  observationsSections,
+} from "./data/admin-sections";
+import { AdminSectionCard } from "./components/AdminSectionCard";
+
+const crossCuttingTopics = [
+  { id: "data-import", title: "Data Import" },
+  { id: "entity-types", title: "Entity Types" },
+  { id: "silent-import", title: "Silent Import" },
+  { id: "relationships", title: "Relationships" },
+  { id: "best-practices", title: "Best Practices" },
+];
 
 export default function GuidePage() {
   return (
@@ -21,12 +35,96 @@ export default function GuidePage() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Admin Guide</h1>
         <p className="text-muted-foreground">
-          Comprehensive reference for data management and import workflows
+          What every admin section does, every form field it exposes, and how
+          mobile users will experience your changes.
         </p>
       </div>
 
-      {/* Data Import */}
+      {/* Table of contents */}
       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Compass className="h-5 w-5" />
+            On this page
+          </CardTitle>
+          <CardDescription>
+            Jump to any section. Each menu item is documented with its forms,
+            actions, and downstream mobile-app effect.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-6 md:grid-cols-3">
+          <div>
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-2">
+              Navigation
+            </h3>
+            <ul className="space-y-1 text-sm">
+              {navigationSections.map((s) => (
+                <li key={s.id}>
+                  <a
+                    href={`#${s.id}`}
+                    className="text-foreground hover:underline"
+                  >
+                    {s.title}
+                  </a>{" "}
+                  <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                    {s.route}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-2">
+              Observations &amp; Measurements
+            </h3>
+            <ul className="space-y-1 text-sm">
+              {observationsSections.map((s) => (
+                <li key={s.id}>
+                  <a
+                    href={`#${s.id}`}
+                    className="text-foreground hover:underline"
+                  >
+                    {s.title}
+                  </a>{" "}
+                  <code className="px-1 py-0.5 bg-muted rounded text-xs">
+                    {s.route}
+                  </code>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h3 className="font-semibold text-sm uppercase tracking-wide text-muted-foreground mb-2">
+              Cross-cutting
+            </h3>
+            <ul className="space-y-1 text-sm">
+              {crossCuttingTopics.map((t) => (
+                <li key={t.id}>
+                  <a
+                    href={`#${t.id}`}
+                    className="text-foreground hover:underline"
+                  >
+                    {t.title}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Per-page sections — Navigation group */}
+      {navigationSections.map((section) => (
+        <AdminSectionCard key={section.id} section={section} />
+      ))}
+
+      {/* Per-page sections — Observations & Measurements group */}
+      {observationsSections.map((section) => (
+        <AdminSectionCard key={section.id} section={section} />
+      ))}
+
+      {/* Data Import */}
+      <Card id="data-import" className="scroll-mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <FileSpreadsheet className="h-5 w-5" />
@@ -115,7 +213,7 @@ export default function GuidePage() {
       </Card>
 
       {/* Entity Types */}
-      <Card>
+      <Card id="entity-types" className="scroll-mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Database className="h-5 w-5" />
@@ -191,7 +289,7 @@ export default function GuidePage() {
       </Card>
 
       {/* Silent Import */}
-      <Card>
+      <Card id="silent-import" className="scroll-mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <VolumeX className="h-5 w-5" />
@@ -266,7 +364,7 @@ export default function GuidePage() {
       </Card>
 
       {/* Relationships */}
-      <Card>
+      <Card id="relationships" className="scroll-mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <GitBranch className="h-5 w-5" />
@@ -332,7 +430,7 @@ export default function GuidePage() {
       </Card>
 
       {/* Best Practices */}
-      <Card>
+      <Card id="best-practices" className="scroll-mt-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Lightbulb className="h-5 w-5" />
