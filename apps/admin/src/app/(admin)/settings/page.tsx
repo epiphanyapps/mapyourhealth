@@ -30,27 +30,58 @@ const client = generateClient<Schema>();
 
 type AppConfig = Schema["AppConfig"]["type"];
 
-const CONFIG_DESCRIPTIONS: Record<string, { label: string; description: string }> = {
-  comingSoonGate: {
+type ManagedConfig = {
+  configKey: string;
+  label: string;
+  description: string;
+};
+
+const MANAGED_CONFIGS: ManagedConfig[] = [
+  {
+    configKey: "comingSoonGate",
     label: "Coming Soon Gate",
     description:
       "When enabled, unauthenticated users see a Coming Soon screen instead of the dashboard. Authenticated users always have full access.",
   },
-};
+  {
+    configKey: "dashboard.environmentalHealth.enabled",
+    label: "Dashboard: Environmental Health card",
+    description:
+      "When enabled, the Environmental Health card (radon zones, disease endemic status) is shown on the mobile dashboard. Default off.",
+  },
+  {
+    configKey: "dashboard.pollutionSources.enabled",
+    label: "Dashboard: Pollution Sources card",
+    description:
+      "When enabled, the Pollution Sources card (known contamination sites near the user) is shown on the mobile dashboard. Default off.",
+  },
+];
+
+const CONFIG_DESCRIPTIONS: Record<
+  string,
+  { label: string; description: string }
+> = Object.fromEntries(
+  MANAGED_CONFIGS.map((c) => [
+    c.configKey,
+    { label: c.label, description: c.description },
+  ]),
+);
 
 // Database management action definitions
 const DATA_ACTIONS = [
   {
     action: "wipeContaminants" as const,
     label: "Wipe Contaminant Data",
-    description: "Clears Contaminant, ContaminantThreshold, and Jurisdiction tables.",
+    description:
+      "Clears Contaminant, ContaminantThreshold, and Jurisdiction tables.",
     confirmPhrase: "DELETE",
     variant: "destructive" as const,
   },
   {
     action: "wipeLocations" as const,
     label: "Wipe Location Data",
-    description: "Clears Location, LocationMeasurement, and LocationObservation tables.",
+    description:
+      "Clears Location, LocationMeasurement, and LocationObservation tables.",
     confirmPhrase: "DELETE",
     variant: "destructive" as const,
   },
@@ -84,7 +115,9 @@ export default function SettingsPage() {
 
   const fetchConfigs = async () => {
     try {
-      const { data, errors } = await client.models.AppConfig.list({ limit: 100 });
+      const { data, errors } = await client.models.AppConfig.list({
+        limit: 100,
+      });
       if (errors) {
         console.error("Error fetching configs:", errors);
         toast.error("Failed to load settings");
@@ -116,7 +149,9 @@ export default function SettingsPage() {
         return;
       }
       setConfigs((prev) =>
-        prev.map((c) => (c.id === config.id ? { ...c, isEnabled: !c.isEnabled } : c)),
+        prev.map((c) =>
+          c.id === config.id ? { ...c, isEnabled: !c.isEnabled } : c,
+        ),
       );
       toast.success(
         `${CONFIG_DESCRIPTIONS[config.configKey]?.label ?? config.configKey} ${!config.isEnabled ? "enabled" : "disabled"}`,
@@ -129,32 +164,41 @@ export default function SettingsPage() {
     }
   };
 
-  const ensureComingSoonConfig = async () => {
-    const existing = configs.find((c) => c.configKey === "comingSoonGate");
-    if (existing) return;
+  const ensureManagedConfigs = async () => {
+    const existingKeys = new Set(configs.map((c) => c.configKey));
+    const missing = MANAGED_CONFIGS.filter(
+      (c) => !existingKeys.has(c.configKey),
+    );
+    if (missing.length === 0) return;
 
-    try {
-      const { data, errors } = await client.models.AppConfig.create({
-        configKey: "comingSoonGate",
-        isEnabled: false,
-        description: "Show Coming Soon screen to unauthenticated users",
-      });
-      if (errors) {
-        console.error("Error creating config:", errors);
-        return;
+    const created: AppConfig[] = [];
+    for (const cfg of missing) {
+      try {
+        const { data, errors } = await client.models.AppConfig.create({
+          configKey: cfg.configKey,
+          isEnabled: false,
+          description: cfg.description,
+        });
+        if (errors) {
+          console.error(`Error creating config ${cfg.configKey}:`, errors);
+          continue;
+        }
+        if (data) created.push(data);
+      } catch (err) {
+        console.error(`Error creating config ${cfg.configKey}:`, err);
       }
-      if (data) {
-        setConfigs((prev) => [...prev, data]);
-        toast.success("Coming Soon Gate config created");
-      }
-    } catch (err) {
-      console.error("Error creating config:", err);
+    }
+    if (created.length > 0) {
+      setConfigs((prev) => [...prev, ...created]);
+      toast.success(
+        `Created ${created.length} missing setting${created.length === 1 ? "" : "s"}`,
+      );
     }
   };
 
   useEffect(() => {
-    if (!loading && configs.length === 0) {
-      ensureComingSoonConfig();
+    if (!loading) {
+      ensureManagedConfigs();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading]);
@@ -166,7 +210,11 @@ export default function SettingsPage() {
 
     try {
       const { data, errors } = await client.mutations.manageData({
-        action: action as "wipeContaminants" | "wipeLocations" | "wipeAll" | "reseedAll",
+        action: action as
+          | "wipeContaminants"
+          | "wipeLocations"
+          | "wipeAll"
+          | "reseedAll",
       });
 
       if (errors) {
@@ -211,42 +259,66 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-        <p className="text-muted-foreground">Manage application-wide configuration</p>
+        <p className="text-muted-foreground">
+          Manage application-wide configuration
+        </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>Feature Gates</CardTitle>
           <CardDescription>
-            Control which features are available to users. Changes take effect within 5 minutes.
+            Control which features are available to users. Changes take effect
+            within 5 minutes.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {configs.map((config) => {
-            const info = CONFIG_DESCRIPTIONS[config.configKey] ?? {
-              label: config.configKey,
-              description: config.description ?? "",
-            };
-            return (
-              <div key={config.id} className="flex items-center justify-between space-x-4">
-                <div className="space-y-1">
-                  <Label htmlFor={config.id} className="text-base font-medium">
-                    {info.label}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">{info.description}</p>
+          {[...configs]
+            .sort((a, b) => {
+              const order = MANAGED_CONFIGS.map((c) => c.configKey);
+              const aIndex = order.indexOf(a.configKey);
+              const bIndex = order.indexOf(b.configKey);
+              if (aIndex === -1 && bIndex === -1)
+                return a.configKey.localeCompare(b.configKey);
+              if (aIndex === -1) return 1;
+              if (bIndex === -1) return -1;
+              return aIndex - bIndex;
+            })
+            .map((config) => {
+              const info = CONFIG_DESCRIPTIONS[config.configKey] ?? {
+                label: config.configKey,
+                description: config.description ?? "",
+              };
+              return (
+                <div
+                  key={config.id}
+                  className="flex items-center justify-between space-x-4"
+                >
+                  <div className="space-y-1">
+                    <Label
+                      htmlFor={config.id}
+                      className="text-base font-medium"
+                    >
+                      {info.label}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {info.description}
+                    </p>
+                  </div>
+                  <Switch
+                    id={config.id}
+                    checked={config.isEnabled ?? false}
+                    onCheckedChange={() => handleToggle(config)}
+                    disabled={updating === config.id}
+                  />
                 </div>
-                <Switch
-                  id={config.id}
-                  checked={config.isEnabled ?? false}
-                  onCheckedChange={() => handleToggle(config)}
-                  disabled={updating === config.id}
-                />
-              </div>
-            );
-          })}
+              );
+            })}
 
           {configs.length === 0 && (
-            <p className="text-sm text-muted-foreground">No configuration entries found.</p>
+            <p className="text-sm text-muted-foreground">
+              No configuration entries found.
+            </p>
           )}
         </CardContent>
       </Card>
@@ -255,8 +327,8 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Database Management</CardTitle>
           <CardDescription>
-            Wipe or reseed reference data tables. User data (subscriptions, reports, health records)
-            is never affected by these operations.
+            Wipe or reseed reference data tables. User data (subscriptions,
+            reports, health records) is never affected by these operations.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -267,7 +339,9 @@ export default function SettingsPage() {
             >
               <div className="space-y-1">
                 <p className="text-sm font-medium">{item.label}</p>
-                <p className="text-sm text-muted-foreground">{item.description}</p>
+                <p className="text-sm text-muted-foreground">
+                  {item.description}
+                </p>
               </div>
 
               <Dialog
@@ -296,8 +370,11 @@ export default function SettingsPage() {
                   </DialogHeader>
                   <div className="space-y-2 py-4">
                     <Label htmlFor="confirm-input">
-                      Type <span className="font-mono font-bold">{item.confirmPhrase}</span> to
-                      confirm
+                      Type{" "}
+                      <span className="font-mono font-bold">
+                        {item.confirmPhrase}
+                      </span>{" "}
+                      to confirm
                     </Label>
                     <Input
                       id="confirm-input"
@@ -331,7 +408,8 @@ export default function SettingsPage() {
 
           {activeAction && (
             <p className="text-sm text-muted-foreground animate-pulse">
-              Operation in progress... This may take a few minutes. Do not close this page.
+              Operation in progress... This may take a few minutes. Do not close
+              this page.
             </p>
           )}
         </CardContent>
