@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
+import { OrphanBanner } from "@/components/orphan-banner";
 import {
   observationTypeNames,
   observedPropertyCategoryColors,
@@ -96,7 +97,10 @@ export default function ObservationsPage() {
       ]);
 
       if (observationsResult.errors) {
-        console.error("Error fetching observations:", observationsResult.errors);
+        console.error(
+          "Error fetching observations:",
+          observationsResult.errors,
+        );
         toast.error("Failed to fetch observations");
       } else {
         setObservations(observationsResult.data || []);
@@ -248,7 +252,7 @@ export default function ObservationsPage() {
         .join(", ") || "this location";
     if (
       !confirm(
-        `Are you sure you want to delete the "${propertyName}" observation for ${locationLabel}?`
+        `Are you sure you want to delete the "${propertyName}" observation for ${locationLabel}?`,
       )
     ) {
       return;
@@ -284,13 +288,14 @@ export default function ObservationsPage() {
       observations
         .filter((o) => filterCountry === "all" || o.country === filterCountry)
         .map((o) => o.state)
-        .filter((s): s is string => Boolean(s))
+        .filter((s): s is string => Boolean(s)),
     ),
   ].sort();
 
   // Filter observations
   const filteredObservations = observations.filter((o) => {
-    if (filterProperty !== "all" && o.propertyId !== filterProperty) return false;
+    if (filterProperty !== "all" && o.propertyId !== filterProperty)
+      return false;
     if (filterCountry !== "all" && o.country !== filterCountry) return false;
     if (filterState !== "all" && o.state !== filterState) return false;
     return true;
@@ -325,6 +330,7 @@ export default function ObservationsPage() {
 
   return (
     <div className="space-y-6">
+      <OrphanBanner pageLabel="location observations" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -428,7 +434,13 @@ export default function ObservationsPage() {
                   <SelectContent>
                     {properties.map((p) => (
                       <SelectItem key={p.id} value={p.propertyId}>
-                        {p.name} ({observationTypeNames[p.observationType as ObservationType]})
+                        {p.name} (
+                        {
+                          observationTypeNames[
+                            p.observationType as ObservationType
+                          ]
+                        }
+                        )
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -718,18 +730,24 @@ export default function ObservationsPage() {
                   // most-specific populated level on the primary line and
                   // the rest of the location chain on the secondary line.
                   const primary =
-                    observation.city || observation.state || observation.country;
+                    observation.city ||
+                    observation.state ||
+                    observation.country;
                   const secondary = observation.city
-                    ? [observation.state, observation.country].filter(Boolean).join(", ")
+                    ? [observation.state, observation.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : observation.state
-                      ? observation.country ?? ""
+                      ? (observation.country ?? "")
                       : "";
                   return (
                     <TableRow key={observation.id}>
                       <TableCell>
                         <div className="font-medium">{primary}</div>
                         {secondary && (
-                          <div className="text-sm text-muted-foreground">{secondary}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {secondary}
+                          </div>
                         )}
                       </TableCell>
                       <TableCell>
@@ -757,7 +775,9 @@ export default function ObservationsPage() {
                       </TableCell>
                       <TableCell>
                         {observation.observedAt
-                          ? new Date(observation.observedAt).toLocaleDateString()
+                          ? new Date(
+                              observation.observedAt,
+                            ).toLocaleDateString()
                           : "—"}
                       </TableCell>
                       <TableCell>
