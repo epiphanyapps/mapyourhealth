@@ -4,7 +4,7 @@
 
 import { NavigationContainer } from "@react-navigation/native"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { fireEvent, render, waitFor } from "@testing-library/react-native"
+import { act, fireEvent, render, waitFor } from "@testing-library/react-native"
 
 import { PlacesSearchBar } from "./PlacesSearchBar"
 import { ThemeProvider } from "../theme/context"
@@ -30,6 +30,7 @@ jest.mock("@expo-google-fonts/space-grotesk", () => ({
 const mockSearch = jest.fn()
 const mockClearSuggestions = jest.fn()
 const mockResolvePlace = jest.fn()
+const mockPrefetchPlace = jest.fn()
 
 jest.mock("../hooks/useLocationSearch", () => ({
   useLocationSearch: () => ({
@@ -40,6 +41,7 @@ jest.mock("../hooks/useLocationSearch", () => ({
     search: mockSearch,
     clearSuggestions: mockClearSuggestions,
     resolvePlace: mockResolvePlace,
+    prefetchPlace: mockPrefetchPlace,
   }),
 }))
 
@@ -431,6 +433,181 @@ describe("PlacesSearchBar", () => {
       await waitFor(() => {
         expect(getByText("Search is taking too long. Please try again.")).toBeTruthy()
       })
+    })
+  })
+
+  describe("prefetch on press-in", () => {
+    it("calls prefetchPlace on press-in for suggestions with a placeId", async () => {
+      mockSuggestions = [
+        {
+          type: "address" as const,
+          displayText: "123 Main St",
+          secondaryText: "Springfield, IL",
+          placeId: "place123",
+        },
+      ]
+
+      const { getByPlaceholderText, getByLabelText, rerender } = render(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      const input = getByPlaceholderText("Search city or location...")
+      fireEvent.changeText(input, "123 Main")
+
+      rerender(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      await waitFor(() => {
+        expect(getByLabelText("Select 123 Main St")).toBeTruthy()
+      })
+
+      fireEvent(getByLabelText("Select 123 Main St"), "pressIn")
+
+      expect(mockPrefetchPlace).toHaveBeenCalledWith("place123")
+    })
+
+    it("does not call prefetchPlace for suggestions without a placeId", async () => {
+      mockSuggestions = createMockSuggestions()
+
+      const { getByPlaceholderText, getByLabelText, rerender } = render(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      const input = getByPlaceholderText("Search city or location...")
+      fireEvent.changeText(input, "New")
+
+      rerender(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      await waitFor(() => {
+        expect(getByLabelText("Select New York, NY")).toBeTruthy()
+      })
+
+      fireEvent(getByLabelText("Select New York, NY"), "pressIn")
+
+      expect(mockPrefetchPlace).not.toHaveBeenCalled()
+    })
+  })
+
+  describe("resolving feedback", () => {
+    it("shows the suggestion text in the input while resolvePlace is pending", async () => {
+      mockSuggestions = [
+        {
+          type: "address" as const,
+          displayText: "123 Main St",
+          secondaryText: "Springfield, IL",
+          placeId: "place123",
+        },
+      ]
+
+      // Controlled promise so the resolve stays pending until we say so.
+      let resolveFn: (value: unknown) => void = () => {}
+      mockResolvePlace.mockImplementation(
+        () =>
+          new Promise((resolve) => {
+            resolveFn = resolve
+          }),
+      )
+
+      const { getByPlaceholderText, getByLabelText, rerender } = render(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      const input = getByPlaceholderText("Search city or location...")
+      fireEvent.changeText(input, "123 Main")
+
+      rerender(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      await waitFor(() => {
+        expect(getByLabelText("Select 123 Main St")).toBeTruthy()
+      })
+
+      fireEvent.press(getByLabelText("Select 123 Main St"))
+
+      // While the resolve is pending, the input should show the selection text
+      // so the user gets immediate feedback and the screen does not feel frozen.
+      await waitFor(() => {
+        expect(input.props.value).toBe("123 Main St")
+      })
+
+      // Resolve the pending promise — input should clear and onLocationSelect should fire.
+      await act(async () => {
+        resolveFn({
+          city: "Springfield",
+          state: "IL",
+          country: "US",
+          jurisdictionCode: "US-IL",
+          hasData: true,
+          isNew: false,
+        })
+      })
+
+      await waitFor(() => {
+        expect(mockOnLocationSelect).toHaveBeenCalledWith("Springfield", "IL", "US", "123 Main St")
+      })
+
+      expect(input.props.value).toBe("")
+    })
+
+    it("clears resolving label and re-enters editing when resolve fails", async () => {
+      mockSuggestions = [
+        {
+          type: "address" as const,
+          displayText: "Bad Place",
+          secondaryText: "Nowhere",
+          placeId: "place-bad",
+        },
+      ]
+
+      mockResolvePlace.mockResolvedValue(null)
+
+      const { getByPlaceholderText, getByLabelText, rerender } = render(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      const input = getByPlaceholderText("Search city or location...")
+      fireEvent.changeText(input, "Bad")
+
+      rerender(
+        <TestWrapper>
+          <PlacesSearchBar onLocationSelect={mockOnLocationSelect} />
+        </TestWrapper>,
+      )
+
+      await waitFor(() => {
+        expect(getByLabelText("Select Bad Place")).toBeTruthy()
+      })
+
+      fireEvent.press(getByLabelText("Select Bad Place"))
+
+      await waitFor(() => {
+        expect(mockResolvePlace).toHaveBeenCalledWith("place-bad")
+      })
+
+      // After failure, original suggestion text should be back in the input
+      // (existing behavior) and onLocationSelect should NOT have fired.
+      await waitFor(() => {
+        expect(input.props.value).toBe("Bad Place")
+      })
+      expect(mockOnLocationSelect).not.toHaveBeenCalled()
     })
   })
 

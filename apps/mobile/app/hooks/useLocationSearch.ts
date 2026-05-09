@@ -62,6 +62,12 @@ interface UseLocationSearchResult {
   /** Resolve a Google Places placeId to a location with jurisdiction and data availability */
   resolvePlace: (placeId: string) => Promise<ResolvedLocation | null>
   /**
+   * Kick off a resolve in the background and cache the result so a later
+   * resolvePlace call for the same placeId returns instantly. Safe to call
+   * speculatively (e.g. on press-in) — failures are not cached, so retries work.
+   */
+  prefetchPlace: (placeId: string) => void
+  /**
    * @deprecated No longer supported — Google Places is the primary search.
    * Returns empty array for backward compatibility.
    */
@@ -218,36 +224,64 @@ export function useLocationSearch(): UseLocationSearchResult {
     }
   }, [])
 
-  // Resolve a Google Places placeId via the resolveLocation mutation
-  const resolvePlace = useCallback(async (placeId: string): Promise<ResolvedLocation | null> => {
-    try {
-      const result: ResolveLocationResponse = await resolveLocationByPlaceId(
-        placeId,
-        sessionTokenRef.current,
-      )
+  // Cache of in-flight and successfully-resolved promises, keyed by placeId.
+  // Failures clear their entry so a later call can retry. Lets us prefetch
+  // on press-in and reuse the result on the actual select, removing the
+  // "tap → wait → navigate" freeze.
+  const resolveCacheRef = useRef<Map<string, Promise<ResolvedLocation | null>>>(new Map())
 
-      // Regenerate session token after completing a search session
-      sessionTokenRef.current = generateSessionToken()
+  const doResolve = useCallback((placeId: string): Promise<ResolvedLocation | null> => {
+    const cached = resolveCacheRef.current.get(placeId)
+    if (cached) return cached
 
-      if (result.error || !result.city || !result.state || !result.country) {
-        console.error("[Places] Error resolving location:", result.error)
+    const promise = (async (): Promise<ResolvedLocation | null> => {
+      try {
+        const result: ResolveLocationResponse = await resolveLocationByPlaceId(
+          placeId,
+          sessionTokenRef.current,
+        )
+
+        // Regenerate session token after completing a search session
+        sessionTokenRef.current = generateSessionToken()
+
+        if (result.error || !result.city || !result.state || !result.country) {
+          console.error("[Places] Error resolving location:", result.error)
+          resolveCacheRef.current.delete(placeId)
+          return null
+        }
+
+        return {
+          city: result.city,
+          state: result.state,
+          country: result.country,
+          county: result.county,
+          jurisdictionCode: result.jurisdictionCode,
+          hasData: result.hasData,
+          isNew: result.isNew,
+        }
+      } catch (error) {
+        console.error("[Places] Error resolving place:", error)
+        resolveCacheRef.current.delete(placeId)
         return null
       }
+    })()
 
-      return {
-        city: result.city,
-        state: result.state,
-        country: result.country,
-        county: result.county,
-        jurisdictionCode: result.jurisdictionCode,
-        hasData: result.hasData,
-        isNew: result.isNew,
-      }
-    } catch (error) {
-      console.error("[Places] Error resolving place:", error)
-      return null
-    }
+    resolveCacheRef.current.set(placeId, promise)
+    return promise
   }, [])
+
+  const resolvePlace = useCallback(
+    (placeId: string): Promise<ResolvedLocation | null> => doResolve(placeId),
+    [doResolve],
+  )
+
+  const prefetchPlace = useCallback(
+    (placeId: string): void => {
+      // Fire and forget — caller does not need the result.
+      void doResolve(placeId)
+    },
+    [doResolve],
+  )
 
   // Backward-compatible wrapper: delegates to resolvePlace
   const resolveAddressToNearestCity = useCallback(
@@ -292,6 +326,7 @@ export function useLocationSearch(): UseLocationSearchResult {
     search,
     clearSuggestions,
     resolvePlace,
+    prefetchPlace,
     resolveAddressToNearestCity,
     getCitiesForState,
   }

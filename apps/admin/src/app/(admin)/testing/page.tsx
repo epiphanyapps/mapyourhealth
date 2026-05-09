@@ -82,6 +82,65 @@ export default function TestingPage() {
               https://admin.mapyourhealth.info/
             </a>
           </div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Web Landing:</span>
+            <a
+              href="https://www.mapyourhealth.info/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              https://www.mapyourhealth.info/
+            </a>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Staging URLs */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ExternalLink className="h-5 w-5" />
+            Staging URLs
+          </CardTitle>
+          <CardDescription>
+            Validate changes here before promoting to production
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Mobile App:</span>
+            <a
+              href="https://staging.d2z5ddqhlc1q5.amplifyapp.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              https://staging.d2z5ddqhlc1q5.amplifyapp.com/
+            </a>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Admin Dashboard:</span>
+            <a
+              href="https://staging.d26q32gc98goap.amplifyapp.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              https://staging.d26q32gc98goap.amplifyapp.com/
+            </a>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium">Web Landing:</span>
+            <a
+              href="https://staging.dv0j563gt073v.amplifyapp.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary hover:underline"
+            >
+              https://staging.dv0j563gt073v.amplifyapp.com/
+            </a>
+          </div>
         </CardContent>
       </Card>
 
