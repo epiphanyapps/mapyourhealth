@@ -26,6 +26,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
+import { useAppConfig } from "@/hooks/useAppConfig"
 import { useLocation } from "@/hooks/useLocation"
 import {
   useLocationData,
@@ -107,6 +108,18 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     state: route.params?.state,
     country: route.params?.country,
   })
+  // Admin-controlled visibility for the Environmental Health and Pollution
+  // Sources cards. Fail-closed: hide while loading or on fetch error so the
+  // cards never appear without an explicit admin toggle.
+  const {
+    isEnabled: environmentalHealthCardEnabled,
+    isLoading: environmentalHealthCardConfigLoading,
+  } = useAppConfig("dashboard.environmentalHealth.enabled")
+  const { isEnabled: pollutionSourcesCardEnabled, isLoading: pollutionSourcesCardConfigLoading } =
+    useAppConfig("dashboard.pollutionSources.enabled")
+  const showEnvironmentalHealthCard =
+    environmentalHealthCardEnabled && !environmentalHealthCardConfigLoading
+  const showPollutionSourcesCard = pollutionSourcesCardEnabled && !pollutionSourcesCardConfigLoading
 
   // Helper to get display name from dynamic categories with fallback
   const getCategoryDisplayName = useCallback(
