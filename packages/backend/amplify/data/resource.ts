@@ -440,7 +440,8 @@ const schema = a.schema({
     .authorization((allow) => [
       allow.owner().to(["create", "read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
-    ]),
+    ])
+    .secondaryIndexes((index) => [index("city"), index("state"), index("country")]),
 
   // =========================================================================
   // Analytics
@@ -491,7 +492,8 @@ const schema = a.schema({
       allow.guest().to(["read"]),
       allow.authenticated().to(["read"]),
       allow.group("admin").to(["create", "update", "delete", "read"]),
-    ]),
+    ])
+    .secondaryIndexes((index) => [index("city"), index("state"), index("country")]),
 
   /**
    * AppConfig - Admin-manageable application configuration
