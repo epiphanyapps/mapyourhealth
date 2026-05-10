@@ -837,6 +837,48 @@ export async function getWarningBanners(): Promise<AmplifyWarningBanner[]> {
   return data
 }
 
+/**
+ * Fetch warning banners for a specific city via the byCity GSI (EPI-22).
+ */
+export async function getWarningBannersByCity(city: string): Promise<AmplifyWarningBanner[]> {
+  const client = await getPublicClient()
+  return paginateList("warning banners by city", (nextToken) =>
+    client.models.WarningBanner.listWarningBannerByCity({
+      city,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
+}
+
+/**
+ * Fetch warning banners for a specific state/province via the byState GSI (EPI-22).
+ */
+export async function getWarningBannersByState(state: string): Promise<AmplifyWarningBanner[]> {
+  const client = await getPublicClient()
+  return paginateList("warning banners by state", (nextToken) =>
+    client.models.WarningBanner.listWarningBannerByState({
+      state,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
+}
+
+/**
+ * Fetch warning banners for a specific country via the byCountry GSI (EPI-22).
+ */
+export async function getWarningBannersByCountry(country: string): Promise<AmplifyWarningBanner[]> {
+  const client = await getPublicClient()
+  return paginateList("warning banners by country", (nextToken) =>
+    client.models.WarningBanner.listWarningBannerByCountry({
+      country,
+      limit: CASCADE_PAGE_LIMIT,
+      nextToken,
+    }),
+  )
+}
+
 // =============================================================================
 // Pollution Sources (Public Read)
 // =============================================================================
