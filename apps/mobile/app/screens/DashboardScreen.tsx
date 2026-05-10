@@ -1,21 +1,12 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
-import { FC, useCallback, useEffect, useMemo, useState } from "react"
-import {
-  View,
-  ViewStyle,
-  Pressable,
-  TextStyle,
-  Alert,
-  ActivityIndicator,
-  RefreshControl,
-  Share,
-} from "react-native"
+import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl, Share } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
 
 import { AdminWarningBanner } from "@/components/AdminWarningBanner"
-import { Card } from "@/components/Card"
+import { DashboardSkeleton } from "@/components/DashboardSkeleton"
 import {
   ExpandableCategoryCard,
   SubCategoryStatusResult,
@@ -35,9 +26,13 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { StatCategory } from "@/data/types/safety"
-import { useAppConfig } from "@/hooks/useAppConfig"
 import { useLocation } from "@/hooks/useLocation"
-import { useLocationData, getWorstStatusForCategory } from "@/hooks/useLocationData"
+import {
+  useLocationData,
+  getWorstStatusForCategory,
+  getRiskStatsForCategory,
+} from "@/hooks/useLocationData"
+import { useMinimumDuration } from "@/hooks/useMinimumDuration"
 import { useWarningBanners } from "@/hooks/useWarningBanners"
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
@@ -48,6 +43,38 @@ import { trackEvent } from "@/utils/analytics"
 
 /** Orange color for WHO-only exceedances */
 const WHO_EXCEEDANCE_COLOR = "#F97316"
+
+// Survives the screen remount that `CommonActions.reset` triggers on every
+// city change. `useLocationData` rehydrates from MMKV via `initialData`, so
+// cached cities land in `success` state with `isLoading: false` and the
+// skeleton would otherwise never show. `resetDashboardToLocation` stamps
+// this on dispatch; the next mount consumes it to seed an initial loading
+// state. All city-changing reset paths (search, GPS, primarySubscription
+// auto-redirect) must go through the helper to stay consistent — the bare
+// "clear location" path intentionally bypasses it.
+let pendingSearchAt: number | null = null
+const SEARCH_HANDOFF_WINDOW_MS = 1000
+const SEARCH_SKELETON_HOLD_MS = 400
+
+interface DashboardResetParams {
+  city: string
+  state: string
+  country: string
+  address?: string
+}
+
+function resetDashboardToLocation(
+  navigation: AppStackScreenProps<"Dashboard">["navigation"],
+  params: DashboardResetParams,
+): void {
+  pendingSearchAt = Date.now()
+  navigation.dispatch(
+    CommonActions.reset({
+      index: 0,
+      routes: [{ name: "Dashboard", params }],
+    }),
+  )
+}
 
 interface DashboardScreenProps extends AppStackScreenProps<"Dashboard"> {}
 
@@ -80,19 +107,6 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     state: route.params?.state,
     country: route.params?.country,
   })
-  // Admin-controlled visibility for the Environmental Health and Pollution
-  // Sources cards. Fail-closed: hide while loading or on fetch error so the
-  // cards never appear without an explicit admin toggle.
-  const {
-    isEnabled: environmentalHealthCardEnabled,
-    isLoading: environmentalHealthCardConfigLoading,
-  } = useAppConfig("dashboard.environmentalHealth.enabled")
-  const { isEnabled: pollutionSourcesCardEnabled, isLoading: pollutionSourcesCardConfigLoading } =
-    useAppConfig("dashboard.pollutionSources.enabled")
-  const showEnvironmentalHealthCard =
-    environmentalHealthCardEnabled && !environmentalHealthCardConfigLoading
-  const showPollutionSourcesCard = pollutionSourcesCardEnabled && !pollutionSourcesCardConfigLoading
-
   // Helper to get display name from dynamic categories with fallback
   const getCategoryDisplayName = useCallback(
     (categoryId: string) => {
@@ -112,21 +126,11 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   // Sync primary subscription to route params when no location is set yet
   useEffect(() => {
     if (!route.params?.city && isAuthenticated && primarySubscription && !subsLoading) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Dashboard",
-              params: {
-                city: primarySubscription.city,
-                state: primarySubscription.state,
-                country: primarySubscription.country,
-              },
-            },
-          ],
-        }),
-      )
+      resetDashboardToLocation(navigation, {
+        city: primarySubscription.city,
+        state: primarySubscription.state,
+        country: primarySubscription.country,
+      })
     }
   }, [primarySubscription, isAuthenticated, subsLoading, route.params?.city, navigation])
 
@@ -153,7 +157,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
 
   const {
     cityData,
-    isLoading,
+    isLoading: isLoadingRaw,
     error,
     isMockData = false,
     isCachedData = false,
@@ -162,6 +166,38 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     scope,
     refresh,
   } = locationData
+
+  // Force-show the skeleton on every search. MMKV-cached cities rehydrate
+  // through `initialData` with `isLoading: false`, which otherwise leaves
+  // search with no visual feedback. Two paths cover both navigation modes:
+  //   1. Module-level handoff for `CommonActions.reset` (remounts the screen).
+  //   2. City-change ref for the same-instance case (e.g., setParams).
+  const [isSearching, setIsSearching] = useState<boolean>(() => {
+    if (pendingSearchAt !== null && Date.now() - pendingSearchAt < SEARCH_HANDOFF_WINDOW_MS) {
+      pendingSearchAt = null
+      return true
+    }
+    return false
+  })
+  const prevCityRef = useRef<string | undefined>(currentLocation?.city)
+
+  useEffect(() => {
+    const newCity = currentLocation?.city
+    if (newCity && newCity !== prevCityRef.current) {
+      setIsSearching(true)
+    }
+    prevCityRef.current = newCity
+  }, [currentLocation?.city])
+
+  useEffect(() => {
+    if (!isSearching) return
+    const timer = setTimeout(() => setIsSearching(false), SEARCH_SKELETON_HOLD_MS)
+    return () => clearTimeout(timer)
+  }, [isSearching])
+
+  // Hold the loading state for at least 250ms so the skeleton does not flash
+  // on warm-cache rehydration (where isLoading flips false in <50ms).
+  const isLoading = useMinimumDuration(isLoadingRaw || isSearching, 250)
 
   // Track city view for analytics
   useEffect(() => {
@@ -274,41 +310,65 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [cityData, contaminants, getThreshold, getWHOThreshold, currentJurisdictionCode],
   )
 
+  // Build the contaminant rows shown when a sub-category is expanded inline
+  // on the dashboard. Joins `cityData.stats` to the contaminant catalog by
+  // statId and filters by `contaminant.category === subCategoryId`.
+  const getSubCategoryContent = useCallback(
+    (subCategoryId: string) => {
+      if (!cityData) return []
+
+      const subCategoryContaminantIds = new Set(
+        contaminants.filter((c) => c.category === subCategoryId).map((c) => c.id),
+      )
+      if (subCategoryContaminantIds.size === 0) return []
+
+      return cityData.stats
+        .filter((stat) => subCategoryContaminantIds.has(stat.statId))
+        .map((stat) => {
+          const definition = statDefinitions.find((d) => d.id === stat.statId)
+          return {
+            statId: stat.statId,
+            name: definition?.name ?? stat.statId,
+            value: stat.value,
+            unit: definition?.unit ?? "",
+            status: stat.status,
+          }
+        })
+    },
+    [cityData, contaminants, statDefinitions],
+  )
+
   // Categories to display (water and air only - health and disaster removed per issue #126)
   const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
 
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
     (city: string, state: string, country: string, addr?: string) => {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [{ name: "Dashboard", params: { city, state, country, address: addr } }],
-        }),
-      )
+      resetDashboardToLocation(navigation, { city, state, country, address: addr })
     },
     [navigation],
   )
+
+  // Clear the selected location — drops route params so the dashboard falls
+  // back to its empty state and (on web) the ?city=… query param is removed.
+  const handleClearLocation = useCallback(() => {
+    navigation.dispatch(
+      CommonActions.reset({
+        index: 0,
+        routes: [{ name: "Dashboard", params: undefined }],
+      }),
+    )
+  }, [navigation])
 
   // Handle location button press - get location from GPS
   const handleLocationPress = useCallback(async () => {
     const location = await getLocationFromGPS()
     if (location) {
-      navigation.dispatch(
-        CommonActions.reset({
-          index: 0,
-          routes: [
-            {
-              name: "Dashboard",
-              params: {
-                city: location.city,
-                state: location.state,
-                country: location.country,
-              },
-            },
-          ],
-        }),
-      )
+      resetDashboardToLocation(navigation, {
+        city: location.city,
+        state: location.state,
+        country: location.country,
+      })
     }
   }, [getLocationFromGPS, navigation])
 
@@ -447,32 +507,6 @@ View details: ${shareUrl}`
     }
   }, [cityData, categories, getStatusForCategory, getCategoryDisplayName, currentLocation])
 
-  const renderPollutionSourcesCard = () => (
-    <View style={$observationsCardContainer}>
-      <Card
-        heading="Pollution Sources"
-        content="View known pollution sources and environmental contamination sites near this area."
-        onPress={() => {
-          navigation.navigate("PollutionSources", {
-            city: currentLocation?.city || "",
-            state: currentLocation?.state || "",
-            country: currentLocation?.country || "",
-          })
-        }}
-        RightComponent={
-          <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
-        }
-        LeftComponent={
-          <View
-            style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
-          >
-            <MaterialCommunityIcons name="factory" size={24} color={theme.colors.tint} />
-          </View>
-        }
-      />
-    </View>
-  )
-
   const $contentContainer: ViewStyle = {
     flexGrow: 1,
     paddingBottom: 24,
@@ -496,13 +530,6 @@ View details: ${shareUrl}`
 
   const $warningBannerContainer: ViewStyle = {
     marginBottom: 16,
-  }
-
-  const $loadingContainer: ViewStyle = {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
   }
 
   const $retryButton: ViewStyle = {
@@ -663,10 +690,7 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
-        <View style={$loadingContainer}>
-          <ActivityIndicator size="large" color={theme.colors.tint} />
-          <Text style={{ marginTop: 12, color: theme.colors.textDim }}>Loading safety data...</Text>
-        </View>
+        <DashboardSkeleton />
         <ProfileMenu
           visible={isProfileMenuVisible}
           onClose={() => setIsProfileMenuVisible(false)}
@@ -699,6 +723,17 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons name="wifi-off" size={64} color={theme.colors.textDim} />
@@ -750,11 +785,18 @@ View details: ${shareUrl}`
             onLocationErrorDismiss={clearLocationError}
           />
         </View>
+        <LocationHeader
+          locationName={
+            currentLocation
+              ? [currentLocation.city, currentLocation.state].filter(Boolean).join(", ") ||
+                currentLocation.country ||
+                "Unknown"
+              : "Unknown"
+          }
+          secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+          onClear={handleClearLocation}
+        />
         {adminBannersJsx}
-        {/* Pollution Sources Card — admin-gated via AppConfig flag and gated on
-            a real location to avoid landing on an empty PollutionSourcesScreen
-            when no city/state is set. */}
-        {currentLocation && showPollutionSourcesCard && renderPollutionSourcesCard()}
         <View style={$emptyStateContainer}>
           <MaterialCommunityIcons
             name="map-marker-question"
@@ -846,6 +888,7 @@ View details: ${shareUrl}`
             : "Unknown"
         }
         secondaryText={currentLocation?.country === "CA" ? "Canada" : "United States"}
+        onClear={handleClearLocation}
       />
 
       {/* Cascade-scope provenance: only renders for state/country fallback (#123) */}
@@ -940,6 +983,10 @@ View details: ${shareUrl}`
               categoryName={getCategoryDisplayName(category)}
               status={getStatusForCategory(category)}
               getSubCategoryStatus={getSubCategoryStatusForCategory}
+              riskCount={
+                cityData ? getRiskStatsForCategory(cityData, category, statDefinitions).length : 0
+              }
+              getSubCategoryContent={getSubCategoryContent}
               onPress={(subCategoryId) => {
                 navigation.navigate("CategoryDetail", {
                   category,
@@ -953,42 +1000,6 @@ View details: ${shareUrl}`
           </View>
         ))}
       </View>
-
-      {/* Environmental Observations Card — admin-gated via AppConfig flag */}
-      {showEnvironmentalHealthCard && (
-        <View style={$observationsCardContainer}>
-          <Card
-            heading="Environmental Health"
-            content="View radon zones, disease endemic status, and other environmental health observations for this area."
-            onPress={() => {
-              const jurisdictionCode =
-                getJurisdictionForLocation(
-                  currentLocation?.state || "",
-                  currentLocation?.country || "",
-                )?.code || "WHO"
-              navigation.navigate("LocationObservations", {
-                city: currentLocation?.city || "",
-                state: currentLocation?.state || "",
-                country: currentLocation?.country || "",
-                jurisdictionCode,
-              })
-            }}
-            RightComponent={
-              <MaterialCommunityIcons name="chevron-right" size={24} color={theme.colors.textDim} />
-            }
-            LeftComponent={
-              <View
-                style={[$observationsIconContainer, { backgroundColor: theme.colors.accentBlueBg }]}
-              >
-                <MaterialCommunityIcons name="leaf" size={24} color={theme.colors.tint} />
-              </View>
-            }
-          />
-        </View>
-      )}
-
-      {/* Pollution Sources Card — admin-gated via AppConfig flag */}
-      {showPollutionSourcesCard && renderPollutionSourcesCard()}
 
       {/* Report Hazard Button */}
       <Pressable
@@ -1073,17 +1084,4 @@ const $notifyButtonText: TextStyle = {
   fontSize: 16,
   fontWeight: "600",
   color: "#FFFFFF",
-}
-
-const $observationsCardContainer: ViewStyle = {
-  marginHorizontal: 16,
-  marginTop: 16,
-}
-
-const $observationsIconContainer: ViewStyle = {
-  width: 44,
-  height: 44,
-  borderRadius: 22,
-  alignItems: "center",
-  justifyContent: "center",
 }

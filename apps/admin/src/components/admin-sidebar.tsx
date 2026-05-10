@@ -43,6 +43,16 @@ import {
   FileText,
 } from "lucide-react";
 
+/** Subset of admin routes whose mobile consumer was removed in #309 and
+ *  whose fate is pending on EPI-25. Marked with a yellow "orphan" badge in
+ *  the sidebar so contributors don't waste effort on data that won't ship. */
+const ORPHAN_ROUTES = new Set([
+  "/observations",
+  "/pollution-sources",
+  "/properties",
+  "/property-thresholds",
+]);
+
 const menuItems = [
   {
     title: "Dashboard",
@@ -174,6 +184,14 @@ export function AdminSidebar() {
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
+                      {ORPHAN_ROUTES.has(item.url) && (
+                        <span
+                          title="No mobile consumer — see EPI-25"
+                          className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                        >
+                          Orphan
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -192,6 +210,14 @@ export function AdminSidebar() {
                     <Link href={item.url}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.title}</span>
+                      {ORPHAN_ROUTES.has(item.url) && (
+                        <span
+                          title="No mobile consumer — see EPI-25"
+                          className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                        >
+                          Orphan
+                        </span>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

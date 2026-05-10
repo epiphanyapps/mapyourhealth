@@ -21,8 +21,29 @@ import {
 } from "@/services/amplify/data"
 import { load, save, remove } from "@/utils/storage"
 
-/** Cache key prefix for location stats */
-const CACHE_KEY_PREFIX = "location_stats_"
+/**
+ * Cache key prefix for location stats.
+ *
+ * History:
+ * - `_v2_`: bumped alongside the EPI-17 / EPI-18 cascade-bleed fix so any
+ *   MMKV entries written under the original `location_stats_` prefix —
+ *   which may contain leaked sibling-city data from the pre-fix cascade —
+ *   are orphaned rather than served to offline users for up to 24 hours
+ *   after the fix deploys.
+ * - `_v3_`: bumped alongside #319 (EPI-18 sub-bug B / dual status pills).
+ *   `_v2_` entries lack the new `whoStatus` / `localStatus` fields on
+ *   `CityStat`. Without a bump, those entries deserialize cleanly (the
+ *   new fields are optional) but the table renders both pills via the
+ *   `stat.status` fallback — which is the worst-of-(WHO, local) and
+ *   therefore "danger" for almost every Boucherville row. Verified on
+ *   staging post-deploy: every WHO pill read "danger" until the cache
+ *   was cleared. Bumping the prefix orphans `_v2_` entries so users see
+ *   the correct WHO=safe / QC=danger split immediately on next fetch.
+ *
+ * Old entries remain in storage until MMKV evicts them naturally; the
+ * cost is negligible (each entry is a few KB).
+ */
+const CACHE_KEY_PREFIX = "location_stats_v3_"
 
 /** Cache duration in milliseconds (24 hours) */
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
@@ -116,6 +137,36 @@ export function clearCachedLocationData(city: string, state?: string, country?: 
 }
 
 /**
+ * Compute a SafetyStatus from a measured value and a single threshold.
+ * Returns "safe" when the threshold is missing or has no limit (no
+ * comparison possible).
+ */
+function computeStatusForThreshold(
+  value: number,
+  threshold: { limitValue?: number | null; warningRatio?: number | null } | undefined,
+  higherIsBad: boolean,
+): StatStatus {
+  if (!threshold || threshold.limitValue == null) return "safe"
+  const limit = threshold.limitValue
+  const warningThreshold = limit * (threshold.warningRatio ?? 0.8)
+  if (higherIsBad) {
+    if (value >= limit) return "danger"
+    if (value >= warningThreshold) return "warning"
+    return "safe"
+  }
+  if (value <= limit) return "danger"
+  if (value <= warningThreshold) return "warning"
+  return "safe"
+}
+
+const STATUS_SEVERITY: Record<StatStatus, number> = { safe: 0, warning: 1, danger: 2 }
+
+/** Returns the more-severe of two statuses (danger > warning > safe). */
+function worstStatus(a: StatStatus, b: StatStatus): StatStatus {
+  return STATUS_SEVERITY[a] >= STATUS_SEVERITY[b] ? a : b
+}
+
+/**
  * Hook to fetch city safety data with caching support.
  *
  * Cascades through the location hierarchy (#123): if no city-specific
@@ -131,6 +182,7 @@ export function useLocationData(
   const {
     contaminants,
     getThreshold,
+    getWHOThreshold,
     getJurisdictionForLocation,
     isLoading: defsLoading,
   } = useContaminants()
@@ -138,37 +190,47 @@ export function useLocationData(
   const qc = useQueryClient()
 
   /**
-   * Maps new LocationMeasurement to legacy CityStat format
+   * Maps new LocationMeasurement to legacy CityStat format.
+   *
+   * Computes status against both the WHO and local-jurisdiction thresholds
+   * (EPI-18 sub-bug B). For QC, the local limits are tighter than WHO for
+   * many contaminants — a row that is safe vs WHO can read as danger vs QC.
+   * Carrying both in `whoStatus` / `localStatus` lets the table render a
+   * pill per column instead of a single row-level badge that hid the
+   * distinction.
+   *
+   * `status` is the worst of the two so callers that have not migrated
+   * (DashboardScreen summary, calculateCategoryStatus) keep behaving the
+   * same way.
    */
   const mapMeasurementToLegacyStat = useCallback(
     (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): CityStat => {
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
-      const threshold = getThreshold(measurement.contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
 
-      let status: StatStatus = "safe"
-      if (threshold && threshold.limitValue !== null) {
-        const limit = threshold.limitValue
-        const warningRatio = threshold.warningRatio ?? 0.8
-        const warningThreshold = limit * warningRatio
-
-        if (higherIsBad) {
-          if (measurement.value >= limit) status = "danger"
-          else if (measurement.value >= warningThreshold) status = "warning"
-        } else {
-          if (measurement.value <= limit) status = "danger"
-          else if (measurement.value <= warningThreshold) status = "warning"
-        }
-      }
+      const whoStatus = computeStatusForThreshold(
+        measurement.value,
+        getWHOThreshold(measurement.contaminantId),
+        higherIsBad,
+      )
+      const localThreshold =
+        jurisdictionCode === "WHO"
+          ? undefined
+          : getThreshold(measurement.contaminantId, jurisdictionCode)
+      const localStatus = localThreshold
+        ? computeStatusForThreshold(measurement.value, localThreshold, higherIsBad)
+        : whoStatus
 
       return {
         statId: measurement.contaminantId,
         value: measurement.value,
-        status,
+        status: worstStatus(whoStatus, localStatus),
+        whoStatus,
+        localStatus,
         lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
       }
     },
-    [contaminants, getThreshold],
+    [contaminants, getThreshold, getWHOThreshold],
   )
 
   /**
@@ -211,12 +273,16 @@ export function useLocationData(
     }
 
     // Online: cascade city → state → country via the shared util.
+    // getRowAnchor restricts state/country fallback to anchored rows so a
+    // by-state fetch for QC does not leak Sorel-Tracy-keyed measurements
+    // onto a Montreal user's screen (EPI-17 / EPI-18 cross-city bleed).
     const { data: measurements, scope } = await fetchWithLocationFallback(
       { city, state, country },
       {
         byCity: getLocationMeasurements,
         byState: getLocationMeasurementsByState,
         byCountry: getLocationMeasurementsByCountry,
+        getRowAnchor: (m) => ({ city: m.city, state: m.state }),
       },
     )
 
@@ -439,4 +505,26 @@ export function getRiskStatsForCategory(
   return getStatsForCategory(cityData, category, statDefinitions).filter(
     ({ stat }) => stat.status === "danger" || stat.status === "warning",
   )
+}
+
+/**
+ * Filter a stats array to a single sub-category (Fertilizers, Pesticides,
+ * Heavy Metals & Inorganics, etc.) by matching the contaminant's own
+ * `category` field against the sub-category id from the route.
+ *
+ * Used when CategoryDetailScreen is opened from a sub-category tap on the
+ * dashboard so that "Fertilizers" surfaces only fertilizer contaminants
+ * instead of every water contaminant. EPI-18 sub-bug A.
+ *
+ * `subCategoryId` is the value carried in the route param — lowercased and
+ * singular, matching the storage shape of `Contaminant.category` (e.g.
+ * "fertilizer", "pesticide", "radioactive", "inorganic", "organic",
+ * "disinfectant", "microbiological").
+ */
+export function filterStatsBySubCategory<T extends { definition: { category?: string | null } }>(
+  stats: T[],
+  subCategoryId: string | undefined,
+): T[] {
+  if (!subCategoryId) return stats
+  return stats.filter(({ definition }) => definition.category === subCategoryId)
 }

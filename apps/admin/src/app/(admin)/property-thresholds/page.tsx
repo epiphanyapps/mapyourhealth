@@ -42,6 +42,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
 import { toast } from "sonner";
+import { OrphanBanner } from "@/components/orphan-banner";
 import {
   PROPERTY_THRESHOLD_STATUS_OPTIONS,
   propertyThresholdStatusNames,
@@ -111,7 +112,7 @@ export default function PropertyThresholdsPage() {
       if (jurisdictionsResult.errors) {
         console.error(
           "Error fetching jurisdictions:",
-          jurisdictionsResult.errors
+          jurisdictionsResult.errors,
         );
       } else {
         setJurisdictions(jurisdictionsResult.data || []);
@@ -171,7 +172,11 @@ export default function PropertyThresholdsPage() {
   };
 
   const handleSave = async () => {
-    if (!formData.propertyId || !formData.jurisdictionCode || !formData.status) {
+    if (
+      !formData.propertyId ||
+      !formData.jurisdictionCode ||
+      !formData.status
+    ) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -194,7 +199,9 @@ export default function PropertyThresholdsPage() {
       const thresholdData = {
         propertyId: formData.propertyId,
         jurisdictionCode: formData.jurisdictionCode,
-        limitValue: formData.limitValue ? parseFloat(formData.limitValue) : null,
+        limitValue: formData.limitValue
+          ? parseFloat(formData.limitValue)
+          : null,
         warningValue: formData.warningValue
           ? parseFloat(formData.warningValue)
           : null,
@@ -238,7 +245,7 @@ export default function PropertyThresholdsPage() {
       threshold.propertyId;
     if (
       !confirm(
-        `Are you sure you want to delete the threshold for "${propertyName}" in ${threshold.jurisdictionCode}?`
+        `Are you sure you want to delete the threshold for "${propertyName}" in ${threshold.jurisdictionCode}?`,
       )
     ) {
       return;
@@ -305,13 +312,17 @@ export default function PropertyThresholdsPage() {
   const filteredThresholds = thresholds.filter((t) => {
     if (filterProperty !== "all" && t.propertyId !== filterProperty)
       return false;
-    if (filterJurisdiction !== "all" && t.jurisdictionCode !== filterJurisdiction)
+    if (
+      filterJurisdiction !== "all" &&
+      t.jurisdictionCode !== filterJurisdiction
+    )
       return false;
     return true;
   });
 
   return (
     <div className="space-y-6">
+      <OrphanBanner pageLabel="property thresholds" />
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -338,243 +349,250 @@ export default function PropertyThresholdsPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingThreshold ? "Edit Threshold" : "Create Threshold"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingThreshold
-                  ? "Update the threshold details below."
-                  : "Add a new jurisdiction-specific threshold."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="propertyId">Property *</Label>
-                  <Select
-                    value={formData.propertyId}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, propertyId: value })
-                    }
-                    disabled={!!editingThreshold}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select property" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {properties.map((p) => (
-                        <SelectItem key={p.id} value={p.propertyId}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="jurisdictionCode">Jurisdiction *</Label>
-                  <Select
-                    value={formData.jurisdictionCode}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, jurisdictionCode: value })
-                    }
-                    disabled={!!editingThreshold}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select jurisdiction" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {jurisdictions.map((j) => (
-                        <SelectItem key={j.id} value={j.code}>
-                          {j.name} ({j.code})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              {selectedProperty && (
-                <p className="text-sm text-muted-foreground">
-                  Property type:{" "}
-                  <strong>
-                    {observationTypeNames[
-                      selectedProperty.observationType as ObservationType
-                    ] || selectedProperty.observationType}
-                  </strong>
-                </p>
-              )}
-
-              {/* Numeric thresholds */}
-              {(!selectedProperty ||
-                selectedProperty.observationType === "numeric") && (
+              <DialogHeader>
+                <DialogTitle>
+                  {editingThreshold ? "Edit Threshold" : "Create Threshold"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingThreshold
+                    ? "Update the threshold details below."
+                    : "Add a new jurisdiction-specific threshold."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="warningValue">Warning Value</Label>
-                    <Input
-                      id="warningValue"
-                      type="number"
-                      placeholder="e.g., 50"
-                      value={formData.warningValue}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          warningValue: e.target.value,
-                        })
+                    <Label htmlFor="propertyId">Property *</Label>
+                    <Select
+                      value={formData.propertyId}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, propertyId: value })
                       }
-                    />
+                      disabled={!!editingThreshold}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select property" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {properties.map((p) => (
+                          <SelectItem key={p.id} value={p.propertyId}>
+                            {p.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="limitValue">Danger/Limit Value</Label>
-                    <Input
-                      id="limitValue"
-                      type="number"
-                      placeholder="e.g., 100"
-                      value={formData.limitValue}
-                      onChange={(e) =>
-                        setFormData({ ...formData, limitValue: e.target.value })
+                    <Label htmlFor="jurisdictionCode">Jurisdiction *</Label>
+                    <Select
+                      value={formData.jurisdictionCode}
+                      onValueChange={(value) =>
+                        setFormData({ ...formData, jurisdictionCode: value })
                       }
-                    />
+                      disabled={!!editingThreshold}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select jurisdiction" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {jurisdictions.map((j) => (
+                          <SelectItem key={j.id} value={j.code}>
+                            {j.name} ({j.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
-              )}
 
-              {/* Zone mapping */}
-              {(!selectedProperty ||
-                selectedProperty.observationType === "zone") && (
-                <div className="space-y-2">
-                  <Label htmlFor="zoneMapping">Zone Mapping (JSON)</Label>
-                  <Textarea
-                    id="zoneMapping"
-                    placeholder='{"Good": "safe", "Moderate": "warning", "Unhealthy": "danger"}'
-                    value={formData.zoneMapping}
-                    onChange={(e) =>
-                      setFormData({ ...formData, zoneMapping: e.target.value })
-                    }
-                    className="font-mono text-sm"
-                    rows={4}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Maps source zone values to safety levels (safe, warning, danger)
+                {selectedProperty && (
+                  <p className="text-sm text-muted-foreground">
+                    Property type:{" "}
+                    <strong>
+                      {observationTypeNames[
+                        selectedProperty.observationType as ObservationType
+                      ] || selectedProperty.observationType}
+                    </strong>
                   </p>
-                </div>
-              )}
+                )}
 
-              {/* Endemic settings */}
-              {(!selectedProperty ||
-                selectedProperty.observationType === "endemic") && (
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="endemicIsDanger"
-                    checked={formData.endemicIsDanger}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, endemicIsDanger: checked })
+                {/* Numeric thresholds */}
+                {(!selectedProperty ||
+                  selectedProperty.observationType === "numeric") && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="warningValue">Warning Value</Label>
+                      <Input
+                        id="warningValue"
+                        type="number"
+                        placeholder="e.g., 50"
+                        value={formData.warningValue}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            warningValue: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="limitValue">Danger/Limit Value</Label>
+                      <Input
+                        id="limitValue"
+                        type="number"
+                        placeholder="e.g., 100"
+                        value={formData.limitValue}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            limitValue: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {/* Zone mapping */}
+                {(!selectedProperty ||
+                  selectedProperty.observationType === "zone") && (
+                  <div className="space-y-2">
+                    <Label htmlFor="zoneMapping">Zone Mapping (JSON)</Label>
+                    <Textarea
+                      id="zoneMapping"
+                      placeholder='{"Good": "safe", "Moderate": "warning", "Unhealthy": "danger"}'
+                      value={formData.zoneMapping}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          zoneMapping: e.target.value,
+                        })
+                      }
+                      className="font-mono text-sm"
+                      rows={4}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Maps source zone values to safety levels (safe, warning,
+                      danger)
+                    </p>
+                  </div>
+                )}
+
+                {/* Endemic settings */}
+                {(!selectedProperty ||
+                  selectedProperty.observationType === "endemic") && (
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="endemicIsDanger"
+                      checked={formData.endemicIsDanger}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, endemicIsDanger: checked })
+                      }
+                    />
+                    <Label htmlFor="endemicIsDanger">
+                      Endemic presence is danger level (vs. warning)
+                    </Label>
+                  </div>
+                )}
+
+                {/* Incidence thresholds */}
+                {(!selectedProperty ||
+                  selectedProperty.observationType === "incidence") && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="incidenceWarningThreshold">
+                        Incidence Warning Threshold
+                      </Label>
+                      <Input
+                        id="incidenceWarningThreshold"
+                        type="number"
+                        placeholder="e.g., 10 (per 100k)"
+                        value={formData.incidenceWarningThreshold}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            incidenceWarningThreshold: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="incidenceDangerThreshold">
+                        Incidence Danger Threshold
+                      </Label>
+                      <Input
+                        id="incidenceDangerThreshold"
+                        type="number"
+                        placeholder="e.g., 50 (per 100k)"
+                        value={formData.incidenceDangerThreshold}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            incidenceDangerThreshold: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label htmlFor="status">Status *</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(value) =>
+                      setFormData({
+                        ...formData,
+                        status: value as PropertyThresholdStatus,
+                      })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROPERTY_THRESHOLD_STATUS_OPTIONS.map((status) => (
+                        <SelectItem key={status} value={status}>
+                          {propertyThresholdStatusNames[status]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Admin notes about this threshold..."
+                    value={formData.notes}
+                    onChange={(e) =>
+                      setFormData({ ...formData, notes: e.target.value })
                     }
                   />
-                  <Label htmlFor="endemicIsDanger">
-                    Endemic presence is danger level (vs. warning)
-                  </Label>
                 </div>
-              )}
-
-              {/* Incidence thresholds */}
-              {(!selectedProperty ||
-                selectedProperty.observationType === "incidence") && (
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="incidenceWarningThreshold">
-                      Incidence Warning Threshold
-                    </Label>
-                    <Input
-                      id="incidenceWarningThreshold"
-                      type="number"
-                      placeholder="e.g., 10 (per 100k)"
-                      value={formData.incidenceWarningThreshold}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          incidenceWarningThreshold: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="incidenceDangerThreshold">
-                      Incidence Danger Threshold
-                    </Label>
-                    <Input
-                      id="incidenceDangerThreshold"
-                      type="number"
-                      placeholder="e.g., 50 (per 100k)"
-                      value={formData.incidenceDangerThreshold}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          incidenceDangerThreshold: e.target.value,
-                        })
-                      }
-                    />
-                  </div>
-                </div>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="status">Status *</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(value) =>
-                    setFormData({
-                      ...formData,
-                      status: value as PropertyThresholdStatus,
-                    })
-                  }
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSaving}
                 >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROPERTY_THRESHOLD_STATUS_OPTIONS.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {propertyThresholdStatusNames[status]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="notes">Notes</Label>
-                <Textarea
-                  id="notes"
-                  placeholder="Admin notes about this threshold..."
-                  value={formData.notes}
-                  onChange={(e) =>
-                    setFormData({ ...formData, notes: e.target.value })
-                  }
-                />
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : editingThreshold ? (
-                  "Update"
-                ) : (
-                  "Create"
-                )}
-              </Button>
-            </DialogFooter>
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : editingThreshold ? (
+                    "Update"
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </DialogFooter>
             </DialogContent>
           </Dialog>
         </div>

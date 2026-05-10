@@ -43,18 +43,6 @@ const MANAGED_CONFIGS: ManagedConfig[] = [
     description:
       "When enabled, unauthenticated users see a Coming Soon screen instead of the dashboard. Authenticated users always have full access.",
   },
-  {
-    configKey: "dashboard.environmentalHealth.enabled",
-    label: "Dashboard: Environmental Health card",
-    description:
-      "When enabled, the Environmental Health card (radon zones, disease endemic status) is shown on the mobile dashboard. Default off.",
-  },
-  {
-    configKey: "dashboard.pollutionSources.enabled",
-    label: "Dashboard: Pollution Sources card",
-    description:
-      "When enabled, the Pollution Sources card (known contamination sites near the user) is shown on the mobile dashboard. Default off.",
-  },
 ];
 
 const CONFIG_DESCRIPTIONS: Record<

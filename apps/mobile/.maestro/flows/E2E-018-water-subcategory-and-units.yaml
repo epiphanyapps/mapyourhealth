@@ -1,0 +1,170 @@
+# flow: E2E-018 Water sub-category filter + per-row units (EPI-18)
+# intent:
+#   Regression coverage for the EPI-18 sub-bugs A and C fixed in #313.
+#
+#   Sub-bug A: tapping a sub-category from the dashboard navigated to
+#   CategoryDetailScreen but the screen ignored the route's
+#   subCategoryId param and rendered every contaminant in the category.
+#   Tapping "Fertilizers" showed all 52 water contaminants for a Quebec
+#   city — including radioactives, pesticides, heavy metals.
+#
+#   Sub-bug C: ContaminantTable used the first row's `unit` for every
+#   cell. With radioactive contaminants sorting first, every threshold
+#   in the table was labeled "Bq/L" — even Lead and Mercury, which
+#   should read "μg/L".
+#
+#   Boucherville (QC) is the test fixture: it has 52 city-keyed
+#   measurements in production, mixing fertilizers, heavy metals,
+#   pesticides, radioactives, etc. Its dashboard is a city-scope hit
+#   (no cascade fallback) so it is unaffected by #312 and lets us
+#   isolate the rendering fixes in #313.
+#
+#   Run against a preview build:
+#     cd apps/mobile && npm run build:ios:preview
+#     xcrun simctl install booted <path-to-MapYourHealth.app>
+#     MAESTRO_APP_ID=info.mapyourhealth.app maestro test \
+#       apps/mobile/.maestro/flows/E2E-018-water-subcategory-and-units.yaml
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1: Search Boucherville (QC) — city-keyed measurements
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar visible"
+
+- tapOn:
+    text: "Search city or.*"
+    label: "Open search"
+
+- inputText: "Boucherville"
+
+# Wait for Google Places autocomplete
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: ".*Boucherville.*QC.*"
+    index: 0
+    label: "Pick Boucherville from autocomplete"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Boucherville"
+    timeout: 10000
+
+# ========================================
+# Part 2: Verify the dashboard rendered Boucherville's data
+# ========================================
+- assertVisible:
+    text: "Boucherville.*QC"
+    label: "Location header shows Boucherville, QC"
+
+- assertVisible:
+    text: "Water Quality"
+    label: "Water Quality category visible"
+
+# ========================================
+# Part 3: Tap into "Fertilizers" sub-category (EPI-18 sub-bug A)
+# ========================================
+# Boucherville has Nitrate + Nitrite under Fertilizers per
+# admin /zip-codes/Boucherville. Pre-fix this screen rendered all 52
+# contaminants regardless of the subCategoryId route param.
+
+- tapOn:
+    text: "Water Quality"
+    label: "Open Water Quality category card"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn:
+    text: "Fertilizers.*"
+    label: "Drill into Fertilizers sub-category"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Nitrate"
+    timeout: 8000
+
+# Fertilizers should show its actual fertilizer contaminants…
+- assertVisible:
+    text: "Nitrate"
+    label: "Nitrate visible under Fertilizers"
+
+- assertVisible:
+    text: "Nitrite"
+    label: "Nitrite visible under Fertilizers"
+
+# …and NOT the heavy metals, radioactives, pesticides that pre-fix
+# leaked into this view. Spot-check three from each leaked category.
+- assertNotVisible:
+    text: "Lead$"
+    label: "Lead (heavy metal) not in Fertilizers"
+
+- assertNotVisible:
+    text: "Mercury"
+    label: "Mercury (heavy metal) not in Fertilizers"
+
+- assertNotVisible:
+    text: "Tritium"
+    label: "Tritium (radioactive) not in Fertilizers"
+
+- assertNotVisible:
+    text: "Strontium-90"
+    label: "Strontium-90 (radioactive) not in Fertilizers"
+
+- assertNotVisible:
+    text: "Atrazine.*"
+    label: "Atrazine (pesticide) not in Fertilizers"
+
+# ========================================
+# Part 4: Verify per-row units render (EPI-18 sub-bug C)
+# ========================================
+# Fertilizer thresholds are in μg/L. Pre-fix, if any radioactive
+# sorted first, the entire table labeled values "Bq/L". Post-fix,
+# rows render with their own unit.
+- assertVisible:
+    text: ".*μg/L.*"
+    label: "Fertilizer thresholds use μg/L (per-row unit)"
+
+# Fertilizers must NOT show Bq/L since neither Nitrate nor Nitrite
+# are radioactive. If this assertion fires, the per-row unit fix
+# regressed.
+- assertNotVisible:
+    text: ".*Bq/L.*"
+    label: "Fertilizers shows no Bq/L (per-row unit fix holds)"
+
+# ========================================
+# Part 5: Cross-check on Radioactive sub-category — Bq/L IS expected
+# ========================================
+# Sanity that the unit override didn't break radioactives.
+- back
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- tapOn:
+    text: "Radioactive.*"
+    label: "Drill into Radioactive sub-category"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Tritium"
+    timeout: 8000
+
+- assertVisible:
+    text: "Tritium"
+    label: "Tritium visible under Radioactive"
+
+- assertVisible:
+    text: ".*Bq/L.*"
+    label: "Radioactive thresholds correctly use Bq/L"
+
+- assertNotVisible:
+    text: "Nitrate"
+    label: "Nitrate (fertilizer) not in Radioactive"

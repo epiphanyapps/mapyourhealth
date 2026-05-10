@@ -23,8 +23,16 @@ export interface ContaminantTableRow {
   localLimit: number | null
   /** Local jurisdiction name (e.g., "NEW YORK", "QUEBEC") */
   localJurisdictionName: string
-  /** Status based on threshold comparison */
+  /**
+   * Worst-of-(whoStatus, localStatus). Used for the trailing summary pill
+   * and as a fallback when whoStatus / localStatus are absent (older cached
+   * data shape).
+   */
   status: StatStatus
+  /** Status vs WHO threshold (EPI-18 sub-bug B). */
+  whoStatus?: StatStatus
+  /** Status vs local-jurisdiction threshold (EPI-18 sub-bug B). */
+  localStatus?: StatStatus
   /** Whether the contaminant is unregulated locally */
   isUnregulated?: boolean
 }
@@ -48,8 +56,6 @@ export interface ContaminantTableProps {
 export function ContaminantTable(props: ContaminantTableProps) {
   const { rows, unit, onWhoHeaderPress, onLocalHeaderPress } = props
   const { theme } = useAppTheme()
-
-  const displayUnit = unit || (rows.length > 0 ? rows[0].unit : "")
 
   const $container: ViewStyle = {
     marginTop: 16,
@@ -108,14 +114,19 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
   const $valueCell: ViewStyle = {
     ...$cell,
-    flex: 1.5,
+    flex: 1.75,
     alignItems: "flex-end",
   }
 
-  const $statusCell: ViewStyle = {
-    ...$cell,
-    flex: 0.5,
+  // Inline pill sits to the left of the threshold text (EPI-18 sub-bug B).
+  const $valueCellInner: ViewStyle = {
+    flexDirection: "row",
     alignItems: "center",
+    gap: 6,
+  }
+
+  const $pillSpacer: ViewStyle = {
+    width: 8,
   }
 
   const $cellText: TextStyle = {
@@ -143,13 +154,20 @@ export function ContaminantTable(props: ContaminantTableProps) {
 
   const localJurisdictionLabel = rows.length > 0 ? rows[0].localJurisdictionName : "LOCAL"
 
+  // EPI-18 sub-bug C: render each row's own unit instead of the first
+  // row's unit (or the optional `unit` prop). The previous behavior caused
+  // every cell to render with "Bq/L" — the first row's unit, since radioactive
+  // contaminants tend to sort first — so Lead and Mercury (μg/L) showed up
+  // labeled in becquerels.
   const formatValue = (
     value: number | null,
+    rowUnit: string,
     options?: { isUnregulated?: boolean; isLocal?: boolean },
   ): string => {
     if (options?.isUnregulated) return "UNREGULATED"
     if (value === null) return options?.isLocal ? "N/A" : "NO STANDARD"
-    return `${value} ${displayUnit}`
+    const effectiveUnit = unit || rowUnit
+    return `${value} ${effectiveUnit}`
   }
 
   return (
@@ -179,40 +197,63 @@ export function ContaminantTable(props: ContaminantTableProps) {
         >
           <Text style={onWhoHeaderPress ? $linkHeaderText : $headerText}>WHO</Text>
         </TouchableOpacity>
-        <View style={[$headerCell, $statusCell]}>
-          <Text style={$headerText}></Text>
-        </View>
       </View>
 
       {/* Data Rows */}
-      {rows.map((row, index) => (
-        <View
-          key={row.name}
-          style={[$row, index % 2 === 1 && $alternateRow, index === rows.length - 1 && $lastRow]}
-        >
-          <View style={[$nameCell, $nameCellRow]}>
-            <Text style={$cellText}>{row.name}</Text>
-            {row.contaminantId && hasHealthEffectsData(row.contaminantId) && (
-              <ContaminantInfoButton contaminantId={row.contaminantId} />
-            )}
+      {rows.map((row, index) => {
+        // EPI-18 sub-bug B: each value cell renders a status pill so the
+        // user sees that a row can be safe vs WHO yet exceed a tighter
+        // local (e.g., QC) limit. Suppress the pill when the threshold
+        // is null/unregulated — there's nothing to compare against.
+        const showLocalPill = row.localLimit !== null && !row.isUnregulated
+        const showWhoPill = row.whoLimit !== null
+        const localPillStatus = row.localStatus ?? row.status
+        const whoPillStatus = row.whoStatus ?? row.status
+        return (
+          <View
+            key={row.name}
+            style={[$row, index % 2 === 1 && $alternateRow, index === rows.length - 1 && $lastRow]}
+          >
+            <View style={[$nameCell, $nameCellRow]}>
+              <Text style={$cellText}>{row.name}</Text>
+              {row.contaminantId && hasHealthEffectsData(row.contaminantId) && (
+                <ContaminantInfoButton contaminantId={row.contaminantId} />
+              )}
+            </View>
+            <View style={$valueCell}>
+              <View style={$valueCellInner}>
+                {showLocalPill ? (
+                  <StatusIndicator status={localPillStatus} size="small" />
+                ) : (
+                  <View style={$pillSpacer} />
+                )}
+                <Text
+                  style={
+                    row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText
+                  }
+                >
+                  {formatValue(row.localLimit, row.unit, {
+                    isUnregulated: row.isUnregulated,
+                    isLocal: true,
+                  })}
+                </Text>
+              </View>
+            </View>
+            <View style={$valueCell}>
+              <View style={$valueCellInner}>
+                {showWhoPill ? (
+                  <StatusIndicator status={whoPillStatus} size="small" />
+                ) : (
+                  <View style={$pillSpacer} />
+                )}
+                <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
+                  {formatValue(row.whoLimit, row.unit)}
+                </Text>
+              </View>
+            </View>
           </View>
-          <View style={$valueCell}>
-            <Text
-              style={row.localLimit === null || row.isUnregulated ? $unregulatedText : $valueText}
-            >
-              {formatValue(row.localLimit, { isUnregulated: row.isUnregulated, isLocal: true })}
-            </Text>
-          </View>
-          <View style={$valueCell}>
-            <Text style={row.whoLimit === null ? $unregulatedText : $valueText}>
-              {formatValue(row.whoLimit)}
-            </Text>
-          </View>
-          <View style={$statusCell}>
-            <StatusIndicator status={row.status} size="small" />
-          </View>
-        </View>
-      ))}
+        )
+      })}
     </View>
   )
 }
