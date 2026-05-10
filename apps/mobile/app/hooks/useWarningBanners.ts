@@ -1,7 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 import type { AmplifyWarningBanner } from "@/services/amplify/data"
-import { getWarningBanners } from "@/services/amplify/data"
+import {
+  getWarningBanners,
+  getWarningBannersByCity,
+  getWarningBannersByCountry,
+  getWarningBannersByState,
+} from "@/services/amplify/data"
 
 interface UseWarningBannersOptions {
   /** City to filter banners for */
@@ -26,11 +31,18 @@ interface UseWarningBannersResult {
 /**
  * Hook to fetch and filter active warning banners for a user's location.
  *
- * Filters by:
- * - isActive === true
- * - startsAt <= now
- * - expiresAt is null OR expiresAt > now
- * - Location match: banners with null location fields (global) + banners matching user's city/state/country
+ * Fan-out fetch (EPI-22): runs up to four parallel queries — by city, by
+ * state, by country (each via the byCity/byState/byCountry GSI), plus a
+ * list scan that picks up globally-scoped banners (no GSI yet exists for
+ * the all-null scope). Results are unioned by `id`, then a JS filter
+ * enforces isActive, time-window, and case-insensitive cross-field
+ * consistency: a banner with non-null city must match the user's city,
+ * non-null state must match the user's state, etc.
+ *
+ * The GSI lookups are case-sensitive against DDB. If admin-entered data
+ * has inconsistent casing, banners can be missed by the GSI and only
+ * recovered via the bounded list scan — normalize at the admin layer
+ * when this matters at scale.
  */
 export function useWarningBanners(options: UseWarningBannersOptions): UseWarningBannersResult {
   const { city, state, country } = options
@@ -42,15 +54,25 @@ export function useWarningBanners(options: UseWarningBannersOptions): UseWarning
     try {
       setIsLoading(true)
       setError(null)
-      const data = await getWarningBanners()
-      setAllBanners(data)
+      const empty: AmplifyWarningBanner[] = []
+      const [cityRows, stateRows, countryRows, scanRows] = await Promise.all([
+        city ? getWarningBannersByCity(city) : Promise.resolve(empty),
+        state ? getWarningBannersByState(state) : Promise.resolve(empty),
+        country ? getWarningBannersByCountry(country) : Promise.resolve(empty),
+        getWarningBanners(),
+      ])
+      const byId = new Map<string, AmplifyWarningBanner>()
+      for (const banner of [...cityRows, ...stateRows, ...countryRows, ...scanRows]) {
+        byId.set(banner.id, banner)
+      }
+      setAllBanners(Array.from(byId.values()))
     } catch (err) {
       console.error("Error fetching warning banners:", err)
       setError(err instanceof Error ? err.message : "Failed to fetch warning banners")
     } finally {
       setIsLoading(false)
     }
-  }, [])
+  }, [city, state, country])
 
   useEffect(() => {
     fetchBanners()
