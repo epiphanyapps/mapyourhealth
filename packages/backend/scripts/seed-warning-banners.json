@@ -1,0 +1,48 @@
+{
+  "banners": [
+    {
+      "title": "[SEED] System-wide announcement",
+      "description": "Test fixture: a global banner that should appear for every user regardless of location. Use this row to verify the global-scope leg of the warning-banner cascade.",
+      "severity": "info",
+      "city": null,
+      "state": null,
+      "country": null,
+      "startsAt": "2026-01-01T00:00:00.000Z",
+      "expiresAt": "2030-12-31T23:59:59.999Z",
+      "isActive": true
+    },
+    {
+      "title": "[SEED] Canada-wide advisory",
+      "description": "Test fixture: a country-anchored banner that should appear for any user with country=CA. Verifies the country leg of the cascade.",
+      "severity": "warning",
+      "city": null,
+      "state": null,
+      "country": "CA",
+      "startsAt": "2026-01-01T00:00:00.000Z",
+      "expiresAt": "2030-12-31T23:59:59.999Z",
+      "isActive": true
+    },
+    {
+      "title": "[SEED] Quebec province-wide alert",
+      "description": "Test fixture: a state-anchored banner that should appear for any user with state=QC and country=CA. Verifies the state leg of the cascade.",
+      "severity": "warning",
+      "city": null,
+      "state": "QC",
+      "country": "CA",
+      "startsAt": "2026-01-01T00:00:00.000Z",
+      "expiresAt": "2030-12-31T23:59:59.999Z",
+      "isActive": true
+    },
+    {
+      "title": "[SEED] Montreal water advisory",
+      "description": "Test fixture: a city-anchored banner that should appear only for users searching Montreal. Verifies the city leg of the cascade.",
+      "severity": "critical",
+      "city": "Montreal",
+      "state": "QC",
+      "country": "CA",
+      "startsAt": "2026-01-01T00:00:00.000Z",
+      "expiresAt": "2030-12-31T23:59:59.999Z",
+      "isActive": true
+    }
+  ]
+}
