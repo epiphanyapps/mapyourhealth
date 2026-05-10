@@ -361,7 +361,7 @@ describe("useLocationData", () => {
       // cities in different states don't alias each other in the cache.
       // Legacy single-arg form (city only) appears as `_Montreal||`.
       expect(mockSave).toHaveBeenCalledWith(
-        "location_stats_v2_Montreal||",
+        "location_stats_v3_Montreal||",
         expect.objectContaining({
           data: expect.objectContaining({ cityName: "Montreal" }),
           cachedAt: expect.any(Number),
