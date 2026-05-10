@@ -84,7 +84,7 @@ export const navigationSections: AdminSection[] = [
           "Contaminants",
           "Jurisdictions",
           "Thresholds",
-          "Locations with Data",
+          "Locations covered",
           "Pending Reports",
         ],
       },
