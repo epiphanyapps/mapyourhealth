@@ -397,7 +397,23 @@ export interface StatDefinition {
 export interface CityStat {
   statId: string
   value: number
+  /**
+   * Worst-of-(whoStatus, localStatus). Kept for callers that have not yet
+   * migrated to the dual-status fields (DashboardScreen, calculateCategoryStatus).
+   */
   status: StatStatus
+  /**
+   * Status vs the WHO threshold (EPI-18 sub-bug B).
+   * Optional so MMKV entries cached before the dual-status migration still
+   * deserialize; consumers must fall back to `status`.
+   */
+  whoStatus?: StatStatus
+  /**
+   * Status vs the local-jurisdiction threshold (e.g., CA-QC). When no local
+   * threshold exists, runtime sets this to whoStatus.
+   * Optional for the same back-compat reason as whoStatus.
+   */
+  localStatus?: StatStatus
   lastUpdated: string
   history?: StatHistoryEntry[]
 }

@@ -125,6 +125,36 @@ export function clearCachedLocationData(city: string, state?: string, country?: 
 }
 
 /**
+ * Compute a SafetyStatus from a measured value and a single threshold.
+ * Returns "safe" when the threshold is missing or has no limit (no
+ * comparison possible).
+ */
+function computeStatusForThreshold(
+  value: number,
+  threshold: { limitValue?: number | null; warningRatio?: number | null } | undefined,
+  higherIsBad: boolean,
+): StatStatus {
+  if (!threshold || threshold.limitValue == null) return "safe"
+  const limit = threshold.limitValue
+  const warningThreshold = limit * (threshold.warningRatio ?? 0.8)
+  if (higherIsBad) {
+    if (value >= limit) return "danger"
+    if (value >= warningThreshold) return "warning"
+    return "safe"
+  }
+  if (value <= limit) return "danger"
+  if (value <= warningThreshold) return "warning"
+  return "safe"
+}
+
+const STATUS_SEVERITY: Record<StatStatus, number> = { safe: 0, warning: 1, danger: 2 }
+
+/** Returns the more-severe of two statuses (danger > warning > safe). */
+function worstStatus(a: StatStatus, b: StatStatus): StatStatus {
+  return STATUS_SEVERITY[a] >= STATUS_SEVERITY[b] ? a : b
+}
+
+/**
  * Hook to fetch city safety data with caching support.
  *
  * Cascades through the location hierarchy (#123): if no city-specific
@@ -140,6 +170,7 @@ export function useLocationData(
   const {
     contaminants,
     getThreshold,
+    getWHOThreshold,
     getJurisdictionForLocation,
     isLoading: defsLoading,
   } = useContaminants()
@@ -147,37 +178,47 @@ export function useLocationData(
   const qc = useQueryClient()
 
   /**
-   * Maps new LocationMeasurement to legacy CityStat format
+   * Maps new LocationMeasurement to legacy CityStat format.
+   *
+   * Computes status against both the WHO and local-jurisdiction thresholds
+   * (EPI-18 sub-bug B). For QC, the local limits are tighter than WHO for
+   * many contaminants — a row that is safe vs WHO can read as danger vs QC.
+   * Carrying both in `whoStatus` / `localStatus` lets the table render a
+   * pill per column instead of a single row-level badge that hid the
+   * distinction.
+   *
+   * `status` is the worst of the two so callers that have not migrated
+   * (DashboardScreen summary, calculateCategoryStatus) keep behaving the
+   * same way.
    */
   const mapMeasurementToLegacyStat = useCallback(
     (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): CityStat => {
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
-      const threshold = getThreshold(measurement.contaminantId, jurisdictionCode)
       const higherIsBad = contaminant?.higherIsBad ?? true
 
-      let status: StatStatus = "safe"
-      if (threshold && threshold.limitValue !== null) {
-        const limit = threshold.limitValue
-        const warningRatio = threshold.warningRatio ?? 0.8
-        const warningThreshold = limit * warningRatio
-
-        if (higherIsBad) {
-          if (measurement.value >= limit) status = "danger"
-          else if (measurement.value >= warningThreshold) status = "warning"
-        } else {
-          if (measurement.value <= limit) status = "danger"
-          else if (measurement.value <= warningThreshold) status = "warning"
-        }
-      }
+      const whoStatus = computeStatusForThreshold(
+        measurement.value,
+        getWHOThreshold(measurement.contaminantId),
+        higherIsBad,
+      )
+      const localThreshold =
+        jurisdictionCode === "WHO"
+          ? undefined
+          : getThreshold(measurement.contaminantId, jurisdictionCode)
+      const localStatus = localThreshold
+        ? computeStatusForThreshold(measurement.value, localThreshold, higherIsBad)
+        : whoStatus
 
       return {
         statId: measurement.contaminantId,
         value: measurement.value,
-        status,
+        status: worstStatus(whoStatus, localStatus),
+        whoStatus,
+        localStatus,
         lastUpdated: measurement.measuredAt ?? new Date().toISOString(),
       }
     },
-    [contaminants, getThreshold],
+    [contaminants, getThreshold, getWHOThreshold],
   )
 
   /**

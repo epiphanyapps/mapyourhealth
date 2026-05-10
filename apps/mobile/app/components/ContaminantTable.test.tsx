@@ -118,4 +118,80 @@ describe("ContaminantTable", () => {
       expect(queryByText("NO STANDARD")).toBeTruthy()
     })
   })
+
+  describe("EPI-18 sub-bug B: dual status pills", () => {
+    it("renders one status indicator per value cell driven by whoStatus / localStatus", () => {
+      // Lead at 5 µg/L: safe vs WHO (limit 10), danger vs QC (limit 5).
+      // Pre-fix the row had a single "danger" pill at the row level that
+      // hid the WHO-vs-local distinction.
+      const rows: ContaminantTableRow[] = [
+        {
+          ...baseRow,
+          name: "Lead",
+          value: 5,
+          unit: "μg/L",
+          whoLimit: 10,
+          localLimit: 5,
+          status: "danger",
+          whoStatus: "safe",
+          localStatus: "danger",
+        },
+      ]
+
+      const { getAllByLabelText } = render(<ContaminantTable rows={rows} />)
+
+      // StatusIndicator sets accessibilityLabel="Status: <status>".
+      // We expect one safe (WHO column) and one danger (Local column).
+      expect(getAllByLabelText("Status: safe").length).toBe(1)
+      expect(getAllByLabelText("Status: danger").length).toBe(1)
+    })
+
+    it("suppresses the WHO pill when no WHO threshold exists", () => {
+      // Glyphosate has a QC limit but no WHO standard ("NO STANDARD"
+      // shown). The WHO column should not render a pill — there is
+      // nothing to compare against.
+      const rows: ContaminantTableRow[] = [
+        {
+          ...baseRow,
+          name: "Glyphosate",
+          value: 280,
+          unit: "μg/L",
+          whoLimit: null,
+          localLimit: 280,
+          status: "danger",
+          whoStatus: "safe",
+          localStatus: "danger",
+        },
+      ]
+
+      const { getAllByLabelText, queryByLabelText } = render(<ContaminantTable rows={rows} />)
+
+      // Only the local column has a pill, and it's danger.
+      expect(getAllByLabelText("Status: danger").length).toBe(1)
+      expect(queryByLabelText("Status: safe")).toBeNull()
+    })
+
+    it("falls back to row.status when whoStatus / localStatus are absent (cached pre-R2 data)", () => {
+      // CityStat objects deserialized from MMKV cache written before the
+      // dual-status migration won't have whoStatus / localStatus. The
+      // table must still render a pill — just both pointing at row.status.
+      const rows: ContaminantTableRow[] = [
+        {
+          ...baseRow,
+          name: "Lead",
+          value: 5,
+          unit: "μg/L",
+          whoLimit: 10,
+          localLimit: 5,
+          status: "danger",
+          // whoStatus/localStatus intentionally absent
+        },
+      ]
+
+      const { getAllByLabelText } = render(<ContaminantTable rows={rows} />)
+
+      // Both pills fall back to row.status ("danger").
+      expect(getAllByLabelText("Status: danger").length).toBe(2)
+    })
+  })
 })
