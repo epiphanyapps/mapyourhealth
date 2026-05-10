@@ -145,6 +145,12 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const [measured, setMeasured] = useState(false)
   const contentHeight = useSharedValue(0)
   const progress = useSharedValue(0)
+  // Tracks the steady "fully open" state. The measured contentHeight is
+  // captured once with all sub-category accordions collapsed, so once the
+  // open animation completes we switch to height:"auto" so a child accordion
+  // expanding (and growing the natural height) is not clipped by the parent's
+  // overflow:hidden.
+  const fullyOpenShared = useSharedValue(0)
 
   const handleMeasured = useCallback(() => {
     setMeasured(true)
@@ -164,14 +170,24 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const toggleExpand = useCallback(() => {
     const newExpanded = !expanded
 
-    // Animate
-    progress.value = withTiming(newExpanded ? 1 : 0, {
-      duration: ANIMATION_DURATION,
-      easing: EASING,
-    })
+    if (!newExpanded) {
+      // Closing: drop the steady-open flag immediately so the height
+      // interpolation animates from the measured value rather than "auto".
+      fullyOpenShared.value = 0
+    }
+
+    progress.value = withTiming(
+      newExpanded ? 1 : 0,
+      { duration: ANIMATION_DURATION, easing: EASING },
+      (finished) => {
+        if (finished && newExpanded) {
+          fullyOpenShared.value = 1
+        }
+      },
+    )
 
     setExpanded(newExpanded)
-  }, [expanded, progress])
+  }, [expanded, progress, fullyOpenShared])
 
   const handlePress = () => {
     if (hasSubCategories) {
@@ -185,6 +201,15 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const animatedContentStyle = useAnimatedStyle(() => {
     // Before measurement, use auto height for initial render
     if (contentHeight.value === 0) {
+      return {
+        height: "auto" as unknown as number,
+        opacity: 1,
+      }
+    }
+
+    // Once the open animation has settled, let height grow naturally so a
+    // nested sub-category accordion expanding doesn't get clipped.
+    if (fullyOpenShared.value === 1) {
       return {
         height: "auto" as unknown as number,
         opacity: 1,

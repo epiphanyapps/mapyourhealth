@@ -199,4 +199,16 @@ describe("ExpandableCategoryCard - inline sub-category expansion", () => {
       getAllByText("No measurements for this sub-category at this location.").length,
     ).toBeGreaterThan(0)
   })
+
+  it("renders contaminant StatItems inside the expanded sub-category panel", () => {
+    const { getAllByLabelText, getAllByTestId, getSubCategoryContent } = setup()
+
+    fireEvent.press(lastByLabel(getAllByLabelText, "Water, status: safe, expandable"))
+    fireEvent.press(lastByLabel(getAllByLabelText, "Fertilizer sub-category"))
+
+    // The mock returns one row (Nitrate) for fertilizer; assert the StatItem
+    // mock surfaces it inside the expanded panel.
+    expect(getSubCategoryContent).toHaveBeenCalledWith("fertilizer")
+    expect(getAllByTestId("stat-item-Nitrate").length).toBeGreaterThan(0)
+  })
 })
