@@ -24,10 +24,13 @@ import {
 type LocationMeasurement = Schema["LocationMeasurement"]["type"];
 type HazardReport = Schema["HazardReport"]["type"];
 
-// Extended type for LocationMeasurement with city/state fields from schema
+// Extended type for LocationMeasurement with city/state/country fields from schema.
+// All three are optional at runtime — cascade scope (#123) means a row can be
+// state-anchored (city null) or country-anchored (city + state null).
 type LocationMeasurementWithLocation = LocationMeasurement & {
-  city: string;
-  state: string;
+  city: string | null | undefined;
+  state: string | null | undefined;
+  country: string | null | undefined;
 };
 
 export default function AdminDashboard() {
@@ -63,17 +66,27 @@ export default function AdminDashboard() {
         // Count contaminants
         const contaminants = contaminantsResult.data?.length || 0;
 
-        // Count unique cities with data. Cascade scope (#123) means
-        // city/state may be null on state-/country-anchored records — skip
-        // those so the count reflects actual distinct city locations
-        // rather than collapsing every null row into one bogus bucket.
-        const uniqueCities = new Set(
-          measurementsResult.data
-            ?.map((m) => m as LocationMeasurementWithLocation)
-            .filter((m) => m.city && m.state)
-            .map((m) => `${m.city}|${m.state}`) || [],
+        // Count unique cascade scopes covered. After PR #312 (EPI-17 / EPI-18
+        // anchored cascade), state-anchored rows (city null, state set) and
+        // country-anchored rows (city + state null, country set) are valid
+        // coverage levels — they back the state/country fallback that mobile
+        // hits when the user's exact city has no city-keyed records. Counting
+        // only distinct cities (the pre-EPI-31 behavior) under-reported as
+        // state-/country-anchored seeding ramps. Each row is bucketed by its
+        // narrowest non-null anchor; rows with all three null are dropped (no
+        // cascade level can address them).
+        const uniqueScopes = new Set(
+          (measurementsResult.data || [])
+            .map((m) => m as LocationMeasurementWithLocation)
+            .map((m) => {
+              if (m.city && m.state) return `city|${m.country ?? ""}|${m.state}|${m.city}`;
+              if (m.state) return `state|${m.country ?? ""}|${m.state}`;
+              if (m.country) return `country|${m.country}`;
+              return null;
+            })
+            .filter((k): k is string => k !== null),
         );
-        const locationsWithData = uniqueCities.size;
+        const locationsWithData = uniqueScopes.size;
 
         // Count pending reports
         const pendingReports =
@@ -196,7 +209,7 @@ export default function AdminDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Locations with Data
+              Locations covered
             </CardTitle>
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -204,7 +217,12 @@ export default function AdminDashboard() {
             <div className="text-2xl font-bold">
               {isLoading ? "..." : stats.locationsWithData}
             </div>
-            <p className="text-xs text-muted-foreground">Cities tracked</p>
+            <p
+              className="text-xs text-muted-foreground"
+              title="Counts unique cascade scopes: city-anchored rows by city, state-anchored rows by state, country-anchored rows by country. Rows missing all three anchors are excluded."
+            >
+              City + state + country scopes
+            </p>
           </CardContent>
         </Card>
 
