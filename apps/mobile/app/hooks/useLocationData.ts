@@ -24,14 +24,26 @@ import { load, save, remove } from "@/utils/storage"
 /**
  * Cache key prefix for location stats.
  *
- * Bumped to `_v2_` alongside the EPI-17 / EPI-18 cascade-bleed fix so any
- * MMKV entries written under the old `location_stats_` prefix — which may
- * contain leaked sibling-city data from the pre-fix cascade — are
- * orphaned rather than served to offline users for up to 24 hours after
- * the fix deploys. Old entries remain in storage until MMKV evicts them
- * naturally; the cost is negligible (each entry is a few KB).
+ * History:
+ * - `_v2_`: bumped alongside the EPI-17 / EPI-18 cascade-bleed fix so any
+ *   MMKV entries written under the original `location_stats_` prefix —
+ *   which may contain leaked sibling-city data from the pre-fix cascade —
+ *   are orphaned rather than served to offline users for up to 24 hours
+ *   after the fix deploys.
+ * - `_v3_`: bumped alongside #319 (EPI-18 sub-bug B / dual status pills).
+ *   `_v2_` entries lack the new `whoStatus` / `localStatus` fields on
+ *   `CityStat`. Without a bump, those entries deserialize cleanly (the
+ *   new fields are optional) but the table renders both pills via the
+ *   `stat.status` fallback — which is the worst-of-(WHO, local) and
+ *   therefore "danger" for almost every Boucherville row. Verified on
+ *   staging post-deploy: every WHO pill read "danger" until the cache
+ *   was cleared. Bumping the prefix orphans `_v2_` entries so users see
+ *   the correct WHO=safe / QC=danger split immediately on next fetch.
+ *
+ * Old entries remain in storage until MMKV evicts them naturally; the
+ * cost is negligible (each entry is a few KB).
  */
-const CACHE_KEY_PREFIX = "location_stats_v2_"
+const CACHE_KEY_PREFIX = "location_stats_v3_"
 
 /** Cache duration in milliseconds (24 hours) */
 const CACHE_DURATION_MS = 24 * 60 * 60 * 1000
