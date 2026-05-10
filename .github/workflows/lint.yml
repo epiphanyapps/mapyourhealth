@@ -66,6 +66,28 @@ jobs:
       - name: Lint backend
         run: yarn workspace @mapyourhealth/backend lint:check
 
+  validate-seed-data:
+    name: Validate Seed Data
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Validate seed-data.json categories against schema enum
+        run: yarn workspace @mapyourhealth/backend validate:seed
+
   lint-mobile:
     name: Lint Mobile
     needs: changes

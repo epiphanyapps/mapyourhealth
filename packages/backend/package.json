@@ -11,6 +11,7 @@
     "fetch:outputs": "AWS_REGION=ca-central-1 npx @aws-amplify/backend-cli@latest generate outputs --branch main --app-id d3jl0ykn4qgj9r --profile rayane && cp amplify_outputs.json ../../apps/mobile/ && cp amplify_outputs.json ../../apps/admin/ && cp amplify_outputs.json ../../",
     "fetch:outputs:staging": "AWS_REGION=ca-central-1 npx @aws-amplify/backend-cli@latest generate outputs --branch staging --app-id d3jl0ykn4qgj9r --profile rayane --out-dir ./.tmp-staging && mv ./.tmp-staging/amplify_outputs.json ./amplify_outputs.staging.json && rm -rf ./.tmp-staging && cp amplify_outputs.staging.json ../../apps/mobile/",
     "lint:check": "echo 'No lint configured'",
+    "validate:seed": "tsx scripts/validate-seed-data.ts",
     "compile": "tsc --noEmit",
     "clean": "rm -rf dist .amplify",
     "esbuild": "esbuild",

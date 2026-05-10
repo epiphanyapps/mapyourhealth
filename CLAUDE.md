@@ -531,6 +531,9 @@ cd apps/web && npx tsc --noEmit               # Web
 
 # Unit tests
 cd apps/mobile && npm run test                # Jest
+
+# Seed-data validation (when packages/backend/scripts/seed-data.json is touched)
+yarn workspace @mapyourhealth/backend validate:seed
 ```
 
 ### Pre-promotion checks (before merging `staging` → `main`)
