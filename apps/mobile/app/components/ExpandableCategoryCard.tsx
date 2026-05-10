@@ -14,9 +14,11 @@ import { useCategories } from "@/context/CategoriesContext"
 import { CATEGORY_CONFIG, SubCategory as LegacySubCategory } from "@/data/categoryConfig"
 import type { StatCategory, StatStatus, SubCategory } from "@/data/types/safety"
 import { useAppTheme } from "@/theme/context"
+import { trackEvent } from "@/utils/analytics"
 
 import { CategoryIcon } from "./CategoryIcon"
 import { CategoryInfoButton } from "./CategoryInfoButton"
+import { StatItem } from "./StatItem"
 import { StatusIndicator } from "./StatusIndicator"
 import { Text } from "./Text"
 
@@ -31,6 +33,17 @@ export interface SubCategoryStatusResult {
   status: StatStatus
   /** Optional color override (e.g., orange for WHO-only exceedances) */
   color?: string
+}
+
+/**
+ * A single contaminant row rendered inside an expanded sub-category panel.
+ */
+export interface SubCategoryStatRow {
+  statId: string
+  name: string
+  value: number
+  unit: string
+  status: StatStatus
 }
 
 export interface ExpandableCategoryCardProps {
@@ -48,7 +61,8 @@ export interface ExpandableCategoryCardProps {
    */
   status: StatStatus
   /**
-   * Callback when the card (or a sub-category) should navigate to details
+   * Callback when the card (or a sub-category's "View details" link) should
+   * navigate to a full detail screen.
    */
   onPress: (subCategoryId?: string) => void
   /**
@@ -62,6 +76,13 @@ export interface ExpandableCategoryCardProps {
    */
   riskCount?: number
   /**
+   * Optional callback to provide the contaminant rows shown when a
+   * sub-category is expanded inline. If omitted (or returns an empty array)
+   * the sub-category panel renders a placeholder line plus a "View details"
+   * link.
+   */
+  getSubCategoryContent?: (subCategoryId: string) => SubCategoryStatRow[]
+  /**
    * Optional style override for the container
    */
   style?: StyleProp<ViewStyle>
@@ -73,7 +94,9 @@ export interface ExpandableCategoryCardProps {
  *
  * For categories with sub-categories:
  * - Tapping the card expands/collapses to show sub-categories with animation
- * - Tapping a sub-category navigates to the category detail with that sub-category focused
+ * - Each sub-category row is itself an accordion: tapping it expands inline
+ *   to show the contaminant rows that belong to that sub-category, plus a
+ *   "View details" link that calls `onPress(subCategoryId)`.
  *
  * @example
  * <ExpandableCategoryCard
@@ -84,7 +107,16 @@ export interface ExpandableCategoryCardProps {
  * />
  */
 export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
-  const { category, categoryName, status, onPress, getSubCategoryStatus, riskCount, style } = props
+  const {
+    category,
+    categoryName,
+    status,
+    onPress,
+    getSubCategoryStatus,
+    riskCount,
+    getSubCategoryContent,
+    style,
+  } = props
   const { theme } = useAppTheme()
   const { getCategoryById, getSubCategoriesByCategoryId, getCategoryDescription } = useCategories()
 
@@ -113,6 +145,12 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const [measured, setMeasured] = useState(false)
   const contentHeight = useSharedValue(0)
   const progress = useSharedValue(0)
+  // Tracks the steady "fully open" state. The measured contentHeight is
+  // captured once with all sub-category accordions collapsed, so once the
+  // open animation completes we switch to height:"auto" so a child accordion
+  // expanding (and growing the natural height) is not clipped by the parent's
+  // overflow:hidden.
+  const fullyOpenShared = useSharedValue(0)
 
   const handleMeasured = useCallback(() => {
     setMeasured(true)
@@ -132,14 +170,24 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
   const toggleExpand = useCallback(() => {
     const newExpanded = !expanded
 
-    // Animate
-    progress.value = withTiming(newExpanded ? 1 : 0, {
-      duration: ANIMATION_DURATION,
-      easing: EASING,
-    })
+    if (!newExpanded) {
+      // Closing: drop the steady-open flag immediately so the height
+      // interpolation animates from the measured value rather than "auto".
+      fullyOpenShared.value = 0
+    }
+
+    progress.value = withTiming(
+      newExpanded ? 1 : 0,
+      { duration: ANIMATION_DURATION, easing: EASING },
+      (finished) => {
+        if (finished && newExpanded) {
+          fullyOpenShared.value = 1
+        }
+      },
+    )
 
     setExpanded(newExpanded)
-  }, [expanded, progress])
+  }, [expanded, progress, fullyOpenShared])
 
   const handlePress = () => {
     if (hasSubCategories) {
@@ -149,17 +197,19 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     }
   }
 
-  const handleSubCategoryPress = (subCategory: SubCategory | LegacySubCategory) => {
-    // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
-    const subCategoryId =
-      "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
-    onPress(subCategoryId)
-  }
-
   // Animated style for content container
   const animatedContentStyle = useAnimatedStyle(() => {
     // Before measurement, use auto height for initial render
     if (contentHeight.value === 0) {
+      return {
+        height: "auto" as unknown as number,
+        opacity: 1,
+      }
+    }
+
+    // Once the open animation has settled, let height grow naturally so a
+    // nested sub-category accordion expanding doesn't get clipped.
+    if (fullyOpenShared.value === 1) {
       return {
         height: "auto" as unknown as number,
         opacity: 1,
@@ -231,28 +281,6 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
     paddingBottom: 8,
   }
 
-  const $subCategoryRow: ViewStyle = {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 10,
-    paddingLeft: 56, // Indent: icon (28) + iconMarginRight (12) + extra indent (16)
-    paddingRight: 16,
-  }
-
-  const $subCategoryText: TextStyle = {
-    flex: 1,
-    fontSize: 15,
-    color: theme.colors.text,
-  }
-
-  const $subCategoryStatusContainer: ViewStyle = {
-    marginLeft: 8,
-  }
-
-  const $subCategoryChevron: ViewStyle = {
-    marginLeft: 8,
-  }
-
   const $divider: ViewStyle = {
     height: 1,
     backgroundColor: theme.colors.separator,
@@ -272,35 +300,16 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
       {subCategories.map((subCategory) => {
         // Handle both dynamic SubCategory (subCategoryId) and legacy SubCategory (id)
         const key = "subCategoryId" in subCategory ? subCategory.subCategoryId : subCategory.id
-        const subCategoryStatusResult = getSubCategoryStatus?.(key)
         return (
-          <Pressable
+          <SubCategoryAccordion
             key={key}
-            onPress={() => handleSubCategoryPress(subCategory)}
-            style={({ pressed }) => [
-              $subCategoryRow,
-              pressed && { backgroundColor: theme.colors.palette.neutral100 },
-            ]}
-            accessibilityRole="button"
-            accessibilityLabel={`${subCategory.name} sub-category${subCategoryStatusResult ? `, status: ${subCategoryStatusResult.status}` : ""}`}
-          >
-            <Text style={$subCategoryText}>{subCategory.name}</Text>
-            {"description" in subCategory && subCategory.description && (
-              <CategoryInfoButton name={subCategory.name} description={subCategory.description} />
-            )}
-            {subCategoryStatusResult && (
-              <View style={$subCategoryStatusContainer}>
-                <StatusIndicator
-                  status={subCategoryStatusResult.status}
-                  size="small"
-                  color={subCategoryStatusResult.color}
-                />
-              </View>
-            )}
-            <View style={$subCategoryChevron}>
-              <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
-            </View>
-          </Pressable>
+            subCategoryId={key}
+            name={subCategory.name}
+            description={"description" in subCategory ? subCategory.description : undefined}
+            statusResult={getSubCategoryStatus?.(key)}
+            content={getSubCategoryContent?.(key)}
+            onViewDetails={() => onPress(key)}
+          />
         )
       })}
     </View>
@@ -350,6 +359,223 @@ export function ExpandableCategoryCard(props: ExpandableCategoryCardProps) {
           </Animated.View>
         </>
       )}
+    </View>
+  )
+}
+
+interface SubCategoryAccordionProps {
+  subCategoryId: string
+  name: string
+  description?: string
+  statusResult?: SubCategoryStatusResult
+  /** Contaminant rows to show when expanded. Empty array = placeholder. */
+  content?: SubCategoryStatRow[]
+  /** Called when the user taps "View details" inside the expanded panel. */
+  onViewDetails: () => void
+}
+
+/**
+ * One sub-category row inside `ExpandableCategoryCard`. Tapping the row
+ * toggles an inner accordion that reveals the contaminants belonging to
+ * the sub-category plus a "View details" link to the full detail screen.
+ *
+ * Re-implements the same Reanimated height-measurement pattern used by
+ * `ExpandableCard` instead of composing it directly, because the header
+ * needs to embed `StatusIndicator` and `CategoryInfoButton` next to the
+ * chevron — which the generic `ExpandableCard` doesn't expose.
+ */
+function SubCategoryAccordion(props: SubCategoryAccordionProps) {
+  const { subCategoryId, name, description, statusResult, content, onViewDetails } = props
+  const { theme } = useAppTheme()
+
+  const [expanded, setExpanded] = useState(false)
+  const [measured, setMeasured] = useState(false)
+  const contentHeight = useSharedValue(0)
+  const progress = useSharedValue(0)
+
+  const handleMeasured = useCallback(() => {
+    setMeasured(true)
+  }, [])
+
+  const onContentLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      const height = event.nativeEvent.layout.height
+      if (height > 0 && contentHeight.value === 0) {
+        contentHeight.value = height
+        runOnJS(handleMeasured)()
+      }
+    },
+    [contentHeight, handleMeasured],
+  )
+
+  const toggleExpand = useCallback(() => {
+    const newExpanded = !expanded
+
+    progress.value = withTiming(newExpanded ? 1 : 0, {
+      duration: ANIMATION_DURATION,
+      easing: EASING,
+    })
+
+    setExpanded(newExpanded)
+
+    if (newExpanded) {
+      trackEvent("SubCategoryExpanded", { subCategoryId })
+    }
+  }, [expanded, progress, subCategoryId])
+
+  const animatedContentStyle = useAnimatedStyle(() => {
+    if (contentHeight.value === 0) {
+      return {
+        height: "auto" as unknown as number,
+        opacity: 1,
+      }
+    }
+
+    const height = interpolate(progress.value, [0, 1], [0, contentHeight.value])
+
+    return {
+      height,
+      opacity: interpolate(progress.value, [0, 0.3, 1], [0, 0.8, 1]),
+    }
+  })
+
+  const animatedChevronStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          rotate: `${interpolate(progress.value, [0, 1], [0, 90])}deg`,
+        },
+      ],
+    }
+  })
+
+  const $row: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 10,
+    paddingLeft: 56, // Indent: icon (28) + iconMarginRight (12) + extra indent (16)
+    paddingRight: 16,
+  }
+
+  const $rowText: TextStyle = {
+    flex: 1,
+    fontSize: 15,
+    color: theme.colors.text,
+  }
+
+  const $rowStatusContainer: ViewStyle = {
+    marginLeft: 8,
+  }
+
+  const $rowChevron: ViewStyle = {
+    marginLeft: 8,
+  }
+
+  const $contentOuter: ViewStyle = {
+    overflow: "hidden",
+  }
+
+  const $innerContent: ViewStyle = {
+    paddingLeft: 56,
+    paddingRight: 16,
+    paddingBottom: 12,
+  }
+
+  const $emptyText: TextStyle = {
+    fontSize: 13,
+    color: theme.colors.textDim,
+    fontStyle: "italic",
+    paddingVertical: 8,
+  }
+
+  const $viewDetailsRow: ViewStyle = {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    marginTop: 4,
+  }
+
+  const $viewDetailsText: TextStyle = {
+    fontSize: 14,
+    color: theme.colors.tint,
+    fontWeight: "500",
+  }
+
+  const $viewDetailsChevron: ViewStyle = {
+    marginLeft: 4,
+  }
+
+  const $measureContainer: ViewStyle = {
+    position: "absolute",
+    opacity: 0,
+    pointerEvents: "none",
+  }
+
+  const renderInnerContent = () => (
+    <View style={$innerContent}>
+      {content && content.length > 0 ? (
+        content.map((row) => (
+          <StatItem
+            key={row.statId}
+            name={row.name}
+            value={row.value}
+            unit={row.unit}
+            status={row.status}
+          />
+        ))
+      ) : (
+        <Text style={$emptyText}>No measurements for this sub-category at this location.</Text>
+      )}
+      <Pressable
+        onPress={onViewDetails}
+        style={({ pressed }) => [$viewDetailsRow, pressed && { opacity: 0.6 }]}
+        accessibilityRole="link"
+        accessibilityLabel={`View details for ${name}`}
+      >
+        <Text style={$viewDetailsText}>View details</Text>
+        <View style={$viewDetailsChevron}>
+          <MaterialCommunityIcons name="chevron-right" size={18} color={theme.colors.tint} />
+        </View>
+      </Pressable>
+    </View>
+  )
+
+  return (
+    <View>
+      <Pressable
+        onPress={toggleExpand}
+        style={({ pressed }) => [
+          $row,
+          pressed && { backgroundColor: theme.colors.palette.neutral100 },
+        ]}
+        accessibilityRole="button"
+        accessibilityLabel={`${name} sub-category${statusResult ? `, status: ${statusResult.status}` : ""}`}
+        accessibilityState={{ expanded }}
+      >
+        <Text style={$rowText}>{name}</Text>
+        {description && <CategoryInfoButton name={name} description={description} />}
+        {statusResult && (
+          <View style={$rowStatusContainer}>
+            <StatusIndicator status={statusResult.status} size="small" color={statusResult.color} />
+          </View>
+        )}
+        <Animated.View style={[$rowChevron, animatedChevronStyle]}>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
+        </Animated.View>
+      </Pressable>
+
+      {/* Hidden measurement view - renders once to get height */}
+      {!measured && (
+        <View style={$measureContainer}>
+          <View onLayout={onContentLayout}>{renderInnerContent()}</View>
+        </View>
+      )}
+
+      <Animated.View style={[$contentOuter, animatedContentStyle]}>
+        {renderInnerContent()}
+      </Animated.View>
     </View>
   )
 }
