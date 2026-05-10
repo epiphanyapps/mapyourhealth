@@ -107,7 +107,6 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     state: route.params?.state,
     country: route.params?.country,
   })
-
   // Helper to get display name from dynamic categories with fallback
   const getCategoryDisplayName = useCallback(
     (categoryId: string) => {
