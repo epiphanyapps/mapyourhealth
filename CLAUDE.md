@@ -423,6 +423,85 @@ When creating or processing GitHub issues, always apply the appropriate labels:
 
 Multiple labels can apply (e.g. an E2E testing issue gets both `e2e` and `test`).
 
+## Email & Communication
+
+**Always use the `gws` CLI for email related to this project — not the claude.ai Gmail MCP.**
+
+The MCP integration is authed against the personal `walter.vargaspena@gmail.com` account, which has no MapYourHealth correspondence. All Rayane / project email lives on **`walter@epiphanyapps.com`**, which `gws` is configured for.
+
+### Setup (already done on this machine)
+
+`gws` is installed at `/opt/homebrew/bin/gws` via Homebrew. Auth tokens live in the macOS Keychain (`keyring` backend). Config at `~/.config/gws/` — never commit; contains `client_secret.json` + encrypted `credentials.enc`.
+
+Sanity check:
+```bash
+gws --version    # expect 0.18.x or later
+gws gmail users messages list \
+  --params '{"userId": "walter@epiphanyapps.com", "maxResults": 1}'
+```
+
+If unauthenticated, run `gws auth login` (interactive browser flow). The "credentials in ENV" mental model from earlier in this project's history actually refers to the keychain-backed tokens — there's nothing to source in a shell rc file.
+
+### Output quirk
+
+`gws` prints `Using keyring backend: keyring` to stdout before the JSON response. For machine-readable parsing, pipe through `tail -n +2` or use `--format json` and skip the first line.
+
+### Common commands
+
+**List recent inbox messages (last 7 days):**
+```bash
+gws gmail users messages list \
+  --params '{"userId": "walter@epiphanyapps.com", "maxResults": 10, "q": "newer_than:7d in:inbox"}'
+```
+
+**Search by sender:**
+```bash
+gws gmail users messages list \
+  --params '{"userId": "walter@epiphanyapps.com", "q": "from:rayane@mapyourhealth.info"}'
+```
+
+**Search a thread by subject:**
+```bash
+gws gmail users threads list \
+  --params '{"userId": "walter@epiphanyapps.com", "q": "subject:\"Updated List\""}'
+```
+
+**Get message headers only (cheap):**
+```bash
+gws gmail users messages get \
+  --params '{"userId": "walter@epiphanyapps.com", "id": "<message-id>", "format": "metadata", "metadataHeaders": ["From", "To", "Subject", "Date"]}'
+```
+
+**Get full message body:**
+```bash
+gws gmail users messages get \
+  --params '{"userId": "walter@epiphanyapps.com", "id": "<message-id>", "format": "full"}'
+```
+
+**Get a whole thread (useful for replying in-context):**
+```bash
+gws gmail users threads get \
+  --params '{"userId": "walter@epiphanyapps.com", "id": "<thread-id>", "format": "full"}'
+```
+
+**Create a draft reply** — needs an RFC 2822 message base64url-encoded in the `raw` field:
+```bash
+gws gmail users drafts create \
+  --json '{"message": {"threadId": "<thread-id>", "raw": "<base64url-encoded-rfc2822>"}}' \
+  --params '{"userId": "walter@epiphanyapps.com"}'
+```
+
+See `gws schema gmail.users.drafts.create` for the full request shape.
+
+### Project contacts
+
+| Person | Email |
+|---|---|
+| **Rayane Laddi** (general) | `rayane@mapyourhealth.info` |
+| **Rayane Laddi** (staging admin login) | `rayane+admin@mapyourhealth.info` |
+| **Walter Vargas-Pena** (project mailbox) | `walter@epiphanyapps.com` |
+| **Seed admin user** (Cognito only, not a mailbox) | `seed@mapyourhealth.info` |
+
 ## Environment Variables
 
 ### Mobile App (`apps/mobile/.env`)

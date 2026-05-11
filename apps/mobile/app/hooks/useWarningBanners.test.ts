@@ -8,10 +8,16 @@
 import { act, renderHook, waitFor } from "@testing-library/react-native"
 
 const mockGetWarningBanners = jest.fn()
+const mockGetWarningBannersByCity = jest.fn()
+const mockGetWarningBannersByState = jest.fn()
+const mockGetWarningBannersByCountry = jest.fn()
 
 // Mock the data service
 jest.mock("../services/amplify/data", () => ({
   getWarningBanners: (...args) => mockGetWarningBanners(...args),
+  getWarningBannersByCity: (...args) => mockGetWarningBannersByCity(...args),
+  getWarningBannersByState: (...args) => mockGetWarningBannersByState(...args),
+  getWarningBannersByCountry: (...args) => mockGetWarningBannersByCountry(...args),
 }))
 
 // eslint-disable-next-line import/first
@@ -41,6 +47,9 @@ describe("useWarningBanners", () => {
   beforeEach(() => {
     jest.clearAllMocks()
     mockGetWarningBanners.mockResolvedValue([])
+    mockGetWarningBannersByCity.mockResolvedValue([])
+    mockGetWarningBannersByState.mockResolvedValue([])
+    mockGetWarningBannersByCountry.mockResolvedValue([])
   })
 
   describe("initial state", () => {
@@ -552,6 +561,92 @@ describe("useWarningBanners", () => {
       expect(ids).not.toContain("country-no-match")
 
       expect(result.current.banners).toHaveLength(4)
+    })
+  })
+
+  describe("fan-out fetch (EPI-22)", () => {
+    it("includes a banner returned only by the byCity GSI", async () => {
+      const cityBanner = createBanner({
+        id: "by-city-only",
+        title: "Toronto Alert via GSI",
+        city: "Toronto",
+        state: "ON",
+        country: "CA",
+      })
+      // Global list returns nothing — banner is only in the GSI result.
+      mockGetWarningBanners.mockResolvedValue([])
+      mockGetWarningBannersByCity.mockResolvedValue([cityBanner])
+
+      const { result } = renderHook(() =>
+        useWarningBanners({ city: "Toronto", state: "ON", country: "CA" }),
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.banners).toHaveLength(1)
+      expect(result.current.banners[0].id).toBe("by-city-only")
+    })
+
+    it("includes a banner returned only by the byState GSI", async () => {
+      const stateBanner = createBanner({
+        id: "by-state-only",
+        city: null,
+        state: "ON",
+        country: "CA",
+      })
+      mockGetWarningBanners.mockResolvedValue([])
+      mockGetWarningBannersByState.mockResolvedValue([stateBanner])
+
+      const { result } = renderHook(() =>
+        useWarningBanners({ city: "Ottawa", state: "ON", country: "CA" }),
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.banners).toHaveLength(1)
+      expect(result.current.banners[0].id).toBe("by-state-only")
+    })
+
+    it("dedupes a banner that appears in multiple fanout results", async () => {
+      const banner = createBanner({
+        id: "dup",
+        city: "Toronto",
+        state: "ON",
+        country: "CA",
+      })
+      mockGetWarningBanners.mockResolvedValue([banner])
+      mockGetWarningBannersByCity.mockResolvedValue([banner])
+      mockGetWarningBannersByState.mockResolvedValue([banner])
+      mockGetWarningBannersByCountry.mockResolvedValue([banner])
+
+      const { result } = renderHook(() =>
+        useWarningBanners({ city: "Toronto", state: "ON", country: "CA" }),
+      )
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false)
+      })
+
+      expect(result.current.banners).toHaveLength(1)
+      expect(result.current.banners[0].id).toBe("dup")
+    })
+
+    it("skips GSI fetchers when corresponding option is missing", async () => {
+      mockGetWarningBanners.mockResolvedValue([])
+
+      renderHook(() => useWarningBanners({}))
+
+      await waitFor(() => {
+        expect(mockGetWarningBanners).toHaveBeenCalled()
+      })
+
+      expect(mockGetWarningBannersByCity).not.toHaveBeenCalled()
+      expect(mockGetWarningBannersByState).not.toHaveBeenCalled()
+      expect(mockGetWarningBannersByCountry).not.toHaveBeenCalled()
     })
   })
 
