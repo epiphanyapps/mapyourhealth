@@ -128,7 +128,14 @@ async function main() {
   console.log(`Table suffix: ${TABLE_SUFFIX}`);
   console.log(`Tables to wipe: ${TABLES_TO_WIPE.join(", ")}\n`);
 
-  const confirmed = await confirm("Are you sure you want to delete all data in the above tables?");
+  // --force / --yes lets reseed-all.sh (and CI) skip the prompt. Without
+  // it, a non-TTY shell reads EOF, treats it as "no", prints "Aborted.",
+  // and exits cleanly — which silently no-ops the wipe in pipelines and
+  // produces doubled-up data when the downstream seed steps still run.
+  const skipPrompt = process.argv.includes("--force") || process.argv.includes("--yes");
+  const confirmed =
+    skipPrompt ||
+    (await confirm("Are you sure you want to delete all data in the above tables?"));
   if (!confirmed) {
     console.log("Aborted.");
     process.exit(0);
