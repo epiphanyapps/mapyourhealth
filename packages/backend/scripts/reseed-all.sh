@@ -39,7 +39,11 @@ if [ -z "$COGNITO_EMAIL" ] || [ -z "$COGNITO_PASSWORD" ]; then
 fi
 
 echo "=== Step 1: Wipe all data tables ==="
-AWS_PROFILE=rayane npx tsx scripts/wipe-all-data.ts
+# `--force` skips the interactive prompt. Without it, a non-TTY shell
+# (e.g. CI or a backgrounded run) reads EOF, treats it as "no", and the
+# wipe is silently aborted — leaving downstream seed steps to double up
+# the data. The reseed-all.sh entrypoint is itself the confirmation gate.
+AWS_PROFILE=rayane npx tsx scripts/wipe-all-data.ts --force
 
 echo ""
 echo "=== Step 2: Parse Risks.xlsx ==="
