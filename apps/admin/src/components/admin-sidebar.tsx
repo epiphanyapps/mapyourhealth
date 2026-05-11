@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -26,7 +27,6 @@ import {
   LogOut,
   Shield,
   KeyRound,
-  TestTube,
   BookOpen,
   Droplets,
   Scale,
@@ -41,123 +41,144 @@ import {
   BarChart3,
   Mail,
   FileText,
+  ChevronDown,
+  ChevronRight,
+  type LucideIcon,
 } from "lucide-react";
 
-/** Subset of admin routes whose mobile consumer was removed in #309 and
- *  whose fate is pending on EPI-25. Marked with a yellow "orphan" badge in
- *  the sidebar so contributors don't waste effort on data that won't ship. */
-const ORPHAN_ROUTES = new Set([
-  "/observations",
-  "/pollution-sources",
-  "/properties",
-  "/property-thresholds",
-]);
+type MenuItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  orphan?: boolean;
+};
 
-const menuItems = [
+type MenuGroup = {
+  label: string;
+  items: MenuItem[];
+  collapsible?: boolean;
+  defaultOpen?: boolean;
+};
+
+/** Sidebar groupings:
+ *  - Operations: data the mobile app surfaces directly to end users.
+ *  - Reference: schema-adjacent lookup data, mostly seeded from Risks.xlsx.
+ *  - Content: marketing surfaces (landing page, subscribers).
+ *  - System: admin meta tools.
+ *  - Orphaned: pages whose mobile consumer was removed in #309 and whose
+ *    fate is pending on EPI-25 / EPI-44 / EPI-45 / EPI-48. Kept visible
+ *    (collapsible, default-open) so the gap stays on the radar. */
+const menuGroups: MenuGroup[] = [
   {
-    title: "Dashboard",
-    url: "/",
-    icon: LayoutDashboard,
+    label: "Operations",
+    items: [
+      { title: "Dashboard", url: "/", icon: LayoutDashboard },
+      { title: "Analytics", url: "/analytics", icon: BarChart3 },
+      { title: "Measurements", url: "/measurements", icon: MapPin },
+      { title: "Import Data", url: "/import", icon: Upload },
+      { title: "Hazard Reports", url: "/hazard-reports", icon: AlertTriangle },
+      { title: "Warning Banners", url: "/banners", icon: Megaphone },
+    ],
   },
   {
-    title: "Analytics",
-    url: "/analytics",
-    icon: BarChart3,
+    label: "Reference",
+    items: [
+      { title: "Contaminants", url: "/contaminants", icon: Droplets },
+      { title: "Thresholds", url: "/thresholds", icon: Scale },
+      { title: "Categories", url: "/categories", icon: FolderTree },
+      { title: "Sub-Categories", url: "/subcategories", icon: Layers },
+      { title: "Jurisdictions", url: "/jurisdictions", icon: Globe },
+    ],
   },
   {
-    title: "Contaminants",
-    url: "/stats",
-    icon: Droplets,
+    label: "Content",
+    items: [
+      { title: "Landing Page", url: "/landing-page", icon: FileText },
+      { title: "Subscribers", url: "/subscribers", icon: Mail },
+    ],
   },
   {
-    title: "Thresholds",
-    url: "/thresholds",
-    icon: Scale,
+    label: "System",
+    items: [
+      { title: "Settings", url: "/settings", icon: Settings },
+      { title: "Guide", url: "/guide", icon: BookOpen },
+    ],
   },
   {
-    title: "Jurisdictions",
-    url: "/jurisdictions",
-    icon: Globe,
-  },
-  {
-    title: "Categories",
-    url: "/categories",
-    icon: FolderTree,
-  },
-  {
-    title: "Sub-Categories",
-    url: "/subcategories",
-    icon: Layers,
-  },
-  {
-    title: "Location Stats",
-    url: "/zip-codes",
-    icon: MapPin,
-  },
-  {
-    title: "Import Data",
-    url: "/import",
-    icon: Upload,
-  },
-  {
-    title: "Warning Banners",
-    url: "/banners",
-    icon: Megaphone,
-  },
-  {
-    title: "Landing Page",
-    url: "/landing-page",
-    icon: FileText,
-  },
-  {
-    title: "Hazard Reports",
-    url: "/reports",
-    icon: AlertTriangle,
-  },
-  {
-    title: "Subscribers",
-    url: "/subscribers",
-    icon: Mail,
-  },
-  {
-    title: "Pollution Sources",
-    url: "/pollution-sources",
-    icon: Factory,
-  },
-  {
-    title: "Testing Guide",
-    url: "/testing",
-    icon: TestTube,
-  },
-  {
-    title: "Guide",
-    url: "/guide",
-    icon: BookOpen,
-  },
-  {
-    title: "Settings",
-    url: "/settings",
-    icon: Settings,
+    label: "Orphaned — pending mobile surface",
+    collapsible: true,
+    defaultOpen: true,
+    items: [
+      { title: "Pollution Sources", url: "/pollution-sources", icon: Factory, orphan: true },
+      { title: "Properties", url: "/properties", icon: Activity, orphan: true },
+      { title: "Property Thresholds", url: "/property-thresholds", icon: Gauge, orphan: true },
+      { title: "Observations", url: "/observations", icon: Eye, orphan: true },
+    ],
   },
 ];
 
-const omMenuItems = [
-  {
-    title: "Properties",
-    url: "/properties",
-    icon: Activity,
-  },
-  {
-    title: "Property Thresholds",
-    url: "/property-thresholds",
-    icon: Gauge,
-  },
-  {
-    title: "Observations",
-    url: "/observations",
-    icon: Eye,
-  },
-];
+function MenuGroupBlock({
+  group,
+  pathname,
+}: {
+  group: MenuGroup;
+  pathname: string;
+}) {
+  const [open, setOpen] = useState(group.defaultOpen ?? true);
+  const isCollapsible = group.collapsible ?? false;
+  const expanded = isCollapsible ? open : true;
+
+  return (
+    <SidebarGroup>
+      {isCollapsible ? (
+        <SidebarGroupLabel
+          asChild
+          className="cursor-pointer select-none hover:text-foreground"
+        >
+          <button
+            type="button"
+            onClick={() => setOpen((v) => !v)}
+            aria-expanded={expanded}
+            className="flex w-full items-center justify-between"
+          >
+            <span>{group.label}</span>
+            {expanded ? (
+              <ChevronDown className="h-3.5 w-3.5" />
+            ) : (
+              <ChevronRight className="h-3.5 w-3.5" />
+            )}
+          </button>
+        </SidebarGroupLabel>
+      ) : (
+        <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+      )}
+      {expanded && (
+        <SidebarGroupContent>
+          <SidebarMenu>
+            {group.items.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild isActive={pathname === item.url}>
+                  <Link href={item.url}>
+                    <item.icon className="h-4 w-4" />
+                    <span>{item.title}</span>
+                    {item.orphan && (
+                      <span
+                        title="No mobile consumer — see EPI-25"
+                        className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
+                      >
+                        Orphan
+                      </span>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </SidebarGroupContent>
+      )}
+    </SidebarGroup>
+  );
+}
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -174,57 +195,9 @@ export function AdminSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
-        <SidebarGroup>
-          <SidebarGroupLabel>Navigation</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {menuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                      {ORPHAN_ROUTES.has(item.url) && (
-                        <span
-                          title="No mobile consumer — see EPI-25"
-                          className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
-                        >
-                          Orphan
-                        </span>
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
-
-        <SidebarGroup>
-          <SidebarGroupLabel>Observations & Measurements</SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {omMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url}>
-                    <Link href={item.url}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
-                      {ORPHAN_ROUTES.has(item.url) && (
-                        <span
-                          title="No mobile consumer — see EPI-25"
-                          className="ml-auto rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-800 dark:bg-amber-900/60 dark:text-amber-200"
-                        >
-                          Orphan
-                        </span>
-                      )}
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+        {menuGroups.map((group) => (
+          <MenuGroupBlock key={group.label} group={group} pathname={pathname} />
+        ))}
       </SidebarContent>
 
       <SidebarFooter className="border-t p-4">
