@@ -104,6 +104,11 @@ const CATEGORY_MAP: Record<string, string> = {
   "heavy metals": "inorganic",
   "heavy metal": "inorganic",
   inorganic: "inorganic",
+  // Microbiological section added in Risks.xlsx restructure; before
+  // this, Microcystin-LR lived under "Chemicals" and was parsed as
+  // "organic", which broke the contaminant-category enum invariant.
+  microbiological: "microbiological",
+  "microbiological contaminants": "microbiological",
   chemicals: "organic",
   chemical: "organic",
   "chemicals - desinfectants used to purify water": "disinfectant",
