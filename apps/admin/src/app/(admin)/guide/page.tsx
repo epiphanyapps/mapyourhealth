@@ -1349,134 +1349,172 @@ function DataTab() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <MapPin className="h-5 w-5" />
-            How data fits together (in plain English)
+            All entities, in order of how the data flows
           </CardTitle>
           <CardDescription>
-            How a city, a contaminant, and its measurement actually connect.
-            No foreign keys between them — the cascade is what stitches it all
-            together at read time.
+            What every table stores, what gets wiped vs preserved by Reseed
+            All. Cascade comes from rows having their own city/state/country
+            fields (no FK to Location).
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4 text-sm leading-relaxed">
-          <p>
-            <strong>Key insight:</strong> there&apos;s no foreign key from a
-            measurement to a Location row. Every data row carries its own{" "}
-            <code className="rounded bg-muted px-1 py-0.5 text-xs">
-              city / state / country
-            </code>{" "}
-            fields directly. The <code>Location</code> table is just a lookup
-            cache that maps &quot;Montreal, QC, CA&quot; to its regulatory
-            jurisdiction.
-          </p>
-
+        <CardContent className="space-y-6 text-sm leading-relaxed">
           <div>
-            <p className="font-medium">
-              Step 1 — A Location row exists for a city
+            <p className="mb-2 font-medium">
+              Reference data — wiped + reseeded by Reseed All
             </p>
-            <p className="mt-1">Two ways a Location appears:</p>
-            <ul className="ml-6 mt-1 list-disc space-y-1">
-              <li>
-                <strong>Seeded at reseed time</strong> — 18 well-known cities
-                (Montreal, Toronto, NYC, etc.) ship in{" "}
-                <code>seed-locations.json</code>. Each row stores city, state,
-                country, and a <code>jurisdictionCode</code> like{" "}
-                <code>CA-QC</code> that tells the app which regulator&apos;s
-                limits apply.
-              </li>
-              <li>
-                <strong>Resolved on demand</strong> — when a mobile user
-                searches a new city, the <code>resolve-location</code> Lambda
-                hits Google Places, derives the jurisdiction code (try{" "}
-                <code>{"{country}-{state}"}</code>, then{" "}
-                <code>{"{country}"}</code>, then <code>WHO</code>), and caches
-                the row.
-              </li>
-            </ul>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Entity</TableHead>
+                    <TableHead>What it is</TableHead>
+                    <TableHead className="w-[80px] text-right">Count</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">Jurisdiction</TableCell>
+                    <TableCell>
+                      Regulatory bodies (WHO, US-NY, CA-QC, EU). <code>code</code>{" "}
+                      + optional <code>parentCode</code> for hierarchy.
+                    </TableCell>
+                    <TableCell className="text-right">~18</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Contaminant</TableCell>
+                    <TableCell>
+                      The <em>substances</em> we track (Lead, Fluoride, PFAS,
+                      Silver). <code>contaminantId</code> is a slug, not a UUID.
+                    </TableCell>
+                    <TableCell className="text-right">~174</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      ContaminantThreshold
+                    </TableCell>
+                    <TableCell>
+                      Legal limit per (contaminant × jurisdiction).
+                    </TableCell>
+                    <TableCell className="text-right">~414</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">Location</TableCell>
+                    <TableCell>
+                      City → jurisdiction lookup cache. Seeded for known cities;
+                      expanded on demand via Google Places when users search a
+                      new city.
+                    </TableCell>
+                    <TableCell className="text-right">~18</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      LocationMeasurement
+                    </TableCell>
+                    <TableCell>
+                      Actual <em>readings</em> of contaminants at places.
+                      Carries its OWN city/state/country (no FK to Location).
+                    </TableCell>
+                    <TableCell className="text-right">~1,771</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      Category / SubCategory
+                    </TableCell>
+                    <TableCell>
+                      Taxonomy: Water/Air × Organic/Inorganic/etc.
+                    </TableCell>
+                    <TableCell className="text-right">4 + 9</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      ObservedProperty
+                    </TableCell>
+                    <TableCell>
+                      Non-contaminant environmental properties (radon, Lyme
+                      disease).
+                    </TableCell>
+                    <TableCell className="text-right">2</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      PropertyThreshold
+                    </TableCell>
+                    <TableCell>Limits per property × jurisdiction.</TableCell>
+                    <TableCell className="text-right">3</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      LocationObservation
+                    </TableCell>
+                    <TableCell>
+                      Actual radon / Lyme readings per city. Same
+                      city/state/country pattern as LocationMeasurement.
+                    </TableCell>
+                    <TableCell className="text-right">~6,660</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </div>
 
           <div>
-            <p className="font-medium">
-              Step 2 — Data is stored with city/state/country on the row itself
+            <p className="mb-2 font-medium">
+              Preserved across reseeds — admin-curated or user-submitted
             </p>
-            <p className="mt-1">
-              When an admin enters a measurement, the{" "}
-              <code>LocationMeasurement</code> row looks like:
-            </p>
-            <pre className="mt-2 overflow-x-auto rounded-md bg-muted px-3 py-2 text-xs">
-              {`{
-  city: "Montreal",
-  state: "QC",
-  country: "CA",
-  contaminantId: "lead",    // slug, not UUID
-  value: 12,
-  unit: "μg/L",
-  measuredAt: "2026-05-01"
-}`}
-            </pre>
-            <p className="mt-2">
-              Two things to notice: <strong>no FK to Location</strong> (same
-              fields duplicated) and{" "}
-              <strong>
-                <code>contaminantId</code> is a slug
-              </strong>{" "}
-              (lookups go through the <code>byContaminantId</code> GSI on the
-              Contaminant table). The duplication enables{" "}
-              <strong>cascade</strong>: a row with{" "}
-              <code>city: null, state: &quot;QC&quot;, country: &quot;CA&quot;</code>{" "}
-              applies to any QC city; one with all-null city + state applies
-              country-wide.
-            </p>
-          </div>
-
-          <div>
-            <p className="font-medium">Step 3 — Mobile joins at read time</p>
-            <p className="mt-1">When a user opens Sorel-Tracy, QC:</p>
-            <ol className="ml-6 mt-1 list-decimal space-y-1">
-              <li>
-                <strong>Cascade-fetch</strong>: try{" "}
-                <code>city = &quot;Sorel-Tracy&quot;</code> → empty. Fall back
-                to <code>state = &quot;QC&quot;, city = null</code> → returns
-                the QC-anchored rows. Returns rows plus a scope label
-                (&quot;Showing QC data&quot;) for the badge.
-              </li>
-              <li>
-                <strong>Lookup the Contaminant</strong> by slug → name,
-                category, unit.
-              </li>
-              <li>
-                <strong>Lookup the ContaminantThreshold</strong> for{" "}
-                <code>(contaminantId, jurisdictionCode)</code>. Try{" "}
-                <code>CA-QC</code>, fall back to <code>CA</code>, then{" "}
-                <code>WHO</code>.
-              </li>
-              <li>
-                <strong>Compute status</strong>:{" "}
-                <code>value ≥ limit</code> → DANGER.{" "}
-                <code>value ≥ limit × 0.8</code> → WARNING. Else SAFE.
-              </li>
-            </ol>
-          </div>
-
-          <div className="rounded-md border border-muted bg-muted/40 p-3">
-            <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              Why no foreign key?
-            </p>
-            <ul className="mt-2 ml-5 list-disc space-y-1">
-              <li>
-                Duplication enables cascade with zero JOIN logic — the GSI on
-                city/state/country gives O(1) lookup at any scope.
-              </li>
-              <li>
-                Measurements survive Location wipes — Reseed All wipes the
-                Location table, but measurements anchor themselves correctly
-                via their own fields.
-              </li>
-              <li>
-                Jurisdiction is derived from state + country alone — no
-                consultation with Location is needed for the threshold-lookup
-                chain.
-              </li>
-            </ul>
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[200px]">Entity</TableHead>
+                    <TableHead>What it is</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="font-medium">WarningBanner</TableCell>
+                    <TableCell>
+                      Admin alerts (boil-water advisories, etc.). Scoped by
+                      city/state/country (any can be null → cascade scope; all
+                      null → global).
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">HazardReport</TableCell>
+                    <TableCell>User-submitted hazard reports.</TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      PollutionSource
+                    </TableCell>
+                    <TableCell>
+                      Admin-entered point sources (lat/lng + city/state/country
+                      + sourceType).
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      UserSubscription
+                    </TableCell>
+                    <TableCell>
+                      Per-user notification preferences (which city, which
+                      contaminants, which severity threshold).
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">
+                      NotificationLog
+                    </TableCell>
+                    <TableCell>
+                      Audit trail of every push / email sent.
+                    </TableCell>
+                  </TableRow>
+                  <TableRow>
+                    <TableCell className="font-medium">HealthRecord</TableCell>
+                    <TableCell>User personal health (owner-only).</TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -1484,91 +1522,88 @@ function DataTab() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Database className="h-5 w-5" />
-            How the Reseed All action works
+            <Droplets className="h-5 w-5" />
+            Contaminant vs LocationMeasurement
           </CardTitle>
           <CardDescription>
-            Step-by-step what the Settings → Reseed All Data button does when
-            you click it.
+            The two most-confused entities. Easy to mix up.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3 text-sm leading-relaxed">
+          <ul className="ml-5 list-disc space-y-2">
+            <li>
+              <strong>
+                Contaminant = a <em>definition</em>.
+              </strong>{" "}
+              &quot;Lead is a heavy metal, dangerous above 10 μg/L per WHO.&quot;
+              Fixed list of ~174 substances; sourced from Risks.xlsx.
+            </li>
+            <li>
+              <strong>
+                LocationMeasurement = a <em>reading</em>.
+              </strong>{" "}
+              &quot;Montreal had 12 μg/L of lead on 2026-05-01.&quot; Grows
+              over time as admins import data.
+            </li>
+          </ul>
+          <p className="text-muted-foreground">
+            A periodic-table column vs a weather reading.
+          </p>
+          <p>
+            The link between them: a measurement stores{" "}
+            <code>contaminantId: &quot;lead&quot;</code> (a slug) and looks up
+            the Contaminant via the <code>byContaminantId</code> GSI on the
+            Contaminant table.
+          </p>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            How Reseed All works
+          </CardTitle>
+          <CardDescription>
+            What Settings → <strong>Reseed All Data</strong> does, step by
+            step. ~1–3 minutes end-to-end. Don&apos;t close the page mid-run.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 text-sm leading-relaxed">
-          <p>
-            The reference data on this platform comes from a master spreadsheet
-            called <strong>Risks.xlsx</strong> — it defines every contaminant
-            we track, the legal limits for each one in each country/state, and
-            the regulatory bodies whose rules apply. <strong>Reseed</strong> is
-            how we push updated values from that spreadsheet into the live
-            database.
-          </p>
-
           <div>
-            <p className="font-medium">Step 1 — Wipe the reference tables</p>
-            <p className="mt-1">
-              All rows are deleted from 10 reference tables:
+            <p className="font-medium">1. Wipe — 10 reference tables in one sweep</p>
+            <p className="ml-4 mt-1 text-muted-foreground">
+              Jurisdiction · Contaminant · ContaminantThreshold · Location ·
+              LocationMeasurement · LocationObservation · Category ·
+              SubCategory · ObservedProperty · PropertyThreshold
             </p>
-            <ul className="ml-6 mt-1 list-disc space-y-0.5 text-muted-foreground">
-              <li>Jurisdiction · Contaminant · ContaminantThreshold</li>
-              <li>Location · LocationMeasurement · LocationObservation</li>
-              <li>Category · SubCategory</li>
-              <li>ObservedProperty · PropertyThreshold</li>
-            </ul>
           </div>
 
           <div>
-            <p className="font-medium">Step 2 — Reload in dependency order</p>
-            <p className="mt-1">
-              Data is added back in this sequence because each table depends on
-              the ones before it:
-            </p>
-            <ol className="ml-6 mt-2 list-decimal space-y-2">
+            <p className="font-medium">2. Refill in dependency order</p>
+            <ol className="ml-6 mt-2 list-decimal space-y-1">
+              <li>Jurisdictions — the regulatory hierarchy</li>
+              <li>Contaminants — the substances, from Risks.xlsx</li>
+              <li>Thresholds — limits per substance × jurisdiction</li>
+              <li>Locations — city lookup cache</li>
               <li>
-                <strong>Jurisdictions</strong> (~18) — the regulatory bodies:
-                WHO, US states, Canadian provinces, EU, etc.
+                ObservedProperties + PropertyThresholds — radon / Lyme and
+                their limits
               </li>
-              <li>
-                <strong>Contaminants</strong> (~174) — the substances we track
-                (Lead, Fluoride, PFAS, Silver, etc.), loaded from Risks.xlsx.
-              </li>
-              <li>
-                <strong>Thresholds</strong> (~414) — the actual limit values,
-                one per <em>contaminant × jurisdiction</em> (e.g., WHO Lead =
-                10 μg/L; Quebec Lead = 5 μg/L).
-              </li>
-              <li>
-                <strong>Locations</strong> (~18) — city/state/country lookup
-                cache for known cities.
-              </li>
-              <li>
-                <strong>Observed Properties &amp; Property Thresholds</strong>{" "}
-                (2 + 3) — environmental measurements (radon, Lyme disease) and
-                their limits per jurisdiction.
-              </li>
-              <li>
-                <strong>Measurements</strong> (~1,771) — actual contaminant
-                readings per city (e.g., Montreal nitrate = 8,500 μg/L).
-              </li>
-              <li>
-                <strong>Categories &amp; Sub-Categories</strong> (4 + 9) —
-                top-level groupings (Water, Air) and sub-categories (Organic,
-                Inorganic, Disinfectant, etc.).
-              </li>
-              <li>
-                <strong>Observations</strong> (~6,660) — actual radon / Lyme
-                data points per city.
-              </li>
+              <li>Measurements — ~1,771 actual readings</li>
+              <li>Categories + SubCategories — the taxonomy</li>
+              <li>Observations — ~6,660 radon / Lyme readings</li>
             </ol>
           </div>
 
           <div className="rounded-md border border-muted bg-muted/40 p-3">
             <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              What&apos;s preserved
+              Preserved untouched
             </p>
             <p className="mt-2">
-              User-submitted data (subscriptions, notification logs, hazard
-              reports, health records) and admin-curated content (warning
-              banners, pollution sources) are <strong>never touched</strong> by
-              the wipe. They survive every reseed.
+              UserSubscription, NotificationLog, HazardReport, HealthRecord,
+              WarningBanner, PollutionSource — admin-curated and user-submitted
+              data is never touched by the wipe.
             </p>
           </div>
 
@@ -1577,19 +1612,12 @@ function DataTab() {
               Source-of-truth caveat
             </p>
             <p className="mt-2 text-amber-900 dark:text-amber-200">
-              The seed values come from JSON files generated at the{" "}
-              <strong>last backend deploy</strong>. If you&apos;ve edited
-              Risks.xlsx since then, your changes won&apos;t appear in this
-              reseed until a new backend build runs and bundles the updated
-              JSON. Trigger a backend deploy first if you&apos;ve made
-              source-data changes you want reflected.
+              Seed values come from JSON files bundled into the{" "}
+              <code>manage-data</code> Lambda at the{" "}
+              <strong>last backend deploy</strong>. Edits to Risks.xlsx only
+              land in a reseed after a backend redeploy.
             </p>
           </div>
-
-          <p className="text-muted-foreground">
-            Roughly <strong>1–3 minutes</strong> end-to-end. Don&apos;t close
-            the page until the operation completes.
-          </p>
         </CardContent>
       </Card>
     </>
