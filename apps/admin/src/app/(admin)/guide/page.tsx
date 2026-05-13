@@ -1345,6 +1345,34 @@ function TestingTab() {
 function DataTab() {
   return (
     <>
+      <Card className="border-primary/40 bg-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Lightbulb className="h-5 w-5" />
+            In plain English
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="text-sm leading-relaxed">
+          <ul className="ml-5 list-disc space-y-2">
+            <li>
+              We track ~174 substances (Lead, Fluoride, etc.) and their legal
+              limits in each country and state. All of that comes from{" "}
+              <strong>Risks.xlsx</strong>.
+            </li>
+            <li>
+              Actual readings (&quot;Montreal had 12 μg/L of lead on
+              2026-05-01&quot;) are stored separately and grow over time as
+              admins import data.
+            </li>
+            <li>
+              <strong>Reseed All</strong> wipes the reference data and
+              re-imports it from Risks.xlsx. Takes 1–3 minutes. Your users&apos;
+              alerts, subscriptions, and reports are never touched.
+            </li>
+          </ul>
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
