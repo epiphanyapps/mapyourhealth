@@ -74,15 +74,19 @@ echo "=== Step 7: Seed O&M observations (AppSync — requires Cognito) ==="
 npx tsx scripts/seed-om-data.ts --json scripts/seed-om-data.json --observations-only
 
 echo ""
-echo "=== Step 8: Seed warning banners (AppSync — requires Cognito) ==="
-# 4 banners (global, country, state, city) for verifying the warning-banner
-# cascade end-to-end. Idempotent upsert by title.
-npx tsx scripts/seed-warning-banners.ts
-
-echo ""
-echo "=== Step 9: Seed pollution sources (AppSync — requires Cognito) ==="
-# 5 sources at varied anchors and types for verifying the pollution-source
-# cascade. Idempotent upsert by sourceId.
+echo "=== Step 8: Seed pollution sources (AppSync — requires Cognito) ==="
+# 5 sources at varied anchors (Montreal city, Toronto city, QC state,
+# ON state, CA country) and varied source types. Idempotent upsert by
+# sourceId. Doubles as cascade-demonstration data for the orphan
+# PollutionSource feature.
+#
+# Note: warning banners are intentionally NOT seeded by reseed-all.sh.
+# Banners surface prominently on the mobile Dashboard, so auto-seeding
+# them risks fake `[SEED]` advisories reaching real users if the admin
+# Reseed action ever runs on prod. Real banner content should always be
+# created by an admin in response to a real situation. The standalone
+# `yarn seed:banners` script still exists for one-off use when a fresh
+# staging env genuinely needs sample banners to demo the UI.
 npx tsx scripts/seed-pollution-sources.ts
 
 echo ""

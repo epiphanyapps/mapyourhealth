@@ -106,7 +106,7 @@ aws dynamodb scan --table-name "Jurisdiction-uusoeozunzdy5biliji7vxbjcy-NONE" \
 
 ## Full Wipe and Reseed (`reseed-all.sh`)
 
-Use when you want to reset a test environment to a known-good state with cascade-test fixtures populated. The script runs nine steps end-to-end (~30 min):
+Use when you want to reset a test environment to a known-good state with cascade-test fixtures populated. The script runs eight steps end-to-end (~30 min):
 
 ```
 1. wipe-all-data.ts                  → wipes 10 reference + measurement tables
@@ -116,9 +116,10 @@ Use when you want to reset a test environment to a known-good state with cascade
 5. seed-cascade-test-observations.ts → radon observations at QC / CA / US anchors
 6. seed-categories.ts                → Category + SubCategory (AppSync)
 7. seed-om-data.ts --observations-only → 6,660 location observations (AppSync)
-8. seed-warning-banners.ts           → 4 test banners (global / country / state / city)
-9. seed-pollution-sources.ts         → 5 test sources at varied anchors
+8. seed-pollution-sources.ts         → 5 test sources at varied anchors
 ```
+
+**Warning banners are intentionally NOT included.** Banners surface prominently on the mobile Dashboard, so auto-seeding them risks fake `[SEED]` advisories reaching real users if the admin Reseed action ever runs on prod. Real banner content should always be created by an admin in response to a real situation. Run `yarn seed:banners` standalone if a fresh staging env genuinely needs sample banners to demo the UI.
 
 ### Prerequisites
 
