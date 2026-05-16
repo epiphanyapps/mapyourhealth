@@ -41,7 +41,10 @@ env:
 jobs:
   ios-e2e:
     name: iOS E2E Tests
-    runs-on: macos-14
+    # macos-15 ships Xcode 16+ which RN 0.81.5 requires (the macos-14 runner
+    # has Xcode 15.4 and fails pod install with "React Native requires
+    # XCode >= 16.1. Found 15.4").
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
