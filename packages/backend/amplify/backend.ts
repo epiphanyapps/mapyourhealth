@@ -128,6 +128,19 @@ locationMeasurementStreamMapping.node.addDependency(onLocationMeasurementStreamP
 const userPoolId = backend.auth.resources.userPool.userPoolId;
 const authStack = Stack.of(backend.auth.resources.userPool);
 
+// Switch the Cognito user pool to send verification / recovery emails via SES
+// instead of the default Cognito sender. The default sender is capped at 50
+// emails/day pool-wide, which silently drops recovery codes (#353). The
+// matching SES identity policy authorising this user pool to send via
+// mapyourhealth.info is applied to the SES identity out-of-band (one-time).
+const { cfnUserPool } = backend.auth.resources.cfnResources;
+cfnUserPool.emailConfiguration = {
+  emailSendingAccount: 'DEVELOPER',
+  sourceArn: `arn:aws:ses:${authStack.region}:${authStack.account}:identity/mapyourhealth.info`,
+  from: 'MapYourHealth <noreply@mapyourhealth.info>',
+  replyToEmailAddress: 'contact@mapyourhealth.info',
+};
+
 // Create DynamoDB table for rate limiting magic link requests
 const rateLimitTable = new Table(authStack, 'MagicLinkRateLimitTable', {
   tableName: `MagicLinkRateLimit-${authStack.stackName}`,
