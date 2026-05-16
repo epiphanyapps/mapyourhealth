@@ -404,8 +404,11 @@ export default function PollutionSourcesPage() {
           </Card>
 
           {/* Source List */}
-          <Card className="flex-1 min-h-0">
-            <CardHeader className="pb-3">
+          {/* min-h-0 lets flex-1 actually shrink under content height; the
+            inner scroll container needs a constrained parent (CardContent with
+            overflow-hidden) or it grows past the Card boundary (#357). */}
+          <Card className="flex-1 min-h-0 flex flex-col">
+            <CardHeader className="pb-3 flex-shrink-0">
               <CardTitle className="text-sm flex items-center justify-between">
                 Sources
                 <Badge variant="secondary" className="ml-2">
@@ -413,7 +416,7 @@ export default function PollutionSourcesPage() {
                 </Badge>
               </CardTitle>
             </CardHeader>
-            <CardContent className="p-0">
+            <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
               {isLoading ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -423,7 +426,7 @@ export default function PollutionSourcesPage() {
                   No pollution sources found
                 </div>
               ) : (
-                <div className="max-h-full overflow-y-auto">
+                <div className="h-full overflow-y-auto">
                   {filteredSources.map((source) => (
                     <div
                       key={source.id}
