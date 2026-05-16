@@ -106,11 +106,24 @@ jobs:
       - name: Setup EAS CLI
         run: npm install -g eas-cli
 
+      # `eas build --local` for an `ios + simulator: true` profile writes
+      # a TARBALL even if --output looks like an .app filename, so simctl
+      # install rejects it with "Failed to extract IPA". Output to .tar.gz
+      # and extract before installing.
       - name: Build iOS Simulator App
         working-directory: apps/mobile
-        run: eas build --profile e2e --platform ios --local --non-interactive --output ./build/MapYourHealth.app
+        run: |
+          mkdir -p ./build
+          eas build --profile e2e --platform ios --local --non-interactive --output ./build/MapYourHealth.tar.gz
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Extract simulator .app bundle
+        working-directory: apps/mobile/build
+        run: |
+          tar -xzf MapYourHealth.tar.gz
+          ls -la
+          test -d MapYourHealth.app || (echo "Expected MapYourHealth.app directory after extracting tarball" && exit 1)
 
       # Pick the first available iPhone simulator regardless of iOS version
       # — macos-14 ships iOS-17 + iPhone 15 Pro, macos-15 ships iOS-18 +
