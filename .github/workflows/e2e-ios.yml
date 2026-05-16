@@ -41,7 +41,10 @@ env:
 jobs:
   ios-e2e:
     name: iOS E2E Tests
-    runs-on: macos-14
+    # macos-15 ships Xcode 16+ which RN 0.81.5 requires (the macos-14 runner
+    # has Xcode 15.4 and fails pod install with "React Native requires
+    # XCode >= 16.1. Found 15.4").
+    runs-on: macos-15
     timeout-minutes: 60
 
     steps:
@@ -75,20 +78,75 @@ jobs:
       - name: Install dependencies
         run: yarn install --immutable
 
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      # apps/mobile/app/app.tsx imports `amplify_outputs.json` and defaults
+      # to it (the "prod" path) unless the user toggles `envOverride` in
+      # MMKV. On real prod, the AppConfig "comingSoon" gate is ENABLED,
+      # which makes the app render `<ComingSoonScreen />` instead of the
+      # Dashboard — smoke flows assert dashboard strings and fail.
+      #
+      # Fetch outputs from the STAGING backend instead, so the smoke build
+      # bypasses the production launch gate. The staging-named file at
+      # apps/mobile/amplify_outputs.staging.json is unaffected (it's
+      # checked into git).
+      - name: Generate Amplify outputs (staging backend, written as the default amplify_outputs.json)
+        run: |
+          npx ampx generate outputs \
+            --branch staging \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --out-dir apps/mobile
+
+      # `eas build --local` honors .gitignore when packaging the project
+      # archive, so the just-generated amplify_outputs.json would be
+      # excluded (it's gitignored everywhere). Drop the rule for this
+      # CI checkout so EAS includes the file.
+      - name: Unignore amplify_outputs.json for EAS pack
+        run: sed -i.bak '/^amplify_outputs\.json$/d' .gitignore && rm .gitignore.bak
+
       - name: Setup EAS CLI
         run: npm install -g eas-cli
 
+      # `eas build --local` for an `ios + simulator: true` profile writes
+      # a TARBALL even if --output looks like an .app filename, so simctl
+      # install rejects it with "Failed to extract IPA". Output to .tar.gz
+      # and extract before installing.
       - name: Build iOS Simulator App
         working-directory: apps/mobile
-        run: eas build --profile e2e --platform ios --local --non-interactive --output ./build/MapYourHealth.app
+        run: |
+          mkdir -p ./build
+          eas build --profile e2e --platform ios --local --non-interactive --output ./build/MapYourHealth.tar.gz
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+      - name: Extract simulator .app bundle
+        working-directory: apps/mobile/build
+        run: |
+          tar -xzf MapYourHealth.tar.gz
+          ls -la
+          test -d MapYourHealth.app || (echo "Expected MapYourHealth.app directory after extracting tarball" && exit 1)
+
+      # Pick the first available iPhone simulator regardless of iOS version
+      # — macos-14 ships iOS-17 + iPhone 15 Pro, macos-15 ships iOS-18 +
+      # iPhone 16 Pro. Hard-coding either breaks across runner upgrades.
       - name: Boot iOS Simulator
         run: |
           xcrun simctl shutdown all 2>/dev/null || true
           DEVICE_ID=$(xcrun simctl list devices available --json | \
-            jq -r '.devices | to_entries[] | select(.key | contains("iOS-17")) | .value[] | select(.name == "iPhone 15 Pro") | .udid' | head -1)
+            jq -r '[.devices | to_entries[] | select(.key | test("SimRuntime.iOS-")) | .value[] | select(.name | startswith("iPhone"))] | first | .udid')
+          if [ -z "$DEVICE_ID" ] || [ "$DEVICE_ID" = "null" ]; then
+            echo "No iPhone simulator found. Available runtimes:"
+            xcrun simctl list runtimes
+            echo "Available devices:"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Booting simulator: $DEVICE_ID"
           xcrun simctl boot "$DEVICE_ID"
           xcrun simctl bootstatus "$DEVICE_ID" -b
           echo "SIMULATOR_UDID=$DEVICE_ID" >> $GITHUB_ENV
