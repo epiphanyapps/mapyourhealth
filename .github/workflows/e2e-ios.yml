@@ -85,14 +85,20 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ca-central-1
 
-      # apps/mobile/app/app.tsx imports `amplify_outputs.json` (prod). The
-      # staging file (`amplify_outputs.staging.json`) is checked into git
-      # — see the comment in root `.gitignore`. Only the prod file needs
-      # to be generated here.
-      - name: Generate Amplify outputs (prod)
+      # apps/mobile/app/app.tsx imports `amplify_outputs.json` and defaults
+      # to it (the "prod" path) unless the user toggles `envOverride` in
+      # MMKV. On real prod, the AppConfig "comingSoon" gate is ENABLED,
+      # which makes the app render `<ComingSoonScreen />` instead of the
+      # Dashboard — smoke flows assert dashboard strings and fail.
+      #
+      # Fetch outputs from the STAGING backend instead, so the smoke build
+      # bypasses the production launch gate. The staging-named file at
+      # apps/mobile/amplify_outputs.staging.json is unaffected (it's
+      # checked into git).
+      - name: Generate Amplify outputs (staging backend, written as the default amplify_outputs.json)
         run: |
           npx ampx generate outputs \
-            --branch main \
+            --branch staging \
             --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
             --out-dir apps/mobile
 
