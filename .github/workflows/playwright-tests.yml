@@ -1,16 +1,26 @@
 name: Playwright Tests
 
+# Tiered triggers (see docs/e2e-ci-review-2026-05-16.md + the CI plan):
+#   - pull_request touching apps/admin/** or packages/backend/** → required check, ~3 min on ubuntu
+#   - push to main with the same paths → informational post-merge run
+#   - workflow_dispatch → manual on-demand
+#
+# Path filter keeps unrelated PRs (mobile-only, web-only) from spinning
+# up the runner. Workflow self-changes trigger the run too so flips to
+# the config don't go untested.
 on:
-  # pull_request:
-  #   branches: [main]
-  #   paths:
-  #     - 'apps/admin/**'
-  #     - '.github/workflows/playwright-tests.yml'
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'apps/admin/**'
-  #     - '.github/workflows/playwright-tests.yml'
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/backend/**'
+      - '.github/workflows/playwright-tests.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/admin/**'
+      - 'packages/backend/**'
+      - '.github/workflows/playwright-tests.yml'
   workflow_dispatch:
 
 permissions:

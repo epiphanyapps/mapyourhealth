@@ -1,12 +1,35 @@
 name: iOS E2E Tests
 
+# Tiered triggers (see docs/e2e-ci-review-2026-05-16.md + the CI plan):
+#   - pull_request touching apps/mobile/** → smoke suite (E2E-100/101/102), ~10 min wall
+#   - push to main                          → full suite (every flow under .maestro/flows/), ~30 min wall, informational
+#   - workflow_dispatch                     → caller picks the suite via the `suite` input
+#
+# Path filter keeps non-mobile PRs from spinning up the (~10 min) macOS
+# runner. Workflow self-changes (this file) trigger the run too so flips
+# to the config don't go untested.
 on:
-  # push:
-  #   branches: [main]
-  #   paths:
-  #     - 'apps/mobile/**'
-  #     - '.github/workflows/e2e-ios.yml'
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-ios.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-ios.yml'
   workflow_dispatch:
+    inputs:
+      suite:
+        description: Test suite to run (smoke | core | full)
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - core
+          - full
 
 permissions:
   contents: read
@@ -79,17 +102,60 @@ jobs:
         working-directory: apps/mobile
         run: xcrun simctl install booted ./build/MapYourHealth.app
 
-      - name: Run E2E tests
+      # Pick the suite glob from the trigger:
+      #   pull_request    → smoke (E2E-100/101/102)
+      #   push to main    → full (.maestro/flows/)
+      #   workflow_dispatch → suite input (smoke | core | full)
+      #
+      # "smoke" matches `.maestro/flows/E2E-10*.yaml` (per
+      # `.maestro/config/test-suites.yaml`). "core" approximates the
+      # suite-config "core" set by globbing smoke + E2E-0*; "full" is
+      # the whole `.maestro/flows/` directory.
+      - name: Determine suite
+        id: suite
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request)
+              SUITE="smoke"
+              ;;
+            push)
+              SUITE="full"
+              ;;
+            workflow_dispatch)
+              SUITE="${{ inputs.suite }}"
+              ;;
+            *)
+              SUITE="smoke"
+              ;;
+          esac
+
+          case "$SUITE" in
+            smoke)
+              GLOB=".maestro/flows/E2E-10*.yaml"
+              ;;
+            core)
+              GLOB=".maestro/flows/E2E-0*.yaml .maestro/flows/E2E-10*.yaml"
+              ;;
+            full|*)
+              GLOB=".maestro/flows"
+              ;;
+          esac
+
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "glob=$GLOB" >> "$GITHUB_OUTPUT"
+          echo "Running suite: $SUITE → $GLOB"
+
+      - name: Run E2E tests (${{ steps.suite.outputs.suite }})
         working-directory: apps/mobile
         run: |
-          $HOME/.maestro/bin/maestro test .maestro/flows \
+          $HOME/.maestro/bin/maestro test ${{ steps.suite.outputs.glob }} \
             --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
 
       - name: Upload test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-e2e-results
+          name: ios-e2e-results-${{ steps.suite.outputs.suite }}
           path: ~/.maestro/tests
           retention-days: 7
           if-no-files-found: ignore
