@@ -112,11 +112,22 @@ jobs:
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
 
+      # Pick the first available iPhone simulator regardless of iOS version
+      # — macos-14 ships iOS-17 + iPhone 15 Pro, macos-15 ships iOS-18 +
+      # iPhone 16 Pro. Hard-coding either breaks across runner upgrades.
       - name: Boot iOS Simulator
         run: |
           xcrun simctl shutdown all 2>/dev/null || true
           DEVICE_ID=$(xcrun simctl list devices available --json | \
-            jq -r '.devices | to_entries[] | select(.key | contains("iOS-17")) | .value[] | select(.name == "iPhone 15 Pro") | .udid' | head -1)
+            jq -r '[.devices | to_entries[] | select(.key | test("SimRuntime.iOS-")) | .value[] | select(.name | startswith("iPhone"))] | first | .udid')
+          if [ -z "$DEVICE_ID" ] || [ "$DEVICE_ID" = "null" ]; then
+            echo "No iPhone simulator found. Available runtimes:"
+            xcrun simctl list runtimes
+            echo "Available devices:"
+            xcrun simctl list devices available
+            exit 1
+          fi
+          echo "Booting simulator: $DEVICE_ID"
           xcrun simctl boot "$DEVICE_ID"
           xcrun simctl bootstatus "$DEVICE_ID" -b
           echo "SIMULATOR_UDID=$DEVICE_ID" >> $GITHUB_ENV
