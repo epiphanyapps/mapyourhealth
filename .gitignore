@@ -132,6 +132,7 @@ build-*.tar.gz
 *.png
 !apps/mobile/assets/**/*.png
 !apps/web/public/**/*.png
+!docs/qa/**/*.png
 
 # Generated seed data
 packages/backend/scripts/seed-data.json
