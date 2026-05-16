@@ -408,9 +408,22 @@ GitHub Actions workflows in `.github/workflows/`:
 | `admin-deploy.yml` | Push to `main` or `staging` | Deploy admin dashboard |
 | `mobile-deploy.yml` | Push to `main` or `staging` | Deploy mobile web |
 | `web-deploy.yml` | Push to `main` or `staging` | Deploy web landing page |
-| `e2e-tests.yml` | PR, manual | Run E2E tests |
-| `e2e-ios.yml` | Manual | iOS E2E tests |
-| `playwright-tests.yml` | PR | Playwright tests |
+| `e2e-ios.yml` | PR (smoke), push to main (full), manual | iOS Maestro E2E tests — tiered suite |
+| `playwright-tests.yml` | PR + push to main on admin/backend paths, manual | Admin Playwright tests |
+
+### E2E strategy (tiered)
+
+Two surviving E2E workflows after the 2026-05-16 audit (`docs/e2e-ci-review-2026-05-16.md`). The previously dormant `e2e-tests.yml`, `e2e-orchestrated.yml`, `e2e-orchestration.yml` were deleted as 940+ lines of duplicate plumbing nobody ran.
+
+| Trigger | Suite | Runner | Time budget | Gating? |
+|---|---|---|---|---|
+| PR touching `apps/mobile/**` | Maestro **smoke** (E2E-100/101/102) | `macos-14` | ~10 min wall | Required check |
+| PR touching `apps/admin/**` or `packages/backend/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Required check |
+| Push to `main` touching `apps/mobile/**` | Maestro **full** (every flow in `.maestro/flows/`) | `macos-14` | ~30 min wall | Informational |
+| Push to `main` touching `apps/admin/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Informational |
+| `workflow_dispatch` (e2e-ios.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `macos-14` | varies | — |
+
+PR feedback target is **≤15 min** (Maestro smoke + Playwright run in parallel on different runners). Deploy gating on these workflows is deferred to a Phase 2 PR once we have a few weeks of green-signal data on real PR traffic.
 
 ## GitHub Issue Labels (MUST FOLLOW)
 
