@@ -85,20 +85,23 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ca-central-1
 
-      # apps/mobile/app/app.tsx imports BOTH amplify_outputs.json (prod) and
-      # amplify_outputs.staging.json — the bundler can't compile without
-      # them. Fetch staging first, rename, then fetch main as the prod file.
-      - name: Generate Amplify outputs (prod + staging)
+      # apps/mobile/app/app.tsx imports `amplify_outputs.json` (prod). The
+      # staging file (`amplify_outputs.staging.json`) is checked into git
+      # — see the comment in root `.gitignore`. Only the prod file needs
+      # to be generated here.
+      - name: Generate Amplify outputs (prod)
         run: |
-          npx ampx generate outputs \
-            --branch staging \
-            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
-            --out-dir apps/mobile
-          mv apps/mobile/amplify_outputs.json apps/mobile/amplify_outputs.staging.json
           npx ampx generate outputs \
             --branch main \
             --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
             --out-dir apps/mobile
+
+      # `eas build --local` honors .gitignore when packaging the project
+      # archive, so the just-generated amplify_outputs.json would be
+      # excluded (it's gitignored everywhere). Drop the rule for this
+      # CI checkout so EAS includes the file.
+      - name: Unignore amplify_outputs.json for EAS pack
+        run: sed -i.bak '/^amplify_outputs\.json$/d' .gitignore && rm .gitignore.bak
 
       - name: Setup EAS CLI
         run: npm install -g eas-cli
