@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
 import {
+  computeStatus,
   DEFAULT_HIGHER_IS_BAD,
   type CityData,
   type CityStat,
@@ -142,29 +143,6 @@ export function clearCachedLocationData(city: string, state?: string, country?: 
   remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
-/**
- * Compute a SafetyStatus from a measured value and a single threshold.
- * Returns "safe" when the threshold is missing or has no limit (no
- * comparison possible).
- */
-function computeStatusForThreshold(
-  value: number,
-  threshold: { limitValue?: number | null; warningRatio: number } | undefined,
-  higherIsBad: boolean,
-): StatStatus {
-  if (!threshold || threshold.limitValue == null) return "safe"
-  const limit = threshold.limitValue
-  const warningThreshold = limit * threshold.warningRatio
-  if (higherIsBad) {
-    if (value >= limit) return "danger"
-    if (value >= warningThreshold) return "warning"
-    return "safe"
-  }
-  if (value <= limit) return "danger"
-  if (value <= warningThreshold) return "warning"
-  return "safe"
-}
-
 const STATUS_SEVERITY: Record<StatStatus, number> = { safe: 0, warning: 1, danger: 2 }
 
 /** Returns the more-severe of two statuses (danger > warning > safe). */
@@ -214,7 +192,7 @@ export function useLocationData(
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
       const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
-      const whoStatus = computeStatusForThreshold(
+      const whoStatus = computeStatus(
         measurement.value,
         getWHOThreshold(measurement.contaminantId),
         higherIsBad,
@@ -224,7 +202,7 @@ export function useLocationData(
           ? undefined
           : getThreshold(measurement.contaminantId, jurisdictionCode)
       const localStatus = localThreshold
-        ? computeStatusForThreshold(measurement.value, localThreshold, higherIsBad)
+        ? computeStatus(measurement.value, localThreshold, higherIsBad)
         : whoStatus
 
       return {
