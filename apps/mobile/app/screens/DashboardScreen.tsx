@@ -26,6 +26,7 @@ import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
 import { DEFAULT_HIGHER_IS_BAD, StatCategory } from "@/data/types/safety"
+import { useJurisdictionResolver } from "@/hooks/useJurisdictionResolver"
 import { useLocation } from "@/hooks/useLocation"
 import {
   useLocationData,
@@ -38,8 +39,9 @@ import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
-// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
-// postalCode utilities removed - using city-level granularity
+// jurisdiction resolution goes through useJurisdictionResolver (thin wrapper
+// over ContaminantsContext.getJurisdictionForLocation); postalCode utilities
+// removed when the app moved to city-level granularity.
 
 /** Orange color for WHO-only exceedances */
 const WHO_EXCEEDANCE_COLOR = "#F97316"
@@ -92,8 +94,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
-  const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
-    useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
+  const { resolveCode } = useJurisdictionResolver()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const {
     getLocationFromGPS,
@@ -233,11 +235,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [cityData, statDefinitions],
   )
 
-  // Determine the jurisdiction code for the current location
-  const currentJurisdictionCode = useMemo(() => {
-    if (!currentLocation) return "WHO"
-    return getJurisdictionForLocation(currentLocation.state, currentLocation.country)?.code || "WHO"
-  }, [currentLocation, getJurisdictionForLocation])
+  // Determine the jurisdiction code for the current location.
+  // `resolveCode` already returns "WHO" for missing/empty inputs (falls through
+  // the in-memory lookup), so the `!currentLocation` early return is folded in.
+  const currentJurisdictionCode = useMemo(
+    () => resolveCode(currentLocation?.state ?? "", currentLocation?.country ?? ""),
+    [currentLocation, resolveCode],
+  )
 
   // Get sub-category status with WHO-vs-national color coding
   const getSubCategoryStatusForCategory = useCallback(
