@@ -65,6 +65,19 @@ export default function ThresholdsPage() {
   const [filterContaminant, setFilterContaminant] = useState<string>("all");
   const [filterJurisdiction, setFilterJurisdiction] = useState<string>("all");
 
+  // Honor ?contaminant=X&jurisdiction=Y on the URL so cross-page links
+  // (e.g. LinkedCountBadge on /jurisdictions and /contaminants) land
+  // pre-filtered. Read once on mount via window.location to avoid
+  // useSearchParams() Suspense-boundary requirements in the app router.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const c = params.get("contaminant");
+    const j = params.get("jurisdiction");
+    if (c) setFilterContaminant(c);
+    if (j) setFilterJurisdiction(j);
+  }, []);
+
   // Form state
   const [formData, setFormData] = useState({
     contaminantId: "",
