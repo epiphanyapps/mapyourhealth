@@ -22,7 +22,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { ArrowRight, CheckCircle2, CircleSlash, Loader2 } from "lucide-react";
+import {
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  CircleSlash,
+  Loader2,
+} from "lucide-react";
 import {
   resolveThresholdCoverage,
   makeThresholdKey,
@@ -48,7 +54,7 @@ function formatChain(
   jurisdictionByCode: Map<string, MinimalJurisdiction>,
 ): string {
   const chain: string[] = [code];
-  let current = jurisdictionByCode.get(code);
+  const current = jurisdictionByCode.get(code);
   // One-level parent + WHO terminator, mirroring resolveThresholdCoverage.
   if (current?.parentCode) chain.push(current.parentCode);
   if (chain[chain.length - 1] !== "WHO") chain.push("WHO");
@@ -61,11 +67,11 @@ export default function ThresholdCoveragePage() {
   const [thresholds, setThresholds] = useState<ContaminantThreshold[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
+  const [truncatedLists, setTruncatedLists] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        setIsLoading(true);
         const client = generateClient<Schema>();
         const [j, c, t] = await Promise.all([
           client.models.Jurisdiction.list({ limit: 100 }),
@@ -73,13 +79,34 @@ export default function ThresholdCoveragePage() {
           client.models.ContaminantThreshold.list({ limit: 1000 }),
         ]);
         if (j.errors || c.errors || t.errors) {
-          console.error("Coverage fetch errors", { j: j.errors, c: c.errors, t: t.errors });
+          console.error("Coverage fetch errors", {
+            j: j.errors,
+            c: c.errors,
+            t: t.errors,
+          });
           toast.error("Failed to load coverage data");
           return;
         }
         setJurisdictions(j.data || []);
         setContaminants(c.data || []);
         setThresholds(t.data || []);
+
+        // Detect pagination ceiling. Amplify list() returns nextToken when
+        // more rows exist than the page size; we don't paginate here, so a
+        // present nextToken means the audit is reading a partial dataset and
+        // would mis-classify direct rows as cascade-WHO. Surface both as a
+        // toast and a persistent inline banner so the warning doesn't vanish
+        // while the admin reads the table.
+        const truncated: string[] = [];
+        if (j.nextToken) truncated.push("jurisdictions");
+        if (c.nextToken) truncated.push("contaminants");
+        if (t.nextToken) truncated.push("thresholds");
+        setTruncatedLists(truncated);
+        if (truncated.length > 0) {
+          toast.warning(
+            `Partial data: ${truncated.join(", ")} list(s) exceeded page size. Counts may undercount Direct.`,
+          );
+        }
       } catch (err) {
         console.error("Coverage fetch error", err);
         toast.error("Failed to load coverage data");
@@ -175,6 +202,25 @@ export default function ThresholdCoveragePage() {
           <code>getThreshold</code> in mobile&apos;s ContaminantsContext.
         </p>
       </div>
+
+      {truncatedLists.length > 0 && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="flex items-start gap-3 py-4">
+            <AlertTriangle className="h-5 w-5 mt-0.5 shrink-0 text-amber-600" />
+            <div className="text-sm text-amber-900">
+              <p className="font-medium">Partial data — audit may undercount.</p>
+              <p>
+                The following list(s) exceeded the page size and were not
+                fully fetched: <code>{truncatedLists.join(", ")}</code>.
+                Missing rows are silently classified as cascading to WHO, so{" "}
+                <span className="font-medium">⚠ Cascade to WHO</span> is
+                inflated and <span className="font-medium">✓ Direct</span> is
+                undercounted until pagination is wired up.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <SummaryCard
