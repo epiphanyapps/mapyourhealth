@@ -40,6 +40,12 @@ permissions:
 
 env:
   MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
+  # Gradle build acceleration. `caching=true` enables the local build cache so
+  # compiled outputs restore across runs. `parallel=true` runs independent
+  # projects concurrently. `daemon=false` skips daemon startup overhead since
+  # each CI job is single-shot. `workers.max=2` matches the 2-core
+  # ubuntu-latest runner.
+  GRADLE_OPTS: "-Dorg.gradle.caching=true -Dorg.gradle.parallel=true -Dorg.gradle.daemon=false -Dorg.gradle.workers.max=2"
 
 jobs:
   android-e2e:
@@ -64,16 +70,56 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Cache dependencies
+      # Three-tier caching for Android E2E:
+      #
+      #   1. Yarn + Gradle module deps — invalidates on lockfile changes
+      #      (downloaded artifacts, fast to repopulate from registries)
+      #   2. Gradle build output — invalidates only on native-affecting changes
+      #      (compiled .class/.dex/.so, the 15-25 min compile we want to skip)
+      #   3. Expo prebuild + CLI caches — Expo's autolinking / template output
+      #
+      # Splitting them matters because the project is ~99% JS-only: a
+      # yarn.lock bump (frequent) shouldn't blow away the 25-min compile
+      # cache. Restore-keys give partial hits when the exact key misses —
+      # Gradle's incremental build sorts out the deltas after a partial
+      # restore.
+      - name: Cache deps (yarn + Gradle modules)
         uses: actions/cache@v4
         with:
           path: |
             .yarn/cache
             node_modules
             apps/mobile/node_modules
-            ~/.gradle/caches
+            ~/.gradle/caches/modules-2
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-android-deps-${{ hashFiles('**/yarn.lock', '**/build.gradle*', '**/gradle-wrapper.properties') }}
+          key: ${{ runner.os }}-android-deps-${{ hashFiles('yarn.lock', 'apps/mobile/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-android-deps-
+
+      - name: Cache Gradle build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/build-cache-1
+            ~/.gradle/caches/transforms-*
+            ~/.gradle/caches/jars-*
+            ~/.gradle/native
+          # Native fingerprint — files that, when changed, require a fresh
+          # native compile. App JS changes don't appear here, so a JS-only
+          # PR reuses the previous build's compiled outputs.
+          key: ${{ runner.os }}-android-build-${{ hashFiles('apps/mobile/package.json', 'apps/mobile/app.json', 'apps/mobile/app.config.*', 'apps/mobile/eas.json', 'yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-android-build-
+
+      - name: Cache Expo prebuild
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.expo
+            apps/mobile/.expo
+          key: ${{ runner.os }}-expo-${{ hashFiles('apps/mobile/package.json', 'apps/mobile/app.json', 'apps/mobile/app.config.*') }}
+          restore-keys: |
+            ${{ runner.os }}-expo-
 
       - name: Install dependencies
         run: yarn install --immutable
