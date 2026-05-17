@@ -1,0 +1,186 @@
+name: Android E2E Tests
+
+# Tiered triggers (mirrors the prior iOS workflow, see #364 + #365):
+#   - pull_request touching apps/mobile/** → smoke suite (E2E-100/101/102), ~12-15 min wall
+#   - push to main                          → full suite (every flow under .maestro/flows/), ~25 min wall, informational
+#   - workflow_dispatch                     → caller picks the suite via the `suite` input
+#
+# Switched from iOS to Android in <follow-up PR> for cost: macOS runners
+# are 10× billable on private repos, ubuntu-latest is 1×. The Maestro
+# flows are platform-agnostic (same appId, percentage-based taps) so
+# Android coverage exercises the same code paths at ~1/10 the runner
+# cost. iOS still has a workflow_dispatch-only entry point in
+# .github/workflows/e2e-ios.yml for occasional manual verification.
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-android.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-android.yml'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Test suite to run (smoke | core | full)
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - core
+          - full
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
+
+jobs:
+  android-e2e:
+    name: Android E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Java (for Maestro + Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            node_modules
+            apps/mobile/node_modules
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-android-deps-${{ hashFiles('**/yarn.lock', '**/build.gradle*', '**/gradle-wrapper.properties') }}
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      # apps/mobile/app/app.tsx imports `amplify_outputs.json` and defaults
+      # to it (the "prod" path). On real prod, the AppConfig "comingSoon"
+      # gate is ENABLED, which renders <ComingSoonScreen /> instead of
+      # the Dashboard — smoke flows assert dashboard strings and fail.
+      # Fetch outputs from the STAGING backend instead.
+      - name: Generate Amplify outputs (staging backend, written as the default amplify_outputs.json)
+        run: |
+          npx ampx generate outputs \
+            --branch staging \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --out-dir apps/mobile
+
+      # `eas build --local` honors .gitignore when packaging the project
+      # archive, so the just-generated amplify_outputs.json would be
+      # excluded (it's gitignored everywhere). Drop the rule for this
+      # CI checkout so EAS includes the file.
+      - name: Unignore amplify_outputs.json for EAS pack
+        run: sed -i.bak '/^amplify_outputs\.json$/d' .gitignore && rm .gitignore.bak
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Build Android APK
+        working-directory: apps/mobile
+        run: |
+          mkdir -p ./build
+          eas build --profile e2e --platform android --local --non-interactive --output ./build/MapYourHealth.apk
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      # Pick the suite glob from the trigger (same as the iOS workflow):
+      #   pull_request    → smoke (E2E-100/101/102)
+      #   push to main    → full (.maestro/flows/)
+      #   workflow_dispatch → suite input (smoke | core | full)
+      - name: Determine suite
+        id: suite
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request)   SUITE="smoke" ;;
+            push)           SUITE="full" ;;
+            workflow_dispatch) SUITE="${{ inputs.suite }}" ;;
+            *)              SUITE="smoke" ;;
+          esac
+          case "$SUITE" in
+            smoke) GLOB=".maestro/flows/E2E-10*.yaml" ;;
+            core)  GLOB=".maestro/flows/E2E-0*.yaml .maestro/flows/E2E-10*.yaml" ;;
+            full|*) GLOB=".maestro/flows" ;;
+          esac
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "glob=$GLOB" >> "$GITHUB_OUTPUT"
+          echo "Running suite: $SUITE → $GLOB"
+
+      # KVM enablement so the AVD runs with hardware acceleration (10×+
+      # faster boot/test). ubuntu-latest has nested virt enabled by
+      # default but we still need to set up the device permission.
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-pixel6-api33-${{ runner.os }}
+
+      - name: Create AVD + run Maestro suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            adb wait-for-device
+            adb install -r ./apps/mobile/build/MapYourHealth.apk
+            $HOME/.maestro/bin/maestro test ${{ steps.suite.outputs.glob }} \
+              --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-e2e-results-${{ steps.suite.outputs.suite }}
+          path: ~/.maestro/tests
+          retention-days: 7
+          if-no-files-found: ignore

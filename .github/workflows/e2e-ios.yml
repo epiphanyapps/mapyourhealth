@@ -1,24 +1,14 @@
-name: iOS E2E Tests
+name: iOS E2E Tests (manual)
 
-# Tiered triggers (see docs/e2e-ci-review-2026-05-16.md + the CI plan):
-#   - pull_request touching apps/mobile/** → smoke suite (E2E-100/101/102), ~10 min wall
-#   - push to main                          → full suite (every flow under .maestro/flows/), ~30 min wall, informational
-#   - workflow_dispatch                     → caller picks the suite via the `suite` input
+# Manual-only after the Android switch. macos-15 runners are 10× billable
+# on private repos vs. 1× for ubuntu-latest; Maestro flows are platform-
+# agnostic so Android coverage in e2e-android.yml exercises the same
+# code paths at ~1/10 the cost. iOS regression is caught by manual
+# testing on the maintainer's iPhone.
 #
-# Path filter keeps non-mobile PRs from spinning up the (~10 min) macOS
-# runner. Workflow self-changes (this file) trigger the run too so flips
-# to the config don't go untested.
+# Run this manually via `gh workflow run e2e-ios.yml -f suite=smoke` (or
+# core/full) when you need to verify something on iOS specifically.
 on:
-  pull_request:
-    branches: [staging, main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-ios.yml'
-  push:
-    branches: [main]
-    paths:
-      - 'apps/mobile/**'
-      - '.github/workflows/e2e-ios.yml'
   workflow_dispatch:
     inputs:
       suite:
