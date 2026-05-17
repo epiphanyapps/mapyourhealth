@@ -17,6 +17,7 @@ import {
   type StatStatus,
   StatCategory,
 } from "@/data/types/safety"
+import { useJurisdictionResolver } from "@/hooks/useJurisdictionResolver"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { fetchWithLocationFallback, type LocationScope } from "@/lib/locationFallback"
 import { queryKeys } from "@/lib/queryKeys"
@@ -163,13 +164,8 @@ export function useLocationData(
   state: string = "",
   country: string = "",
 ): UseLocationDataResult {
-  const {
-    contaminants,
-    getThreshold,
-    getWHOThreshold,
-    getJurisdictionForLocation,
-    isLoading: defsLoading,
-  } = useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold, isLoading: defsLoading } = useContaminants()
+  const { resolveCode } = useJurisdictionResolver()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -281,8 +277,7 @@ export function useLocationData(
       const effectiveState = state || firstMeasurement.state || ""
       const effectiveCountry = country || firstMeasurement.country || ""
       const cityName = scope === "city" ? (firstMeasurement.city ?? city) : city
-      const jurisdictionCode =
-        getJurisdictionForLocation(effectiveState, effectiveCountry)?.code || "WHO"
+      const jurisdictionCode = resolveCode(effectiveState, effectiveCountry)
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: CityData = {
         city,
@@ -323,7 +318,7 @@ export function useLocationData(
       scope: "none",
       warning: null,
     }
-  }, [city, state, country, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
+  }, [city, state, country, isOffline, mapMeasurementToLegacyStat, resolveCode])
 
   const query = useQuery({
     queryKey: queryKeys.measurements.byLocation(city, state, country),
