@@ -64,6 +64,103 @@ test.describe("Pollution Sources E2E", () => {
     });
   });
 
+  // #357 — the Sources card used to overflow its column because
+  // CardContent had no height constraint and the inner scroll used
+  // max-h-full. These tests pin the fixed layout: the card must stay
+  // inside the left column at common viewport widths, and CardContent
+  // must remain a bounded overflow-clipped box so the inner list scrolls
+  // instead of escaping.
+  test.describe("Sources card layout (#357)", () => {
+    test.skip(
+      !hasRealCredentials,
+      "Skipping - requires ADMIN_TEST_EMAIL and ADMIN_TEST_PASSWORD env vars",
+    );
+
+    test.beforeEach(async ({ page }) => {
+      await page.goto(`${testUrls.admin}/login`);
+      await page.fill("input#email", adminCredentials.email);
+      await page.fill("input#password", adminCredentials.password);
+      await page.getByRole("button", { name: "Sign In" }).click();
+      await page.waitForURL(`${testUrls.admin}/`, { timeout: 30000 });
+    });
+
+    const sourcesCardLocator = (page: import("@playwright/test").Page) =>
+      page
+        .locator('[data-slot="card"]')
+        .filter({
+          has: page.locator('[data-slot="card-title"]', {
+            hasText: /^sources$/i,
+          }),
+        })
+        .first();
+
+    for (const vp of [
+      { width: 1280, height: 800 },
+      { width: 1440, height: 900 },
+      { width: 1920, height: 1080 },
+    ]) {
+      test(`Sources card stays inside the left column at ${vp.width}×${vp.height}`, async ({
+        page,
+      }) => {
+        await page.setViewportSize(vp);
+        await page.goto(`${testUrls.admin}/pollution-sources`);
+        await page.waitForLoadState("networkidle");
+
+        const sourcesCard = sourcesCardLocator(page);
+        await expect(sourcesCard).toBeVisible();
+
+        // Left panel is the only w-80 column on this page; ancestor walk
+        // would be safer but this selector is stable enough for now.
+        const leftColumn = page.locator("div.w-80").first();
+        await expect(leftColumn).toBeVisible();
+
+        const [cardBox, colBox] = await Promise.all([
+          sourcesCard.boundingBox(),
+          leftColumn.boundingBox(),
+        ]);
+        expect(cardBox).not.toBeNull();
+        expect(colBox).not.toBeNull();
+
+        // 1px tolerance for sub-pixel rounding. Card must not extend
+        // below or to the right of its parent column.
+        const cardBottom = cardBox!.y + cardBox!.height;
+        const colBottom = colBox!.y + colBox!.height;
+        const cardRight = cardBox!.x + cardBox!.width;
+        const colRight = colBox!.x + colBox!.width;
+
+        expect(
+          cardBottom,
+          `Sources card bottom (${cardBottom}) must not exceed left column bottom (${colBottom})`,
+        ).toBeLessThanOrEqual(colBottom + 1);
+        expect(
+          cardRight,
+          `Sources card right edge (${cardRight}) must not exceed left column right edge (${colRight})`,
+        ).toBeLessThanOrEqual(colRight + 1);
+      });
+    }
+
+    test("CardContent stays a bounded box so the list scrolls inside it", async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1280, height: 800 });
+      await page.goto(`${testUrls.admin}/pollution-sources`);
+      await page.waitForLoadState("networkidle");
+
+      const sourcesCard = sourcesCardLocator(page);
+      const content = sourcesCard.locator('[data-slot="card-content"]');
+      await expect(content).toBeVisible();
+
+      // The #357 fix sets overflow-hidden on CardContent so the inner
+      // h-full overflow-y-auto scroller has a real parent height to size
+      // against. If someone reverts the override (or removes the
+      // flex chain), this assertion fails.
+      const overflow = await content.evaluate(
+        (el) => getComputedStyle(el).overflowY,
+      );
+      expect(["hidden", "clip", "auto", "scroll"]).toContain(overflow);
+    });
+  });
+
   test.describe("Admin create → Mobile verify", () => {
     test.skip(
       !hasRealCredentials,
