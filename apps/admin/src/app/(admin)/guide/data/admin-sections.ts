@@ -252,7 +252,7 @@ const allSections: AdminSection[] = [
     icon: Scale,
     group: "reference-data",
     purpose:
-      "Pairs a contaminant with a jurisdiction and a numeric limit. The mobile safety badge (green/orange/red) is computed entirely from these records. Missing thresholds silently fall back to the parent jurisdiction, then to WHO.",
+      "One row per (contaminant, jurisdiction) pair — the numeric limit the mobile safety badge (green/orange/red) is computed from. The jurisdiction is the rulebook the limit comes from (WHO, US EPA, US-NY, CA-QC…), NOT the city — cities are resolved to a jurisdiction at read time. When a row is missing for the resolved jurisdiction, the mobile app silently cascades to that jurisdiction's parentCode and finally to WHO (US-NY → US → WHO). That cascade is also why deleting a threshold may not visibly change anything: a parent row may already be answering for it.",
     lists: [
       {
         title: "Table",
