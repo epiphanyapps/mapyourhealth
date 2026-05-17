@@ -408,22 +408,24 @@ GitHub Actions workflows in `.github/workflows/`:
 | `admin-deploy.yml` | Push to `main` or `staging` | Deploy admin dashboard |
 | `mobile-deploy.yml` | Push to `main` or `staging` | Deploy mobile web |
 | `web-deploy.yml` | Push to `main` or `staging` | Deploy web landing page |
-| `e2e-ios.yml` | PR (smoke), push to main (full), manual | iOS Maestro E2E tests — tiered suite |
+| `e2e-android.yml` | PR (smoke), push to main (full), manual | Android Maestro E2E tests — tiered suite (primary mobile gate) |
+| `e2e-ios.yml` | Manual only | iOS Maestro E2E tests — `workflow_dispatch` only, not gating |
 | `playwright-tests.yml` | PR + push to main on admin/backend paths, manual | Admin Playwright tests |
 
 ### E2E strategy (tiered)
 
-Two surviving E2E workflows after the 2026-05-16 audit (`docs/e2e-ci-review-2026-05-16.md`). The previously dormant `e2e-tests.yml`, `e2e-orchestrated.yml`, `e2e-orchestration.yml` were deleted as 940+ lines of duplicate plumbing nobody ran.
+Three surviving E2E workflows after the audits in `docs/e2e-ci-review-2026-05-16.md` (previously dormant `e2e-tests.yml` / `e2e-orchestrated.yml` / `e2e-orchestration.yml` were deleted as 940+ lines of duplicate plumbing nobody ran). Android replaced iOS as the primary mobile gate for cost: `ubuntu-latest` (1×) vs `macos-15` (10×) on private repos, and the Maestro flows are platform-agnostic (same `appId`, percentage-based taps).
 
 | Trigger | Suite | Runner | Time budget | Gating? |
 |---|---|---|---|---|
-| PR touching `apps/mobile/**` | Maestro **smoke** (E2E-100/101/102) | `macos-14` | ~10 min wall | Required check |
+| PR touching `apps/mobile/**` | Maestro **smoke** (E2E-100/101/102) on Android | `ubuntu-latest` (AVD api-33 google_apis x86_64) | ~12-15 min wall | Required check |
 | PR touching `apps/admin/**` or `packages/backend/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Required check |
-| Push to `main` touching `apps/mobile/**` | Maestro **full** (every flow in `.maestro/flows/`) | `macos-14` | ~30 min wall | Informational |
+| Push to `main` touching `apps/mobile/**` | Maestro **full** (every flow in `.maestro/flows/`) on Android | `ubuntu-latest` | ~25 min wall | Informational |
 | Push to `main` touching `apps/admin/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Informational |
-| `workflow_dispatch` (e2e-ios.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `macos-14` | varies | — |
+| `workflow_dispatch` (e2e-android.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `ubuntu-latest` | varies | — |
+| `workflow_dispatch` (e2e-ios.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `macos-15` | varies (~15-30 min) | — (manual-only) |
 
-PR feedback target is **≤15 min** (Maestro smoke + Playwright run in parallel on different runners). Deploy gating on these workflows is deferred to a Phase 2 PR once we have a few weeks of green-signal data on real PR traffic.
+PR feedback target is **≤15 min** (Android Maestro smoke + Playwright run in parallel on different `ubuntu-latest` runners). iOS regression is caught by manual testing on the maintainer's iPhone + occasional `gh workflow run e2e-ios.yml`. Deploy gating on these workflows is deferred to a Phase 2 PR once we have a few weeks of green-signal data on real PR traffic.
 
 ## GitHub Issue Labels (MUST FOLLOW)
 
