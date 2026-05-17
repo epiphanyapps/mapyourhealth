@@ -342,6 +342,48 @@ const allSections: AdminSection[] = [
     },
   },
   {
+    id: "threshold-coverage",
+    title: "Threshold Coverage",
+    route: "/threshold-coverage",
+    icon: Gauge,
+    group: "reference-data",
+    purpose:
+      "Read-only audit view. For every (jurisdiction, contaminant) pair, answers: where does the mobile safety badge actually get its limit from? Cells bucket into ✓ direct (threshold seeded for this exact jurisdiction), ↓ cascade-parent (no direct row; resolved via the jurisdiction's parentCode), ⚠ cascade-WHO (fell all the way to the WHO global default — this is what makes the mobile app's WHO and LOCAL columns show identical values), or ⊘ none (unregulated, no row anywhere). Mirrors `getThreshold` in mobile's ContaminantsContext. Use this to find the gaps before adding state-specific thresholds.",
+    lists: [
+      {
+        title: "Summary cards",
+        columns: ["✓ Direct", "↓ Cascade to parent", "⚠ Cascade to WHO", "⊘ Unregulated"],
+      },
+      {
+        title: "By Jurisdiction table",
+        columns: [
+          "Code",
+          "Name",
+          "Cascade chain (e.g. US-NY → US → WHO)",
+          "✓ Direct",
+          "↓ Parent",
+          "⚠ WHO",
+          "⊘ None",
+          "Show contaminants",
+        ],
+      },
+    ],
+    actions: [
+      {
+        label: "Show contaminants",
+        description:
+          "Expands the row to list every contaminant under this jurisdiction, gaps first (⚠ WHO-only, ⊘ unregulated), with per-row 'edit' links to /thresholds pre-filtered.",
+      },
+    ],
+    mobileImpact: {
+      summary:
+        "No write surface — this page does not change data. It surfaces the cascade decisions the mobile app makes at read time so admins can spot gaps (e.g. \"Atlanta shows identical WHO + LOCAL columns because US-GA has no state-specific thresholds\") and add the missing rows on /thresholds.",
+      edgeCases: [
+        "Cascade is one-level-parent + WHO, matching mobile's getThreshold. If mobile ever widens the chain, update lib/threshold-cascade.ts to stay in sync.",
+      ],
+    },
+  },
+  {
     id: "jurisdictions",
     title: "Jurisdictions",
     route: "/jurisdictions",

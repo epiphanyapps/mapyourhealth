@@ -85,6 +85,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Contaminants", url: "/contaminants", icon: Droplets },
       { title: "Thresholds", url: "/thresholds", icon: Scale },
+      { title: "Threshold Coverage", url: "/threshold-coverage", icon: Gauge },
       { title: "Categories", url: "/categories", icon: FolderTree },
       { title: "Sub-Categories", url: "/subcategories", icon: Layers },
       { title: "Jurisdictions", url: "/jurisdictions", icon: Globe },
