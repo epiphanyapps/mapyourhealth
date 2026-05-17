@@ -475,7 +475,7 @@ export default function JurisdictionsPage() {
                         }
                         icon={<Scale />}
                         href={`/thresholds?jurisdiction=${encodeURIComponent(jurisdiction.code)}`}
-                        title={`${thresholdCountByJurisdiction[jurisdiction.code] ?? 0} thresholds reference ${jurisdiction.code}`}
+                        title={`${thresholdCountByJurisdiction[jurisdiction.code] ?? 0} ${(thresholdCountByJurisdiction[jurisdiction.code] ?? 0) === 1 ? "threshold" : "thresholds"} reference ${jurisdiction.code}`}
                       />
                     </TableCell>
                     <TableCell>
@@ -486,7 +486,7 @@ export default function JurisdictionsPage() {
                           ).length
                         }
                         icon={<GitBranch />}
-                        title={`${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length} jurisdictions list ${jurisdiction.code} as parentCode`}
+                        title={`${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length} ${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length === 1 ? "jurisdiction" : "jurisdictions"} list ${jurisdiction.code} as parentCode`}
                       />
                     </TableCell>
                     <TableCell>

@@ -474,7 +474,7 @@ export default function ContaminantsPage() {
                         }
                         icon={<Scale />}
                         href={`/thresholds?contaminant=${encodeURIComponent(contaminant.contaminantId)}`}
-                        title={`${thresholdCountByContaminant[contaminant.contaminantId] ?? 0} thresholds defined for ${contaminant.contaminantId}`}
+                        title={`${thresholdCountByContaminant[contaminant.contaminantId] ?? 0} ${(thresholdCountByContaminant[contaminant.contaminantId] ?? 0) === 1 ? "threshold" : "thresholds"} defined for ${contaminant.contaminantId}`}
                       />
                     </TableCell>
                     <TableCell className="text-right">
