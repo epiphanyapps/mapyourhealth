@@ -10,7 +10,7 @@ import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { TrendChart, calculateTrendDirection } from "@/components/TrendChart"
 import { useContaminants } from "@/context/ContaminantsContext"
-import type { StatStatus, TrendDirection } from "@/data/types/safety"
+import { DEFAULT_HIGHER_IS_BAD, type StatStatus, type TrendDirection } from "@/data/types/safety"
 import { useLocationData } from "@/hooks/useLocationData"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
@@ -98,7 +98,7 @@ export function StatTrendScreen() {
   const definition = contaminantMap.get(statId)
   const statName = definition?.name ?? statId
   const unit = definition?.unit ?? ""
-  const higherIsBad = definition?.higherIsBad ?? true
+  const higherIsBad = definition?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
   // Find this stat in the zip data
   const stat = cityData?.stats.find((s) => s.statId === statId)

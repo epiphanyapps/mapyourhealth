@@ -671,30 +671,23 @@ When a location's jurisdiction cannot be determined, the system silently falls b
 
 When `warningRatio` is null/undefined, the system assumes 80%. This could misrepresent warning thresholds for contaminants that were never explicitly configured.
 
+**Mobile** is consolidated: a single boundary substitution in `mapAmplifyThreshold` (`apps/mobile/app/context/ContaminantsContext.tsx`) uses `DEFAULT_WARNING_RATIO` from `apps/mobile/app/data/types/safety.ts`. `ContaminantThreshold.warningRatio` is typed as a non-null `number` downstream.
+
 | File | Line | Expression |
 |------|------|------------|
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 103 | `amplify.warningRatio ?? 0.8` |
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 306 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/hooks/useMultiLocationData.ts` | 70 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/hooks/useZipCodeData.ts` | 159 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/data/types/safety.ts` | 489 | `threshold.warningRatio ?? 0.8` |
 | `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 62 | `threshold.warningRatio ?? 0.8` |
 | `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 81 | `threshold.warningRatio ?? 0.8` |
 | `apps/admin/scripts/seed-data.ts` | 569 | `t.warningRatio \|\| 0.8` |
-| `packages/backend/amplify/data/resource.ts` | 227 | `a.float().default(0.8)` (schema default) |
+| `packages/backend/amplify/data/resource.ts` | 227 | `a.float().default(0.8)` (schema default — must stay in sync with `DEFAULT_WARNING_RATIO`) |
 
 ### 3. `higherIsBad` Default → `true`
 
 Assumes higher contaminant values are always dangerous. Incorrect for beneficial metrics or properties where lower is worse.
 
+**Mobile** is consolidated: `DEFAULT_HIGHER_IS_BAD` from `apps/mobile/app/data/types/safety.ts` is applied once at the mapping boundary (`mapAmplifyContaminant` in `ContaminantsContext.tsx`) and reused at lookup sites where the contaminant may be undefined (`contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD`).
+
 | File | Line | Expression |
 |------|------|------------|
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 91, 295 | `amplify.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useMultiLocationData.ts` | 65, 98 | `contaminant?.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useZipCodeData.ts` | 154 | `contaminant?.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useLocationObservations.ts` | 120 | `prop.higherIsBad ?? true` |
-| `apps/mobile/app/screens/StatTrendScreen.tsx` | 100 | `definition?.higherIsBad ?? true` |
-| `apps/mobile/app/screens/DashboardScreen.tsx` | 220 | `contaminant?.higherIsBad ?? true` |
 | `apps/admin/src/app/(admin)/stats/page.tsx` | 131 | `contaminant.higherIsBad ?? true` |
 | `apps/admin/src/app/(admin)/properties/page.tsx` | 137, 216 | `property.higherIsBad ?? true` |
 | `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 583, 591, 690 | `?.higherIsBad ?? true` |

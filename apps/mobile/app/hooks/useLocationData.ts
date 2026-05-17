@@ -9,7 +9,13 @@ import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import { type CityData, type CityStat, type StatStatus, StatCategory } from "@/data/types/safety"
+import {
+  DEFAULT_HIGHER_IS_BAD,
+  type CityData,
+  type CityStat,
+  type StatStatus,
+  StatCategory,
+} from "@/data/types/safety"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { fetchWithLocationFallback, type LocationScope } from "@/lib/locationFallback"
 import { queryKeys } from "@/lib/queryKeys"
@@ -143,12 +149,12 @@ export function clearCachedLocationData(city: string, state?: string, country?: 
  */
 function computeStatusForThreshold(
   value: number,
-  threshold: { limitValue?: number | null; warningRatio?: number | null } | undefined,
+  threshold: { limitValue?: number | null; warningRatio: number } | undefined,
   higherIsBad: boolean,
 ): StatStatus {
   if (!threshold || threshold.limitValue == null) return "safe"
   const limit = threshold.limitValue
-  const warningThreshold = limit * (threshold.warningRatio ?? 0.8)
+  const warningThreshold = limit * threshold.warningRatio
   if (higherIsBad) {
     if (value >= limit) return "danger"
     if (value >= warningThreshold) return "warning"
@@ -206,7 +212,7 @@ export function useLocationData(
   const mapMeasurementToLegacyStat = useCallback(
     (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): CityStat => {
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
-      const higherIsBad = contaminant?.higherIsBad ?? true
+      const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
       const whoStatus = computeStatusForThreshold(
         measurement.value,
