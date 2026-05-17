@@ -236,11 +236,15 @@ jobs:
           force-avd-creation: false
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
           disable-animations: true
+          # NOTE: reactivecircus/android-emulator-runner executes this
+          # block line-by-line via `sh -c`, so `\<newline>` line
+          # continuation does NOT join lines — the `\` ends up as a
+          # literal final arg to whatever's on that line. Keep the
+          # maestro invocation on a single line.
           script: |
             adb wait-for-device
             adb install -r ./apps/mobile/build/MapYourHealth.apk
-            $HOME/.maestro/bin/maestro test ${{ steps.suite.outputs.glob }} \
-              --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth
+            $HOME/.maestro/bin/maestro test --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth ${{ steps.suite.outputs.glob }}
 
       - name: Upload test results
         if: always()
