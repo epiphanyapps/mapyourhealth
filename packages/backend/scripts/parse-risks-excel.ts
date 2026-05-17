@@ -45,7 +45,7 @@ interface SeedThreshold {
   contaminantId: string;
   jurisdictionCode: string;
   limitValue: number | null;
-  warningRatio: number | null;
+  warningRatio: number;
   status: "regulated" | "banned" | "not_approved" | "not_controlled";
 }
 
@@ -372,7 +372,13 @@ function parseExcel(filePath: string): SeedData {
           contaminantId,
           jurisdictionCode: code,
           limitValue: value,
-          warningRatio: status === "regulated" ? 0.8 : null,
+          // Always emit a numeric warningRatio so the schema's
+          // `.required()` invariant holds even for direct-DDB writers
+          // (seed-dynamodb-direct.ts, manage-data Lambda) that bypass
+          // AppSync defaults. For banned/not_approved rows the value is
+          // cosmetic — those have no `limitValue` so it's never used in
+          // the `limit * warningRatio` calculation.
+          warningRatio: 0.8,
           status,
         };
         thresholds.push(threshold);

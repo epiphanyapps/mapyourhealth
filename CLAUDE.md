@@ -667,32 +667,22 @@ When a location's jurisdiction cannot be determined, the system silently falls b
 | `apps/mobile/app/hooks/useMultiLocationData.ts` | 163 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
 | `packages/backend/scripts/parse-risks-excel.ts` | 425–459 | `JURISDICTION_FALLBACK` map + `\|\| "WHO"` |
 
-### 2. Warning Ratio Default → `0.8`
+### 2. Warning Ratio Default → `0.8` — **Resolved (schema-level)**
 
-When `warningRatio` is null/undefined, the system assumes 80%. This could misrepresent warning thresholds for contaminants that were never explicitly configured.
+`ContaminantThreshold.warningRatio` is now `a.float().required().default(0.8)` in `packages/backend/amplify/data/resource.ts`. Amplify guarantees a non-null `number` on every read, so no `?? 0.8` coalesces remain anywhere on the read path.
 
-**Mobile** is consolidated: a single boundary substitution in `mapAmplifyThreshold` (`apps/mobile/app/context/ContaminantsContext.tsx`) uses `DEFAULT_WARNING_RATIO` from `apps/mobile/app/data/types/safety.ts`. `ContaminantThreshold.warningRatio` is typed as a non-null `number` downstream.
+The only surviving `0.8` literal is the schema default itself plus the write boundary in admin seed scripts (`apps/admin/scripts/seed-data.ts:569` uses `|| 0.8` as a defensive default when seeding rows from a CSV that may omit the column — kept intentional).
 
-| File | Line | Expression |
-|------|------|------------|
-| `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 62 | `threshold.warningRatio ?? 0.8` |
-| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 81 | `threshold.warningRatio ?? 0.8` |
-| `apps/admin/scripts/seed-data.ts` | 569 | `t.warningRatio \|\| 0.8` |
-| `packages/backend/amplify/data/resource.ts` | 227 | `a.float().default(0.8)` (schema default — must stay in sync with `DEFAULT_WARNING_RATIO`) |
+### 3. `higherIsBad` Default → `true` — **Mostly resolved (schema-level + named constant for lookup-failure)**
 
-### 3. `higherIsBad` Default → `true`
+`Contaminant.higherIsBad` and `ObservedProperty.higherIsBad` are now `a.boolean().required().default(true)` in `packages/backend/amplify/data/resource.ts`. Amplify guarantees a non-null `boolean` on every record.
 
-Assumes higher contaminant values are always dangerous. Incorrect for beneficial metrics or properties where lower is worse.
+**What remains, and why:** when code reads `higherIsBad` via a *lookup* that may return `undefined` (e.g. `contaminants.find(c => c.id === id)?.higherIsBad`), the `??` is fallback for the missing-lookup case, not the missing-field case. Mobile uses `DEFAULT_HIGHER_IS_BAD` from `apps/mobile/app/data/types/safety.ts` at those sites. Admin uses a literal `true` (a small `DEFAULT_HIGHER_IS_BAD` constant in admin would be a follow-up — low priority since each call site already documents intent in context).
 
-**Mobile** is consolidated: `DEFAULT_HIGHER_IS_BAD` from `apps/mobile/app/data/types/safety.ts` is applied once at the mapping boundary (`mapAmplifyContaminant` in `ContaminantsContext.tsx`) and reused at lookup sites where the contaminant may be undefined (`contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD`).
-
-| File | Line | Expression |
-|------|------|------------|
-| `apps/admin/src/app/(admin)/stats/page.tsx` | 131 | `contaminant.higherIsBad ?? true` |
-| `apps/admin/src/app/(admin)/properties/page.tsx` | 137, 216 | `property.higherIsBad ?? true` |
-| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 583, 591, 690 | `?.higherIsBad ?? true` |
-| `packages/backend/scripts/seed-om-data.ts` | 151 | `property.higherIsBad ?? true` |
-| `packages/backend/scripts/seed-dynamodb-direct.ts` | 235 | `p.higherIsBad ?? true` |
+Remaining lookup-failure call sites:
+- mobile: `apps/mobile/app/context/ContaminantsContext.tsx`, `apps/mobile/app/hooks/useLocationData.ts`, `apps/mobile/app/screens/DashboardScreen.tsx`, `apps/mobile/app/screens/StatTrendScreen.tsx` — all use `?? DEFAULT_HIGHER_IS_BAD`
+- admin: `apps/admin/src/app/(admin)/measurements/page.tsx`, `apps/admin/src/app/(admin)/measurements/[city]/page.tsx`, `apps/admin/src/app/(admin)/zip-codes/page.tsx`, `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` — `?? true` literals on `?.higherIsBad` optional-chain access
+- seed boundaries: `packages/backend/amplify/functions/manage-data/handler.ts`, `packages/backend/scripts/seed-dynamodb-direct.ts`, `packages/backend/scripts/seed-om-data.ts` — defensive on inputs that may omit the field. Intentional.
 
 ### 4. Mock/Offline Data Fallbacks
 

@@ -2147,21 +2147,21 @@
       "contaminantId": "alachlor",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "alachlor",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "alachlor",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2175,21 +2175,21 @@
       "contaminantId": "aldicarb",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "aldicarb",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "aldicarb",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2203,21 +2203,21 @@
       "contaminantId": "aldrin-and-dieldrin",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "aldrin-and-dieldrin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "aldrin-and-dieldrin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2245,7 +2245,7 @@
       "contaminantId": "atrazine-and-its-chloro-s-triazine-metabolites",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2259,21 +2259,21 @@
       "contaminantId": "carbofuran",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "carbofuran",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "carbofuran",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2287,21 +2287,21 @@
       "contaminantId": "chlordane",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "chlordane",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "chlordane",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2315,14 +2315,14 @@
       "contaminantId": "chlorotoluron",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "chlorotoluron",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2336,14 +2336,14 @@
       "contaminantId": "chlorpyrifos",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "chlorpyrifos",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2357,21 +2357,21 @@
       "contaminantId": "cyanazine",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "cyanazine",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "cyanazine",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2420,21 +2420,21 @@
       "contaminantId": "12-dibromo-3-chloropropane",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "12-dibromo-3-chloropropane",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "12-dibromo-3-chloropropane",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2448,21 +2448,21 @@
       "contaminantId": "12-dibromoethane",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "12-dibromoethane",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "12-dibromoethane",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2476,7 +2476,7 @@
       "contaminantId": "12-dichloropropane",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2511,14 +2511,14 @@
       "contaminantId": "13-dichloropropene",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "13-dichloropropene",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2532,7 +2532,7 @@
       "contaminantId": "dichlorprop",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2567,21 +2567,21 @@
       "contaminantId": "endrin",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "endrin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "endrin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2595,14 +2595,14 @@
       "contaminantId": "fenoprop",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "fenoprop",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2616,7 +2616,7 @@
       "contaminantId": "hydroxyatrazine",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2644,14 +2644,14 @@
       "contaminantId": "isoproturon",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "isoproturon",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2665,21 +2665,21 @@
       "contaminantId": "lindane",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "lindane",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "lindane",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2728,7 +2728,7 @@
       "contaminantId": "mecoprop",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2742,21 +2742,21 @@
       "contaminantId": "methoxychlor",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "methoxychlor",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "methoxychlor",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2791,14 +2791,14 @@
       "contaminantId": "molinate",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "molinate",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2826,7 +2826,7 @@
       "contaminantId": "simazine",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2840,7 +2840,7 @@
       "contaminantId": "simazine",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2854,21 +2854,21 @@
       "contaminantId": "245-t",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "245-t",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "245-t",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -2882,14 +2882,14 @@
       "contaminantId": "terbuthylazine",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "terbuthylazine",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2917,14 +2917,14 @@
       "contaminantId": "bifenthrin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "cypermethrin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2938,7 +2938,7 @@
       "contaminantId": "deltamethrin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2952,35 +2952,35 @@
       "contaminantId": "fenitrothion",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "fenitrothion",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "fenitrothion",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "lambda-cyhalothrin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "lambda-cyhalothrin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -2994,14 +2994,14 @@
       "contaminantId": "permethrin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "pyriproxyfen",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3029,7 +3029,7 @@
       "contaminantId": "trifloxystrobin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3050,28 +3050,28 @@
       "contaminantId": "carbaryl",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "clothianidin",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "clothianidin",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "imidacloprid",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3120,98 +3120,98 @@
       "contaminantId": "thiacloprid",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "thiacloprid",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "thiacloprid",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "rotenone",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "rotenone",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "rotenone",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "endosulfan",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "endosulfan",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "endosulfan",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "diazinon",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "diazinon",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "diazinon",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "diclofop-methyl",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "diclofop-methyl",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3225,7 +3225,7 @@
       "contaminantId": "diuron",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3239,14 +3239,14 @@
       "contaminantId": "diuron",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "paraquat",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3260,35 +3260,35 @@
       "contaminantId": "paraquat",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "phorate",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "phorate",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "phorate",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "picloram",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
@@ -3309,42 +3309,42 @@
       "contaminantId": "terbufos",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "terbufos",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "terbufos",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "azinphos-methyl",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "azinphos-methyl",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "azinphos-methyl",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3358,14 +3358,14 @@
       "contaminantId": "bendiocarb",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "bendiocarb",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3379,14 +3379,14 @@
       "contaminantId": "bromoxynil",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "not_approved"
     },
     {
       "contaminantId": "bromoxynil",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3421,14 +3421,14 @@
       "contaminantId": "dinoseb",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "dinoseb",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3449,7 +3449,7 @@
       "contaminantId": "diquat",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3491,21 +3491,21 @@
       "contaminantId": "parathion",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "parathion",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "parathion",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
@@ -3519,21 +3519,21 @@
       "contaminantId": "pentachlorophenol",
       "jurisdictionCode": "CA-QC",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "pentachlorophenol",
       "jurisdictionCode": "US-NY",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
       "contaminantId": "pentachlorophenol",
       "jurisdictionCode": "EU",
       "limitValue": null,
-      "warningRatio": null,
+      "warningRatio": 0.8,
       "status": "banned"
     },
     {
