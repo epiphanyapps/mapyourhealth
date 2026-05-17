@@ -164,12 +164,7 @@ export function useLocationData(
   state: string = "",
   country: string = "",
 ): UseLocationDataResult {
-  const {
-    contaminants,
-    getThreshold,
-    getWHOThreshold,
-    isLoading: defsLoading,
-  } = useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold, isLoading: defsLoading } = useContaminants()
   const { resolveCode } = useJurisdictionResolver()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()

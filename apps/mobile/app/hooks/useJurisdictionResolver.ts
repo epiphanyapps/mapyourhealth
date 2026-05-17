@@ -37,8 +37,7 @@ export function useJurisdictionResolver(): JurisdictionResolver {
   return useMemo(
     () => ({
       resolve: getJurisdictionForLocation,
-      resolveCode: (state, country) =>
-        getJurisdictionForLocation(state, country)?.code ?? "WHO",
+      resolveCode: (state, country) => getJurisdictionForLocation(state, country)?.code ?? "WHO",
     }),
     [getJurisdictionForLocation],
   )
