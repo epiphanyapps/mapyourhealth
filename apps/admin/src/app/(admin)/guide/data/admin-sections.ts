@@ -348,7 +348,7 @@ const allSections: AdminSection[] = [
     icon: Globe,
     group: "reference-data",
     purpose:
-      "Defines the regulatory bodies whose thresholds the app compares against (WHO, US, US-NY, CA-QC, EU, etc.). Each location resolves to one jurisdiction; the parent chain provides the cascade fallback when a state-level threshold is missing.",
+      "Catalog of regulatory standards — the laws and guidelines used to judge whether a measurement is safe (WHO, US federal EPA, US-NY, CA-QC, EU, etc.). This is NOT a list of places; cities and measurements live in the Locations and Measurements sections. A jurisdiction is the rulebook (\"what New York State's regulations say about lead\"), not the geography. Each location resolves to one jurisdiction, and the parentCode chain provides cascade fallback (US-NY → US → WHO) when a state-specific threshold isn't seeded.",
     lists: [
       {
         title: "Table",
@@ -368,7 +368,8 @@ const allSections: AdminSection[] = [
         name: "country",
         type: "text",
         required: true,
-        description: 'ISO country code (e.g. "US", "CA", "MX") used for the cascade.',
+        description:
+          'ISO country code (e.g. "US", "CA", "MX") this regulator belongs to. Used to match a measurement\'s country to the right rulebook — it does NOT mean this jurisdiction is "located in" that country in any geographic sense.',
       },
       {
         name: "name / nameFr",
@@ -379,7 +380,8 @@ const allSections: AdminSection[] = [
       {
         name: "region",
         type: "text",
-        description: 'Optional state/province code (e.g. "NY", "QC") used to match measurements to this jurisdiction.',
+        description:
+          'Optional state/province code this regulator governs (e.g. "NY" for the State of New York\'s rules, "QC" for Quebec\'s). Used to match a measurement\'s state to the right rulebook. Leave blank for country-level (e.g. US federal EPA) or global (WHO) standards.',
       },
       {
         name: "parentCode",
