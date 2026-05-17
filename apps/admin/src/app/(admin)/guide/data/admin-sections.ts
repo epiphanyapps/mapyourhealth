@@ -1152,7 +1152,7 @@ const allSections: AdminSection[] = [
     icon: Activity,
     group: "orphan",
     purpose:
-      "Defines observable phenomena beyond classical numeric contaminants — radon zones, endemic disease flags, incidence rates, binary presence indicators. Each property declares its observationType, which dictates how thresholds and observations are entered and rendered.",
+      "Non-numeric observations the app can track — radon zones, endemic disease flags, per-100k incidence rates, binary presence indicators. The numeric counterpart is Contaminants (lead in ppb, PM2.5 in μg/m³, etc.); Properties is for everything that doesn't reduce to a single measured number. Each property declares an observationType (numeric / zone / endemic / incidence / binary) which decides which fields appear on Property Thresholds and observation forms downstream.",
     lists: [
       {
         title: "Table",
@@ -1222,7 +1222,7 @@ const allSections: AdminSection[] = [
     icon: Gauge,
     group: "orphan",
     purpose:
-      "Per-jurisdiction thresholds for non-numeric properties. The form fields you see depend on the parent property's observationType.",
+      "One row per (property, jurisdiction) pair — like Thresholds but for non-numeric Observed Properties. The jurisdiction is the rulebook (WHO, US EPA, US-NY, CA-QC…), NOT a city. The fields you see in the dialog change based on the parent property's observationType: a zone property surfaces zone-mapping fields, an incidence property surfaces per-100k rate fields, and so on. Missing rows cascade the same way contaminant thresholds do (US-NY → US → WHO).",
     lists: [
       {
         title: "Table",
