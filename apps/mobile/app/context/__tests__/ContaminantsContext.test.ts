@@ -1,4 +1,3 @@
-import { DEFAULT_HIGHER_IS_BAD, DEFAULT_WARNING_RATIO } from "@/data/types/safety"
 import type { AmplifyContaminant, AmplifyContaminantThreshold } from "@/services/amplify/data"
 
 import { mapAmplifyContaminant, mapAmplifyThreshold } from "../ContaminantsContext"
@@ -33,23 +32,18 @@ const baseContaminant = {
 } as unknown as AmplifyContaminant
 
 describe("mapAmplifyThreshold", () => {
-  it("substitutes DEFAULT_WARNING_RATIO when the Amplify record has warningRatio null", () => {
-    const mapped = mapAmplifyThreshold({
-      ...baseThreshold,
-      warningRatio: null,
-    } as unknown as AmplifyContaminantThreshold)
-
-    expect(mapped.warningRatio).toBe(DEFAULT_WARNING_RATIO)
-  })
-
-  it("preserves the Amplify warningRatio when it is a number (including 0)", () => {
+  // `warningRatio` is `.required().default(0.8)` at the schema level, so the
+  // mapper trusts Amplify and passes the value through. These tests document
+  // that contract — including the zero-tolerance case (E. coli, total
+  // coliform) which a `??` coalesce would silently rewrite.
+  it("passes warningRatio through unchanged when it is a number", () => {
     expect(
       mapAmplifyThreshold({ ...baseThreshold, warningRatio: 0.5 } as AmplifyContaminantThreshold)
         .warningRatio,
     ).toBe(0.5)
+  })
 
-    // 0 is a real value used by zero-tolerance contaminants (E. coli, total coliform)
-    // and must not be coalesced away.
+  it("preserves warningRatio: 0 (zero-tolerance contaminants)", () => {
     expect(
       mapAmplifyThreshold({ ...baseThreshold, warningRatio: 0 } as AmplifyContaminantThreshold)
         .warningRatio,
@@ -58,16 +52,19 @@ describe("mapAmplifyThreshold", () => {
 })
 
 describe("mapAmplifyContaminant", () => {
-  it("substitutes DEFAULT_HIGHER_IS_BAD when the Amplify record has higherIsBad null", () => {
+  // `higherIsBad` is `.required().default(true)` at the schema level. Same
+  // trust-the-schema contract as `warningRatio` — the mapper must not
+  // coalesce `false` to `true`, since beneficial properties are a real case.
+  it("passes higherIsBad: true through unchanged", () => {
     const mapped = mapAmplifyContaminant({
       ...baseContaminant,
-      higherIsBad: null,
-    } as unknown as AmplifyContaminant)
+      higherIsBad: true,
+    } as AmplifyContaminant)
 
-    expect(mapped.higherIsBad).toBe(DEFAULT_HIGHER_IS_BAD)
+    expect(mapped.higherIsBad).toBe(true)
   })
 
-  it("preserves higherIsBad: false (the case the default would silently flip)", () => {
+  it("preserves higherIsBad: false (the case a `?? true` coalesce would silently flip)", () => {
     const mapped = mapAmplifyContaminant({
       ...baseContaminant,
       higherIsBad: false,
