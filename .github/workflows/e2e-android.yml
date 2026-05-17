@@ -51,7 +51,13 @@ jobs:
   android-e2e:
     name: Android E2E Tests
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    # Temporarily bumped from 60 → 90 so the first cache-priming run can
+    # finish — every cold run in the last few hours cancelled at exactly
+    # 60.3 min, which means actions/cache@v4 never gets to save the
+    # Gradle build-output cache and the workflow stays cold forever.
+    # Revert to 60 once a warm cache has landed and a JS-only PR shows
+    # the expected ~10-15 min wall.
+    timeout-minutes: 90
 
     steps:
       - uses: actions/checkout@v4
