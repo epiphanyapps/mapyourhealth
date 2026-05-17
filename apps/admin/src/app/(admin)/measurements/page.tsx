@@ -281,8 +281,14 @@ export default function ZipCodesPage() {
           Location Measurements
         </h1>
         <p className="text-muted-foreground">
-          View and manage contaminant measurements by city, state/province, or
-          country
+          Coverage view across the three cascade levels the mobile app reads
+          from: by-city, by-state, and by-country. When a user picks a city,
+          mobile reads city-anchored rows first; if none, it falls back to
+          state, then country.{" "}
+          <span className="font-medium">Add new city</span> only creates the
+          location target — to add the actual contaminant values, use{" "}
+          <span className="font-medium">Manage</span> on a row, or the{" "}
+          <span className="font-medium">Import Data</span> page.
         </p>
       </div>
 

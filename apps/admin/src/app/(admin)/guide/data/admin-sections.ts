@@ -641,7 +641,7 @@ const allSections: AdminSection[] = [
     icon: MapPin,
     group: "daily-ops",
     purpose:
-      "View measurements aggregated by city, state, and country. Use this page to verify recent imports and to add a new city as a target for future imports. Three tables surface the cascade levels users actually see.",
+      "Coverage view across the three cascade levels the mobile app reads from: by-city, by-state, and by-country. Mobile resolves a user's selected city by trying city-anchored rows first, then state, then country. Use this page to verify recent imports and to add a new city as a target for future imports. Drilling into Manage opens per-contaminant editing for that city. NOTE: the \"source\" field on each measurement (e.g. \"EPA\", \"NY DEC\", \"WHO\") is informational data-provenance ONLY — it records where the number came from. It does NOT determine which threshold rulebook is applied to it; that is decided by the city's resolved jurisdiction on the Thresholds page.",
     lists: [
       {
         title: "By City table",
