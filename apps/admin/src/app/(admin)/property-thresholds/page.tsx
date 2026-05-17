@@ -278,6 +278,17 @@ export default function PropertyThresholdsPage() {
     ? getProperty(formData.propertyId)
     : null;
 
+  // Friendly observationType label for the dialog description, so it matches
+  // the "Property type:" line further down the form.
+  const selectedObservationTypeLabel = selectedProperty?.observationType
+    ? observationTypeNames[
+        selectedProperty.observationType as ObservationType
+      ] || selectedProperty.observationType
+    : null;
+  const observationTypeNote = selectedObservationTypeLabel
+    ? ` This property is "${selectedObservationTypeLabel}" — the fields below match that observationType.`
+    : "";
+
   const handleExport = () => {
     const exportData = thresholds.map((t) => {
       const entry: Record<string, unknown> = {
@@ -364,19 +375,11 @@ export default function PropertyThresholdsPage() {
                 <DialogTitle>
                   {editingThreshold ? "Edit Threshold" : "Create Threshold"}
                 </DialogTitle>
-                {(() => {
-                  const obsType = selectedProperty?.observationType;
-                  const typeNote = obsType
-                    ? ` This property is "${obsType}" — the fields below match that observationType.`
-                    : "";
-                  return (
-                    <DialogDescription>
-                      {editingThreshold
-                        ? `Update this (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law) — not a city.${typeNote}`
-                        : `Add a (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law); the visible fields depend on the parent property's observationType.${typeNote}`}
-                    </DialogDescription>
-                  );
-                })()}
+                <DialogDescription>
+                  {editingThreshold
+                    ? `Update this (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law) — not a city.${observationTypeNote}`
+                    : `Add a (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law); the visible fields depend on the parent property's observationType.${observationTypeNote}`}
+                </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
                 <div className="grid grid-cols-2 gap-4">
