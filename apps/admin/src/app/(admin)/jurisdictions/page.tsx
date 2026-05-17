@@ -39,13 +39,24 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Loader2,
+  Download,
+  Scale,
+  GitBranch,
+} from "lucide-react";
 import { toast } from "sonner";
+import { LinkedCountBadge } from "@/components/LinkedCountBadge";
 
 type Jurisdiction = Schema["Jurisdiction"]["type"];
 
 export default function JurisdictionsPage() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
+  const [thresholdCountByJurisdiction, setThresholdCountByJurisdiction] =
+    useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingJurisdiction, setEditingJurisdiction] =
@@ -67,17 +78,28 @@ export default function JurisdictionsPage() {
     try {
       setIsLoading(true);
       const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Jurisdiction.list({
-        limit: 100,
-      });
+      const [jurisdictionsResult, thresholdsResult] = await Promise.all([
+        client.models.Jurisdiction.list({ limit: 100 }),
+        client.models.ContaminantThreshold.list({ limit: 1000 }),
+      ]);
 
-      if (errors) {
-        console.error("Error fetching jurisdictions:", errors);
+      if (jurisdictionsResult.errors) {
+        console.error(
+          "Error fetching jurisdictions:",
+          jurisdictionsResult.errors,
+        );
         toast.error("Failed to fetch jurisdictions");
         return;
       }
 
-      setJurisdictions(data || []);
+      setJurisdictions(jurisdictionsResult.data || []);
+
+      const counts: Record<string, number> = {};
+      for (const t of thresholdsResult.data || []) {
+        if (!t.jurisdictionCode) continue;
+        counts[t.jurisdictionCode] = (counts[t.jurisdictionCode] || 0) + 1;
+      }
+      setThresholdCountByJurisdiction(counts);
     } catch (error) {
       console.error("Error fetching jurisdictions:", error);
       toast.error("Failed to fetch jurisdictions");
@@ -416,6 +438,12 @@ export default function JurisdictionsPage() {
                   <TableHead>Country</TableHead>
                   <TableHead>Region</TableHead>
                   <TableHead>Parent</TableHead>
+                  <TableHead title="Number of ContaminantThreshold rows referencing this jurisdiction. Click to view them.">
+                    Thresholds
+                  </TableHead>
+                  <TableHead title="Number of jurisdictions that list this one as their parentCode (used for cascade fallback).">
+                    Children
+                  </TableHead>
                   <TableHead>Default</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -439,6 +467,27 @@ export default function JurisdictionsPage() {
                       ) : (
                         "—"
                       )}
+                    </TableCell>
+                    <TableCell>
+                      <LinkedCountBadge
+                        count={
+                          thresholdCountByJurisdiction[jurisdiction.code] ?? 0
+                        }
+                        icon={<Scale />}
+                        href={`/thresholds?jurisdiction=${encodeURIComponent(jurisdiction.code)}`}
+                        title={`${thresholdCountByJurisdiction[jurisdiction.code] ?? 0} thresholds reference ${jurisdiction.code}`}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <LinkedCountBadge
+                        count={
+                          jurisdictions.filter(
+                            (j) => j.parentCode === jurisdiction.code,
+                          ).length
+                        }
+                        icon={<GitBranch />}
+                        title={`${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length} jurisdictions list ${jurisdiction.code} as parentCode`}
+                      />
                     </TableCell>
                     <TableCell>
                       {jurisdiction.isDefault ? <Badge>Default</Badge> : null}

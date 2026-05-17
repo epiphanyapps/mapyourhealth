@@ -38,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Loader2, Scale } from "lucide-react";
 import { toast } from "sonner";
 import {
   CONTAMINANT_CATEGORIES,
@@ -46,11 +46,14 @@ import {
   contaminantCategoryNames,
   type ContaminantCategory,
 } from "@/lib/constants";
+import { LinkedCountBadge } from "@/components/LinkedCountBadge";
 
 type Contaminant = Schema["Contaminant"]["type"];
 
 export default function ContaminantsPage() {
   const [contaminants, setContaminants] = useState<Contaminant[]>([]);
+  const [thresholdCountByContaminant, setThresholdCountByContaminant] =
+    useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingContaminant, setEditingContaminant] =
@@ -74,17 +77,25 @@ export default function ContaminantsPage() {
     try {
       setIsLoading(true);
       const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Contaminant.list({
-        limit: 1000,
-      });
+      const [contaminantsResult, thresholdsResult] = await Promise.all([
+        client.models.Contaminant.list({ limit: 1000 }),
+        client.models.ContaminantThreshold.list({ limit: 1000 }),
+      ]);
 
-      if (errors) {
-        console.error("Error fetching contaminants:", errors);
+      if (contaminantsResult.errors) {
+        console.error("Error fetching contaminants:", contaminantsResult.errors);
         toast.error("Failed to fetch contaminants");
         return;
       }
 
-      setContaminants(data || []);
+      setContaminants(contaminantsResult.data || []);
+
+      const counts: Record<string, number> = {};
+      for (const t of thresholdsResult.data || []) {
+        if (!t.contaminantId) continue;
+        counts[t.contaminantId] = (counts[t.contaminantId] || 0) + 1;
+      }
+      setThresholdCountByContaminant(counts);
     } catch (error) {
       console.error("Error fetching contaminants:", error);
       toast.error("Failed to fetch contaminants");
@@ -411,6 +422,9 @@ export default function ContaminantsPage() {
                   <TableHead>Category</TableHead>
                   <TableHead>Unit</TableHead>
                   <TableHead>Higher Is</TableHead>
+                  <TableHead title="Number of ContaminantThreshold rows defined for this contaminant across all jurisdictions. Click to view them.">
+                    Thresholds
+                  </TableHead>
                   <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
@@ -450,6 +464,18 @@ export default function ContaminantsPage() {
                       >
                         {contaminant.higherIsBad ? "Bad" : "Good"}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <LinkedCountBadge
+                        count={
+                          thresholdCountByContaminant[
+                            contaminant.contaminantId
+                          ] ?? 0
+                        }
+                        icon={<Scale />}
+                        href={`/thresholds?contaminant=${encodeURIComponent(contaminant.contaminantId)}`}
+                        title={`${thresholdCountByContaminant[contaminant.contaminantId] ?? 0} thresholds defined for ${contaminant.contaminantId}`}
+                      />
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
