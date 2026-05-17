@@ -171,6 +171,12 @@ export interface ContaminantThreshold {
  * Default warning ratio used when a `ContaminantThreshold` record arrives from
  * Amplify with `warningRatio` null. Normalized at the mapping boundary so
  * downstream code never has to repeat the fallback.
+ *
+ * Must stay in sync with the `ContaminantThreshold.warningRatio` schema default
+ * in `packages/backend/amplify/data/resource.ts` (currently `a.float().default(0.8)`).
+ * If the schema default ever changes, pre-existing null records in DynamoDB
+ * would normalize here to the old value while new records would write the new
+ * one — both literals should move together.
  */
 export const DEFAULT_WARNING_RATIO = 0.8
 

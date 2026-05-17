@@ -80,7 +80,7 @@ export type { ContaminantsContextType }
 /**
  * Maps Amplify Contaminant to frontend Contaminant type
  */
-function mapAmplifyContaminant(amplify: AmplifyContaminant): Contaminant {
+export function mapAmplifyContaminant(amplify: AmplifyContaminant): Contaminant {
   return {
     id: amplify.contaminantId,
     name: amplify.name,
@@ -99,7 +99,7 @@ function mapAmplifyContaminant(amplify: AmplifyContaminant): Contaminant {
  * `warningRatio` is normalized to a non-null number here so downstream callers
  * never have to re-apply `?? DEFAULT_WARNING_RATIO`.
  */
-function mapAmplifyThreshold(amplify: AmplifyContaminantThreshold): ContaminantThreshold {
+export function mapAmplifyThreshold(amplify: AmplifyContaminantThreshold): ContaminantThreshold {
   return {
     contaminantId: amplify.contaminantId,
     jurisdictionCode: amplify.jurisdictionCode,
