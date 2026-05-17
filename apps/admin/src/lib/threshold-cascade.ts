@@ -13,7 +13,8 @@
  *
  * Kept in pure-function form so it's trivially unit-testable and can stay in
  * sync with mobile by inspection. If mobile ever widens the cascade past one
- * parent level, update both call sites together.
+ * parent level, only `getThresholdChain` needs to change — the resolver and
+ * the UI's chain display both consume it.
  */
 
 export type CoverageState = "direct" | "cascade-parent" | "cascade-who" | "none";
@@ -38,28 +39,45 @@ export type MinimalJurisdiction = {
   parentCode?: string | null;
 };
 
+/**
+ * The ordered cascade we'd walk for any contaminant under this jurisdiction:
+ * `[jurisdictionCode, parentCode?, "WHO"]`, deduped so the chain doesn't end
+ * in `WHO → WHO` when the parent is already WHO (or when the jurisdiction
+ * itself is WHO). Single source of truth for both the `resolveThresholdCoverage`
+ * walk and the UI's "US-NY → US → WHO" display string.
+ */
+export function getThresholdChain(
+  jurisdictionCode: string,
+  jurisdictionByCode: Map<string, MinimalJurisdiction>,
+): string[] {
+  const chain: string[] = [jurisdictionCode];
+  const parentCode = jurisdictionByCode.get(jurisdictionCode)?.parentCode;
+  if (parentCode && parentCode !== jurisdictionCode) chain.push(parentCode);
+  if (chain[chain.length - 1] !== "WHO") chain.push("WHO");
+  return chain;
+}
+
 export function resolveThresholdCoverage(
   contaminantId: string,
   jurisdictionCode: string,
   jurisdictionByCode: Map<string, MinimalJurisdiction>,
   thresholdKeys: Set<ThresholdLookupKey>,
 ): ThresholdCoverage {
-  if (thresholdKeys.has(makeThresholdKey(contaminantId, jurisdictionCode))) {
-    return { state: "direct", resolvedJurisdictionCode: jurisdictionCode };
+  // Walk the same chain the UI displays. Index 0 is the requested jurisdiction
+  // itself (a hit there is "direct"); the WHO terminator yields "cascade-who"
+  // only when reached via a non-WHO start, because if the request *is* WHO it
+  // sits at index 0 and matches the "direct" branch first.
+  const chain = getThresholdChain(jurisdictionCode, jurisdictionByCode);
+  for (let i = 0; i < chain.length; i++) {
+    const code = chain[i];
+    if (!thresholdKeys.has(makeThresholdKey(contaminantId, code))) continue;
+    if (i === 0) {
+      return { state: "direct", resolvedJurisdictionCode: code };
+    }
+    if (code === "WHO") {
+      return { state: "cascade-who", resolvedJurisdictionCode: "WHO" };
+    }
+    return { state: "cascade-parent", resolvedJurisdictionCode: code };
   }
-
-  const jurisdiction = jurisdictionByCode.get(jurisdictionCode);
-  const parentCode = jurisdiction?.parentCode ?? null;
-  if (parentCode && thresholdKeys.has(makeThresholdKey(contaminantId, parentCode))) {
-    return { state: "cascade-parent", resolvedJurisdictionCode: parentCode };
-  }
-
-  if (thresholdKeys.has(makeThresholdKey(contaminantId, "WHO"))) {
-    // If the requested jurisdiction *is* WHO, the "direct" branch would have
-    // matched above. Reaching here means the lookup fell through to WHO from
-    // a non-WHO jurisdiction.
-    return { state: "cascade-who", resolvedJurisdictionCode: "WHO" };
-  }
-
   return { state: "none", resolvedJurisdictionCode: null };
 }

@@ -30,6 +30,7 @@ import {
   Loader2,
 } from "lucide-react";
 import {
+  getThresholdChain,
   resolveThresholdCoverage,
   makeThresholdKey,
   type CoverageState,
@@ -43,23 +44,11 @@ type ContaminantThreshold = Schema["ContaminantThreshold"]["type"];
 type Counts = Record<CoverageState, number>;
 
 const EMPTY_COUNTS: Counts = {
-  "direct": 0,
+  direct: 0,
   "cascade-parent": 0,
   "cascade-who": 0,
-  "none": 0,
+  none: 0,
 };
-
-function formatChain(
-  code: string,
-  jurisdictionByCode: Map<string, MinimalJurisdiction>,
-): string {
-  const chain: string[] = [code];
-  const current = jurisdictionByCode.get(code);
-  // One-level parent + WHO terminator, mirroring resolveThresholdCoverage.
-  if (current?.parentCode) chain.push(current.parentCode);
-  if (chain[chain.length - 1] !== "WHO") chain.push("WHO");
-  return chain.join(" → ");
-}
 
 export default function ThresholdCoveragePage() {
   const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
@@ -172,10 +161,10 @@ export default function ThresholdCoveragePage() {
   const totals = useMemo(() => {
     const sum: Counts = { ...EMPTY_COUNTS };
     for (const { counts } of coverageByJurisdiction.values()) {
-      sum["direct"] += counts["direct"];
+      sum.direct += counts.direct;
       sum["cascade-parent"] += counts["cascade-parent"];
       sum["cascade-who"] += counts["cascade-who"];
-      sum["none"] += counts["none"];
+      sum.none += counts.none;
     }
     return sum;
   }, [coverageByJurisdiction]);
@@ -295,7 +284,7 @@ export default function ThresholdCoveragePage() {
                         </TableCell>
                         <TableCell>{j.name}</TableCell>
                         <TableCell className="font-mono text-xs text-muted-foreground">
-                          {formatChain(j.code, jurisdictionByCode)}
+                          {getThresholdChain(j.code, jurisdictionByCode).join(" → ")}
                         </TableCell>
                         <CountCell count={cov.counts.direct} tone="success" />
                         <CountCell count={cov.counts["cascade-parent"]} tone="info" />
