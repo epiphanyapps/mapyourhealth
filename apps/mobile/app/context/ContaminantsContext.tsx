@@ -10,12 +10,14 @@ import { createContext, FC, PropsWithChildren, useCallback, useContext, useMemo 
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
-import type {
-  Contaminant,
-  ContaminantCategory,
-  ContaminantThreshold,
-  Jurisdiction,
-  SafetyStatus,
+import {
+  DEFAULT_HIGHER_IS_BAD,
+  DEFAULT_WARNING_RATIO,
+  type Contaminant,
+  type ContaminantCategory,
+  type ContaminantThreshold,
+  type Jurisdiction,
+  type SafetyStatus,
 } from "@/data/types/safety"
 import { queryKeys } from "@/lib/queryKeys"
 import {
@@ -88,19 +90,21 @@ function mapAmplifyContaminant(amplify: AmplifyContaminant): Contaminant {
     description: amplify.description ?? undefined,
     descriptionFr: amplify.descriptionFr ?? undefined,
     studies: amplify.studies ?? undefined,
-    higherIsBad: amplify.higherIsBad ?? true,
+    higherIsBad: amplify.higherIsBad ?? DEFAULT_HIGHER_IS_BAD,
   }
 }
 
 /**
- * Maps Amplify ContaminantThreshold to frontend type
+ * Maps Amplify ContaminantThreshold to frontend type.
+ * `warningRatio` is normalized to a non-null number here so downstream callers
+ * never have to re-apply `?? DEFAULT_WARNING_RATIO`.
  */
 function mapAmplifyThreshold(amplify: AmplifyContaminantThreshold): ContaminantThreshold {
   return {
     contaminantId: amplify.contaminantId,
     jurisdictionCode: amplify.jurisdictionCode,
     limitValue: amplify.limitValue ?? null,
-    warningRatio: amplify.warningRatio ?? 0.8,
+    warningRatio: amplify.warningRatio ?? DEFAULT_WARNING_RATIO,
     status: (amplify.status ?? "regulated") as ContaminantThreshold["status"],
   }
 }
@@ -292,7 +296,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     (value: number, contaminantId: string, jurisdictionCode: string): SafetyStatus => {
       const threshold = getThreshold(contaminantId, jurisdictionCode)
       const contaminant = getById(contaminantId)
-      const higherIsBad = contaminant?.higherIsBad ?? true
+      const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
       // If no threshold or banned/not controlled
       if (!threshold || threshold.status === "banned") {
@@ -303,8 +307,7 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
       }
 
       const limit = threshold.limitValue
-      const warningRatio = threshold.warningRatio ?? 0.8
-      const warningThreshold = limit * warningRatio
+      const warningThreshold = limit * threshold.warningRatio
 
       if (higherIsBad) {
         // Special case: limit of 0 means "must be absent"

@@ -159,11 +159,30 @@ export interface ContaminantThreshold {
   jurisdictionCode: string
   /** Limit value (null if banned or not controlled) */
   limitValue: number | null
-  /** Warning ratio (e.g., 0.8 means warning at 80% of limit) */
-  warningRatio: number | null
+  /** Warning ratio (e.g., 0.8 means warning at 80% of limit). Always populated — when
+   * the Amplify record has none, `DEFAULT_WARNING_RATIO` is substituted at the
+   * mapping boundary (see `mapAmplifyThreshold` in ContaminantsContext). */
+  warningRatio: number
   /** Regulatory status */
   status: ThresholdStatus
 }
+
+/**
+ * Default warning ratio used when a `ContaminantThreshold` record arrives from
+ * Amplify with `warningRatio` null. Normalized at the mapping boundary so
+ * downstream code never has to repeat the fallback.
+ */
+export const DEFAULT_WARNING_RATIO = 0.8
+
+/**
+ * Default `higherIsBad` when a `Contaminant` record arrives from Amplify with
+ * `higherIsBad` null. Most contaminants are "higher is worse" (lead, nitrate,
+ * PM2.5, …). Normalized at the mapping boundary so downstream code can read
+ * `contaminant.higherIsBad` as a non-null boolean. The same constant is also
+ * used as the fallback at lookup sites where the contaminant itself may be
+ * undefined (e.g. `contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD`).
+ */
+export const DEFAULT_HIGHER_IS_BAD = true
 
 // =============================================================================
 // Jurisdiction
@@ -503,8 +522,7 @@ export function calculateStatus(
   }
 
   const limit = threshold.limitValue
-  const warningRatio = threshold.warningRatio ?? 0.8
-  const warningThreshold = limit * warningRatio
+  const warningThreshold = limit * threshold.warningRatio
 
   if (higherIsBad) {
     if (value >= limit) return "danger"

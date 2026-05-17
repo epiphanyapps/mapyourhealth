@@ -25,7 +25,7 @@ import { useContaminants } from "@/context/ContaminantsContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
-import { StatCategory } from "@/data/types/safety"
+import { DEFAULT_HIGHER_IS_BAD, StatCategory } from "@/data/types/safety"
 import { useLocation } from "@/hooks/useLocation"
 import {
   useLocationData,
@@ -265,7 +265,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         const nationalThreshold = getThreshold(stat.statId, currentJurisdictionCode)
         const whoThreshold = getWHOThreshold(stat.statId)
         const contaminant = subCategoryContaminants.find((c) => c.id === stat.statId)
-        const higherIsBad = contaminant?.higherIsBad ?? true
+        const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
         // Check if the measurement exceeds the national/state threshold
         let exceedsNational = false
