@@ -208,7 +208,13 @@ export default function JurisdictionsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Jurisdictions</h1>
           <p className="text-muted-foreground">
-            Manage regulatory jurisdictions for threshold comparisons
+            Regulatory standards (WHO, US EPA, US-NY, CA-QC, EU…) the mobile app
+            compares measurements against. This is the rulebook catalog — not a
+            list of places. Cities and measurements live in{" "}
+            <span className="font-medium">Measurements</span>; this page only
+            defines which laws/guidelines exist and how they cascade
+            (US-NY&nbsp;→&nbsp;US&nbsp;→&nbsp;WHO) when a state-specific
+            threshold is missing.
           </p>
         </div>
         <div className="flex gap-2">
@@ -236,8 +242,8 @@ export default function JurisdictionsPage() {
               </DialogTitle>
               <DialogDescription>
                 {editingJurisdiction
-                  ? "Update the jurisdiction details below."
-                  : "Add a new regulatory jurisdiction."}
+                  ? "Update this regulatory standard. A jurisdiction is a rulebook (e.g. WHO, US EPA, New York State law) — not a place."
+                  : "Add a new regulatory standard (e.g. WHO, US EPA, New York State law). Jurisdictions are rulebooks the app compares measurements against — not geographic locations."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
