@@ -1,0 +1,138 @@
+# flow: E2E-044 Pollution Sources cascade (EPI-44 / GH #339 / GH #360)
+# intent:
+#   Validates the Pollution Sources mobile surface restored in PR #352:
+#   the dashboard entry-point card, the cascade-stop hook
+#   (usePollutionSources), and the staging seed data ending up on
+#   screen via the real DynamoDB byCity / byState / byCountry GSIs.
+#
+#   Unit tests in apps/mobile/app/hooks/usePollutionSources.test.ts
+#   mock all three cascade fetchers, so they validate hook logic but
+#   not real GSI behavior. This flow closes that gap and protects
+#   against silent navigation regressions on the Dashboard.
+#
+#   Part 1 — Montreal: city-anchored source, no cascade. Validates the
+#   happy path. seed-source-montreal-landfill ("Montreal Landfill")
+#   sits on staging from PR #332.
+#
+#   Part 2 — Halifax: no city- or state-anchored source on staging, so
+#   the cascade falls back to country. seed-source-ca-transportation
+#   ("Canada-wide Transportation Corridor") is the country-anchored
+#   fixture. This is the LOAD-BEARING assertion — only an E2E proves
+#   the GSI returns the country-anchored row and the
+#   `LocationScopeBadge` renders "Showing CA data".
+#
+#   Run against a preview build:
+#     cd apps/mobile && npm run build:ios:preview
+#     xcrun simctl install booted <path-to-MapYourHealth.app>
+#     MAESTRO_APP_ID=info.mapyourhealth.app maestro test \
+#       apps/mobile/.maestro/flows/E2E-044-pollution-sources.yaml
+
+appId: ${MAESTRO_APP_ID}
+onFlowStart:
+  - runFlow: ../shared/_OnFlowStart.yaml
+---
+
+# ========================================
+# Part 1 — Montreal, QC: city-anchored source (no cascade)
+# ========================================
+- assertVisible:
+    text: "Search city or location..."
+    label: "Search bar visible"
+
+- tapOn:
+    text: "Search city or.*"
+    label: "Open search"
+
+- inputText: "Montreal"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: ".*Montreal.*QC.*"
+    index: 0
+    label: "Pick Montreal from autocomplete"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Montreal"
+    timeout: 10000
+
+# Dashboard renders the new Pollution Sources card below the category
+# cards (added in PR #352). Without `currentLocation` it's hidden, so
+# this assertion also proves the location handoff above succeeded.
+- assertVisible:
+    text: "Pollution Sources"
+    label: "Pollution Sources card on Dashboard"
+
+- tapOn:
+    text: "Pollution Sources"
+    label: "Open Pollution Sources screen"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- extendedWaitUntil:
+    visible: "Montreal Landfill"
+    timeout: 8000
+
+- assertVisible:
+    text: "Montreal Landfill"
+    label: "City-anchored seed source visible"
+
+# City-scope hits do not render a LocationScopeBadge — the badge only
+# fires when scope is state/country. If this assertion regresses, the
+# cascade is short-circuiting to a higher scope when it shouldn't.
+- assertNotVisible:
+    text: "Showing.*data"
+    label: "No scope badge on city-scope hit"
+
+- back
+
+- waitForAnimationToEnd:
+    timeout: 2000
+
+# ========================================
+# Part 2 — Halifax, NS: country-scope cascade (load-bearing)
+# ========================================
+# Halifax has no city- or state-anchored PollutionSource on staging,
+# so the cascade falls through to byCountry("CA"). This is the
+# assertion unit tests can't make — only an E2E proves the GSI
+# returns the country-anchored row correctly.
+- tapOn:
+    text: "Search city or.*"
+    label: "Re-open search"
+
+- inputText: "Halifax"
+
+- waitForAnimationToEnd:
+    timeout: 5000
+
+- tapOn:
+    text: ".*Halifax.*NS.*"
+    index: 0
+    label: "Pick Halifax from autocomplete"
+
+- waitForAnimationToEnd
+- extendedWaitUntil:
+    visible: "Halifax"
+    timeout: 10000
+
+- tapOn:
+    text: "Pollution Sources"
+    label: "Open Pollution Sources for Halifax"
+
+- waitForAnimationToEnd:
+    timeout: 3000
+
+- extendedWaitUntil:
+    visible: "Transportation Corridor"
+    timeout: 8000
+
+- assertVisible:
+    text: "Showing CA data"
+    label: "Country-scope badge — cascade fell back to byCountry"
+
+- assertVisible:
+    text: "Transportation Corridor"
+    label: "Country-anchored seed source visible"
