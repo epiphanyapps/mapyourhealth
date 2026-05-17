@@ -11,6 +11,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
 import {
+  computeStatus,
   DEFAULT_HIGHER_IS_BAD,
   type Contaminant,
   type ContaminantCategory,
@@ -293,36 +294,18 @@ export const ContaminantsProvider: FC<PropsWithChildren> = ({ children }) => {
     [thresholdMap],
   )
 
-  // Calculate status for a measurement
+  // Calculate status for a measurement.
+  //
+  // Thin wrapper: resolves the threshold + higherIsBad via the context's
+  // lookup maps and delegates to the canonical `computeStatus` in safety.ts.
+  // Passes `whenMissing: "danger"` to preserve legacy semantics — if no
+  // threshold rule exists at all (not even via cascade fallback to WHO),
+  // treat that as needing attention rather than silently returning "safe".
   const calculateMeasurementStatus = useCallback(
     (value: number, contaminantId: string, jurisdictionCode: string): SafetyStatus => {
       const threshold = getThreshold(contaminantId, jurisdictionCode)
-      const contaminant = getById(contaminantId)
-      const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
-
-      // If no threshold or banned/not controlled
-      if (!threshold || threshold.status === "banned") {
-        return "danger" // Presence of banned substance is danger
-      }
-      if (threshold.status === "not_controlled" || threshold.limitValue === null) {
-        return "safe" // Can't evaluate without a limit
-      }
-
-      const limit = threshold.limitValue
-      const warningThreshold = limit * threshold.warningRatio
-
-      if (higherIsBad) {
-        // Special case: limit of 0 means "must be absent"
-        // If value is also 0 (none detected), that's safe, not danger
-        if (limit === 0 && value === 0) return "safe"
-        if (value >= limit) return "danger"
-        if (value >= warningThreshold) return "warning"
-        return "safe"
-      } else {
-        if (value <= limit) return "danger"
-        if (value <= warningThreshold) return "warning"
-        return "safe"
-      }
+      const higherIsBad = getById(contaminantId)?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
+      return computeStatus(value, threshold, higherIsBad, { whenMissing: "danger" })
     },
     [getThreshold, getById],
   )

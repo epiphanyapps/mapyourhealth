@@ -506,33 +506,64 @@ export interface Subscription {
 // =============================================================================
 
 /**
- * Calculate safety status based on measurement value and threshold
+ * Options for `computeStatus`.
  */
-export function calculateStatus(
+export interface ComputeStatusOptions {
+  /**
+   * Status to return when `threshold` is `undefined` (no rule exists at all,
+   * not even via cascade fallback). Defaults to `"safe"` — the conservative
+   * read: no rule means we can't evaluate, so don't alarm the user. Pass
+   * `"danger"` to flag missing-threshold contaminants as needing attention.
+   */
+  whenMissing?: SafetyStatus
+}
+
+/**
+ * Canonical safety-status computation for a `ContaminantThreshold` and a
+ * measured value. Single source of truth — all four prior implementations
+ * (`calculateStatus`, `computeStatusForThreshold`, `calculateMeasurementStatus`,
+ * and the inline check in `DashboardScreen`) now delegate to this.
+ *
+ * Threshold semantics, in order:
+ *  - no threshold at all → `options.whenMissing` (defaults to `"safe"`)
+ *  - `status === "banned"` → `"danger"` (any presence of a banned substance)
+ *  - `status === "not_controlled"` or `limitValue == null` → `"safe"` (no limit, can't evaluate)
+ *
+ * Numeric comparison, given a limit:
+ *  - `warningThreshold = limit * threshold.warningRatio`
+ *  - `higherIsBad`: at-or-above limit → `"danger"`; at-or-above warning → `"warning"`; below → `"safe"`
+ *  - `!higherIsBad`: at-or-below limit → `"danger"`; at-or-below warning → `"warning"`; above → `"safe"`
+ *
+ * Special case for `higherIsBad`: when `limit === 0` ("must be absent" rule —
+ * e.g. lead, asbestos), `value === 0` means "none detected" → `"safe"`, not
+ * `"danger"`. Guards against the degenerate `0 >= 0 → danger` reading.
+ */
+export function computeStatus(
   value: number,
   threshold: ContaminantThreshold | undefined,
-  higherIsBad: boolean = true,
+  higherIsBad: boolean,
+  options: ComputeStatusOptions = {},
 ): SafetyStatus {
-  // If no threshold or banned/not controlled, we can't determine status
-  if (!threshold || threshold.status === "banned") {
-    return "danger" // Presence of banned substance is always danger
-  }
-  if (threshold.status === "not_controlled" || threshold.limitValue === null) {
-    return "safe" // Can't evaluate without a limit
+  const whenMissing = options.whenMissing ?? "safe"
+
+  if (!threshold) return whenMissing
+  if (threshold.status === "banned") return "danger"
+  if (threshold.status === "not_controlled" || threshold.limitValue == null) {
+    return "safe"
   }
 
   const limit = threshold.limitValue
   const warningThreshold = limit * threshold.warningRatio
 
   if (higherIsBad) {
+    if (limit === 0 && value === 0) return "safe"
     if (value >= limit) return "danger"
     if (value >= warningThreshold) return "warning"
     return "safe"
-  } else {
-    if (value <= limit) return "danger"
-    if (value <= warningThreshold) return "warning"
-    return "safe"
   }
+  if (value <= limit) return "danger"
+  if (value <= warningThreshold) return "warning"
+  return "safe"
 }
 
 /**
