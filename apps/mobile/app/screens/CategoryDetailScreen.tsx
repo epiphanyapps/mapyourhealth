@@ -33,6 +33,7 @@ import {
   getLocalStandardsLink,
 } from "@/data/categoryConfig"
 import { StatCategory } from "@/data/types/safety"
+import { useJurisdictionResolver } from "@/hooks/useJurisdictionResolver"
 import {
   useLocationData,
   getRiskStatsForCategory,
@@ -57,7 +58,8 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const { category, city, state, country, subCategoryId } = route.params
   const { theme } = useAppTheme()
   const { statDefinitions } = useStatDefinitions()
-  const { getWHOThreshold, getThreshold, getJurisdictionForLocation } = useContaminants()
+  const { getWHOThreshold, getThreshold } = useContaminants()
+  const { resolve: resolveJurisdiction } = useJurisdictionResolver()
   const { getCategoryName, getCategoryColor } = useCategories()
 
   // Fetch data for the passed city from Amplify (with caching, offline support,
@@ -108,10 +110,7 @@ export const CategoryDetailScreen: FC<CategoryDetailScreenProps> = function Cate
   const categoryColor = getCategoryColor(categoryId) ?? CATEGORY_COLORS[category] ?? "#6B7280"
 
   // Get jurisdiction name for display
-  const localJurisdiction = getJurisdictionForLocation(
-    cityData?.state ?? state ?? "",
-    country ?? "",
-  )
+  const localJurisdiction = resolveJurisdiction(cityData?.state ?? state ?? "", country ?? "")
   const localJurisdictionCode = localJurisdiction?.code ?? "WHO"
   const localJurisdictionName =
     localJurisdiction?.name?.toUpperCase() || cityData?.state?.toUpperCase() || "LOCAL"

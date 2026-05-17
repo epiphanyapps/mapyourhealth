@@ -110,7 +110,6 @@ export type AmplifySubCategory = Schema["SubCategory"]["type"]
 export type AmplifyContaminant = Schema["Contaminant"]["type"]
 export type AmplifyContaminantThreshold = Schema["ContaminantThreshold"]["type"]
 export type AmplifyJurisdiction = Schema["Jurisdiction"]["type"]
-export type AmplifyLocation = Schema["Location"]["type"]
 export type AmplifyLocationMeasurement = Schema["LocationMeasurement"]["type"]
 export type AmplifyUserSubscription = Schema["UserSubscription"]["type"]
 export type AmplifyHazardReport = Schema["HazardReport"]["type"]
@@ -342,88 +341,6 @@ export async function getJurisdictionsByCountry(country: string): Promise<Amplif
   if (errors) {
     console.error("Error fetching jurisdictions by country:", errors)
     throw new Error("Failed to fetch jurisdictions by country")
-  }
-  return data
-}
-
-// =============================================================================
-// Locations (Public Read)
-// =============================================================================
-
-/**
- * Fetch locations by city name
- * Uses the city index for efficient lookup
- */
-export async function getLocationsByCity(city: string): Promise<AmplifyLocation[]> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.listLocationByCity({
-    city,
-  })
-  if (errors) {
-    console.error("Error fetching locations by city:", errors)
-    throw new Error("Failed to fetch locations by city")
-  }
-  return data
-}
-
-/**
- * Fetch all locations by state/province
- * Uses the state index for efficient lookup
- */
-export async function getLocationsByState(state: string): Promise<AmplifyLocation[]> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.listLocationByState({
-    state,
-  })
-  if (errors) {
-    console.error("Error fetching locations by state:", errors)
-    throw new Error("Failed to fetch locations by state")
-  }
-  return data
-}
-
-/**
- * Fetch all locations by county/region
- */
-export async function getLocationsByCounty(county: string): Promise<AmplifyLocation[]> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.listLocationByCounty({
-    county,
-  })
-  if (errors) {
-    console.error("Error fetching locations by county:", errors)
-    throw new Error("Failed to fetch locations by county")
-  }
-  return data
-}
-
-/**
- * Fetch all locations by country
- */
-export async function getLocationsByCountry(country: string): Promise<AmplifyLocation[]> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.listLocationByCountry({
-    country,
-  })
-  if (errors) {
-    console.error("Error fetching locations by country:", errors)
-    throw new Error("Failed to fetch locations by country")
-  }
-  return data
-}
-
-/**
- * Fetch all locations from the database
- * Used for building the search index
- */
-export async function getAllLocations(): Promise<AmplifyLocation[]> {
-  const client = await getPublicClient()
-  const { data, errors } = await client.models.Location.list({
-    limit: 1000,
-  })
-  if (errors) {
-    console.error("Error fetching all locations:", errors)
-    throw new Error("Failed to fetch all locations")
   }
   return data
 }

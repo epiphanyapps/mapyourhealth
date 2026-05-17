@@ -408,9 +408,24 @@ GitHub Actions workflows in `.github/workflows/`:
 | `admin-deploy.yml` | Push to `main` or `staging` | Deploy admin dashboard |
 | `mobile-deploy.yml` | Push to `main` or `staging` | Deploy mobile web |
 | `web-deploy.yml` | Push to `main` or `staging` | Deploy web landing page |
-| `e2e-tests.yml` | PR, manual | Run E2E tests |
-| `e2e-ios.yml` | Manual | iOS E2E tests |
-| `playwright-tests.yml` | PR | Playwright tests |
+| `e2e-android.yml` | PR (smoke), push to main (full), manual | Android Maestro E2E tests — tiered suite (primary mobile gate) |
+| `e2e-ios.yml` | Manual only | iOS Maestro E2E tests — `workflow_dispatch` only, not gating |
+| `playwright-tests.yml` | PR + push to main on admin/backend paths, manual | Admin Playwright tests |
+
+### E2E strategy (tiered)
+
+Three surviving E2E workflows after the audits in `docs/e2e-ci-review-2026-05-16.md` (previously dormant `e2e-tests.yml` / `e2e-orchestrated.yml` / `e2e-orchestration.yml` were deleted as 940+ lines of duplicate plumbing nobody ran). Android replaced iOS as the primary mobile gate for cost: `ubuntu-latest` (1×) vs `macos-15` (10×) on private repos, and the Maestro flows are platform-agnostic (same `appId`, percentage-based taps).
+
+| Trigger | Suite | Runner | Time budget | Gating? |
+|---|---|---|---|---|
+| PR touching `apps/mobile/**` | Maestro **smoke** (E2E-100/101/102) on Android | `ubuntu-latest` (AVD api-33 google_apis x86_64) | ~12-15 min wall | Required check |
+| PR touching `apps/admin/**` or `packages/backend/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Required check |
+| Push to `main` touching `apps/mobile/**` | Maestro **full** (every flow in `.maestro/flows/`) on Android | `ubuntu-latest` | ~25 min wall | Informational |
+| Push to `main` touching `apps/admin/**` | Playwright admin | `ubuntu-latest` | ~3 min wall | Informational |
+| `workflow_dispatch` (e2e-android.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `ubuntu-latest` | varies | — |
+| `workflow_dispatch` (e2e-ios.yml) | configurable via `suite` input — `smoke` / `core` / `full` | `macos-15` | varies (~15-30 min) | — (manual-only) |
+
+PR feedback target is **≤15 min** (Android Maestro smoke + Playwright run in parallel on different `ubuntu-latest` runners). iOS regression is caught by manual testing on the maintainer's iPhone + occasional `gh workflow run e2e-ios.yml`. Deploy gating on these workflows is deferred to a Phase 2 PR once we have a few weeks of green-signal data on real PR traffic.
 
 ## GitHub Issue Labels (MUST FOLLOW)
 
@@ -652,39 +667,22 @@ When a location's jurisdiction cannot be determined, the system silently falls b
 | `apps/mobile/app/hooks/useMultiLocationData.ts` | 163 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
 | `packages/backend/scripts/parse-risks-excel.ts` | 425–459 | `JURISDICTION_FALLBACK` map + `\|\| "WHO"` |
 
-### 2. Warning Ratio Default → `0.8`
+### 2. Warning Ratio Default → `0.8` — **Resolved (schema-level)**
 
-When `warningRatio` is null/undefined, the system assumes 80%. This could misrepresent warning thresholds for contaminants that were never explicitly configured.
+`ContaminantThreshold.warningRatio` is now `a.float().required().default(0.8)` in `packages/backend/amplify/data/resource.ts`. Amplify guarantees a non-null `number` on every read, so no `?? 0.8` coalesces remain anywhere on the read path.
 
-| File | Line | Expression |
-|------|------|------------|
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 103 | `amplify.warningRatio ?? 0.8` |
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 306 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/hooks/useMultiLocationData.ts` | 70 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/hooks/useZipCodeData.ts` | 159 | `threshold.warningRatio ?? 0.8` |
-| `apps/mobile/app/data/types/safety.ts` | 489 | `threshold.warningRatio ?? 0.8` |
-| `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 62 | `threshold.warningRatio ?? 0.8` |
-| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 81 | `threshold.warningRatio ?? 0.8` |
-| `apps/admin/scripts/seed-data.ts` | 569 | `t.warningRatio \|\| 0.8` |
-| `packages/backend/amplify/data/resource.ts` | 227 | `a.float().default(0.8)` (schema default) |
+The only surviving `0.8` literal is the schema default itself plus the write boundary in admin seed scripts (`apps/admin/scripts/seed-data.ts:569` uses `|| 0.8` as a defensive default when seeding rows from a CSV that may omit the column — kept intentional).
 
-### 3. `higherIsBad` Default → `true`
+### 3. `higherIsBad` Default → `true` — **Mostly resolved (schema-level + named constant for lookup-failure)**
 
-Assumes higher contaminant values are always dangerous. Incorrect for beneficial metrics or properties where lower is worse.
+`Contaminant.higherIsBad` and `ObservedProperty.higherIsBad` are now `a.boolean().required().default(true)` in `packages/backend/amplify/data/resource.ts`. Amplify guarantees a non-null `boolean` on every record.
 
-| File | Line | Expression |
-|------|------|------------|
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 91, 295 | `amplify.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useMultiLocationData.ts` | 65, 98 | `contaminant?.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useZipCodeData.ts` | 154 | `contaminant?.higherIsBad ?? true` |
-| `apps/mobile/app/hooks/useLocationObservations.ts` | 120 | `prop.higherIsBad ?? true` |
-| `apps/mobile/app/screens/StatTrendScreen.tsx` | 100 | `definition?.higherIsBad ?? true` |
-| `apps/mobile/app/screens/DashboardScreen.tsx` | 220 | `contaminant?.higherIsBad ?? true` |
-| `apps/admin/src/app/(admin)/stats/page.tsx` | 131 | `contaminant.higherIsBad ?? true` |
-| `apps/admin/src/app/(admin)/properties/page.tsx` | 137, 216 | `property.higherIsBad ?? true` |
-| `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` | 583, 591, 690 | `?.higherIsBad ?? true` |
-| `packages/backend/scripts/seed-om-data.ts` | 151 | `property.higherIsBad ?? true` |
-| `packages/backend/scripts/seed-dynamodb-direct.ts` | 235 | `p.higherIsBad ?? true` |
+**What remains, and why:** when code reads `higherIsBad` via a *lookup* that may return `undefined` (e.g. `contaminants.find(c => c.id === id)?.higherIsBad`), the `??` is fallback for the missing-lookup case, not the missing-field case. Mobile uses `DEFAULT_HIGHER_IS_BAD` from `apps/mobile/app/data/types/safety.ts` at those sites. Admin uses a literal `true` (a small `DEFAULT_HIGHER_IS_BAD` constant in admin would be a follow-up — low priority since each call site already documents intent in context).
+
+Remaining lookup-failure call sites:
+- mobile: `apps/mobile/app/context/ContaminantsContext.tsx`, `apps/mobile/app/hooks/useLocationData.ts`, `apps/mobile/app/screens/DashboardScreen.tsx`, `apps/mobile/app/screens/StatTrendScreen.tsx` — all use `?? DEFAULT_HIGHER_IS_BAD`
+- admin: `apps/admin/src/app/(admin)/measurements/page.tsx`, `apps/admin/src/app/(admin)/measurements/[city]/page.tsx`, `apps/admin/src/app/(admin)/zip-codes/page.tsx`, `apps/admin/src/app/(admin)/zip-codes/[zipCode]/page.tsx` — `?? true` literals on `?.higherIsBad` optional-chain access
+- seed boundaries: `packages/backend/amplify/functions/manage-data/handler.ts`, `packages/backend/scripts/seed-dynamodb-direct.ts`, `packages/backend/scripts/seed-om-data.ts` — defensive on inputs that may omit the field. Intentional.
 
 ### 4. Mock/Offline Data Fallbacks
 

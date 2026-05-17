@@ -1,10 +1,90 @@
 import {
   calculateObservationStatus,
+  computeStatus,
   getObservedPropertyCategoryDisplayName,
+  type ContaminantThreshold,
   type ObservedProperty,
   type PropertyThreshold,
   type LocationObservation,
 } from "../safety"
+
+describe("computeStatus", () => {
+  const baseThreshold: ContaminantThreshold = {
+    contaminantId: "lead",
+    jurisdictionCode: "US-NY",
+    limitValue: 15,
+    warningRatio: 0.8,
+    status: "regulated",
+  }
+
+  describe("missing threshold", () => {
+    it("returns 'safe' by default when threshold is undefined", () => {
+      expect(computeStatus(100, undefined, true)).toBe("safe")
+    })
+
+    it("honors whenMissing override (e.g. 'danger' to flag unregulated)", () => {
+      expect(computeStatus(100, undefined, true, { whenMissing: "danger" })).toBe("danger")
+    })
+  })
+
+  describe("threshold lifecycle", () => {
+    it("returns 'danger' when status === 'banned' regardless of value", () => {
+      expect(computeStatus(0, { ...baseThreshold, status: "banned" }, true)).toBe("danger")
+      expect(computeStatus(999, { ...baseThreshold, status: "banned" }, true)).toBe("danger")
+    })
+
+    it("returns 'safe' when status === 'not_controlled'", () => {
+      expect(computeStatus(100, { ...baseThreshold, status: "not_controlled" }, true)).toBe("safe")
+    })
+
+    it("returns 'safe' when limitValue is null (no limit to compare against)", () => {
+      expect(computeStatus(100, { ...baseThreshold, limitValue: null }, true)).toBe("safe")
+    })
+  })
+
+  describe("higherIsBad: true (most contaminants — higher is worse)", () => {
+    it("returns 'danger' at or above the limit", () => {
+      expect(computeStatus(15, baseThreshold, true)).toBe("danger")
+      expect(computeStatus(20, baseThreshold, true)).toBe("danger")
+    })
+
+    it("returns 'warning' at or above limit × warningRatio", () => {
+      // limit=15, warningRatio=0.8 → warning at 12
+      expect(computeStatus(12, baseThreshold, true)).toBe("warning")
+      expect(computeStatus(13, baseThreshold, true)).toBe("warning")
+    })
+
+    it("returns 'safe' below the warning threshold", () => {
+      expect(computeStatus(11, baseThreshold, true)).toBe("safe")
+      expect(computeStatus(0, baseThreshold, true)).toBe("safe")
+    })
+
+    it("'limit=0 must be absent' rule — value=0 reads as safe, not danger", () => {
+      // Lead/asbestos/PFAS: regulatory limit is "any detected presence" → 0.
+      // value=0 means "none detected" — should be safe, not the degenerate
+      // `0 >= 0 → danger` reading.
+      expect(computeStatus(0, { ...baseThreshold, limitValue: 0 }, true)).toBe("safe")
+      // But any positive presence at limit=0 is danger.
+      expect(computeStatus(0.01, { ...baseThreshold, limitValue: 0 }, true)).toBe("danger")
+    })
+  })
+
+  describe("higherIsBad: false (lower is worse — dissolved oxygen, pH proxies)", () => {
+    it("returns 'danger' at or below the limit", () => {
+      expect(computeStatus(15, baseThreshold, false)).toBe("danger")
+      expect(computeStatus(10, baseThreshold, false)).toBe("danger")
+    })
+
+    it("returns 'warning' at or below limit × warningRatio", () => {
+      // limit=15, warningRatio=0.8 → warning at 12 (and lower, until danger)
+      expect(computeStatus(12, baseThreshold, false)).toBe("warning")
+    })
+
+    it("returns 'safe' above the warning threshold", () => {
+      expect(computeStatus(20, baseThreshold, false)).toBe("safe")
+    })
+  })
+})
 
 describe("calculateObservationStatus", () => {
   describe("numeric observation type", () => {

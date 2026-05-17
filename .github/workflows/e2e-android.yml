@@ -1,0 +1,256 @@
+name: Android E2E Tests
+
+# Tiered triggers (mirrors the prior iOS workflow, see #364 + #365):
+#   - pull_request touching apps/mobile/** → smoke suite (E2E-100/101/102), ~12-15 min wall
+#   - push to main                          → full suite (every flow under .maestro/flows/), ~25 min wall, informational
+#   - workflow_dispatch                     → caller picks the suite via the `suite` input
+#
+# Switched from iOS to Android in <follow-up PR> for cost: macOS runners
+# are 10× billable on private repos, ubuntu-latest is 1×. The Maestro
+# flows are platform-agnostic (same appId, percentage-based taps) so
+# Android coverage exercises the same code paths at ~1/10 the runner
+# cost. iOS still has a workflow_dispatch-only entry point in
+# .github/workflows/e2e-ios.yml for occasional manual verification.
+on:
+  pull_request:
+    branches: [staging, main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-android.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/mobile/**'
+      - '.github/workflows/e2e-android.yml'
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Test suite to run (smoke | core | full)
+        required: false
+        default: smoke
+        type: choice
+        options:
+          - smoke
+          - core
+          - full
+
+permissions:
+  contents: read
+  pull-requests: write
+
+env:
+  MAESTRO_DRIVER_STARTUP_TIMEOUT: 240000
+  # Gradle build acceleration. `caching=true` enables the local build cache so
+  # compiled outputs restore across runs. `parallel=true` runs independent
+  # projects concurrently. `workers.max=2` matches the 2-core ubuntu-latest
+  # runner.
+  GRADLE_OPTS: "-Dorg.gradle.caching=true -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=2"
+  # Bump JVM memory for every Java process in this job — Gradle daemon AND
+  # forked workers. AGP's `lintVitalAnalyzeRelease` runs in a Worker JVM
+  # whose `org.gradle.jvmargs` defaults to `-Xmx2g -XX:MaxMetaspaceSize=512m`
+  # via Expo-prebuild's generated `android/gradle.properties` (regenerated
+  # every build, so it can't be patched in the repo). At ~15 sequential
+  # `lintVitalAnalyze*` tasks the worker overflows Metaspace and the build
+  # crashes around the 25-min mark on `react-native-async-storage`.
+  #
+  # `_JAVA_OPTIONS` is honoured by every JVM started in the job, applied
+  # after `org.gradle.jvmargs`, so it wins. `ubuntu-latest` has ~7 GiB free
+  # so 4 GiB heap + 1 GiB metaspace is well within budget.
+  _JAVA_OPTIONS: "-Xmx4g -XX:MaxMetaspaceSize=1g"
+
+jobs:
+  android-e2e:
+    name: Android E2E Tests
+    runs-on: ubuntu-latest
+    # Temporarily bumped from 60 → 90 so the first cache-priming run can
+    # finish — every cold run in the last few hours cancelled at exactly
+    # 60.3 min, which means actions/cache@v4 never gets to save the
+    # Gradle build-output cache and the workflow stays cold forever.
+    # Revert to 60 once a warm cache has landed and a JS-only PR shows
+    # the expected ~10-15 min wall.
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Setup Java (for Maestro + Gradle)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Three-tier caching for Android E2E:
+      #
+      #   1. Yarn + Gradle module deps — invalidates on lockfile changes
+      #      (downloaded artifacts, fast to repopulate from registries)
+      #   2. Gradle build output — invalidates only on native-affecting changes
+      #      (compiled .class/.dex/.so, the 15-25 min compile we want to skip)
+      #   3. Expo prebuild + CLI caches — Expo's autolinking / template output
+      #
+      # Splitting them matters because the project is ~99% JS-only: a
+      # yarn.lock bump (frequent) shouldn't blow away the 25-min compile
+      # cache. Restore-keys give partial hits when the exact key misses —
+      # Gradle's incremental build sorts out the deltas after a partial
+      # restore.
+      - name: Cache deps (yarn + Gradle modules)
+        uses: actions/cache@v4
+        with:
+          path: |
+            .yarn/cache
+            node_modules
+            apps/mobile/node_modules
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-android-deps-${{ hashFiles('yarn.lock', 'apps/mobile/package.json') }}
+          restore-keys: |
+            ${{ runner.os }}-android-deps-
+
+      - name: Cache Gradle build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches/build-cache-1
+            ~/.gradle/caches/transforms-*
+            ~/.gradle/caches/jars-*
+            ~/.gradle/native
+          # Native fingerprint — files that, when changed, require a fresh
+          # native compile. App JS changes don't appear here, so a JS-only
+          # PR reuses the previous build's compiled outputs.
+          key: ${{ runner.os }}-android-build-${{ hashFiles('apps/mobile/package.json', 'apps/mobile/app.json', 'apps/mobile/app.config.*', 'apps/mobile/eas.json', 'yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-android-build-
+
+      - name: Cache Expo prebuild
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.expo
+            apps/mobile/.expo
+          key: ${{ runner.os }}-expo-${{ hashFiles('apps/mobile/package.json', 'apps/mobile/app.json', 'apps/mobile/app.config.*') }}
+          restore-keys: |
+            ${{ runner.os }}-expo-
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ca-central-1
+
+      # apps/mobile/app/app.tsx imports `amplify_outputs.json` and defaults
+      # to it (the "prod" path). On real prod, the AppConfig "comingSoon"
+      # gate is ENABLED, which renders <ComingSoonScreen /> instead of
+      # the Dashboard — smoke flows assert dashboard strings and fail.
+      # Fetch outputs from the STAGING backend instead.
+      - name: Generate Amplify outputs (staging backend, written as the default amplify_outputs.json)
+        run: |
+          npx ampx generate outputs \
+            --branch staging \
+            --app-id ${{ secrets.AMPLIFY_BACKEND_APP_ID }} \
+            --out-dir apps/mobile
+
+      # `eas build --local` honors .gitignore when packaging the project
+      # archive, so the just-generated amplify_outputs.json would be
+      # excluded (it's gitignored everywhere). Drop the rule for this
+      # CI checkout so EAS includes the file.
+      - name: Unignore amplify_outputs.json for EAS pack
+        run: sed -i.bak '/^amplify_outputs\.json$/d' .gitignore && rm .gitignore.bak
+
+      - name: Setup EAS CLI
+        run: npm install -g eas-cli
+
+      - name: Build Android APK
+        working-directory: apps/mobile
+        run: |
+          mkdir -p ./build
+          eas build --profile e2e --platform android --local --non-interactive --output ./build/MapYourHealth.apk
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Install Maestro
+        run: |
+          curl -Ls "https://get.maestro.mobile.dev" | bash
+          echo "$HOME/.maestro/bin" >> $GITHUB_PATH
+
+      # Pick the suite glob from the trigger (same as the iOS workflow):
+      #   pull_request    → smoke (E2E-100/101/102)
+      #   push to main    → full (.maestro/flows/)
+      #   workflow_dispatch → suite input (smoke | core | full)
+      - name: Determine suite
+        id: suite
+        run: |
+          case "${{ github.event_name }}" in
+            pull_request)   SUITE="smoke" ;;
+            push)           SUITE="full" ;;
+            workflow_dispatch) SUITE="${{ inputs.suite }}" ;;
+            *)              SUITE="smoke" ;;
+          esac
+          # Flows live under `apps/mobile/.maestro/flows/`. The
+          # android-emulator-runner `script:` executes from the repo root,
+          # so paths must be repo-relative — not module-relative.
+          case "$SUITE" in
+            smoke) GLOB="apps/mobile/.maestro/flows/E2E-10*.yaml" ;;
+            core)  GLOB="apps/mobile/.maestro/flows/E2E-0*.yaml apps/mobile/.maestro/flows/E2E-10*.yaml" ;;
+            full|*) GLOB="apps/mobile/.maestro/flows" ;;
+          esac
+          echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
+          echo "glob=$GLOB" >> "$GITHUB_OUTPUT"
+          echo "Running suite: $SUITE → $GLOB"
+
+      # KVM enablement so the AVD runs with hardware acceleration (10×+
+      # faster boot/test). ubuntu-latest has nested virt enabled by
+      # default but we still need to set up the device permission.
+      - name: Enable KVM group perms
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: AVD cache
+        uses: actions/cache@v4
+        id: avd-cache
+        with:
+          path: |
+            ~/.android/avd/*
+            ~/.android/adb*
+          key: avd-pixel6-api33-${{ runner.os }}
+
+      - name: Create AVD + run Maestro suite
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 33
+          target: google_apis
+          arch: x86_64
+          profile: pixel_6
+          force-avd-creation: false
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none
+          disable-animations: true
+          # NOTE: reactivecircus/android-emulator-runner executes this
+          # block line-by-line via `sh -c`, so `\<newline>` line
+          # continuation does NOT join lines — the `\` ends up as a
+          # literal final arg to whatever's on that line. Keep the
+          # maestro invocation on a single line.
+          script: |
+            adb wait-for-device
+            adb install -r ./apps/mobile/build/MapYourHealth.apk
+            $HOME/.maestro/bin/maestro test --env MAESTRO_APP_ID=com.epiphanyapps.mapyourhealth ${{ steps.suite.outputs.glob }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-e2e-results-${{ steps.suite.outputs.suite }}
+          path: ~/.maestro/tests
+          retention-days: 7
+          if-no-files-found: ignore

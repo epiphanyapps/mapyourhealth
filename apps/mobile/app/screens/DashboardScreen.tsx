@@ -25,7 +25,8 @@ import { useContaminants } from "@/context/ContaminantsContext"
 import { usePendingAction } from "@/context/PendingActionContext"
 import { useStatDefinitions } from "@/context/StatDefinitionsContext"
 import { useSubscriptions } from "@/context/SubscriptionsContext"
-import { StatCategory } from "@/data/types/safety"
+import { DEFAULT_HIGHER_IS_BAD, StatCategory } from "@/data/types/safety"
+import { useJurisdictionResolver } from "@/hooks/useJurisdictionResolver"
 import { useLocation } from "@/hooks/useLocation"
 import {
   useLocationData,
@@ -38,8 +39,9 @@ import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
-// jurisdiction resolution now uses ContaminantsContext.getJurisdictionForLocation
-// postalCode utilities removed - using city-level granularity
+// jurisdiction resolution goes through useJurisdictionResolver (thin wrapper
+// over ContaminantsContext.getJurisdictionForLocation); postalCode utilities
+// removed when the app moved to city-level granularity.
 
 /** Orange color for WHO-only exceedances */
 const WHO_EXCEEDANCE_COLOR = "#F97316"
@@ -92,8 +94,8 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
   const { isAuthenticated, user, logout } = useAuth()
   const { setPendingAction } = usePendingAction()
   const { statDefinitions } = useStatDefinitions()
-  const { contaminants, getThreshold, getWHOThreshold, getJurisdictionForLocation } =
-    useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold } = useContaminants()
+  const { resolveCode } = useJurisdictionResolver()
   const { primarySubscription, addSubscription, isLoading: subsLoading } = useSubscriptions()
   const {
     getLocationFromGPS,
@@ -233,11 +235,13 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [cityData, statDefinitions],
   )
 
-  // Determine the jurisdiction code for the current location
-  const currentJurisdictionCode = useMemo(() => {
-    if (!currentLocation) return "WHO"
-    return getJurisdictionForLocation(currentLocation.state, currentLocation.country)?.code || "WHO"
-  }, [currentLocation, getJurisdictionForLocation])
+  // Determine the jurisdiction code for the current location.
+  // `resolveCode` already returns "WHO" for missing/empty inputs (falls through
+  // the in-memory lookup), so the `!currentLocation` early return is folded in.
+  const currentJurisdictionCode = useMemo(
+    () => resolveCode(currentLocation?.state ?? "", currentLocation?.country ?? ""),
+    [currentLocation, resolveCode],
+  )
 
   // Get sub-category status with WHO-vs-national color coding
   const getSubCategoryStatusForCategory = useCallback(
@@ -265,7 +269,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
         const nationalThreshold = getThreshold(stat.statId, currentJurisdictionCode)
         const whoThreshold = getWHOThreshold(stat.statId)
         const contaminant = subCategoryContaminants.find((c) => c.id === stat.statId)
-        const higherIsBad = contaminant?.higherIsBad ?? true
+        const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
         // Check if the measurement exceeds the national/state threshold
         let exceedsNational = false
@@ -1001,6 +1005,35 @@ View details: ${shareUrl}`
         ))}
       </View>
 
+      {/* Pollution Sources entry point — navigates to the cascade-aware list */}
+      {currentLocation && (
+        <Pressable
+          onPress={() =>
+            navigation.navigate("PollutionSources", {
+              city: currentLocation.city || "",
+              state: currentLocation.state || "",
+              country: currentLocation.country || "",
+            })
+          }
+          style={({ pressed }) => [
+            $pollutionSourcesCard,
+            { borderColor: theme.colors.border, backgroundColor: theme.colors.background },
+            pressed && { opacity: 0.8 },
+          ]}
+          accessibilityRole="button"
+          accessibilityLabel="View pollution sources for this location"
+        >
+          <MaterialCommunityIcons name="factory" size={22} color={theme.colors.tint} />
+          <View style={$pollutionSourcesTextContainer}>
+            <Text style={$pollutionSourcesTitle}>Pollution Sources</Text>
+            <Text style={$pollutionSourcesSubtitle}>
+              Industrial sites, landfills, and other emitters near this location
+            </Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
+        </Pressable>
+      )}
+
       {/* Report Hazard Button */}
       <Pressable
         onPress={handleReportHazard}
@@ -1050,6 +1083,33 @@ const $actionButton: ViewStyle = {
 const $actionButtonText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
+}
+
+const $pollutionSourcesCard: ViewStyle = {
+  flexDirection: "row",
+  alignItems: "center",
+  marginHorizontal: 16,
+  marginTop: 16,
+  paddingVertical: 14,
+  paddingHorizontal: 16,
+  borderRadius: 12,
+  borderWidth: 1,
+  gap: 12,
+}
+
+const $pollutionSourcesTextContainer: ViewStyle = {
+  flex: 1,
+}
+
+const $pollutionSourcesTitle: TextStyle = {
+  fontSize: 15,
+  fontWeight: "600",
+}
+
+const $pollutionSourcesSubtitle: TextStyle = {
+  fontSize: 12,
+  opacity: 0.7,
+  marginTop: 2,
 }
 
 const $reportButton: ViewStyle = {

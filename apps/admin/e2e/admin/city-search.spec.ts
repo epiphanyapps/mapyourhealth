@@ -9,8 +9,14 @@ import { test, expect } from "@playwright/test";
 
 const MOBILE_APP_URL = "https://app.mapyourhealth.info";
 
+// TODO(EPI-CI): These specs exercise the mobile-web app at production
+// (https://app.mapyourhealth.info), not the admin portal — they live in
+// admin/ by accident and run under the `admin-chromium` Playwright project.
+// They're marked fixme so the PR gate isn't blocked by production-side bit
+// rot. Relocate to `mobile-web/` once the mobile-web Playwright project is
+// wired into CI (see docs/e2e-ci-review-2026-05-16.md, Phase 3).
 test.describe("City Search", () => {
-  test("should search for New York and display results", async ({
+  test.fixme("should search for New York and display results", async ({
     browser,
   }) => {
     const context = await browser.newContext({
@@ -63,7 +69,7 @@ test.describe("City Search", () => {
     await context.close();
   });
 
-  test("should display city suggestions with proper formatting", async ({
+  test.fixme("should display city suggestions with proper formatting", async ({
     browser,
   }) => {
     const context = await browser.newContext({

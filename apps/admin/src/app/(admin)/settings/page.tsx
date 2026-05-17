@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
-import { Loader2 } from "lucide-react";
+import { Loader2, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -320,6 +321,24 @@ export default function SettingsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          <Link
+            href="/guide?tab=data"
+            className="flex items-center gap-2 rounded-lg border border-dashed bg-muted/40 px-4 py-3 text-sm hover:bg-muted"
+          >
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
+            <span className="flex-1">
+              <span className="font-medium">New to reseed?</span>{" "}
+              <span className="text-muted-foreground">
+                Read what happens step-by-step, in plain English — what gets
+                wiped, in what order it&apos;s repopulated, and what stays
+                untouched.
+              </span>
+            </span>
+            <span className="text-sm font-medium text-muted-foreground">
+              Open guide →
+            </span>
+          </Link>
+
           {DATA_ACTIONS.map((item) => (
             <div
               key={item.action}

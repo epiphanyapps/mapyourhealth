@@ -236,7 +236,16 @@ const schema = a.schema({
       description: a.string(), // Health concerns (EN)
       descriptionFr: a.string(), // Health concerns (FR)
       studies: a.string(), // Scientific references
-      higherIsBad: a.boolean().default(true),
+      // Required + default: AppSync mutations may omit the field (the default
+      // is injected). Reads always return a non-null boolean so downstream
+      // code doesn't have to coalesce.
+      //
+      // **Writer contract**: the `.default(true)` only applies on the AppSync
+      // mutation path. Any writer that bypasses AppSync (direct DynamoDB SDK,
+      // see `scripts/seed-dynamodb-direct.ts`, `amplify/functions/manage-data`)
+      // must itself supply a non-null value — otherwise the row exists but
+      // reads will fail with "Cannot return null for non-nullable field".
+      higherIsBad: a.boolean().required().default(true),
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
@@ -255,7 +264,12 @@ const schema = a.schema({
       contaminantId: a.string().required(), // References Contaminant.contaminantId
       jurisdictionCode: a.string().required(), // "WHO", "CA-QC", "US-NY", "US-CA", "US-TX", "US-FL", "EU"
       limitValue: a.float(), // null if banned or not controlled
-      warningRatio: a.float().default(0.8), // Warning threshold as ratio of limit (e.g., 0.8 = 80%)
+      // Required + default — same writer-contract caveat as Contaminant.higherIsBad
+      // above: AppSync mutations get the 0.8 default for free, but direct-DDB
+      // writers (`scripts/seed-dynamodb-direct.ts`, the `manage-data` Lambda,
+      // `scripts/parse-risks-excel.ts` JSON output) must supply 0.8 themselves
+      // for banned / not_approved rows where the value is cosmetic.
+      warningRatio: a.float().required().default(0.8), // Warning threshold as ratio of limit (e.g., 0.8 = 80%)
       status: a.enum([
         "regulated", // Has a specific limit
         "banned", // Completely prohibited
@@ -716,7 +730,10 @@ const schema = a.schema({
       unit: a.string(), // Measurement unit (may be null for zone/endemic/binary)
       description: a.string(), // English description
       descriptionFr: a.string(), // French description
-      higherIsBad: a.boolean().default(true), // For numeric: higher = worse? For endemic: presence = bad?
+      // Required + default — same writer-contract caveat as
+      // Contaminant.higherIsBad above. Direct-DDB writers must supply a
+      // non-null value; AppSync mutations get the default for free.
+      higherIsBad: a.boolean().required().default(true), // For numeric: higher = worse? For endemic: presence = bad?
       metadata: a.json(), // Additional property-specific config (e.g., scale ranges for zones)
     })
     .authorization((allow) => [

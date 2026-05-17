@@ -54,12 +54,19 @@ export type MobileImpact = {
   edgeCases?: string[];
 };
 
+export type AdminSectionGroupId =
+  | "daily-ops"
+  | "reference-data"
+  | "web-marketing"
+  | "system"
+  | "orphan";
+
 export type AdminSection = {
   id: string;
   title: string;
   route: string;
   icon: ComponentType<{ className?: string }>;
-  group: "navigation" | "observations";
+  group: AdminSectionGroupId;
   purpose: string;
   lists?: AdminList[];
   fields?: AdminField[];
@@ -68,13 +75,13 @@ export type AdminSection = {
   notes?: string[];
 };
 
-export const navigationSections: AdminSection[] = [
+const allSections: AdminSection[] = [
   {
     id: "dashboard",
     title: "Dashboard",
     route: "/",
     icon: LayoutDashboard,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
       "Read-only landing page that summarizes platform state. The first screen an admin sees after login. No data is created or modified here.",
     lists: [
@@ -105,7 +112,7 @@ export const navigationSections: AdminSection[] = [
     title: "Analytics",
     route: "/analytics",
     icon: BarChart3,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
       "Real-time inventory of platform usage. Use this to verify that recent imports landed and that visit traffic looks reasonable.",
     lists: [
@@ -136,9 +143,9 @@ export const navigationSections: AdminSection[] = [
   {
     id: "contaminants",
     title: "Contaminants",
-    route: "/stats",
+    route: "/contaminants",
     icon: Droplets,
-    group: "navigation",
+    group: "reference-data",
     purpose:
       "Defines every contaminant the platform tracks (lead, nitrate, radon, PM2.5, etc.). A contaminant is the row that appears in a category's standards table on mobile, with its name, unit, and description. Edits here change what mobile users read.",
     lists: [
@@ -243,9 +250,9 @@ export const navigationSections: AdminSection[] = [
     title: "Thresholds",
     route: "/thresholds",
     icon: Scale,
-    group: "navigation",
+    group: "reference-data",
     purpose:
-      "Pairs a contaminant with a jurisdiction and a numeric limit. The mobile safety badge (green/orange/red) is computed entirely from these records. Missing thresholds silently fall back to the parent jurisdiction, then to WHO.",
+      "One row per (contaminant, jurisdiction) pair — the numeric limit the mobile safety badge (green/orange/red) is computed from. The jurisdiction is the rulebook the limit comes from (WHO, US EPA, US-NY, CA-QC…), NOT the city — cities are resolved to a jurisdiction at read time. When a row is missing for the resolved jurisdiction, the mobile app silently cascades to that jurisdiction's parentCode and finally to WHO (US-NY → US → WHO). That cascade is also why deleting a threshold may not visibly change anything: a parent row may already be answering for it.",
     lists: [
       {
         title: "Table",
@@ -335,13 +342,55 @@ export const navigationSections: AdminSection[] = [
     },
   },
   {
+    id: "threshold-coverage",
+    title: "Threshold Coverage",
+    route: "/threshold-coverage",
+    icon: Gauge,
+    group: "reference-data",
+    purpose:
+      "Read-only audit view. For every (jurisdiction, contaminant) pair, answers: where does the mobile safety badge actually get its limit from? Cells bucket into ✓ direct (threshold seeded for this exact jurisdiction), ↓ cascade-parent (no direct row; resolved via the jurisdiction's parentCode), ⚠ cascade-WHO (fell all the way to the WHO global default — this is what makes the mobile app's WHO and LOCAL columns show identical values), or ⊘ none (unregulated, no row anywhere). Mirrors `getThreshold` in mobile's ContaminantsContext. Use this to find the gaps before adding state-specific thresholds.",
+    lists: [
+      {
+        title: "Summary cards",
+        columns: ["✓ Direct", "↓ Cascade to parent", "⚠ Cascade to WHO", "⊘ Unregulated"],
+      },
+      {
+        title: "By Jurisdiction table",
+        columns: [
+          "Code",
+          "Name",
+          "Cascade chain (e.g. US-NY → US → WHO)",
+          "✓ Direct",
+          "↓ Parent",
+          "⚠ WHO",
+          "⊘ None",
+          "Show contaminants",
+        ],
+      },
+    ],
+    actions: [
+      {
+        label: "Show contaminants",
+        description:
+          "Expands the row to list every contaminant under this jurisdiction, gaps first (⚠ WHO-only, ⊘ unregulated), with per-row 'edit' links to /thresholds pre-filtered.",
+      },
+    ],
+    mobileImpact: {
+      summary:
+        "No write surface — this page does not change data. It surfaces the cascade decisions the mobile app makes at read time so admins can spot gaps (e.g. \"Atlanta shows identical WHO + LOCAL columns because US-GA has no state-specific thresholds\") and add the missing rows on /thresholds.",
+      edgeCases: [
+        "Cascade is one-level-parent + WHO, matching mobile's getThreshold. If mobile ever widens the chain, update lib/threshold-cascade.ts to stay in sync.",
+      ],
+    },
+  },
+  {
     id: "jurisdictions",
     title: "Jurisdictions",
     route: "/jurisdictions",
     icon: Globe,
-    group: "navigation",
+    group: "reference-data",
     purpose:
-      "Defines the regulatory bodies whose thresholds the app compares against (WHO, US, US-NY, CA-QC, EU, etc.). Each location resolves to one jurisdiction; the parent chain provides the cascade fallback when a state-level threshold is missing.",
+      "Catalog of regulatory standards — the laws and guidelines used to judge whether a measurement is safe (WHO, US federal EPA, US-NY, CA-QC, EU, etc.). This is NOT a list of places; cities and measurements live in the Locations and Measurements sections. A jurisdiction is the rulebook (\"what New York State's regulations say about lead\"), not the geography. Each location resolves to one jurisdiction, and the parentCode chain provides cascade fallback (US-NY → US → WHO) when a state-specific threshold isn't seeded.",
     lists: [
       {
         title: "Table",
@@ -361,7 +410,8 @@ export const navigationSections: AdminSection[] = [
         name: "country",
         type: "text",
         required: true,
-        description: 'ISO country code (e.g. "US", "CA", "MX") used for the cascade.',
+        description:
+          'ISO country code (e.g. "US", "CA", "MX") this regulator belongs to. Used to match a measurement\'s country to the right rulebook — it does NOT mean this jurisdiction is "located in" that country in any geographic sense.',
       },
       {
         name: "name / nameFr",
@@ -372,7 +422,8 @@ export const navigationSections: AdminSection[] = [
       {
         name: "region",
         type: "text",
-        description: 'Optional state/province code (e.g. "NY", "QC") used to match measurements to this jurisdiction.',
+        description:
+          'Optional state/province code this regulator governs (e.g. "NY" for the State of New York\'s rules, "QC" for Quebec\'s). Used to match a measurement\'s state to the right rulebook. Leave blank for country-level (e.g. US federal EPA) or global (WHO) standards.',
       },
       {
         name: "parentCode",
@@ -428,7 +479,7 @@ export const navigationSections: AdminSection[] = [
     title: "Categories",
     route: "/categories",
     icon: FolderTree,
-    group: "navigation",
+    group: "reference-data",
     purpose:
       "Defines the top-level groupings on the mobile dashboard (Water, Air, Health, Disaster). Each category card on mobile takes its icon, color, name, sort order, and optional external links from this page.",
     lists: [
@@ -545,7 +596,7 @@ export const navigationSections: AdminSection[] = [
     title: "Sub-Categories",
     route: "/subcategories",
     icon: Layers,
-    group: "navigation",
+    group: "reference-data",
     purpose:
       "Optional second level of grouping under a category (e.g. Pesticides, Fertilizers under Water). Sub-categories can inherit the parent's icon and color.",
     lists: [
@@ -628,11 +679,11 @@ export const navigationSections: AdminSection[] = [
   {
     id: "location-stats",
     title: "Location Stats",
-    route: "/zip-codes",
+    route: "/measurements",
     icon: MapPin,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
-      "View measurements aggregated by city, state, and country. Use this page to verify recent imports and to add a new city as a target for future imports. Three tables surface the cascade levels users actually see.",
+      "Coverage view across the three cascade levels the mobile app reads from: by-city, by-state, and by-country. Mobile resolves a user's selected city by trying city-anchored rows first, then state, then country. Use this page to verify recent imports and to add a new city as a target for future imports. Drilling into Manage opens per-contaminant editing for that city. NOTE: the \"source\" field on each measurement (e.g. \"EPA\", \"NY DEC\", \"WHO\") is informational data-provenance ONLY — it records where the number came from. It does NOT determine which threshold rulebook is applied to it; that is decided by the city's resolved jurisdiction on the Thresholds page.",
     lists: [
       {
         title: "By City table",
@@ -662,7 +713,7 @@ export const navigationSections: AdminSection[] = [
       {
         label: "Manage",
         description:
-          "Drills into /zip-codes/[zipCode] for per-contaminant editing of that city's measurements.",
+          "Drills into /measurements/[city] for per-contaminant editing of that city's measurements.",
       },
     ],
     mobileImpact: {
@@ -691,7 +742,7 @@ export const navigationSections: AdminSection[] = [
     title: "Import Data",
     route: "/import",
     icon: Upload,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
       "Bulk-import LocationMeasurement records from CSV, JSON, or Excel. The Silent Import checkbox is the single most consequential control on this page — without it, every imported row triggers push and email alerts.",
     lists: [
@@ -764,7 +815,7 @@ export const navigationSections: AdminSection[] = [
     title: "Warning Banners",
     route: "/banners",
     icon: Megaphone,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
       "Show alert banners at the top of the mobile dashboard. Use for boil-water advisories, infrastructure outages, regulatory updates, or any time-bounded user-facing message. Scope is determined by the city/state/country fields — leave them all blank for a global banner.",
     lists: [
@@ -854,7 +905,7 @@ export const navigationSections: AdminSection[] = [
     title: "Landing Page",
     route: "/landing-page",
     icon: FileText,
-    group: "navigation",
+    group: "web-marketing",
     purpose:
       "Edit text and theme colors on the marketing landing site (apps/web). EN and FR copy are managed independently via the override system; the Theme tab tunes the site's color tokens. This section does not affect the mobile app.",
     lists: [
@@ -893,9 +944,9 @@ export const navigationSections: AdminSection[] = [
   {
     id: "reports",
     title: "Hazard Reports",
-    route: "/reports",
+    route: "/hazard-reports",
     icon: AlertTriangle,
-    group: "navigation",
+    group: "daily-ops",
     purpose:
       "Moderate user-submitted hazard reports. Reports arrive with status=pending; admins review the description, decide whether the report is actionable, and update the status. Notes are private to admins.",
     lists: [
@@ -948,7 +999,7 @@ export const navigationSections: AdminSection[] = [
     title: "Subscribers",
     route: "/subscribers",
     icon: Mail,
-    group: "navigation",
+    group: "web-marketing",
     purpose:
       "Manage newsletter signups captured from the landing site. Distinct from mobile UserSubscription records (which gate location alerts) — this page only handles email-list subscribers.",
     lists: [
@@ -988,7 +1039,7 @@ export const navigationSections: AdminSection[] = [
     title: "Pollution Sources",
     route: "/pollution-sources",
     icon: Factory,
-    group: "navigation",
+    group: "orphan",
     purpose:
       "Pin known pollution sources (industrial sites, landfills, etc.) to the map. Each source has a location, an impact radius, a severity, and a status. Mobile renders these on the dedicated PollutionSourcesScreen.",
     lists: [
@@ -1038,28 +1089,18 @@ export const navigationSections: AdminSection[] = [
     ],
     mobileImpact: {
       summary:
-        "Pollution sources appear on the dedicated PollutionSourcesScreen as cards plus an optional map view. Visibility is gated on the user having a real (non-demo) location.",
-      surfaces: [
-        {
-          screen: "PollutionSourcesScreen",
-          behavior:
-            "One card per source: name, type label, status label, severity icon (critical=alert-octagon red, high=alert red, moderate=alert-circle orange, low=shield-check green), impact radius (e.g. \"2.5 km\").",
-        },
-      ],
+        "ORPHAN (EPI-25): no current mobile consumer. Service helpers exist in apps/mobile/app/services/amplify/data.ts but no screen, hook, or component renders pollution sources. Edits here are not visible to users today.",
       edgeCases: [
-        "No sources at the user's location → cascade to state, then country, then empty state.",
-        "Missing sourceType → labeled \"Other\".",
-        "Missing severity → defaults to \"moderate\".",
-        "Missing status → defaults to \"active\".",
+        "If EPI-25 reinstates a PollutionSourcesScreen, the cascade rules (city → state → country) will mirror banners and measurements.",
       ],
     },
   },
   {
     id: "testing",
     title: "Testing Guide",
-    route: "/testing",
+    route: "/guide?tab=testing",
     icon: TestTube,
-    group: "navigation",
+    group: "system",
     purpose:
       "Static reference page. Lists the production and staging URLs, the 34 seeded test locations (major cities + NYC neighborhoods), the testing scenarios, and the seed-script command. No data is written from this page.",
     mobileImpact: {
@@ -1072,7 +1113,7 @@ export const navigationSections: AdminSection[] = [
     title: "Guide",
     route: "/guide",
     icon: BookOpen,
-    group: "navigation",
+    group: "system",
     purpose:
       "This page. The long-form admin reference. Each section above documents one menu item; each cross-cutting card below covers a behavior that spans pages.",
     mobileImpact: {
@@ -1085,7 +1126,7 @@ export const navigationSections: AdminSection[] = [
     title: "Settings",
     route: "/settings",
     icon: Settings,
-    group: "navigation",
+    group: "system",
     purpose:
       "Application-wide feature toggles and destructive database operations. Wipes and reseeds in this page affect every mobile user immediately. Confirmation phrases are case-sensitive and must be typed exactly.",
     fields: [
@@ -1146,17 +1187,14 @@ export const navigationSections: AdminSection[] = [
       ],
     },
   },
-];
-
-export const observationsSections: AdminSection[] = [
   {
     id: "properties",
     title: "Properties",
     route: "/properties",
     icon: Activity,
-    group: "observations",
+    group: "orphan",
     purpose:
-      "Defines observable phenomena beyond classical numeric contaminants — radon zones, endemic disease flags, incidence rates, binary presence indicators. Each property declares its observationType, which dictates how thresholds and observations are entered and rendered.",
+      "Non-numeric observations the app can track — radon zones, endemic disease flags, per-100k incidence rates, binary presence indicators. The numeric counterpart is Contaminants (lead in ppb, PM2.5 in μg/m³, etc.); Properties is for everything that doesn't reduce to a single measured number. Each property declares an observationType (numeric / zone / endemic / incidence / binary) which decides which fields appear on Property Thresholds and observation forms downstream.",
     lists: [
       {
         title: "Table",
@@ -1224,9 +1262,9 @@ export const observationsSections: AdminSection[] = [
     title: "Property Thresholds",
     route: "/property-thresholds",
     icon: Gauge,
-    group: "observations",
+    group: "orphan",
     purpose:
-      "Per-jurisdiction thresholds for non-numeric properties. The form fields you see depend on the parent property's observationType.",
+      "One row per (property, jurisdiction) pair — like Thresholds but for non-numeric Observed Properties. The jurisdiction is the rulebook (WHO, US EPA, US-NY, CA-QC…), NOT a city. The fields you see in the dialog change based on the parent property's observationType: a zone property surfaces zone-mapping fields, an incidence property surfaces per-100k rate fields, and so on. Missing rows cascade the same way contaminant thresholds do (US-NY → US → WHO).",
     lists: [
       {
         title: "Table",
@@ -1310,7 +1348,7 @@ export const observationsSections: AdminSection[] = [
     title: "Observations",
     route: "/observations",
     icon: Eye,
-    group: "observations",
+    group: "orphan",
     purpose:
       "Records of measured property values. The value field on the form changes based on the property's observationType. Location uses the same city/state/country cascade as banners and pollution sources — blank fields scope wider.",
     lists: [
@@ -1379,3 +1417,46 @@ export const observationsSections: AdminSection[] = [
     },
   },
 ];
+
+export const adminSections = allSections;
+
+export type AdminSectionGroup = {
+  id: AdminSectionGroupId;
+  label: string;
+  description: string;
+  sections: AdminSection[];
+};
+
+const groupOrder: { id: AdminSectionGroupId; label: string; description: string }[] = [
+  {
+    id: "daily-ops",
+    label: "Mobile App — Daily Ops",
+    description: "Drives the location detail screen. Edits here are visible to mobile users immediately.",
+  },
+  {
+    id: "reference-data",
+    label: "Reference Data",
+    description: "Catalogs that classify the daily-ops data. Rarely edited but high blast-radius.",
+  },
+  {
+    id: "web-marketing",
+    label: "Web & Marketing",
+    description: "Landing site and newsletter. No effect on the mobile app.",
+  },
+  {
+    id: "system",
+    label: "System",
+    description: "Feature flags and documentation.",
+  },
+  {
+    id: "orphan",
+    label: "Orphaned (EPI-25)",
+    description: "Routes whose mobile consumer was removed. Pending the EPI-25 decision.",
+  },
+];
+
+export const adminSectionGroups: AdminSectionGroup[] = groupOrder.map((g) => ({
+  ...g,
+  sections: allSections.filter((s) => s.group === g.id),
+}));
+

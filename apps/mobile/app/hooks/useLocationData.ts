@@ -9,7 +9,15 @@ import { useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { useContaminants } from "@/context/ContaminantsContext"
-import { type CityData, type CityStat, type StatStatus, StatCategory } from "@/data/types/safety"
+import {
+  computeStatus,
+  DEFAULT_HIGHER_IS_BAD,
+  type CityData,
+  type CityStat,
+  type StatStatus,
+  StatCategory,
+} from "@/data/types/safety"
+import { useJurisdictionResolver } from "@/hooks/useJurisdictionResolver"
 import { useNetworkStatus } from "@/hooks/useNetworkStatus"
 import { fetchWithLocationFallback, type LocationScope } from "@/lib/locationFallback"
 import { queryKeys } from "@/lib/queryKeys"
@@ -136,29 +144,6 @@ export function clearCachedLocationData(city: string, state?: string, country?: 
   remove(`${CACHE_KEY_PREFIX}${city}`)
 }
 
-/**
- * Compute a SafetyStatus from a measured value and a single threshold.
- * Returns "safe" when the threshold is missing or has no limit (no
- * comparison possible).
- */
-function computeStatusForThreshold(
-  value: number,
-  threshold: { limitValue?: number | null; warningRatio?: number | null } | undefined,
-  higherIsBad: boolean,
-): StatStatus {
-  if (!threshold || threshold.limitValue == null) return "safe"
-  const limit = threshold.limitValue
-  const warningThreshold = limit * (threshold.warningRatio ?? 0.8)
-  if (higherIsBad) {
-    if (value >= limit) return "danger"
-    if (value >= warningThreshold) return "warning"
-    return "safe"
-  }
-  if (value <= limit) return "danger"
-  if (value <= warningThreshold) return "warning"
-  return "safe"
-}
-
 const STATUS_SEVERITY: Record<StatStatus, number> = { safe: 0, warning: 1, danger: 2 }
 
 /** Returns the more-severe of two statuses (danger > warning > safe). */
@@ -179,13 +164,8 @@ export function useLocationData(
   state: string = "",
   country: string = "",
 ): UseLocationDataResult {
-  const {
-    contaminants,
-    getThreshold,
-    getWHOThreshold,
-    getJurisdictionForLocation,
-    isLoading: defsLoading,
-  } = useContaminants()
+  const { contaminants, getThreshold, getWHOThreshold, isLoading: defsLoading } = useContaminants()
+  const { resolveCode } = useJurisdictionResolver()
   const { isOffline, isReady: networkReady } = useNetworkStatus()
   const qc = useQueryClient()
 
@@ -206,9 +186,9 @@ export function useLocationData(
   const mapMeasurementToLegacyStat = useCallback(
     (measurement: AmplifyLocationMeasurement, jurisdictionCode: string): CityStat => {
       const contaminant = contaminants.find((c) => c.id === measurement.contaminantId)
-      const higherIsBad = contaminant?.higherIsBad ?? true
+      const higherIsBad = contaminant?.higherIsBad ?? DEFAULT_HIGHER_IS_BAD
 
-      const whoStatus = computeStatusForThreshold(
+      const whoStatus = computeStatus(
         measurement.value,
         getWHOThreshold(measurement.contaminantId),
         higherIsBad,
@@ -218,7 +198,7 @@ export function useLocationData(
           ? undefined
           : getThreshold(measurement.contaminantId, jurisdictionCode)
       const localStatus = localThreshold
-        ? computeStatusForThreshold(measurement.value, localThreshold, higherIsBad)
+        ? computeStatus(measurement.value, localThreshold, higherIsBad)
         : whoStatus
 
       return {
@@ -297,8 +277,7 @@ export function useLocationData(
       const effectiveState = state || firstMeasurement.state || ""
       const effectiveCountry = country || firstMeasurement.country || ""
       const cityName = scope === "city" ? (firstMeasurement.city ?? city) : city
-      const jurisdictionCode =
-        getJurisdictionForLocation(effectiveState, effectiveCountry)?.code || "WHO"
+      const jurisdictionCode = resolveCode(effectiveState, effectiveCountry)
       const stats = measurements.map((m) => mapMeasurementToLegacyStat(m, jurisdictionCode))
       const newData: CityData = {
         city,
@@ -339,7 +318,7 @@ export function useLocationData(
       scope: "none",
       warning: null,
     }
-  }, [city, state, country, isOffline, mapMeasurementToLegacyStat, getJurisdictionForLocation])
+  }, [city, state, country, isOffline, mapMeasurementToLegacyStat, resolveCode])
 
   const query = useQuery({
     queryKey: queryKeys.measurements.byLocation(city, state, country),

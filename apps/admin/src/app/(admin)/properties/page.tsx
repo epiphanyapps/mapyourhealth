@@ -137,7 +137,7 @@ export default function PropertiesPage() {
       unit: property.unit || "",
       description: property.description || "",
       descriptionFr: property.descriptionFr || "",
-      higherIsBad: property.higherIsBad ?? true,
+      higherIsBad: property.higherIsBad,
     });
     setIsDialogOpen(true);
   };
@@ -216,7 +216,7 @@ export default function PropertiesPage() {
       unit: p.unit || null,
       description: p.description || null,
       descriptionFr: p.descriptionFr || null,
-      higherIsBad: p.higherIsBad ?? true,
+      higherIsBad: p.higherIsBad,
       metadata: p.metadata || null,
     }));
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
@@ -247,7 +247,17 @@ export default function PropertiesPage() {
             Observed Properties
           </h1>
           <p className="text-muted-foreground">
-            Manage what can be measured or observed
+            Properties are{" "}
+            <span className="font-medium">non-numeric observations</span> the
+            app can track — radon zones, endemic disease flags, per-100k
+            incidence rates, binary presence indicators. For{" "}
+            <span className="font-medium">numeric</span> measurements (lead in
+            ppb, PM2.5 in μg/m³, etc.) use the{" "}
+            <span className="font-medium">Contaminants</span> page instead.
+            Each property declares its{" "}
+            <span className="font-medium">observationType</span> (numeric /
+            zone / endemic / incidence / binary), which decides which fields
+            appear on the Property Thresholds and observation forms downstream.
           </p>
         </div>
         <div className="flex gap-2">
@@ -273,8 +283,8 @@ export default function PropertiesPage() {
                 </DialogTitle>
                 <DialogDescription>
                   {editingProperty
-                    ? "Update the property details below."
-                    : "Add a new observed property."}
+                    ? "Update this observed property (non-numeric: zone, endemic, incidence, binary). The observationType drives which fields appear on Property Thresholds and observation forms."
+                    : "Add a non-numeric observation type (zone, endemic, incidence, binary). For numeric values like ppb/μg-per-L, use Contaminants instead. The observationType you pick decides which fields appear downstream."}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">

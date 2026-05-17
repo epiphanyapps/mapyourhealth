@@ -278,6 +278,17 @@ export default function PropertyThresholdsPage() {
     ? getProperty(formData.propertyId)
     : null;
 
+  // Friendly observationType label for the dialog description, so it matches
+  // the "Property type:" line further down the form.
+  const selectedObservationTypeLabel = selectedProperty?.observationType
+    ? observationTypeNames[
+        selectedProperty.observationType as ObservationType
+      ] || selectedProperty.observationType
+    : null;
+  const observationTypeNote = selectedObservationTypeLabel
+    ? ` This property is "${selectedObservationTypeLabel}" — the fields below match that observationType.`
+    : "";
+
   const handleExport = () => {
     const exportData = thresholds.map((t) => {
       const entry: Record<string, unknown> = {
@@ -329,7 +340,18 @@ export default function PropertyThresholdsPage() {
             Property Thresholds
           </h1>
           <p className="text-muted-foreground">
-            Manage jurisdiction-specific thresholds for observed properties
+            One row per{" "}
+            <span className="font-medium">(property, jurisdiction)</span> pair
+            — like Thresholds, but for non-numeric{" "}
+            <span className="font-medium">Observed Properties</span> (zone,
+            endemic, incidence, binary). The jurisdiction is the{" "}
+            <span className="font-medium">rulebook</span> (WHO, US EPA,
+            US-NY…), not a city. The fields you see in the dialog change
+            based on the parent property&apos;s{" "}
+            <span className="font-medium">observationType</span> — a zone
+            property shows zone-mapping fields; an incidence property shows
+            per-100k rate fields; and so on. Missing rows cascade the same
+            way contaminant thresholds do (US-NY&nbsp;→&nbsp;US&nbsp;→&nbsp;WHO).
           </p>
         </div>
         <div className="flex gap-2">
@@ -355,8 +377,8 @@ export default function PropertyThresholdsPage() {
                 </DialogTitle>
                 <DialogDescription>
                   {editingThreshold
-                    ? "Update the threshold details below."
-                    : "Add a new jurisdiction-specific threshold."}
+                    ? `Update this (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law) — not a city.${observationTypeNote}`
+                    : `Add a (property, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law); the visible fields depend on the parent property's observationType.${observationTypeNote}`}
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">

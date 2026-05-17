@@ -65,6 +65,19 @@ export default function ThresholdsPage() {
   const [filterContaminant, setFilterContaminant] = useState<string>("all");
   const [filterJurisdiction, setFilterJurisdiction] = useState<string>("all");
 
+  // Honor ?contaminant=X&jurisdiction=Y on the URL so cross-page links
+  // (e.g. LinkedCountBadge on /jurisdictions and /contaminants) land
+  // pre-filtered. Read once on mount via window.location to avoid
+  // useSearchParams() Suspense-boundary requirements in the app router.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const c = params.get("contaminant");
+    const j = params.get("jurisdiction");
+    if (c) setFilterContaminant(c);
+    if (j) setFilterJurisdiction(j);
+  }, []);
+
   // Form state
   const [formData, setFormData] = useState({
     contaminantId: "",
@@ -253,7 +266,14 @@ export default function ThresholdsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Thresholds</h1>
           <p className="text-muted-foreground">
-            Manage jurisdiction-specific contaminant limits
+            One row per <span className="font-medium">(contaminant, jurisdiction)</span>{" "}
+            pair — the numeric limit the mobile app uses to color the
+            green/orange/red safety badge. Limits are tied to a{" "}
+            <span className="font-medium">rulebook</span> (WHO, US EPA,
+            US-NY…), not to a city. When a row is missing, the mobile app
+            cascades to the parent jurisdiction and finally to WHO
+            (US-NY&nbsp;→&nbsp;US&nbsp;→&nbsp;WHO), so deleting a row may
+            change nothing visible if a parent threshold already covers it.
           </p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
@@ -270,8 +290,8 @@ export default function ThresholdsPage() {
               </DialogTitle>
               <DialogDescription>
                 {editingThreshold
-                  ? "Update the threshold details below."
-                  : "Add a new jurisdiction-specific threshold."}
+                  ? "Update this (contaminant, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law) — not a city."
+                  : "Add a (contaminant, jurisdiction) limit. The jurisdiction is the rulebook (WHO, US EPA, NY State law); cities resolve to a jurisdiction at read time. Missing rows cascade to the parent jurisdiction, then to WHO."}
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
@@ -506,7 +526,7 @@ export default function ThresholdsPage() {
                         ? threshold.limitValue
                         : "—"}
                     </TableCell>
-                    <TableCell>{threshold.warningRatio ?? 0.8}</TableCell>
+                    <TableCell>{threshold.warningRatio}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"

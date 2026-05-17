@@ -94,9 +94,9 @@ function calculateStatus(
 export default function LocationDetailPage({
   params,
 }: {
-  params: Promise<{ zipCode: string }>;
+  params: Promise<{ city: string }>;
 }) {
-  const { zipCode: locationId } = use(params);
+  const { city: locationId } = use(params);
   const cityName = decodeURIComponent(locationId);
   const router = useRouter();
   const [measurements, setMeasurements] = useState<LocationMeasurement[]>([]);
@@ -381,7 +381,7 @@ export default function LocationDetailPage({
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => router.push("/zip-codes")}
+            onClick={() => router.push("/measurements")}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -391,7 +391,12 @@ export default function LocationDetailPage({
               <h1 className="text-3xl font-bold tracking-tight">{cityName}</h1>
             </div>
             <p className="text-muted-foreground">
-              Manage contaminant measurements for this location
+              Per-contaminant measurement values for this location. Safety
+              badges on mobile come from comparing these values to the{" "}
+              <span className="font-medium">Thresholds</span> page — the{" "}
+              <span className="font-medium">Data Source</span> field below is
+              informational only (where the number came from) and does NOT
+              decide which threshold is applied.
             </p>
           </div>
         </div>
@@ -617,6 +622,12 @@ export default function LocationDetailPage({
                       setFormData({ ...formData, source: e.target.value })
                     }
                   />
+                  <p className="text-xs text-muted-foreground">
+                    Where this value came from. Informational only — does
+                    not determine which threshold rulebook is used to color
+                    the safety badge (that comes from the city&apos;s resolved
+                    jurisdiction on the Thresholds page).
+                  </p>
                 </div>
 
                 <div className="space-y-2">
