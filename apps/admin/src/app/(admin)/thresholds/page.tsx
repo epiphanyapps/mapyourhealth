@@ -526,7 +526,7 @@ export default function ThresholdsPage() {
                         ? threshold.limitValue
                         : "—"}
                     </TableCell>
-                    <TableCell>{threshold.warningRatio ?? 0.8}</TableCell>
+                    <TableCell>{threshold.warningRatio}</TableCell>
                     <TableCell>
                       <Badge
                         variant="secondary"

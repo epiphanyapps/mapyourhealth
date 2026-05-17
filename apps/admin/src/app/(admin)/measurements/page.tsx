@@ -73,8 +73,7 @@ function calculateStatus(
   }
 
   const limit = threshold.limitValue!;
-  const warningRatio = threshold.warningRatio ?? 0.8;
-  const warningThreshold = limit * warningRatio;
+  const warningThreshold = limit * threshold.warningRatio;
 
   if (higherIsBad) {
     if (value >= limit) return "danger";

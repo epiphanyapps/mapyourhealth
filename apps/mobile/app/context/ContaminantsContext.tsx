@@ -12,7 +12,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { mockContaminants, mockThresholds, mockJurisdictions } from "@/data/mock"
 import {
   DEFAULT_HIGHER_IS_BAD,
-  DEFAULT_WARNING_RATIO,
   type Contaminant,
   type ContaminantCategory,
   type ContaminantThreshold,
@@ -90,21 +89,24 @@ export function mapAmplifyContaminant(amplify: AmplifyContaminant): Contaminant 
     description: amplify.description ?? undefined,
     descriptionFr: amplify.descriptionFr ?? undefined,
     studies: amplify.studies ?? undefined,
-    higherIsBad: amplify.higherIsBad ?? DEFAULT_HIGHER_IS_BAD,
+    // Schema-tightened: `Contaminant.higherIsBad` is `.required().default(true)`
+    // in resource.ts, so Amplify guarantees a non-null boolean here.
+    higherIsBad: amplify.higherIsBad,
   }
 }
 
 /**
  * Maps Amplify ContaminantThreshold to frontend type.
- * `warningRatio` is normalized to a non-null number here so downstream callers
- * never have to re-apply `?? DEFAULT_WARNING_RATIO`.
+ *
+ * `warningRatio` is `.required().default(0.8)` at the schema level, so Amplify
+ * guarantees a non-null number here — no coalesce needed.
  */
 export function mapAmplifyThreshold(amplify: AmplifyContaminantThreshold): ContaminantThreshold {
   return {
     contaminantId: amplify.contaminantId,
     jurisdictionCode: amplify.jurisdictionCode,
     limitValue: amplify.limitValue ?? null,
-    warningRatio: amplify.warningRatio ?? DEFAULT_WARNING_RATIO,
+    warningRatio: amplify.warningRatio,
     status: (amplify.status ?? "regulated") as ContaminantThreshold["status"],
   }
 }

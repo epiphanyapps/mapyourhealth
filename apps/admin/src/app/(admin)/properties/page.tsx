@@ -137,7 +137,7 @@ export default function PropertiesPage() {
       unit: property.unit || "",
       description: property.description || "",
       descriptionFr: property.descriptionFr || "",
-      higherIsBad: property.higherIsBad ?? true,
+      higherIsBad: property.higherIsBad,
     });
     setIsDialogOpen(true);
   };
@@ -216,7 +216,7 @@ export default function PropertiesPage() {
       unit: p.unit || null,
       description: p.description || null,
       descriptionFr: p.descriptionFr || null,
-      higherIsBad: p.higherIsBad ?? true,
+      higherIsBad: p.higherIsBad,
       metadata: p.metadata || null,
     }));
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {

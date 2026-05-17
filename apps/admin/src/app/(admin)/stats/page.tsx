@@ -128,7 +128,7 @@ export default function ContaminantsPage() {
       descriptionFr: contaminant.descriptionFr || "",
       category: (contaminant.category as ContaminantCategory) || "",
       studies: contaminant.studies || "",
-      higherIsBad: contaminant.higherIsBad ?? true,
+      higherIsBad: contaminant.higherIsBad,
     });
     setIsDialogOpen(true);
   };
