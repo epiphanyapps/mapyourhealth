@@ -196,10 +196,13 @@ jobs:
             workflow_dispatch) SUITE="${{ inputs.suite }}" ;;
             *)              SUITE="smoke" ;;
           esac
+          # Flows live under `apps/mobile/.maestro/flows/`. The
+          # android-emulator-runner `script:` executes from the repo root,
+          # so paths must be repo-relative — not module-relative.
           case "$SUITE" in
-            smoke) GLOB=".maestro/flows/E2E-10*.yaml" ;;
-            core)  GLOB=".maestro/flows/E2E-0*.yaml .maestro/flows/E2E-10*.yaml" ;;
-            full|*) GLOB=".maestro/flows" ;;
+            smoke) GLOB="apps/mobile/.maestro/flows/E2E-10*.yaml" ;;
+            core)  GLOB="apps/mobile/.maestro/flows/E2E-0*.yaml apps/mobile/.maestro/flows/E2E-10*.yaml" ;;
+            full|*) GLOB="apps/mobile/.maestro/flows" ;;
           esac
           echo "suite=$SUITE" >> "$GITHUB_OUTPUT"
           echo "glob=$GLOB" >> "$GITHUB_OUTPUT"
