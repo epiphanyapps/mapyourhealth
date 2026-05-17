@@ -85,6 +85,7 @@ export default function JurisdictionsPage() {
     formData,
     setFormData,
     isSaving,
+    isDeleting,
     handleSave,
     handleDelete,
     handleExport,
@@ -136,7 +137,9 @@ export default function JurisdictionsPage() {
   // Kept in the page because it's not the page's own model — useCrudResource
   // owns Jurisdiction lifecycle; threshold counts are derived from a different
   // table and only need to refresh on initial load (admins don't add/remove
-  // thresholds from this page).
+  // thresholds from this page). When a jurisdiction is deleted, its entry
+  // here goes stale but never renders — the row that would have read it is
+  // gone — so we intentionally don't refresh the counts on CRUD events.
   const [thresholdCountByJurisdiction, setThresholdCountByJurisdiction] =
     useState<Record<string, number>>({});
 
@@ -435,6 +438,7 @@ export default function JurisdictionsPage() {
                             variant="ghost"
                             size="icon"
                             onClick={() => handleDelete(jurisdiction)}
+                            disabled={isDeleting}
                           >
                             <Trash2 className="h-4 w-4 text-red-500" />
                           </Button>

@@ -25,6 +25,14 @@ import { toast } from "sonner";
  * The hook does NOT replace forms. Form rendering, validation surface, and
  * field-level event handlers stay in the page — pass `defaultFormValues`,
  * `editToForm`, `validate`, and `formToPayload` to plug them in.
+ *
+ * Note on referential stability: the returned handlers (`openCreate`,
+ * `openEdit`, `handleSave`, `handleDelete`, `handleExport`, `refresh`) are
+ * NOT referentially stable across renders, because the config callbacks
+ * (`getModel`, `editToForm`, `formToPayload`, …) are typically inline literals
+ * with a fresh identity per render. This is fine when the handlers are used
+ * directly in `onClick` (the common case). If you need to put one in a
+ * `useEffect` dep array, memoize the config object at the call site first.
  */
 /**
  * Loose Amplify model shape — the four methods every page-side CRUD touches.
@@ -107,6 +115,7 @@ export interface UseCrudResource<T, FormData> {
 
   // Mutations
   isSaving: boolean;
+  isDeleting: boolean;
   handleSave: () => Promise<void>;
   handleDelete: (record: T) => Promise<void>;
 
@@ -137,6 +146,7 @@ export function useCrudResource<T extends RecordWithId, FormData>(
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingRecord, setEditingRecord] = useState<T | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [formData, setFormData] = useState<FormData>(defaultFormValues);
 
   const refresh = useCallback(async () => {
@@ -223,11 +233,16 @@ export function useCrudResource<T extends RecordWithId, FormData>(
 
   const handleDelete = useCallback(
     async (record: T) => {
+      // Re-entrancy guard: a previous delete is still in flight. Callers
+      // should also disable trigger UI via the returned `isDeleting`, but
+      // this defends against handler races even when they forget.
+      if (isDeleting) return;
       const name = getDisplayName?.(record);
       const message = name
         ? `Are you sure you want to delete "${name}"?`
         : `Are you sure you want to delete this ${resourceName.toLowerCase()}?`;
       if (!confirm(message)) return;
+      setIsDeleting(true);
       try {
         const client = generateClient<Schema>();
         const model = getModel(client);
@@ -237,13 +252,22 @@ export function useCrudResource<T extends RecordWithId, FormData>(
       } catch (err) {
         console.error(`Error deleting ${resourceName}:`, err);
         toast.error(`Failed to delete ${resourceName}`);
+      } finally {
+        setIsDeleting(false);
       }
     },
-    [getDisplayName, getModel, refresh, resourceName],
+    [getDisplayName, getModel, isDeleting, refresh, resourceName],
   );
 
   const handleExport = useCallback(() => {
-    if (!exportConfig) return;
+    if (!exportConfig) {
+      if (process.env.NODE_ENV !== "production") {
+        console.warn(
+          `useCrudResource: handleExport called for ${resourceName} but no \`export\` config was provided.`,
+        );
+      }
+      return;
+    }
     const exportData = data.map(exportConfig.transform ?? ((r) => r));
     const blob = new Blob([JSON.stringify(exportData, null, 2)], {
       type: "application/json",
@@ -252,10 +276,14 @@ export function useCrudResource<T extends RecordWithId, FormData>(
     const a = document.createElement("a");
     a.href = url;
     a.download = exportConfig.fileName;
+    // Some browsers (Firefox, older Safari) require the anchor to be in the
+    // document for the synthetic click to dispatch the download.
+    document.body.appendChild(a);
     a.click();
+    document.body.removeChild(a);
     URL.revokeObjectURL(url);
     toast.success(`Exported ${exportConfig.fileName}`);
-  }, [data, exportConfig]);
+  }, [data, exportConfig, resourceName]);
 
   return {
     data,
@@ -269,6 +297,7 @@ export function useCrudResource<T extends RecordWithId, FormData>(
     formData,
     setFormData,
     isSaving,
+    isDeleting,
     handleSave,
     handleDelete,
     handleExport,
