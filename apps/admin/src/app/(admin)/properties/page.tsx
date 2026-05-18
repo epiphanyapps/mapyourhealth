@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { generateClient } from "aws-amplify/data";
+import { useState } from "react";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +40,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Download } from "lucide-react";
-import { toast } from "sonner";
 import { OrphanBanner } from "@/components/orphan-banner";
 import {
   OBSERVED_PROPERTY_CATEGORIES,
@@ -52,186 +50,110 @@ import {
   type ObservedPropertyCategory,
   type ObservationType,
 } from "@/lib/constants";
+import { useCrudResource } from "@/hooks/useCrudResource";
 
 type ObservedProperty = Schema["ObservedProperty"]["type"];
 
-export default function PropertiesPage() {
-  const [properties, setProperties] = useState<ObservedProperty[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingProperty, setEditingProperty] =
-    useState<ObservedProperty | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+interface PropertyFormData {
+  propertyId: string;
+  name: string;
+  nameFr: string;
+  category: ObservedPropertyCategory;
+  observationType: ObservationType;
+  unit: string;
+  description: string;
+  descriptionFr: string;
+  higherIsBad: boolean;
+}
 
-  // Filters
+const DEFAULT_FORM: PropertyFormData = {
+  propertyId: "",
+  name: "",
+  nameFr: "",
+  category: "water_quality",
+  observationType: "numeric",
+  unit: "",
+  description: "",
+  descriptionFr: "",
+  higherIsBad: true,
+};
+
+export default function PropertiesPage() {
+  const {
+    data: properties,
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingRecord: editingProperty,
+    openCreate,
+    openEdit,
+    formData,
+    setFormData,
+    isSaving,
+    handleSave,
+    handleDelete,
+    handleExport,
+  } = useCrudResource<ObservedProperty, PropertyFormData>({
+    resourceName: "Property",
+    resourceNamePlural: "properties",
+    getModel: (client) => client.models.ObservedProperty,
+    listOptions: { limit: 1000 },
+    defaultFormValues: DEFAULT_FORM,
+    editToForm: (p) => ({
+      propertyId: p.propertyId,
+      name: p.name,
+      nameFr: p.nameFr || "",
+      category: (p.category as ObservedPropertyCategory) || "water_quality",
+      observationType: (p.observationType as ObservationType) || "numeric",
+      unit: p.unit || "",
+      description: p.description || "",
+      descriptionFr: p.descriptionFr || "",
+      higherIsBad: p.higherIsBad,
+    }),
+    validate: (form) => {
+      if (!form.propertyId || !form.name || !form.category) {
+        return "Please fill in all required fields";
+      }
+      return null;
+    },
+    formToPayload: (form) => ({
+      propertyId: form.propertyId,
+      name: form.name,
+      nameFr: form.nameFr || null,
+      category: form.category,
+      observationType: form.observationType,
+      unit: form.unit || null,
+      description: form.description || null,
+      descriptionFr: form.descriptionFr || null,
+      higherIsBad: form.higherIsBad,
+    }),
+    // Custom confirm — properties have cascading effects worth surfacing.
+    // PropertyThresholds and LocationObservations both reference the
+    // propertyId by string, so deletion silently orphans them on the
+    // mobile read path.
+    getDeleteConfirmMessage: (p) =>
+      `Are you sure you want to delete "${p.name}"? This will also affect any thresholds and observations using this property.`,
+    export: {
+      fileName: "observed-properties.json",
+      transform: (p) => ({
+        propertyId: p.propertyId,
+        name: p.name,
+        nameFr: p.nameFr || null,
+        category: p.category,
+        observationType: p.observationType,
+        unit: p.unit || null,
+        description: p.description || null,
+        descriptionFr: p.descriptionFr || null,
+        higherIsBad: p.higherIsBad,
+        metadata: p.metadata || null,
+      }),
+    },
+  });
+
+  // Page-side filters.
   const [filterCategory, setFilterCategory] = useState<string>("all");
   const [filterType, setFilterType] = useState<string>("all");
 
-  // Form state
-  const [formData, setFormData] = useState({
-    propertyId: "",
-    name: "",
-    nameFr: "",
-    category: "water_quality" as ObservedPropertyCategory,
-    observationType: "numeric" as ObservationType,
-    unit: "",
-    description: "",
-    descriptionFr: "",
-    higherIsBad: true,
-  });
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const client = generateClient<Schema>();
-      const result = await client.models.ObservedProperty.list({ limit: 1000 });
-
-      if (result.errors) {
-        console.error("Error fetching properties:", result.errors);
-        toast.error("Failed to fetch properties");
-      } else {
-        setProperties(result.data || []);
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to fetch data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const resetForm = () => {
-    setFormData({
-      propertyId: "",
-      name: "",
-      nameFr: "",
-      category: "water_quality",
-      observationType: "numeric",
-      unit: "",
-      description: "",
-      descriptionFr: "",
-      higherIsBad: true,
-    });
-    setEditingProperty(null);
-  };
-
-  const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (property: ObservedProperty) => {
-    setEditingProperty(property);
-    setFormData({
-      propertyId: property.propertyId,
-      name: property.name,
-      nameFr: property.nameFr || "",
-      category:
-        (property.category as ObservedPropertyCategory) || "water_quality",
-      observationType:
-        (property.observationType as ObservationType) || "numeric",
-      unit: property.unit || "",
-      description: property.description || "",
-      descriptionFr: property.descriptionFr || "",
-      higherIsBad: property.higherIsBad,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.propertyId || !formData.name || !formData.category) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const client = generateClient<Schema>();
-
-      const propertyData = {
-        propertyId: formData.propertyId,
-        name: formData.name,
-        nameFr: formData.nameFr || null,
-        category: formData.category,
-        observationType: formData.observationType,
-        unit: formData.unit || null,
-        description: formData.description || null,
-        descriptionFr: formData.descriptionFr || null,
-        higherIsBad: formData.higherIsBad,
-      };
-
-      if (editingProperty) {
-        await client.models.ObservedProperty.update({
-          id: editingProperty.id,
-          ...propertyData,
-        });
-        toast.success("Property updated");
-      } else {
-        await client.models.ObservedProperty.create(propertyData);
-        toast.success("Property created");
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchData();
-    } catch (error) {
-      console.error("Error saving property:", error);
-      toast.error("Failed to save property");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (property: ObservedProperty) => {
-    if (
-      !confirm(
-        `Are you sure you want to delete "${property.name}"? This will also affect any thresholds and observations using this property.`,
-      )
-    ) {
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      await client.models.ObservedProperty.delete({ id: property.id });
-      toast.success("Property deleted");
-      fetchData();
-    } catch (error) {
-      console.error("Error deleting property:", error);
-      toast.error("Failed to delete property");
-    }
-  };
-
-  const handleExport = () => {
-    const exportData = properties.map((p) => ({
-      propertyId: p.propertyId,
-      name: p.name,
-      nameFr: p.nameFr || null,
-      category: p.category,
-      observationType: p.observationType,
-      unit: p.unit || null,
-      description: p.description || null,
-      descriptionFr: p.descriptionFr || null,
-      higherIsBad: p.higherIsBad,
-      metadata: p.metadata || null,
-    }));
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "observed-properties.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported observed-properties.json");
-  };
-
-  // Filter properties
   const filteredProperties = properties.filter((p) => {
     if (filterCategory !== "all" && p.category !== filterCategory) return false;
     if (filterType !== "all" && p.observationType !== filterType) return false;
@@ -271,7 +193,7 @@ export default function PropertiesPage() {
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
+              <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Property
               </Button>
@@ -296,7 +218,10 @@ export default function PropertiesPage() {
                       placeholder="e.g., air_quality_index"
                       value={formData.propertyId}
                       onChange={(e) =>
-                        setFormData({ ...formData, propertyId: e.target.value })
+                        setFormData({
+                          ...formData,
+                          propertyId: e.target.value,
+                        })
                       }
                       disabled={!!editingProperty}
                     />
@@ -395,7 +320,10 @@ export default function PropertiesPage() {
                     placeholder="Describe what this property measures..."
                     value={formData.description}
                     onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
+                      setFormData({
+                        ...formData,
+                        description: e.target.value,
+                      })
                     }
                   />
                 </div>
@@ -572,7 +500,7 @@ export default function PropertiesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEditDialog(property)}
+                          onClick={() => openEdit(property)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>

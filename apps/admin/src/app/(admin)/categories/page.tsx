@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { generateClient } from "aws-amplify/data";
+import { useMemo } from "react";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +33,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { useCrudResource } from "@/hooks/useCrudResource";
 
 type Category = Schema["Category"]["type"];
 
@@ -42,6 +41,34 @@ interface CategoryLink {
   label: string;
   url: string;
 }
+
+interface CategoryFormData {
+  categoryId: string;
+  name: string;
+  nameFr: string;
+  description: string;
+  descriptionFr: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+  links: CategoryLink[];
+  showStandardsTable: boolean;
+}
+
+const DEFAULT_FORM: CategoryFormData = {
+  categoryId: "",
+  name: "",
+  nameFr: "",
+  description: "",
+  descriptionFr: "",
+  icon: "water",
+  color: "#3B82F6",
+  sortOrder: 0,
+  isActive: true,
+  links: [],
+  showStandardsTable: false,
+};
 
 // Common MaterialCommunityIcons used in the app
 const ICON_OPTIONS = [
@@ -59,196 +86,112 @@ const ICON_OPTIONS = [
   { value: "bacteria", label: "Bacteria" },
 ];
 
-export default function CategoriesPage() {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+function parseLinks(raw: Category["links"]): CategoryLink[] {
+  if (!raw) return [];
+  try {
+    return typeof raw === "string" ? JSON.parse(raw) : (raw as CategoryLink[]);
+  } catch {
+    return [];
+  }
+}
 
-  // Form state
-  const [formData, setFormData] = useState({
-    categoryId: "",
-    name: "",
-    nameFr: "",
-    description: "",
-    descriptionFr: "",
-    icon: "water",
-    color: "#3B82F6",
-    sortOrder: 0,
-    isActive: true,
-    links: [] as CategoryLink[],
-    showStandardsTable: false,
+export default function CategoriesPage() {
+  const {
+    data: unsortedCategories,
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingRecord: editingCategory,
+    openCreate,
+    openEdit,
+    formData,
+    setFormData,
+    isSaving,
+    handleSave,
+    handleDelete,
+  } = useCrudResource<Category, CategoryFormData>({
+    resourceName: "Category",
+    resourceNamePlural: "categories",
+    getModel: (client) => client.models.Category,
+    listOptions: { limit: 100 },
+    defaultFormValues: DEFAULT_FORM,
+    editToForm: (c) => ({
+      categoryId: c.categoryId,
+      name: c.name,
+      nameFr: c.nameFr || "",
+      description: c.description || "",
+      descriptionFr: c.descriptionFr || "",
+      icon: c.icon,
+      color: c.color,
+      sortOrder: c.sortOrder ?? 0,
+      isActive: c.isActive ?? true,
+      links: parseLinks(c.links),
+      showStandardsTable: c.showStandardsTable ?? false,
+    }),
+    validate: (form) => {
+      if (!form.categoryId || !form.name || !form.icon) {
+        return "Please fill in all required fields";
+      }
+      return null;
+    },
+    formToPayload: (form) => ({
+      categoryId: form.categoryId.toLowerCase(),
+      name: form.name,
+      nameFr: form.nameFr || null,
+      description: form.description || null,
+      descriptionFr: form.descriptionFr || null,
+      icon: form.icon,
+      color: form.color,
+      sortOrder: form.sortOrder,
+      isActive: form.isActive,
+      links: form.links.length > 0 ? JSON.stringify(form.links) : null,
+      showStandardsTable: form.showStandardsTable,
+    }),
+    getDisplayName: (c) => c.name,
   });
 
-  const fetchCategories = async () => {
-    try {
-      setIsLoading(true);
-      const client = generateClient<Schema>();
-      const { data, errors } = await client.models.Category.list({
-        limit: 100,
-      });
-
-      if (errors) {
-        console.error("Error fetching categories:", errors);
-        toast.error("Failed to fetch categories");
-        return;
-      }
-
-      // Sort by sortOrder
-      const sorted = [...(data || [])].sort(
+  // Page-side sort by sortOrder for display. The hook returns the raw list;
+  // ordering is a render-time concern.
+  const categories = useMemo(
+    () =>
+      [...unsortedCategories].sort(
         (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-      );
-      setCategories(sorted);
-    } catch (error) {
-      console.error("Error fetching categories:", error);
-      toast.error("Failed to fetch categories");
-    } finally {
-      setIsLoading(false);
-    }
+      ),
+    [unsortedCategories],
+  );
+
+  // Wrap openCreate so the new-row sortOrder defaults to the end of the
+  // current list (matches the prior behavior of resetForm). The hook's
+  // openCreate has already set formData to DEFAULT_FORM; we override
+  // sortOrder via a follow-up setFormData (state updates batch).
+  const handleOpenCreate = () => {
+    openCreate();
+    setFormData((prev) => ({ ...prev, sortOrder: categories.length }));
   };
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const resetForm = () => {
-    setFormData({
-      categoryId: "",
-      name: "",
-      nameFr: "",
-      description: "",
-      descriptionFr: "",
-      icon: "water",
-      color: "#3B82F6",
-      sortOrder: categories.length,
-      isActive: true,
-      links: [],
-      showStandardsTable: false,
-    });
-    setEditingCategory(null);
-  };
-
-  const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (category: Category) => {
-    setEditingCategory(category);
-    let links: CategoryLink[] = [];
-    try {
-      if (category.links) {
-        links =
-          typeof category.links === "string"
-            ? JSON.parse(category.links)
-            : category.links;
-      }
-    } catch {
-      links = [];
-    }
-
-    setFormData({
-      categoryId: category.categoryId,
-      name: category.name,
-      nameFr: category.nameFr || "",
-      description: category.description || "",
-      descriptionFr: category.descriptionFr || "",
-      icon: category.icon,
-      color: category.color,
-      sortOrder: category.sortOrder ?? 0,
-      isActive: category.isActive ?? true,
-      links,
-      showStandardsTable: category.showStandardsTable ?? false,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.categoryId || !formData.name || !formData.icon) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const client = generateClient<Schema>();
-
-      const categoryData = {
-        categoryId: formData.categoryId.toLowerCase(),
-        name: formData.name,
-        nameFr: formData.nameFr || null,
-        description: formData.description || null,
-        descriptionFr: formData.descriptionFr || null,
-        icon: formData.icon,
-        color: formData.color,
-        sortOrder: formData.sortOrder,
-        isActive: formData.isActive,
-        links:
-          formData.links.length > 0 ? JSON.stringify(formData.links) : null,
-        showStandardsTable: formData.showStandardsTable,
-      };
-
-      if (editingCategory) {
-        await client.models.Category.update({
-          id: editingCategory.id,
-          ...categoryData,
-        });
-        toast.success("Category updated");
-      } else {
-        await client.models.Category.create(categoryData);
-        toast.success("Category created");
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchCategories();
-    } catch (error) {
-      console.error("Error saving category:", error);
-      toast.error("Failed to save category");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (category: Category) => {
-    if (!confirm(`Are you sure you want to delete "${category.name}"?`)) {
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      await client.models.Category.delete({ id: category.id });
-      toast.success("Category deleted");
-      fetchCategories();
-    } catch (error) {
-      console.error("Error deleting category:", error);
-      toast.error("Failed to delete category");
-    }
-  };
-
+  // Link list helpers — pure setFormData mutations, stay in the page.
   const addLink = () => {
-    setFormData({
-      ...formData,
-      links: [...formData.links, { label: "", url: "" }],
-    });
+    setFormData((prev) => ({
+      ...prev,
+      links: [...prev.links, { label: "", url: "" }],
+    }));
   };
-
   const updateLink = (
     index: number,
     field: "label" | "url",
     value: string,
   ) => {
-    const newLinks = [...formData.links];
-    newLinks[index] = { ...newLinks[index], [field]: value };
-    setFormData({ ...formData, links: newLinks });
-  };
-
-  const removeLink = (index: number) => {
-    setFormData({
-      ...formData,
-      links: formData.links.filter((_, i) => i !== index),
+    setFormData((prev) => {
+      const newLinks = [...prev.links];
+      newLinks[index] = { ...newLinks[index], [field]: value };
+      return { ...prev, links: newLinks };
     });
+  };
+  const removeLink = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      links: prev.links.filter((_, i) => i !== index),
+    }));
   };
 
   return (
@@ -262,7 +205,7 @@ export default function CategoriesPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
               Add Category
             </Button>
@@ -574,7 +517,7 @@ export default function CategoriesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEditDialog(category)}
+                          onClick={() => openEdit(category)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
