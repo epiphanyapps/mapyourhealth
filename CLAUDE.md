@@ -160,21 +160,14 @@ The app migrated from zip/postal code-based lookups to **city-based lookups** us
 
 Seeded jurisdictions with state-specific thresholds: `CA-QC`, `CA-ON`, `CA-BC`, `CA-AB`, `US-NY`, `US-CA`, `US-TX`, `US-FL`, `US-IL`, `US-WA`, `US-GA`, `US-AZ`, `US-CO`, `US-MA`. Other states fall back to country-level or WHO.
 
-### Legacy Patterns (Tech Debt)
+### Legacy Patterns (Tech Debt) — **Cleared**
 
-| Pattern | Location | Status |
-|---------|----------|--------|
-| `useZipCodeData` hook name | `hooks/useZipCodeData.ts` | Takes city names, not zip codes |
-| `ZipCodeData` / `ZipCodeStat` types | `data/types/safety.ts` | Still primary types, marked @deprecated |
-| `getCityStateForZipCode()` | `hooks/useZipCodeData.ts` | Bundled US zip metadata, unused for city lookups |
-| `detectPostalCodeRegion()` | `utils/postalCode.ts` | Postal code pattern matching, fails for city names |
-| `CANADIAN_POSTAL_PREFIX_TO_PROVINCE` | `hooks/useZipCodeData.ts` | Hardcoded postal prefix map |
-| Query key `byPostalCode` | `hooks/useZipCodeData.ts` | Used with city names |
-| `getZipCodeStats()` | `services/amplify/data.ts` | Deprecated alias for `getLocationMeasurements()` |
+The previous tech-debt table here listed `useZipCodeData`, `useMultiLocationData`, `postalCode.ts`, `getCityStateForZipCode()`, `getZipCodeStats()`, `CANADIAN_POSTAL_PREFIX_TO_PROVINCE`, `byPostalCode` query key, and the `ZipCodeData` / `ZipCodeStat` types. **None of those exist anymore.** Cleanups landed in PRs #377 (delete-postal-and-location-getters), #319/#325 (cascade-aware hook consolidation that retired `useZipCodeData` → `useLocationData`), and PR #383 (`useJurisdictionResolver` extraction).
 
-### Important: ZipCodeData includes `country`
-
-The `ZipCodeData` type includes a `country` field populated from API measurement responses. This is critical for correct jurisdiction resolution. The `state` and `country` values come from the `LocationMeasurement` records in DynamoDB, not from postal code parsing.
+Current state:
+- `apps/mobile/app/hooks/useLocationData.ts` is the canonical city-safety-data hook; takes `(city, state, country)` and cascades via `fetchWithLocationFallback`.
+- `apps/mobile/app/hooks/useJurisdictionResolver.ts` is the single seam for `(state, country) → jurisdiction` resolution.
+- The mobile types in `apps/mobile/app/data/types/safety.ts` are `CityData` / `CityStat`, not `ZipCodeData` / `ZipCodeStat`.
 
 ## Backend (`packages/backend`)
 
@@ -654,18 +647,17 @@ Each merge to `staging` auto-deploys. Wait for the deployment to complete before
 
 The codebase contains numerous fallback/default values that can silently hide bugs. These are documented here for awareness and future cleanup.
 
-### 1. Jurisdiction Fallbacks → `"WHO"`
+### 1. Jurisdiction Fallbacks → `"WHO"` — **Mostly consolidated (PR #383)**
 
-When a location's jurisdiction cannot be determined, the system silently falls back to WHO thresholds. This can mask missing jurisdiction data.
+When a location's jurisdiction cannot be resolved, the system falls back to WHO thresholds. The previous table here listed five mobile sites that each rolled their own `?.code ?? "WHO"` coalesce; PR #383 (`useJurisdictionResolver` hook) consolidated those to a single seam.
 
-| File | Line | Expression |
-|------|------|------------|
-| `apps/mobile/app/screens/LocationObservationsScreen.tsx` | 103 | `route.params.jurisdictionCode ?? getJurisdictionForLocation(...)?.code ?? "WHO"` |
-| `apps/mobile/app/screens/CategoryDetailScreen.tsx` | 88 | `localJurisdiction?.code ?? "WHO"` |
-| `apps/mobile/app/screens/DashboardScreen.tsx` | 191 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
-| `apps/mobile/app/hooks/useZipCodeData.ts` | 222 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
-| `apps/mobile/app/hooks/useMultiLocationData.ts` | 163 | `getJurisdictionForLocation(...)?.code \|\| "WHO"` |
-| `packages/backend/scripts/parse-risks-excel.ts` | 425–459 | `JURISDICTION_FALLBACK` map + `\|\| "WHO"` |
+Current state on mobile:
+- **Centralized** in `apps/mobile/app/hooks/useJurisdictionResolver.ts` — the hook's `resolveCode(state, country)` returns `"WHO"` when no jurisdiction is found. All hook consumers (`useLocationData`, `DashboardScreen`, `CategoryDetailScreen`) go through this.
+- **One direct site remains** in `apps/mobile/app/screens/CategoryDetailScreen.tsx` (`localJurisdiction?.code ?? "WHO"`), used for the standards-table header label. Could route through the hook in a future cleanup but adds little value — the call site is one line.
+
+Backend-side fallback boundaries (intentional, not consolidated):
+- `packages/backend/amplify/functions/resolve-location/handler.ts` constructs `${country}-${state}` / `country` / `"WHO"` at write time when storing `Location` rows.
+- `packages/backend/scripts/parse-risks-excel.ts` has a `JURISDICTION_FALLBACK` map for CSV-parsing rows that omit jurisdiction.
 
 ### 2. Warning Ratio Default → `0.8` — **Resolved (schema-level)**
 
@@ -704,7 +696,6 @@ Multiple files define their own hardcoded category display names, icons, and col
 | `apps/mobile/app/components/CategoryIcon.tsx` | `FALLBACK_ICONS` | `water → "water"`, `air → "weather-cloudy"`, `health → "heart"`, `disaster → "fire"` |
 | `apps/mobile/app/components/CategoryIcon.tsx` | `CATEGORY_COLORS` | `water → "#3B82F6"`, `air → "#8B5CF6"`, `health → "#EF4444"`, `disaster → "#F97316"` |
 | `apps/mobile/app/components/StatCategoryCard.tsx` | `CATEGORY_DISPLAY_NAMES` | `water → "Tap Water Quality"`, `air → "Air Pollution"`, etc. |
-| `apps/mobile/app/screens/CompareScreen.tsx` | `CATEGORY_DISPLAY_NAMES` (local copy) | `water → "Water Quality"` (different from StatCategoryCard!) |
 | `apps/mobile/app/components/HazardReportForm.tsx` | `FALLBACK_CATEGORY_OPTIONS` | Only `water` and `air` hardcoded |
 | `apps/mobile/app/context/CategoriesContext.tsx` | 241, 250 | `category?.color ?? "#6B7280"`, `category?.icon ?? "help-circle"` |
 
@@ -727,9 +718,10 @@ Missing status values default to the safest option, potentially hiding data inte
 
 | File | Line | Expression | Default |
 |------|------|------------|---------|
-| `apps/mobile/app/screens/StatTrendScreen.tsx` | 105 | `stat?.status ?? "safe"` | `"safe"` |
-| `apps/mobile/app/context/ContaminantsContext.tsx` | 104 | `amplify.status ?? "regulated"` | `"regulated"` |
-| `apps/admin/src/app/(admin)/reports/page.tsx` | 264, 330 | `report.status \|\| "pending"` | `"pending"` |
+| `apps/mobile/app/screens/StatTrendScreen.tsx` | 106 | `stat?.status ?? "safe"` | `"safe"` |
+| `apps/mobile/app/context/ContaminantsContext.tsx` | 111 | `(amplify.status ?? "regulated")` | `"regulated"` |
+| `apps/admin/src/app/(admin)/reports/page.tsx` | 261, 264, 327, 330 | `report.status \|\| "pending"` | `"pending"` |
+| `apps/admin/src/app/(admin)/hazard-reports/page.tsx` | 261, 264 | `report.status \|\| "pending"` | `"pending"` |
 
 ### 8. Lambda Environment Variable Fallbacks
 
@@ -750,10 +742,10 @@ Missing location data is replaced with generic strings instead of surfacing the 
 
 | File | Line | Expression | Default |
 |------|------|------------|---------|
-| `apps/mobile/app/screens/LocationObservationsScreen.tsx` | 134 | `city \|\| state \|\| "Unknown Location"` | `"Unknown Location"` |
-| `apps/mobile/app/screens/CategoryDetailScreen.tsx` | 140–143 | `cityName \|\| state \|\| "Unknown Location"` | `"Unknown Location"` |
+| `apps/mobile/app/screens/CategoryDetailScreen.tsx` | ~140–143 | `cityName \|\| state \|\| "Unknown Location"` | `"Unknown Location"` |
 | `apps/admin/src/app/(admin)/zip-codes/page.tsx` | 133 | `m.city ?? "Unknown"` | `"Unknown"` |
-| `apps/mobile/app/screens/CompareScreen.tsx` | 76–87 | Multi-level fallback chain | `"Unknown Location"` |
+
+The previous table also listed `LocationObservationsScreen.tsx` and `CompareScreen.tsx`. Both screens were removed in earlier cleanup work and no longer exist on staging.
 
 ### 10. Measurement "Source" Field vs Threshold Jurisdiction
 
