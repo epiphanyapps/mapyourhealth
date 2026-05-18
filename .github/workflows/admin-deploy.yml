@@ -11,6 +11,12 @@ on:
       - 'yarn.lock'
   workflow_dispatch:
 
+# Serialize deploys per branch so back-to-back pushes don't collide on the
+# Amplify branch (one PENDING/RUNNING job per branch is the AWS limit).
+concurrency:
+  group: admin-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   wait-for-checks:
     name: Wait for Lint and Type Check
@@ -146,12 +152,50 @@ jobs:
 
       - name: Deploy Admin Portal
         run: |
-          COMMIT_MSG=$(git log -1 --pretty=%s "${{ github.sha }}")
-          COMMIT_TIME=$(git log -1 --pretty=%cI "${{ github.sha }}")
-          aws amplify start-job \
-            --app-id d26q32gc98goap \
-            --branch-name ${{ github.ref_name }} \
-            --job-type RELEASE \
-            --commit-id ${{ github.sha }} \
-            --commit-message "$COMMIT_MSG" \
-            --commit-time "$COMMIT_TIME"
+          set -uo pipefail
+          APP_ID="d26q32gc98goap"
+          BRANCH="${{ github.ref_name }}"
+          SHA="${{ github.sha }}"
+          COMMIT_MSG=$(git log -1 --pretty=%s "$SHA")
+          COMMIT_TIME=$(git log -1 --pretty=%cI "$SHA")
+
+          # Amplify allows one PENDING/RUNNING job per branch. Wait for the
+          # branch to be free before calling start-job.
+          DEADLINE=$(( $(date +%s) + 1800 ))
+          while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+            BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 5 \
+              --query "jobSummaries[?status=='PENDING' || status=='RUNNING'] | length(@)" \
+              --output text 2>/dev/null || echo "ERR")
+            if [ "$BUSY" = "0" ]; then
+              break
+            fi
+            if [ "$BUSY" = "ERR" ]; then
+              echo "list-jobs failed; retrying..."
+            else
+              echo "Amplify branch $BRANCH busy ($BUSY job(s)); waiting..."
+            fi
+            sleep 20
+          done
+
+          # Belt-and-suspenders: another caller may have slipped in between
+          # the poll and the call. Retry on LimitExceededException.
+          for attempt in 1 2 3 4 5; do
+            if OUT=$(aws amplify start-job \
+              --app-id "$APP_ID" \
+              --branch-name "$BRANCH" \
+              --job-type RELEASE \
+              --commit-id "$SHA" \
+              --commit-message "$COMMIT_MSG" \
+              --commit-time "$COMMIT_TIME" 2>&1); then
+              echo "$OUT"
+              exit 0
+            fi
+            echo "start-job attempt $attempt failed: $OUT"
+            if echo "$OUT" | grep -q "LimitExceededException"; then
+              sleep 30
+              continue
+            fi
+            exit 1
+          done
+          echo "start-job exhausted retries"
+          exit 1
