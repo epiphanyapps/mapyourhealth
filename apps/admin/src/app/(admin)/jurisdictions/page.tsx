@@ -48,181 +48,112 @@ import {
   Scale,
   GitBranch,
 } from "lucide-react";
-import { toast } from "sonner";
 import { LinkedCountBadge } from "@/components/LinkedCountBadge";
+import { useCrudResource } from "@/hooks/useCrudResource";
 
 type Jurisdiction = Schema["Jurisdiction"]["type"];
 
-export default function JurisdictionsPage() {
-  const [jurisdictions, setJurisdictions] = useState<Jurisdiction[]>([]);
-  const [thresholdCountByJurisdiction, setThresholdCountByJurisdiction] =
-    useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingJurisdiction, setEditingJurisdiction] =
-    useState<Jurisdiction | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+interface JurisdictionFormData {
+  code: string;
+  name: string;
+  nameFr: string;
+  country: string;
+  region: string;
+  parentCode: string;
+  isDefault: boolean;
+}
 
-  // Form state
-  const [formData, setFormData] = useState({
-    code: "",
-    name: "",
-    nameFr: "",
-    country: "",
-    region: "",
-    parentCode: "",
-    isDefault: false,
+const DEFAULT_FORM: JurisdictionFormData = {
+  code: "",
+  name: "",
+  nameFr: "",
+  country: "",
+  region: "",
+  parentCode: "",
+  isDefault: false,
+};
+
+export default function JurisdictionsPage() {
+  const {
+    data: jurisdictions,
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingRecord: editingJurisdiction,
+    openCreate,
+    openEdit,
+    formData,
+    setFormData,
+    isSaving,
+    isDeleting,
+    handleSave,
+    handleDelete,
+    handleExport,
+  } = useCrudResource<Jurisdiction, JurisdictionFormData>({
+    resourceName: "Jurisdiction",
+    getModel: (client) => client.models.Jurisdiction,
+    listOptions: { limit: 100 },
+    defaultFormValues: DEFAULT_FORM,
+    editToForm: (j) => ({
+      code: j.code,
+      name: j.name,
+      nameFr: j.nameFr || "",
+      country: j.country,
+      region: j.region || "",
+      parentCode: j.parentCode || "",
+      isDefault: j.isDefault ?? false,
+    }),
+    validate: (form) => {
+      if (!form.code || !form.name || !form.country) {
+        return "Please fill in all required fields";
+      }
+      return null;
+    },
+    formToPayload: (form) => ({
+      code: form.code,
+      name: form.name,
+      nameFr: form.nameFr || null,
+      country: form.country,
+      region: form.region || null,
+      parentCode: form.parentCode || null,
+      isDefault: form.isDefault,
+    }),
+    getDisplayName: (j) => j.name,
+    export: {
+      fileName: "jurisdictions.json",
+      transform: (j) => ({
+        code: j.code,
+        name: j.name,
+        nameFr: j.nameFr || null,
+        country: j.country,
+        region: j.region || null,
+        parentCode: j.parentCode || null,
+        isDefault: j.isDefault ?? false,
+      }),
+    },
   });
 
-  const fetchJurisdictions = async () => {
-    try {
-      setIsLoading(true);
-      const client = generateClient<Schema>();
-      const [jurisdictionsResult, thresholdsResult] = await Promise.all([
-        client.models.Jurisdiction.list({ limit: 100 }),
-        client.models.ContaminantThreshold.list({ limit: 1000 }),
-      ]);
+  // Companion fetch for the LinkedCountBadge counts (Thresholds column).
+  // Kept in the page because it's not the page's own model — useCrudResource
+  // owns Jurisdiction lifecycle; threshold counts are derived from a different
+  // table and only need to refresh on initial load (admins don't add/remove
+  // thresholds from this page). When a jurisdiction is deleted, its entry
+  // here goes stale but never renders — the row that would have read it is
+  // gone — so we intentionally don't refresh the counts on CRUD events.
+  const [thresholdCountByJurisdiction, setThresholdCountByJurisdiction] =
+    useState<Record<string, number>>({});
 
-      if (jurisdictionsResult.errors) {
-        console.error(
-          "Error fetching jurisdictions:",
-          jurisdictionsResult.errors,
-        );
-        toast.error("Failed to fetch jurisdictions");
-        return;
-      }
-
-      setJurisdictions(jurisdictionsResult.data || []);
-
+  useEffect(() => {
+    const client = generateClient<Schema>();
+    client.models.ContaminantThreshold.list({ limit: 1000 }).then((result) => {
       const counts: Record<string, number> = {};
-      for (const t of thresholdsResult.data || []) {
+      for (const t of result.data || []) {
         if (!t.jurisdictionCode) continue;
         counts[t.jurisdictionCode] = (counts[t.jurisdictionCode] || 0) + 1;
       }
       setThresholdCountByJurisdiction(counts);
-    } catch (error) {
-      console.error("Error fetching jurisdictions:", error);
-      toast.error("Failed to fetch jurisdictions");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchJurisdictions();
+    });
   }, []);
-
-  const resetForm = () => {
-    setFormData({
-      code: "",
-      name: "",
-      nameFr: "",
-      country: "",
-      region: "",
-      parentCode: "",
-      isDefault: false,
-    });
-    setEditingJurisdiction(null);
-  };
-
-  const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (jurisdiction: Jurisdiction) => {
-    setEditingJurisdiction(jurisdiction);
-    setFormData({
-      code: jurisdiction.code,
-      name: jurisdiction.name,
-      nameFr: jurisdiction.nameFr || "",
-      country: jurisdiction.country,
-      region: jurisdiction.region || "",
-      parentCode: jurisdiction.parentCode || "",
-      isDefault: jurisdiction.isDefault ?? false,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.code || !formData.name || !formData.country) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const client = generateClient<Schema>();
-
-      const jurisdictionData = {
-        code: formData.code,
-        name: formData.name,
-        nameFr: formData.nameFr || null,
-        country: formData.country,
-        region: formData.region || null,
-        parentCode: formData.parentCode || null,
-        isDefault: formData.isDefault,
-      };
-
-      if (editingJurisdiction) {
-        await client.models.Jurisdiction.update({
-          id: editingJurisdiction.id,
-          ...jurisdictionData,
-        });
-        toast.success("Jurisdiction updated");
-      } else {
-        await client.models.Jurisdiction.create(jurisdictionData);
-        toast.success("Jurisdiction created");
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchJurisdictions();
-    } catch (error) {
-      console.error("Error saving jurisdiction:", error);
-      toast.error("Failed to save jurisdiction");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (jurisdiction: Jurisdiction) => {
-    if (!confirm(`Are you sure you want to delete "${jurisdiction.name}"?`)) {
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      await client.models.Jurisdiction.delete({ id: jurisdiction.id });
-      toast.success("Jurisdiction deleted");
-      fetchJurisdictions();
-    } catch (error) {
-      console.error("Error deleting jurisdiction:", error);
-      toast.error("Failed to delete jurisdiction");
-    }
-  };
-
-  const handleExport = () => {
-    const exportData = jurisdictions.map((j) => ({
-      code: j.code,
-      name: j.name,
-      nameFr: j.nameFr || null,
-      country: j.country,
-      region: j.region || null,
-      parentCode: j.parentCode || null,
-      isDefault: j.isDefault ?? false,
-    }));
-    const blob = new Blob([JSON.stringify(exportData, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "jurisdictions.json";
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.success("Exported jurisdictions.json");
-  };
 
   return (
     <div className="space-y-6">
@@ -250,163 +181,163 @@ export default function JurisdictionsPage() {
           </Button>
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button onClick={openCreateDialog}>
+              <Button onClick={openCreate}>
                 <Plus className="mr-2 h-4 w-4" />
                 Add Jurisdiction
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingJurisdiction
-                  ? "Edit Jurisdiction"
-                  : "Create Jurisdiction"}
-              </DialogTitle>
-              <DialogDescription>
-                {editingJurisdiction
-                  ? "Update this regulatory standard. A jurisdiction is a rulebook (e.g. WHO, US EPA, New York State law) — not a place."
-                  : "Add a new regulatory standard (e.g. WHO, US EPA, New York State law). Jurisdictions are rulebooks the app compares measurements against — not geographic locations."}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="code">Code *</Label>
-                  <Input
-                    id="code"
-                    placeholder="e.g., US-NY, CA-QC, WHO"
-                    value={formData.code}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        code: e.target.value.toUpperCase(),
-                      })
-                    }
-                    disabled={!!editingJurisdiction}
-                  />
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>
+                  {editingJurisdiction
+                    ? "Edit Jurisdiction"
+                    : "Create Jurisdiction"}
+                </DialogTitle>
+                <DialogDescription>
+                  {editingJurisdiction
+                    ? "Update this regulatory standard. A jurisdiction is a rulebook (e.g. WHO, US EPA, New York State law) — not a place."
+                    : "Add a new regulatory standard (e.g. WHO, US EPA, New York State law). Jurisdictions are rulebooks the app compares measurements against — not geographic locations."}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="code">Code *</Label>
+                    <Input
+                      id="code"
+                      placeholder="e.g., US-NY, CA-QC, WHO"
+                      value={formData.code}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          code: e.target.value.toUpperCase(),
+                        })
+                      }
+                      disabled={!!editingJurisdiction}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="country">Country Code *</Label>
+                    <Input
+                      id="country"
+                      placeholder="e.g., US, CA, INTL"
+                      value={formData.country}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          country: e.target.value.toUpperCase(),
+                        })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="country">Country Code *</Label>
-                  <Input
-                    id="country"
-                    placeholder="e.g., US, CA, INTL"
-                    value={formData.country}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        country: e.target.value.toUpperCase(),
-                      })
-                    }
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Name (English) *</Label>
-                  <Input
-                    id="name"
-                    placeholder="e.g., New York State"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Name (English) *</Label>
+                    <Input
+                      id="name"
+                      placeholder="e.g., New York State"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nameFr">Name (French)</Label>
+                    <Input
+                      id="nameFr"
+                      placeholder="e.g., État de New York"
+                      value={formData.nameFr}
+                      onChange={(e) =>
+                        setFormData({ ...formData, nameFr: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nameFr">Name (French)</Label>
-                  <Input
-                    id="nameFr"
-                    placeholder="e.g., État de New York"
-                    value={formData.nameFr}
-                    onChange={(e) =>
-                      setFormData({ ...formData, nameFr: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="region">Region/State Code</Label>
-                  <Input
-                    id="region"
-                    placeholder="e.g., NY, QC"
-                    value={formData.region}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        region: e.target.value.toUpperCase(),
-                      })
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="region">Region/State Code</Label>
+                    <Input
+                      id="region"
+                      placeholder="e.g., NY, QC"
+                      value={formData.region}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          region: e.target.value.toUpperCase(),
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="parentCode">Parent Jurisdiction Code</Label>
+                    <Select
+                      value={formData.parentCode || "none"}
+                      onValueChange={(value) =>
+                        setFormData({
+                          ...formData,
+                          parentCode: value === "none" ? "" : value,
+                        })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="None (top-level)" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">None (top-level)</SelectItem>
+                        {jurisdictions
+                          .filter((j) => j.code !== formData.code)
+                          .map((j) => (
+                            <SelectItem key={j.id} value={j.code}>
+                              {j.code} - {j.name}
+                            </SelectItem>
+                          ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Parent for threshold fallback (e.g., US for US-NY)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="isDefault"
+                    checked={formData.isDefault}
+                    onCheckedChange={(checked: boolean) =>
+                      setFormData({ ...formData, isDefault: checked })
                     }
                   />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="parentCode">Parent Jurisdiction Code</Label>
-                  <Select
-                    value={formData.parentCode || "none"}
-                    onValueChange={(value) =>
-                      setFormData({
-                        ...formData,
-                        parentCode: value === "none" ? "" : value,
-                      })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="None (top-level)" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">None (top-level)</SelectItem>
-                      {jurisdictions
-                        .filter((j) => j.code !== formData.code)
-                        .map((j) => (
-                          <SelectItem key={j.id} value={j.code}>
-                            {j.code} - {j.name}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-xs text-muted-foreground">
-                    Parent for threshold fallback (e.g., US for US-NY)
-                  </p>
+                  <Label htmlFor="isDefault">
+                    Default jurisdiction (for WHO global standard)
+                  </Label>
                 </div>
               </div>
-
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="isDefault"
-                  checked={formData.isDefault}
-                  onCheckedChange={(checked: boolean) =>
-                    setFormData({ ...formData, isDefault: checked })
-                  }
-                />
-                <Label htmlFor="isDefault">
-                  Default jurisdiction (for WHO global standard)
-                </Label>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => setIsDialogOpen(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSave} disabled={isSaving}>
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Saving...
-                  </>
-                ) : editingJurisdiction ? (
-                  "Update"
-                ) : (
-                  "Create"
-                )}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsDialogOpen(false)}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+                <Button onClick={handleSave} disabled={isSaving}>
+                  {isSaving ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : editingJurisdiction ? (
+                    "Update"
+                  ) : (
+                    "Create"
+                  )}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
           </Dialog>
         </div>
       </div>
@@ -449,69 +380,73 @@ export default function JurisdictionsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {jurisdictions.map((jurisdiction) => (
-                  <TableRow key={jurisdiction.id}>
-                    <TableCell className="font-mono font-medium">
-                      {jurisdiction.code}
-                    </TableCell>
-                    <TableCell>{jurisdiction.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="outline">{jurisdiction.country}</Badge>
-                    </TableCell>
-                    <TableCell>{jurisdiction.region || "—"}</TableCell>
-                    <TableCell>
-                      {jurisdiction.parentCode ? (
-                        <Badge variant="secondary">
-                          {jurisdiction.parentCode}
-                        </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <LinkedCountBadge
-                        count={
-                          thresholdCountByJurisdiction[jurisdiction.code] ?? 0
-                        }
-                        icon={<Scale />}
-                        href={`/thresholds?jurisdiction=${encodeURIComponent(jurisdiction.code)}`}
-                        title={`${thresholdCountByJurisdiction[jurisdiction.code] ?? 0} ${(thresholdCountByJurisdiction[jurisdiction.code] ?? 0) === 1 ? "threshold" : "thresholds"} reference ${jurisdiction.code}`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <LinkedCountBadge
-                        count={
-                          jurisdictions.filter(
-                            (j) => j.parentCode === jurisdiction.code,
-                          ).length
-                        }
-                        icon={<GitBranch />}
-                        title={`${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length} ${jurisdictions.filter((j) => j.parentCode === jurisdiction.code).length === 1 ? "jurisdiction" : "jurisdictions"} list ${jurisdiction.code} as parentCode`}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      {jurisdiction.isDefault ? <Badge>Default</Badge> : null}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(jurisdiction)}
-                        >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(jurisdiction)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                {jurisdictions.map((jurisdiction) => {
+                  const tCount =
+                    thresholdCountByJurisdiction[jurisdiction.code] ?? 0;
+                  const childCount = jurisdictions.filter(
+                    (j) => j.parentCode === jurisdiction.code,
+                  ).length;
+                  return (
+                    <TableRow key={jurisdiction.id}>
+                      <TableCell className="font-mono font-medium">
+                        {jurisdiction.code}
+                      </TableCell>
+                      <TableCell>{jurisdiction.name}</TableCell>
+                      <TableCell>
+                        <Badge variant="outline">{jurisdiction.country}</Badge>
+                      </TableCell>
+                      <TableCell>{jurisdiction.region || "—"}</TableCell>
+                      <TableCell>
+                        {jurisdiction.parentCode ? (
+                          <Badge variant="secondary">
+                            {jurisdiction.parentCode}
+                          </Badge>
+                        ) : (
+                          "—"
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <LinkedCountBadge
+                          count={tCount}
+                          icon={<Scale />}
+                          href={`/thresholds?jurisdiction=${encodeURIComponent(jurisdiction.code)}`}
+                          title={`${tCount} ${tCount === 1 ? "threshold" : "thresholds"} reference ${jurisdiction.code}`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <LinkedCountBadge
+                          count={childCount}
+                          icon={<GitBranch />}
+                          title={`${childCount} ${childCount === 1 ? "jurisdiction" : "jurisdictions"} list ${jurisdiction.code} as parentCode`}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {jurisdiction.isDefault ? (
+                          <Badge>Default</Badge>
+                        ) : null}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(jurisdiction)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(jurisdiction)}
+                            disabled={isDeleting}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
