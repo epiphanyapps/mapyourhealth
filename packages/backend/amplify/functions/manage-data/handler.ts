@@ -27,21 +27,27 @@ import categoriesData from '../../../scripts/seed-data-categories.json';
 // Stub committed to git — regenerate locally with `yarn seed:om` for real data
 import omData from '../../../scripts/seed-om-data.json';
 
+import { requireEnv } from '../../../shared/env';
+
 const dynamodb = new DynamoDBClient({});
 const docClient = DynamoDBDocumentClient.from(dynamodb);
 
-// Table names from environment variables (set in backend.ts)
+// Table names from environment variables (wired in backend.ts via the
+// `manageDataLambda.addEnvironment(\`${name.toUpperCase()}_TABLE_NAME\`, ...)`
+// loop). All required at cold-start — a missing one would silently send
+// BatchWriteItem / Scan ops to a table named '' and 'fail loudly with the
+// wrong message'. `requireEnv` fails INIT instead.
 const TABLES: Record<string, string> = {
-  Jurisdiction: process.env.JURISDICTION_TABLE_NAME || '',
-  Contaminant: process.env.CONTAMINANT_TABLE_NAME || '',
-  ContaminantThreshold: process.env.CONTAMINANTTHRESHOLD_TABLE_NAME || '',
-  Location: process.env.LOCATION_TABLE_NAME || '',
-  LocationMeasurement: process.env.LOCATIONMEASUREMENT_TABLE_NAME || '',
-  LocationObservation: process.env.LOCATIONOBSERVATION_TABLE_NAME || '',
-  Category: process.env.CATEGORY_TABLE_NAME || '',
-  SubCategory: process.env.SUBCATEGORY_TABLE_NAME || '',
-  ObservedProperty: process.env.OBSERVEDPROPERTY_TABLE_NAME || '',
-  PropertyThreshold: process.env.PROPERTYTHRESHOLD_TABLE_NAME || '',
+  Jurisdiction: requireEnv('JURISDICTION_TABLE_NAME'),
+  Contaminant: requireEnv('CONTAMINANT_TABLE_NAME'),
+  ContaminantThreshold: requireEnv('CONTAMINANTTHRESHOLD_TABLE_NAME'),
+  Location: requireEnv('LOCATION_TABLE_NAME'),
+  LocationMeasurement: requireEnv('LOCATIONMEASUREMENT_TABLE_NAME'),
+  LocationObservation: requireEnv('LOCATIONOBSERVATION_TABLE_NAME'),
+  Category: requireEnv('CATEGORY_TABLE_NAME'),
+  SubCategory: requireEnv('SUBCATEGORY_TABLE_NAME'),
+  ObservedProperty: requireEnv('OBSERVEDPROPERTY_TABLE_NAME'),
+  PropertyThreshold: requireEnv('PROPERTYTHRESHOLD_TABLE_NAME'),
 };
 
 // Action → table groupings

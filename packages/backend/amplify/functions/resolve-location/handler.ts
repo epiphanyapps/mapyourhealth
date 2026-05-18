@@ -20,12 +20,23 @@ import {
 import { unmarshall } from '@aws-sdk/util-dynamodb';
 import { randomUUID } from 'crypto';
 
+import { requireEnv } from '../../../shared/env';
+
 const dynamodb = new DynamoDBClient({});
+// Plain env vars wired in `backend.ts` via
+// `resolveLocationLambda.addEnvironment(...)`. `requireEnv` throws (failing
+// INIT) on any missing var so we don't silently send DynamoDB ops to a
+// table named ''.
+const CACHE_TABLE_NAME = requireEnv('CACHE_TABLE_NAME');
+const LOCATION_TABLE_NAME = requireEnv('LOCATION_TABLE_NAME');
+const JURISDICTION_TABLE_NAME = requireEnv('JURISDICTION_TABLE_NAME');
+const LOCATION_MEASUREMENT_TABLE_NAME = requireEnv('LOCATION_MEASUREMENT_TABLE_NAME');
+// GOOGLE_PLACES_API_KEY is an Amplify Gen 2 secret (resource.ts uses
+// `secret()`). On the deployed Lambda the env var is literally
+// "<value will be resolved during runtime>" — the real value comes from
+// SSM via AMPLIFY_SSM_ENV_CONFIG. Kept on the existing `|| ''` pattern;
+// see the matching note in places-autocomplete/handler.ts.
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || '';
-const CACHE_TABLE_NAME = process.env.CACHE_TABLE_NAME || '';
-const LOCATION_TABLE_NAME = process.env.LOCATION_TABLE_NAME || '';
-const JURISDICTION_TABLE_NAME = process.env.JURISDICTION_TABLE_NAME || '';
-const LOCATION_MEASUREMENT_TABLE_NAME = process.env.LOCATION_MEASUREMENT_TABLE_NAME || '';
 
 const CACHE_TTL_SECONDS = 86400; // 24 hours for location data (changes rarely)
 

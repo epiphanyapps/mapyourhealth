@@ -12,8 +12,20 @@ import {
   PutItemCommand,
 } from '@aws-sdk/client-dynamodb';
 
+import { requireEnv } from '../../../shared/env';
+
 const dynamodb = new DynamoDBClient({});
-const CACHE_TABLE_NAME = process.env.CACHE_TABLE_NAME || '';
+// CACHE_TABLE_NAME is a plain env var wired in `backend.ts` via
+// `placesAutocompleteLambda.addEnvironment('CACHE_TABLE_NAME', ...)`.
+// `requireEnv` throws at INIT if missing.
+const CACHE_TABLE_NAME = requireEnv('CACHE_TABLE_NAME');
+// GOOGLE_PLACES_API_KEY is an Amplify Gen 2 secret (defined in resource.ts
+// via `secret()`). On the deployed Lambda the env var is literally
+// "<value will be resolved during runtime>" — the real value comes from
+// SSM via the AMPLIFY_SSM_ENV_CONFIG bootstrap. We keep the `|| ''`
+// pattern here because hardening this with `requireEnv` would only
+// validate the placeholder, not the resolved value, and could mask the
+// (rare) case where resolution itself fails.
 const GOOGLE_PLACES_API_KEY = process.env.GOOGLE_PLACES_API_KEY || '';
 const CACHE_TTL_SECONDS = 3600; // 1 hour
 
