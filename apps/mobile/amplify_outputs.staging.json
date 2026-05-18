@@ -3906,5 +3906,8 @@
       "app_id": "b24826e79d90457ba3b3a33374632a5c",
       "aws_region": "ca-central-1"
     }
+  },
+  "custom": {
+    "magicLinkApiUrl": "https://7eidridev5cfzbktaa3s5hueva0ccnej.lambda-url.ca-central-1.on.aws/"
   }
 }
