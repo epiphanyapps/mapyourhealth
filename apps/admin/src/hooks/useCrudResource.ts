@@ -84,9 +84,16 @@ export interface UseCrudResourceConfig<T, FormData> {
   /** Optional list-options passed to `model.list()` on each refresh. */
   listOptions?: Record<string, unknown>;
 
-  /** Optional accessor for the record's display name. Used in the delete
-   *  confirm prompt: `Are you sure you want to delete "<name>"?`. */
+  /** Optional accessor for the record's display name. Used as the simple
+   *  delete-confirm prompt: `Are you sure you want to delete "<name>"?`.
+   *  Ignored if `getDeleteConfirmMessage` is provided. */
   getDisplayName?: (record: T) => string;
+
+  /** Optional full override for the delete confirmation prompt. Use this
+   *  when the simple "delete '<name>'?" form isn't enough — e.g. when the
+   *  record has cascading effects worth warning about ("This will also
+   *  affect any thresholds and observations using this property"). */
+  getDeleteConfirmMessage?: (record: T) => string;
 
   /** Optional JSON export configuration. When set, `handleExport` writes
    *  a file with `transform`-mapped records (defaults to identity). */
@@ -136,6 +143,7 @@ export function useCrudResource<T extends RecordWithId, FormData>(
     formToPayload,
     listOptions,
     getDisplayName,
+    getDeleteConfirmMessage,
     getModel,
   } = config;
   const resourceNamePlural = config.resourceNamePlural ?? `${resourceName}s`;
@@ -237,10 +245,15 @@ export function useCrudResource<T extends RecordWithId, FormData>(
       // should also disable trigger UI via the returned `isDeleting`, but
       // this defends against handler races even when they forget.
       if (isDeleting) return;
-      const name = getDisplayName?.(record);
-      const message = name
-        ? `Are you sure you want to delete "${name}"?`
-        : `Are you sure you want to delete this ${resourceName.toLowerCase()}?`;
+      let message: string;
+      if (getDeleteConfirmMessage) {
+        message = getDeleteConfirmMessage(record);
+      } else {
+        const name = getDisplayName?.(record);
+        message = name
+          ? `Are you sure you want to delete "${name}"?`
+          : `Are you sure you want to delete this ${resourceName.toLowerCase()}?`;
+      }
       if (!confirm(message)) return;
       setIsDeleting(true);
       try {
@@ -256,7 +269,14 @@ export function useCrudResource<T extends RecordWithId, FormData>(
         setIsDeleting(false);
       }
     },
-    [getDisplayName, getModel, isDeleting, refresh, resourceName],
+    [
+      getDeleteConfirmMessage,
+      getDisplayName,
+      getModel,
+      isDeleting,
+      refresh,
+      resourceName,
+    ],
   );
 
   const handleExport = useCallback(() => {
