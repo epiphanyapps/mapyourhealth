@@ -1,6 +1,6 @@
 /* eslint-disable react-native/no-inline-styles, react/no-unescaped-entities */
 import { FC, useCallback, useEffect, useMemo, useRef, useState } from "react"
-import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl, Share } from "react-native"
+import { View, ViewStyle, Pressable, TextStyle, Alert, RefreshControl } from "react-native"
 import { MaterialCommunityIcons } from "@expo/vector-icons"
 import { CommonActions } from "@react-navigation/native"
 import { formatDistanceToNow } from "date-fns"
@@ -39,6 +39,7 @@ import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { recordLocationVisit } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
+import { sharePayload } from "@/utils/share"
 // jurisdiction resolution goes through useJurisdictionResolver (thin wrapper
 // over ContaminantsContext.getJurisdictionForLocation); postalCode utilities
 // removed when the app moved to city-level granularity.
@@ -103,7 +104,7 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     error: locationError,
     clearError: clearLocationError,
   } = useLocation()
-  const { getCategoryName } = useCategories()
+  const { categories: dynamicCategories, getCategoryName } = useCategories()
   const { banners: adminBanners } = useWarningBanners({
     city: route.params?.city,
     state: route.params?.state,
@@ -342,8 +343,19 @@ export const DashboardScreen: FC<DashboardScreenProps> = function DashboardScree
     [cityData, contaminants, statDefinitions],
   )
 
-  // Categories to display (water and air only - health and disaster removed per issue #126)
-  const categories = useMemo(() => [StatCategory.water, StatCategory.air], [])
+  // Categories to display. Filter to water + air (health and disaster removed per issue #126),
+  // but take the order from the backend Category.sortOrder so admins can re-sequence without
+  // a code change. CategoriesContext already sorts by sortOrder; we just preserve that order
+  // here while keeping the product-decision filter explicit (GH #356).
+  const categories = useMemo(() => {
+    const allowed = new Set<string>([StatCategory.water, StatCategory.air])
+    const sorted = dynamicCategories
+      .map((c) => c.categoryId)
+      .filter((id): id is StatCategory => allowed.has(id))
+    // Fallback to the legacy order if the backend hasn't populated either category yet
+    // (e.g. cold mock state before CategoriesProvider hydrates).
+    return sorted.length > 0 ? sorted : [StatCategory.water, StatCategory.air]
+  }, [dynamicCategories])
 
   // Handle location selection from PlacesSearchBar — updates URL via route params
   const handleLocationSelect = useCallback(
@@ -500,14 +512,15 @@ ${categoryRisks || "No risks detected"}
 
 View details: ${shareUrl}`
 
-    try {
-      await Share.share({
-        message: shareMessage,
-        title: `Safety Report - ${currentLocation?.city || "Location"}`,
-      })
-    } catch (error) {
-      // User cancelled or share failed - no need to show error
-      console.log("Share cancelled or failed:", error)
+    const result = await sharePayload({
+      message: shareMessage,
+      title: `Safety Report - ${currentLocation?.city || "Location"}`,
+      url: shareUrl,
+    })
+    if (result.outcome === "copied") {
+      Alert.alert("Copied to clipboard", "Paste the safety report into a message or email.")
+    } else if (result.outcome === "error") {
+      console.log("Share failed:", result.error)
     }
   }, [cityData, categories, getStatusForCategory, getCategoryDisplayName, currentLocation])
 

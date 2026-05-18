@@ -165,7 +165,11 @@ export function ContaminantTable(props: ContaminantTableProps) {
     options?: { isUnregulated?: boolean; isLocal?: boolean },
   ): string => {
     if (options?.isUnregulated) return "UNREGULATED"
-    if (value === null) return options?.isLocal ? "N/A" : "NO STANDARD"
+    // Null in the local column means the local jurisdiction has no direct threshold
+    // (CategoryDetailScreen sets it to null when getThreshold cascades to WHO). Use
+    // explicit copy instead of "N/A" so the column doesn't look identical to WHO when
+    // the local jurisdiction is unseeded (GH #356).
+    if (value === null) return options?.isLocal ? "NO LOCAL STANDARD" : "NO STANDARD"
     const effectiveUnit = unit || rowUnit
     return `${value} ${effectiveUnit}`
   }
