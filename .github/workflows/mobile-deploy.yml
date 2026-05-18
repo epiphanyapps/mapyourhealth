@@ -132,6 +132,12 @@ jobs:
     if: (needs.detect-changes.outputs.mobile_changed == 'true' || github.event_name == 'workflow_dispatch') && (github.ref_name == 'main' || github.ref_name == 'staging')
     environment:
       name: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+    # Serialize Amplify deploys per branch (one PENDING/RUNNING job per
+    # branch is the AWS limit). Job-level rather than workflow-level so
+    # the parallel ota-update (EAS) job is not gated by this queue.
+    concurrency:
+      group: mobile-deploy-${{ github.ref_name }}
+      cancel-in-progress: false
     steps:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -145,16 +151,11 @@ jobs:
           fetch-depth: 1
 
       - name: Deploy Mobile Web
-        run: |
-          COMMIT_MSG=$(git log -1 --pretty=%s "${{ github.sha }}")
-          COMMIT_TIME=$(git log -1 --pretty=%cI "${{ github.sha }}")
-          aws amplify start-job \
-            --app-id ${{ secrets.AMPLIFY_MOBILE_APP_ID }} \
-            --branch-name ${{ github.ref_name }} \
-            --job-type RELEASE \
-            --commit-id ${{ github.sha }} \
-            --commit-message "$COMMIT_MSG" \
-            --commit-time "$COMMIT_TIME"
+        uses: ./.github/actions/amplify-start-job
+        with:
+          app-id: ${{ secrets.AMPLIFY_MOBILE_APP_ID }}
+          branch: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
 
   ota-update:
     name: Publish EAS Update
