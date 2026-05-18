@@ -41,11 +41,17 @@ runs:
         DEADLINE=$(( $(date +%s) + TIMEOUT ))
         FREE=0
         while [ "$(date +%s)" -lt "$DEADLINE" ]; do
-          # `jobSummaries[?…]` returns null when no jobs match (or when the
-          # list is empty), and `length(null)` errors. Coalesce to `[]` so
-          # length() always sees an array. Without this, an idle branch
-          # makes the poll loop spin until the timeout fires.
-          if BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 5 \
+          # Two things to handle:
+          # 1. `jobSummaries[?…]` returns null when no jobs match (or when
+          #    the list is empty), and `length(null)` errors. Coalesce to
+          #    `[]` so length() always sees an array.
+          # 2. `--max-items` enables AWS CLI client-side pagination — each
+          #    page evaluates --query independently and prints to stdout,
+          #    so the script can receive multi-line output like "0\n0".
+          #    Use --no-paginate (with no --max-items) so we get a single
+          #    integer back from the first API response (default page is
+          #    large enough; we only need the count anyway).
+          if BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --no-paginate \
             --query "length(jobSummaries[?status=='PENDING' || status=='RUNNING'] || \`[]\`)" \
             --output text 2>&1); then
             if [ "$BUSY" = "0" ]; then
