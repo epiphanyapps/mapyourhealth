@@ -14,7 +14,7 @@ on:
 # Serialize deploys per branch so back-to-back pushes don't collide on the
 # Amplify branch (one PENDING/RUNNING job per branch is the AWS limit).
 concurrency:
-  group: mobile-deploy-${{ github.ref }}
+  group: mobile-deploy-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
@@ -160,22 +160,28 @@ jobs:
           COMMIT_TIME=$(git log -1 --pretty=%cI "$SHA")
 
           # Amplify allows one PENDING/RUNNING job per branch. Wait for the
-          # branch to be free before calling start-job.
+          # branch to be free before calling start-job. Surface a clear
+          # timeout error rather than falling through to the retry loop.
           DEADLINE=$(( $(date +%s) + 1800 ))
+          FREE=0
           while [ "$(date +%s)" -lt "$DEADLINE" ]; do
-            BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 5 \
+            if BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --max-items 5 \
               --query "jobSummaries[?status=='PENDING' || status=='RUNNING'] | length(@)" \
-              --output text 2>/dev/null || echo "ERR")
-            if [ "$BUSY" = "0" ]; then
-              break
-            fi
-            if [ "$BUSY" = "ERR" ]; then
-              echo "list-jobs failed; retrying..."
-            else
+              --output text 2>&1); then
+              if [ "$BUSY" = "0" ]; then
+                FREE=1
+                break
+              fi
               echo "Amplify branch $BRANCH busy ($BUSY job(s)); waiting..."
+            else
+              echo "list-jobs failed: $BUSY"
             fi
             sleep 20
           done
+          if [ "$FREE" = "0" ]; then
+            echo "Timed out after 30 min waiting for Amplify branch $BRANCH to be free"
+            exit 1
+          fi
 
           # Belt-and-suspenders: another caller may have slipped in between
           # the poll and the call. Retry on LimitExceededException.
