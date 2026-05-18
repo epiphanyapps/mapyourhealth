@@ -39,7 +39,6 @@ import {
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Loader2, Scale } from "lucide-react";
-import { toast } from "sonner";
 import {
   CONTAMINANT_CATEGORIES,
   contaminantCategoryColors,
@@ -47,167 +46,102 @@ import {
   type ContaminantCategory,
 } from "@/lib/constants";
 import { LinkedCountBadge } from "@/components/LinkedCountBadge";
+import { useCrudResource } from "@/hooks/useCrudResource";
 
 type Contaminant = Schema["Contaminant"]["type"];
 
-export default function ContaminantsPage() {
-  const [contaminants, setContaminants] = useState<Contaminant[]>([]);
-  const [thresholdCountByContaminant, setThresholdCountByContaminant] =
-    useState<Record<string, number>>({});
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingContaminant, setEditingContaminant] =
-    useState<Contaminant | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
+interface ContaminantFormData {
+  contaminantId: string;
+  name: string;
+  nameFr: string;
+  unit: string;
+  description: string;
+  descriptionFr: string;
+  category: ContaminantCategory | "";
+  studies: string;
+  higherIsBad: boolean;
+}
 
-  // Form state
-  const [formData, setFormData] = useState({
-    contaminantId: "",
-    name: "",
-    nameFr: "",
-    unit: "",
-    description: "",
-    descriptionFr: "",
-    category: "" as ContaminantCategory | "",
-    studies: "",
-    higherIsBad: true,
+const DEFAULT_FORM: ContaminantFormData = {
+  contaminantId: "",
+  name: "",
+  nameFr: "",
+  unit: "",
+  description: "",
+  descriptionFr: "",
+  category: "",
+  studies: "",
+  higherIsBad: true,
+};
+
+export default function ContaminantsPage() {
+  const {
+    data: contaminants,
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingRecord: editingContaminant,
+    openCreate,
+    openEdit,
+    formData,
+    setFormData,
+    isSaving,
+    handleSave,
+    handleDelete,
+  } = useCrudResource<Contaminant, ContaminantFormData>({
+    resourceName: "Contaminant",
+    getModel: (client) => client.models.Contaminant,
+    listOptions: { limit: 1000 },
+    defaultFormValues: DEFAULT_FORM,
+    editToForm: (c) => ({
+      contaminantId: c.contaminantId,
+      name: c.name,
+      nameFr: c.nameFr || "",
+      unit: c.unit,
+      description: c.description || "",
+      descriptionFr: c.descriptionFr || "",
+      category: (c.category as ContaminantCategory) || "",
+      studies: c.studies || "",
+      higherIsBad: c.higherIsBad,
+    }),
+    validate: (form) => {
+      if (!form.contaminantId || !form.name || !form.unit || !form.category) {
+        return "Please fill in all required fields";
+      }
+      return null;
+    },
+    formToPayload: (form) => ({
+      contaminantId: form.contaminantId,
+      name: form.name,
+      nameFr: form.nameFr || null,
+      unit: form.unit,
+      description: form.description || null,
+      descriptionFr: form.descriptionFr || null,
+      category: form.category as ContaminantCategory,
+      studies: form.studies || null,
+      higherIsBad: form.higherIsBad,
+    }),
+    getDisplayName: (c) => c.name,
   });
 
-  const fetchContaminants = async () => {
-    try {
-      setIsLoading(true);
-      const client = generateClient<Schema>();
-      const [contaminantsResult, thresholdsResult] = await Promise.all([
-        client.models.Contaminant.list({ limit: 1000 }),
-        client.models.ContaminantThreshold.list({ limit: 1000 }),
-      ]);
+  // Companion fetch for the LinkedCountBadge counts (Thresholds column).
+  // Kept in the page because it reads a different model. Only fetched once on
+  // mount — admins manage thresholds elsewhere, so we don't need to retrigger
+  // on Contaminant CRUD.
+  const [thresholdCountByContaminant, setThresholdCountByContaminant] =
+    useState<Record<string, number>>({});
 
-      if (contaminantsResult.errors) {
-        console.error("Error fetching contaminants:", contaminantsResult.errors);
-        toast.error("Failed to fetch contaminants");
-        return;
-      }
-
-      setContaminants(contaminantsResult.data || []);
-
+  useEffect(() => {
+    const client = generateClient<Schema>();
+    client.models.ContaminantThreshold.list({ limit: 1000 }).then((result) => {
       const counts: Record<string, number> = {};
-      for (const t of thresholdsResult.data || []) {
+      for (const t of result.data || []) {
         if (!t.contaminantId) continue;
         counts[t.contaminantId] = (counts[t.contaminantId] || 0) + 1;
       }
       setThresholdCountByContaminant(counts);
-    } catch (error) {
-      console.error("Error fetching contaminants:", error);
-      toast.error("Failed to fetch contaminants");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchContaminants();
+    });
   }, []);
-
-  const resetForm = () => {
-    setFormData({
-      contaminantId: "",
-      name: "",
-      nameFr: "",
-      unit: "",
-      description: "",
-      descriptionFr: "",
-      category: "",
-      studies: "",
-      higherIsBad: true,
-    });
-    setEditingContaminant(null);
-  };
-
-  const openCreateDialog = () => {
-    resetForm();
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (contaminant: Contaminant) => {
-    setEditingContaminant(contaminant);
-    setFormData({
-      contaminantId: contaminant.contaminantId,
-      name: contaminant.name,
-      nameFr: contaminant.nameFr || "",
-      unit: contaminant.unit,
-      description: contaminant.description || "",
-      descriptionFr: contaminant.descriptionFr || "",
-      category: (contaminant.category as ContaminantCategory) || "",
-      studies: contaminant.studies || "",
-      higherIsBad: contaminant.higherIsBad,
-    });
-    setIsDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (
-      !formData.contaminantId ||
-      !formData.name ||
-      !formData.unit ||
-      !formData.category
-    ) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const client = generateClient<Schema>();
-
-      const contaminantData = {
-        contaminantId: formData.contaminantId,
-        name: formData.name,
-        nameFr: formData.nameFr || null,
-        unit: formData.unit,
-        description: formData.description || null,
-        descriptionFr: formData.descriptionFr || null,
-        category: formData.category as ContaminantCategory,
-        studies: formData.studies || null,
-        higherIsBad: formData.higherIsBad,
-      };
-
-      if (editingContaminant) {
-        await client.models.Contaminant.update({
-          id: editingContaminant.id,
-          ...contaminantData,
-        });
-        toast.success("Contaminant updated");
-      } else {
-        await client.models.Contaminant.create(contaminantData);
-        toast.success("Contaminant created");
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchContaminants();
-    } catch (error) {
-      console.error("Error saving contaminant:", error);
-      toast.error("Failed to save contaminant");
-    } finally {
-      setIsSaving(false);
-    }
-  };
-
-  const handleDelete = async (contaminant: Contaminant) => {
-    if (!confirm(`Are you sure you want to delete "${contaminant.name}"?`)) {
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      await client.models.Contaminant.delete({ id: contaminant.id });
-      toast.success("Contaminant deleted");
-      fetchContaminants();
-    } catch (error) {
-      console.error("Error deleting contaminant:", error);
-      toast.error("Failed to delete contaminant");
-    }
-  };
 
   return (
     <div className="space-y-6">
@@ -220,7 +154,7 @@ export default function ContaminantsPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={openCreate}>
               <Plus className="mr-2 h-4 w-4" />
               Add Contaminant
             </Button>
@@ -429,74 +363,74 @@ export default function ContaminantsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {contaminants.map((contaminant) => (
-                  <TableRow key={contaminant.id}>
-                    <TableCell className="font-mono text-sm">
-                      {contaminant.contaminantId}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {contaminant.name}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant="secondary"
-                        className={
-                          contaminant.category
-                            ? contaminantCategoryColors[
+                {contaminants.map((contaminant) => {
+                  const tCount =
+                    thresholdCountByContaminant[contaminant.contaminantId] ?? 0;
+                  return (
+                    <TableRow key={contaminant.id}>
+                      <TableCell className="font-mono text-sm">
+                        {contaminant.contaminantId}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {contaminant.name}
+                      </TableCell>
+                      <TableCell>
+                        <Badge
+                          variant="secondary"
+                          className={
+                            contaminant.category
+                              ? contaminantCategoryColors[
+                                  contaminant.category as ContaminantCategory
+                                ]
+                              : ""
+                          }
+                        >
+                          {contaminant.category
+                            ? contaminantCategoryNames[
                                 contaminant.category as ContaminantCategory
                               ]
-                            : ""
-                        }
-                      >
-                        {contaminant.category
-                          ? contaminantCategoryNames[
-                              contaminant.category as ContaminantCategory
-                            ]
-                          : "—"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{contaminant.unit}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          contaminant.higherIsBad ? "destructive" : "default"
-                        }
-                      >
-                        {contaminant.higherIsBad ? "Bad" : "Good"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <LinkedCountBadge
-                        count={
-                          thresholdCountByContaminant[
-                            contaminant.contaminantId
-                          ] ?? 0
-                        }
-                        icon={<Scale />}
-                        href={`/thresholds?contaminant=${encodeURIComponent(contaminant.contaminantId)}`}
-                        title={`${thresholdCountByContaminant[contaminant.contaminantId] ?? 0} ${(thresholdCountByContaminant[contaminant.contaminantId] ?? 0) === 1 ? "threshold" : "thresholds"} defined for ${contaminant.contaminantId}`}
-                      />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => openEditDialog(contaminant)}
+                            : "—"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>{contaminant.unit}</TableCell>
+                      <TableCell>
+                        <Badge
+                          variant={
+                            contaminant.higherIsBad ? "destructive" : "default"
+                          }
                         >
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(contaminant)}
-                        >
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                          {contaminant.higherIsBad ? "Bad" : "Good"}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <LinkedCountBadge
+                          count={tCount}
+                          icon={<Scale />}
+                          href={`/thresholds?contaminant=${encodeURIComponent(contaminant.contaminantId)}`}
+                          title={`${tCount} ${tCount === 1 ? "threshold" : "thresholds"} defined for ${contaminant.contaminantId}`}
+                        />
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => openEdit(contaminant)}
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(contaminant)}
+                          >
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
