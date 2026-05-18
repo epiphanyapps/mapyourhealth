@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { generateClient } from "aws-amplify/data";
 import type { Schema } from "@mapyourhealth/backend/amplify/data/resource";
 import { Button } from "@/components/ui/button";
@@ -41,7 +41,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Plus, Pencil, Trash2, Loader2, Eye, EyeOff } from "lucide-react";
-import { toast } from "sonner";
+import { useCrudResource } from "@/hooks/useCrudResource";
 
 type Category = Schema["Category"]["type"];
 type SubCategory = Schema["SubCategory"]["type"];
@@ -51,229 +51,168 @@ interface CategoryLink {
   url: string;
 }
 
+interface SubCategoryFormData {
+  subCategoryId: string;
+  categoryId: string;
+  name: string;
+  nameFr: string;
+  description: string;
+  descriptionFr: string;
+  icon: string;
+  color: string;
+  sortOrder: number;
+  isActive: boolean;
+  links: CategoryLink[];
+}
+
+const DEFAULT_FORM: SubCategoryFormData = {
+  subCategoryId: "",
+  categoryId: "",
+  name: "",
+  nameFr: "",
+  description: "",
+  descriptionFr: "",
+  icon: "",
+  color: "",
+  sortOrder: 0,
+  isActive: true,
+  links: [],
+};
+
+function parseLinks(raw: SubCategory["links"]): CategoryLink[] {
+  if (!raw) return [];
+  try {
+    return typeof raw === "string" ? JSON.parse(raw) : (raw as CategoryLink[]);
+  } catch {
+    return [];
+  }
+}
+
 export default function SubCategoriesPage() {
+  // Companion fetch: parent categories list. Used for the parent select,
+  // filter dropdown, and color/name lookup in the table. Kept in the page
+  // because it's a different model; only fetched once on mount.
   const [categories, setCategories] = useState<Category[]>([]);
-  const [subCategories, setSubCategories] = useState<SubCategory[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingSubCategory, setEditingSubCategory] =
-    useState<SubCategory | null>(null);
-  const [isSaving, setIsSaving] = useState(false);
   const [filterCategoryId, setFilterCategoryId] = useState<string>("all");
 
-  // Form state
-  const [formData, setFormData] = useState({
-    subCategoryId: "",
-    categoryId: "",
-    name: "",
-    nameFr: "",
-    description: "",
-    descriptionFr: "",
-    icon: "",
-    color: "",
-    sortOrder: 0,
-    isActive: true,
-    links: [] as CategoryLink[],
-  });
-
-  const fetchData = async () => {
-    try {
-      setIsLoading(true);
-      const client = generateClient<Schema>();
-
-      const [categoriesResult, subCategoriesResult] = await Promise.all([
-        client.models.Category.list({ limit: 100 }),
-        client.models.SubCategory.list({ limit: 500 }),
-      ]);
-
-      if (categoriesResult.errors) {
-        console.error("Error fetching categories:", categoriesResult.errors);
-        toast.error("Failed to fetch categories");
-      } else {
-        setCategories(
-          [...(categoriesResult.data || [])].sort(
-            (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-          ),
-        );
-      }
-
-      if (subCategoriesResult.errors) {
-        console.error(
-          "Error fetching sub-categories:",
-          subCategoriesResult.errors,
-        );
-        toast.error("Failed to fetch sub-categories");
-      } else {
-        setSubCategories(
-          [...(subCategoriesResult.data || [])].sort(
-            (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
-          ),
-        );
-      }
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Failed to fetch data");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
-    fetchData();
+    const client = generateClient<Schema>();
+    client.models.Category.list({ limit: 100 }).then((result) => {
+      setCategories(
+        [...(result.data || [])].sort(
+          (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+        ),
+      );
+    });
   }, []);
 
-  const resetForm = () => {
-    setFormData({
-      subCategoryId: "",
-      categoryId: categories[0]?.categoryId || "",
-      name: "",
-      nameFr: "",
-      description: "",
-      descriptionFr: "",
-      icon: "",
-      color: "",
-      sortOrder: 0,
-      isActive: true,
-      links: [],
-    });
-    setEditingSubCategory(null);
-  };
-
-  const openCreateDialog = () => {
-    resetForm();
-    // Pre-select filtered category if not "all"
-    if (filterCategoryId !== "all") {
-      setFormData((prev) => ({ ...prev, categoryId: filterCategoryId }));
-    }
-    setIsDialogOpen(true);
-  };
-
-  const openEditDialog = (subCategory: SubCategory) => {
-    setEditingSubCategory(subCategory);
-    let links: CategoryLink[] = [];
-    try {
-      if (subCategory.links) {
-        links =
-          typeof subCategory.links === "string"
-            ? JSON.parse(subCategory.links)
-            : subCategory.links;
+  const {
+    data: unsortedSubCategories,
+    isLoading,
+    isDialogOpen,
+    setIsDialogOpen,
+    editingRecord: editingSubCategory,
+    openCreate,
+    openEdit,
+    formData,
+    setFormData,
+    isSaving,
+    handleSave,
+    handleDelete,
+  } = useCrudResource<SubCategory, SubCategoryFormData>({
+    resourceName: "Sub-category",
+    resourceNamePlural: "sub-categories",
+    getModel: (client) => client.models.SubCategory,
+    listOptions: { limit: 500 },
+    defaultFormValues: DEFAULT_FORM,
+    editToForm: (sc) => ({
+      subCategoryId: sc.subCategoryId,
+      categoryId: sc.categoryId,
+      name: sc.name,
+      nameFr: sc.nameFr || "",
+      description: sc.description || "",
+      descriptionFr: sc.descriptionFr || "",
+      icon: sc.icon || "",
+      color: sc.color || "",
+      sortOrder: sc.sortOrder ?? 0,
+      isActive: sc.isActive ?? true,
+      links: parseLinks(sc.links),
+    }),
+    validate: (form) => {
+      if (!form.subCategoryId || !form.name || !form.categoryId) {
+        return "Please fill in all required fields";
       }
-    } catch {
-      links = [];
-    }
+      return null;
+    },
+    formToPayload: (form) => ({
+      subCategoryId: form.subCategoryId.toLowerCase(),
+      categoryId: form.categoryId,
+      name: form.name,
+      nameFr: form.nameFr || null,
+      description: form.description || null,
+      descriptionFr: form.descriptionFr || null,
+      icon: form.icon || null,
+      color: form.color || null,
+      sortOrder: form.sortOrder,
+      isActive: form.isActive,
+      links: form.links.length > 0 ? JSON.stringify(form.links) : null,
+    }),
+    getDisplayName: (sc) => sc.name,
+  });
 
-    setFormData({
-      subCategoryId: subCategory.subCategoryId,
-      categoryId: subCategory.categoryId,
-      name: subCategory.name,
-      nameFr: subCategory.nameFr || "",
-      description: subCategory.description || "",
-      descriptionFr: subCategory.descriptionFr || "",
-      icon: subCategory.icon || "",
-      color: subCategory.color || "",
-      sortOrder: subCategory.sortOrder ?? 0,
-      isActive: subCategory.isActive ?? true,
-      links,
-    });
-    setIsDialogOpen(true);
-  };
+  // Sort by sortOrder for display.
+  const subCategories = useMemo(
+    () =>
+      [...unsortedSubCategories].sort(
+        (a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0),
+      ),
+    [unsortedSubCategories],
+  );
 
-  const handleSave = async () => {
-    if (!formData.subCategoryId || !formData.name || !formData.categoryId) {
-      toast.error("Please fill in all required fields");
-      return;
-    }
-
-    setIsSaving(true);
-    try {
-      const client = generateClient<Schema>();
-
-      const subCategoryData = {
-        subCategoryId: formData.subCategoryId.toLowerCase(),
-        categoryId: formData.categoryId,
-        name: formData.name,
-        nameFr: formData.nameFr || null,
-        description: formData.description || null,
-        descriptionFr: formData.descriptionFr || null,
-        icon: formData.icon || null,
-        color: formData.color || null,
-        sortOrder: formData.sortOrder,
-        isActive: formData.isActive,
-        links:
-          formData.links.length > 0 ? JSON.stringify(formData.links) : null,
-      };
-
-      if (editingSubCategory) {
-        await client.models.SubCategory.update({
-          id: editingSubCategory.id,
-          ...subCategoryData,
-        });
-        toast.success("Sub-category updated");
-      } else {
-        await client.models.SubCategory.create(subCategoryData);
-        toast.success("Sub-category created");
-      }
-
-      setIsDialogOpen(false);
-      resetForm();
-      fetchData();
-    } catch (error) {
-      console.error("Error saving sub-category:", error);
-      toast.error("Failed to save sub-category");
-    } finally {
-      setIsSaving(false);
+  // Wrap openCreate to pre-select a parent category:
+  // - if the page filter is active, use the filtered category
+  // - otherwise default to the first category in the list
+  // (Matches the prior resetForm + post-reset patch behavior.)
+  const handleOpenCreate = () => {
+    openCreate();
+    const preselectedCategoryId =
+      filterCategoryId !== "all"
+        ? filterCategoryId
+        : categories[0]?.categoryId || "";
+    if (preselectedCategoryId) {
+      setFormData((prev) => ({ ...prev, categoryId: preselectedCategoryId }));
     }
   };
 
-  const handleDelete = async (subCategory: SubCategory) => {
-    if (
-      !confirm(`Are you sure you want to delete "${subCategory.name}"?`)
-    ) {
-      return;
-    }
-
-    try {
-      const client = generateClient<Schema>();
-      await client.models.SubCategory.delete({ id: subCategory.id });
-      toast.success("Sub-category deleted");
-      fetchData();
-    } catch (error) {
-      console.error("Error deleting sub-category:", error);
-      toast.error("Failed to delete sub-category");
-    }
-  };
-
+  // Link helpers — pure setFormData mutations, page-owned.
   const addLink = () => {
-    setFormData({
-      ...formData,
-      links: [...formData.links, { label: "", url: "" }],
-    });
+    setFormData((prev) => ({
+      ...prev,
+      links: [...prev.links, { label: "", url: "" }],
+    }));
   };
-
   const updateLink = (
     index: number,
     field: "label" | "url",
     value: string,
   ) => {
-    const newLinks = [...formData.links];
-    newLinks[index] = { ...newLinks[index], [field]: value };
-    setFormData({ ...formData, links: newLinks });
-  };
-
-  const removeLink = (index: number) => {
-    setFormData({
-      ...formData,
-      links: formData.links.filter((_, i) => i !== index),
+    setFormData((prev) => {
+      const newLinks = [...prev.links];
+      newLinks[index] = { ...newLinks[index], [field]: value };
+      return { ...prev, links: newLinks };
     });
   };
-
-  const getCategoryName = (categoryId: string) => {
-    return categories.find((c) => c.categoryId === categoryId)?.name || categoryId;
+  const removeLink = (index: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      links: prev.links.filter((_, i) => i !== index),
+    }));
   };
 
-  const getCategoryColor = (categoryId: string) => {
-    return categories.find((c) => c.categoryId === categoryId)?.color || "#6B7280";
-  };
+  const getCategoryName = (categoryId: string) =>
+    categories.find((c) => c.categoryId === categoryId)?.name || categoryId;
+  const getCategoryColor = (categoryId: string) =>
+    categories.find((c) => c.categoryId === categoryId)?.color || "#6B7280";
 
   const filteredSubCategories =
     filterCategoryId === "all"
@@ -291,7 +230,7 @@ export default function SubCategoriesPage() {
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button onClick={openCreateDialog}>
+            <Button onClick={handleOpenCreate}>
               <Plus className="mr-2 h-4 w-4" />
               Add Sub-Category
             </Button>
@@ -532,7 +471,8 @@ export default function SubCategoriesPage() {
               <CardDescription>
                 {filteredSubCategories.length} sub-categor
                 {filteredSubCategories.length !== 1 ? "ies" : "y"}{" "}
-                {filterCategoryId !== "all" && `in ${getCategoryName(filterCategoryId)}`}
+                {filterCategoryId !== "all" &&
+                  `in ${getCategoryName(filterCategoryId)}`}
               </CardDescription>
             </div>
             <Select
@@ -624,7 +564,7 @@ export default function SubCategoriesPage() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => openEditDialog(subCategory)}
+                          onClick={() => openEdit(subCategory)}
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
