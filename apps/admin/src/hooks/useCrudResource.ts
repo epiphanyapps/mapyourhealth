@@ -219,8 +219,12 @@ export function useCrudResource<T extends RecordWithId, FormData>(
         toast.success(`${resourceName} created`);
       }
       setIsDialogOpen(false);
-      setEditingRecord(null);
-      setFormData(defaultFormValues);
+      // Don't clear editingRecord / formData here. They'll be set
+      // correctly the next time the dialog opens via openCreate or
+      // openEdit. Clearing them in the same render that closes the
+      // dialog makes Radix's exit animation briefly show "Create
+      // <Resource>" (empty form, title flipped) before the dialog
+      // disappears (#395).
       await refresh();
     } catch (err) {
       console.error(`Error saving ${resourceName}:`, err);

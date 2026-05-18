@@ -1,0 +1,93 @@
+name: Amplify Start Job
+description: >
+  Wait for the Amplify branch to be free, then start a RELEASE job.
+  Surfaces a clear timeout error on prolonged contention, and retries
+  start-job on LimitExceededException as a defense against a job
+  slipping in between the poll and the call.
+
+inputs:
+  app-id:
+    description: Amplify app ID
+    required: true
+  branch:
+    description: Amplify branch name (e.g. "staging", "main")
+    required: true
+  sha:
+    description: Commit SHA to deploy
+    required: true
+  timeout-seconds:
+    description: How long to wait for the branch to be free
+    required: false
+    default: "1800"
+
+runs:
+  using: composite
+  steps:
+    - name: Start Amplify job
+      shell: bash
+      env:
+        APP_ID: ${{ inputs.app-id }}
+        BRANCH: ${{ inputs.branch }}
+        SHA: ${{ inputs.sha }}
+        TIMEOUT: ${{ inputs.timeout-seconds }}
+      run: |
+        set -uo pipefail
+        COMMIT_MSG=$(git log -1 --pretty=%s "$SHA")
+        COMMIT_TIME=$(git log -1 --pretty=%cI "$SHA")
+
+        # Amplify allows one PENDING/RUNNING job per branch. Wait for the
+        # branch to be free before calling start-job. Surface a clear
+        # timeout error rather than falling through to the retry loop.
+        DEADLINE=$(( $(date +%s) + TIMEOUT ))
+        FREE=0
+        while [ "$(date +%s)" -lt "$DEADLINE" ]; do
+          # Two things to handle:
+          # 1. `jobSummaries[?…]` returns null when no jobs match (or when
+          #    the list is empty), and `length(null)` errors. Coalesce to
+          #    `[]` so length() always sees an array.
+          # 2. `--max-items` enables AWS CLI client-side pagination — each
+          #    page evaluates --query independently and prints to stdout,
+          #    so the script can receive multi-line output like "0\n0".
+          #    Use --no-paginate (with no --max-items) so we get a single
+          #    integer back from the first API response (default page is
+          #    large enough; we only need the count anyway).
+          if BUSY=$(aws amplify list-jobs --app-id "$APP_ID" --branch-name "$BRANCH" --no-paginate \
+            --query "length(jobSummaries[?status=='PENDING' || status=='RUNNING'] || \`[]\`)" \
+            --output text 2>&1); then
+            if [ "$BUSY" = "0" ]; then
+              FREE=1
+              break
+            fi
+            echo "Amplify branch $BRANCH busy ($BUSY job(s)); waiting..."
+          else
+            echo "list-jobs failed: $BUSY"
+          fi
+          sleep 20
+        done
+        if [ "$FREE" = "0" ]; then
+          echo "Timed out after ${TIMEOUT}s waiting for Amplify branch $BRANCH to be free"
+          exit 1
+        fi
+
+        # Belt-and-suspenders: another caller may have slipped in between
+        # the poll and the call. Retry on LimitExceededException.
+        for attempt in 1 2 3 4 5; do
+          if OUT=$(aws amplify start-job \
+            --app-id "$APP_ID" \
+            --branch-name "$BRANCH" \
+            --job-type RELEASE \
+            --commit-id "$SHA" \
+            --commit-message "$COMMIT_MSG" \
+            --commit-time "$COMMIT_TIME" 2>&1); then
+            echo "$OUT"
+            exit 0
+          fi
+          echo "start-job attempt $attempt failed: $OUT"
+          if echo "$OUT" | grep -q "LimitExceededException"; then
+            sleep 30
+            continue
+          fi
+          exit 1
+        done
+        echo "start-job exhausted retries"
+        exit 1

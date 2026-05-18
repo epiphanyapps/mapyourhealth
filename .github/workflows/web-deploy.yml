@@ -11,6 +11,12 @@ on:
       - 'yarn.lock'
   workflow_dispatch:
 
+# Serialize deploys per branch so back-to-back pushes don't collide on the
+# Amplify branch (one PENDING/RUNNING job per branch is the AWS limit).
+concurrency:
+  group: web-deploy-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   wait-for-checks:
     name: Wait for Lint and Type Check
@@ -124,13 +130,8 @@ jobs:
           fetch-depth: 1
 
       - name: Deploy Web Landing Page
-        run: |
-          COMMIT_MSG=$(git log -1 --pretty=%s "${{ github.sha }}")
-          COMMIT_TIME=$(git log -1 --pretty=%cI "${{ github.sha }}")
-          aws amplify start-job \
-            --app-id ${{ secrets.AMPLIFY_WEB_APP_ID }} \
-            --branch-name ${{ github.ref_name }} \
-            --job-type RELEASE \
-            --commit-id ${{ github.sha }} \
-            --commit-message "$COMMIT_MSG" \
-            --commit-time "$COMMIT_TIME"
+        uses: ./.github/actions/amplify-start-job
+        with:
+          app-id: ${{ secrets.AMPLIFY_WEB_APP_ID }}
+          branch: ${{ github.ref_name }}
+          sha: ${{ github.sha }}
