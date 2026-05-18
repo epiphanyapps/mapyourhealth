@@ -233,7 +233,6 @@ export function useCrudResource<T extends RecordWithId, FormData>(
       setIsSaving(false);
     }
   }, [
-    defaultFormValues,
     editingRecord,
     formData,
     formToPayload,
