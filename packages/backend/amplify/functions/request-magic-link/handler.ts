@@ -51,7 +51,13 @@ function isValidEmail(email: string): boolean {
 }
 
 /**
- * Create response with CORS headers
+ * Build a JSON response. CORS headers are intentionally NOT set here — the
+ * Lambda Function URL itself is configured with `cors: { allowedOrigins: ['*'] }`
+ * in `packages/backend/amplify/backend.ts`, and AWS adds those headers to
+ * every response. Adding them again from the Lambda produces duplicate
+ * `Access-Control-Allow-Origin` values (`*` from us + the request origin
+ * reflected by Function URL), which browsers reject as `Failed to fetch`.
+ * That was the post-#401 regression Rayane hit on staging mobile-web.
  */
 function createResponse(
   statusCode: number,
@@ -61,8 +67,6 @@ function createResponse(
     statusCode,
     headers: {
       'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Content-Type',
     },
     body: JSON.stringify(body),
   };
