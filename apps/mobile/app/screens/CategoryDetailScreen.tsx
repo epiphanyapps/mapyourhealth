@@ -6,8 +6,8 @@ import {
   TextStyle,
   ScrollView,
   ActivityIndicator,
+  Alert,
   RefreshControl,
-  Share,
   TouchableOpacity,
   Linking,
 } from "react-native"
@@ -42,6 +42,7 @@ import {
 import type { AppStackScreenProps } from "@/navigators/navigationTypes"
 import { useAppTheme } from "@/theme/context"
 import { trackEvent } from "@/utils/analytics"
+import { sharePayload } from "@/utils/share"
 
 interface CategoryDetailScreenProps extends AppStackScreenProps<"CategoryDetail"> {}
 
@@ -189,14 +190,15 @@ ${riskDetails || "No risks detected"}
 
 View details: ${shareUrl}`
 
-    try {
-      await Share.share({
-        message: shareMessage,
-        title: `${categoryName} Risk Report - ${cityData.city}`,
-      })
-    } catch (error) {
-      // User cancelled or share failed - no need to show error
-      console.log("Share cancelled or failed:", error)
+    const result = await sharePayload({
+      message: shareMessage,
+      title: `${categoryName} Risk Report - ${cityData.city}`,
+      url: shareUrl,
+    })
+    if (result.outcome === "copied") {
+      Alert.alert("Copied to clipboard", "Paste the risk report into a message or email.")
+    } else if (result.outcome === "error") {
+      console.log("Share failed:", result.error)
     }
   }, [cityData, stats, categoryName, city, state, country, category])
 
