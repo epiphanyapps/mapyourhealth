@@ -20,7 +20,12 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import { checkRateLimit, recordRequest } from './rate-limiter';
 
 const cognitoClient = new CognitoIdentityProviderClient({});
-const sesClient = new SESClient({});
+// SES in ca-central-1 (the rest of the stack's region) is still in sandbox —
+// recipients must be a verified identity. us-east-1 has production access for
+// this AWS account with the mapyourhealth.info domain verified, so route the
+// magic-link emails through there. Matches the pattern already used in
+// resend-confirmation and subscribe-to-newsletter Lambdas.
+const sesClient = new SESClient({ region: 'us-east-1' });
 
 const USER_POOL_ID = process.env.USER_POOL_ID!;
 const FROM_EMAIL = process.env.FROM_EMAIL || 'noreply@mapyourhealth.info';

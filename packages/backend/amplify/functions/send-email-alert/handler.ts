@@ -8,8 +8,12 @@
 import type { Handler } from 'aws-lambda'
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses'
 
-// Initialize SES client
-const sesClient = new SESClient({})
+// Initialize SES client. SES in ca-central-1 is still in sandbox (recipients
+// must be verified identities). us-east-1 has production access for this AWS
+// account with the mapyourhealth.info domain verified, so route alert emails
+// through there. Matches the pattern already used in resend-confirmation and
+// subscribe-to-newsletter Lambdas.
+const sesClient = new SESClient({ region: "us-east-1" })
 
 interface EmailAlertEvent {
   /** The stat that changed */
