@@ -120,7 +120,7 @@ export default function AdminDashboard() {
       title: "Manage Contaminants",
       description: "Add, edit, or remove contaminant definitions",
       icon: Droplets,
-      href: "/stats",
+      href: "/contaminants",
     },
     {
       title: "Manage Thresholds",
@@ -138,7 +138,7 @@ export default function AdminDashboard() {
       title: "Location Measurements",
       description: "Add or modify measurements for cities",
       icon: MapPin,
-      href: "/zip-codes",
+      href: "/measurements",
     },
     {
       title: "Import Data",
@@ -150,7 +150,7 @@ export default function AdminDashboard() {
       title: "Review Reports",
       description: "Moderate user-submitted hazard reports",
       icon: AlertTriangle,
-      href: "/reports",
+      href: "/hazard-reports",
     },
   ];
 
