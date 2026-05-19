@@ -113,7 +113,7 @@ function generateEmailHtml(magicLink: string): string {
         <p style="color: #71717a; margin: 0 0 8px 0; font-size: 12px;">
           If the button doesn't work, copy and paste this link into your browser:
         </p>
-        <p style="color: #7A9229; margin: 0; font-size: 12px; word-break: break-all;">
+        <p style="color: #7a9229; margin: 0; font-size: 12px; word-break: break-all;">
           ${magicLink}
         </p>
       </div>
