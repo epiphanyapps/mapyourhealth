@@ -115,8 +115,11 @@ test.describe("Admin: Location Management", () => {
 
 test.describe("Admin: Authentication", () => {
   test("redirects to login when not authenticated", async ({ page }) => {
-    // Try to access protected page directly
-    await page.goto(`${testUrls.admin}/zip-codes`);
+    // Try to access protected page directly. The previous target was
+    // `/zip-codes`, which PR #406 retired — Next then renders a 404 outside
+    // the (admin) layout so the auth guard never runs and this assertion
+    // failed without exercising real behaviour.
+    await page.goto(`${testUrls.admin}/measurements`);
 
     // Should be redirected to login
     await expect(page).toHaveURL(/.*login.*/, { timeout: 10000 });
