@@ -296,9 +296,9 @@ export default function PollutionSourcesPage() {
     <div className="flex flex-col h-[calc(100vh-4rem)] p-6 gap-4">
       <div className="flex flex-1 min-h-0 gap-6">
         {/* Left Panel - Filters and Source List */}
-        <div className="w-80 flex flex-col gap-4">
-          <div className="flex items-center justify-between">
-            <div>
+        <div className="w-[28rem] flex flex-col gap-4 min-h-0">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
               <h1 className="text-2xl font-bold tracking-tight">
                 Pollution Sources
               </h1>
@@ -306,100 +306,78 @@ export default function PollutionSourcesPage() {
                 Manage environmental contamination data
               </p>
             </div>
+            <Button
+              onClick={handleCreateSource}
+              size="sm"
+              disabled={isCreatingSource}
+              className="shrink-0"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              {isCreatingSource ? "Click map…" : "Add Source"}
+            </Button>
           </div>
 
-          {/* Add Source Button */}
-          <Button
-            onClick={handleCreateSource}
-            className="w-full"
-            disabled={isCreatingSource}
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            {isCreatingSource
-              ? "Click map to place..."
-              : "Add Pollution Source"}
-          </Button>
-
-          {/* Filters */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Filters</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Source Type
-                </label>
-                <Select
-                  value={filters.sourceType}
-                  onValueChange={(value) =>
-                    setFilters({ ...filters, sourceType: value })
-                  }
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    {uniqueSourceTypes.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type.charAt(0).toUpperCase() +
-                          type.slice(1).replace("_", " ")}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Severity
-                </label>
-                <Select
-                  value={filters.severity}
-                  onValueChange={(value) =>
-                    setFilters({ ...filters, severity: value })
-                  }
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Severities</SelectItem>
-                    {uniqueSeverities.map((severity) => (
-                      <SelectItem key={severity} value={severity}>
-                        {severity.charAt(0).toUpperCase() + severity.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground">
-                  Status
-                </label>
-                <Select
-                  value={filters.status}
-                  onValueChange={(value) =>
-                    setFilters({ ...filters, status: value })
-                  }
-                >
-                  <SelectTrigger className="h-8">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Statuses</SelectItem>
-                    {uniqueStatuses.map((status) => (
-                      <SelectItem key={status} value={status}>
-                        {status.charAt(0).toUpperCase() + status.slice(1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </CardContent>
-          </Card>
+          {/* Compact inline filters — one row of three selects. The previous
+              vertical Filters card with labels above each select ate ~140px
+              of vertical space, pushing the Sources list below the fold even
+              with only 5 records. */}
+          <div className="grid grid-cols-3 gap-2">
+            <Select
+              value={filters.sourceType}
+              onValueChange={(value) =>
+                setFilters({ ...filters, sourceType: value })
+              }
+            >
+              <SelectTrigger className="h-9" aria-label="Source type filter">
+                <SelectValue placeholder="Type" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {uniqueSourceTypes.map((type) => (
+                  <SelectItem key={type} value={type}>
+                    {type.charAt(0).toUpperCase() +
+                      type.slice(1).replace("_", " ")}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.severity}
+              onValueChange={(value) =>
+                setFilters({ ...filters, severity: value })
+              }
+            >
+              <SelectTrigger className="h-9" aria-label="Severity filter">
+                <SelectValue placeholder="Severity" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Severities</SelectItem>
+                {uniqueSeverities.map((severity) => (
+                  <SelectItem key={severity} value={severity}>
+                    {severity.charAt(0).toUpperCase() + severity.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select
+              value={filters.status}
+              onValueChange={(value) =>
+                setFilters({ ...filters, status: value })
+              }
+            >
+              <SelectTrigger className="h-9" aria-label="Status filter">
+                <SelectValue placeholder="Status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Statuses</SelectItem>
+                {uniqueStatuses.map((status) => (
+                  <SelectItem key={status} value={status}>
+                    {status.charAt(0).toUpperCase() + status.slice(1)}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
           {/* Source List */}
           {/* min-h-0 lets flex-1 actually shrink under content height; the
@@ -407,11 +385,19 @@ export default function PollutionSourcesPage() {
             overflow-hidden) or it grows past the Card boundary (#357). */}
           <Card className="flex-1 min-h-0 flex flex-col">
             <CardHeader className="pb-3 flex-shrink-0">
-              <CardTitle className="text-sm flex items-center justify-between">
-                Sources
-                <Badge variant="secondary" className="ml-2">
-                  {filteredSources.length}
-                </Badge>
+              <CardTitle className="text-sm flex items-center justify-between gap-2">
+                <span className="flex items-center gap-2">
+                  Sources
+                  <Badge variant="secondary">
+                    {filteredSources.length}
+                    {sources.length !== filteredSources.length
+                      ? `/${sources.length}`
+                      : ""}
+                  </Badge>
+                </span>
+                <span className="text-xs font-normal text-muted-foreground">
+                  Updated {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0 flex-1 min-h-0 overflow-hidden">
@@ -436,7 +422,7 @@ export default function PollutionSourcesPage() {
                       <div className="flex items-start gap-2">
                         {getStatusIcon(source.status ?? "active")}
                         <div className="flex-1 min-w-0">
-                          <div className="font-medium text-sm truncate">
+                          <div className="font-medium text-sm">
                             {source.name}
                           </div>
                           <div className="text-xs text-muted-foreground">
@@ -453,8 +439,10 @@ export default function PollutionSourcesPage() {
                             >
                               {source.severityLevel ?? "moderate"}
                             </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {source.impactRadius}m
+                            <span className="text-xs text-muted-foreground tabular-nums">
+                              {source.impactRadius >= 1000
+                                ? `${(source.impactRadius / 1000).toFixed(1)} km`
+                                : `${source.impactRadius} m`}
                             </span>
                           </div>
                         </div>
@@ -467,10 +455,9 @@ export default function PollutionSourcesPage() {
           </Card>
         </div>
 
-        {/* Right Panel - Map and Details */}
-        <div className="flex-1 flex flex-col gap-4">
-          {/* Map Container */}
-          <Card className="flex-1">
+        {/* Right Panel - Map */}
+        <div className="flex-1 flex flex-col min-h-0">
+          <Card className="flex-1 min-h-0">
             <CardContent className="p-0 h-full">
               <PollutionSourceMap
                 sources={filteredSources}
@@ -486,20 +473,6 @@ export default function PollutionSourcesPage() {
               />
             </CardContent>
           </Card>
-
-          {/* Status Bar */}
-          <div className="flex items-center justify-between text-sm text-muted-foreground">
-            <div>
-              {filteredSources.length} sources visible
-              {filters.sourceType !== "all" ||
-              filters.severity !== "all" ||
-              filters.status !== "all" ||
-              filters.jurisdiction !== "all"
-                ? " (filtered)"
-                : ""}
-            </div>
-            <div>Last updated: {new Date().toLocaleTimeString()}</div>
-          </div>
         </div>
       </div>
     </div>
