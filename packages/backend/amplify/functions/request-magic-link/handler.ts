@@ -89,10 +89,10 @@ function generateEmailHtml(magicLink: string): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Sign in to MapYourHealth</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 20px;">
+<body style="font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #f4f4f5; margin: 0; padding: 20px;">
   <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
     <!-- Header -->
-    <div style="background-color: #3B82F6; padding: 24px; text-align: center;">
+    <div style="background-color: #9db835; padding: 24px; text-align: center;">
       <h1 style="color: #ffffff; margin: 0; font-size: 24px;">MapYourHealth</h1>
     </div>
 
@@ -108,7 +108,7 @@ function generateEmailHtml(magicLink: string): string {
 
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${magicLink}" style="display: inline-block; background-color: #3B82F6; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
+        <a href="${magicLink}" style="display: inline-block; background-color: #9db835; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 16px;">
           Sign In to MapYourHealth
         </a>
       </div>
@@ -122,7 +122,7 @@ function generateEmailHtml(magicLink: string): string {
         <p style="color: #71717a; margin: 0 0 8px 0; font-size: 12px;">
           If the button doesn't work, copy and paste this link into your browser:
         </p>
-        <p style="color: #3B82F6; margin: 0; font-size: 12px; word-break: break-all;">
+        <p style="color: #7a9229; margin: 0; font-size: 12px; word-break: break-all;">
           ${magicLink}
         </p>
       </div>
