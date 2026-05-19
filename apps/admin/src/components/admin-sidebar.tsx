@@ -78,6 +78,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Import Data", url: "/import", icon: Upload },
       { title: "Hazard Reports", url: "/hazard-reports", icon: AlertTriangle },
       { title: "Warning Banners", url: "/banners", icon: Megaphone },
+      { title: "Pollution Sources", url: "/pollution-sources", icon: Factory },
     ],
   },
   {
@@ -110,7 +111,6 @@ const menuGroups: MenuGroup[] = [
     collapsible: true,
     defaultOpen: true,
     items: [
-      { title: "Pollution Sources", url: "/pollution-sources", icon: Factory, orphan: true },
       { title: "Properties", url: "/properties", icon: Activity, orphan: true },
       { title: "Property Thresholds", url: "/property-thresholds", icon: Gauge, orphan: true },
       { title: "Observations", url: "/observations", icon: Eye, orphan: true },

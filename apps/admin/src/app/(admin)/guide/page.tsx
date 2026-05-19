@@ -166,7 +166,7 @@ const capabilityRows: CapabilityRow[] = [
       "Plot industrial sites / landfills / spills on a map with severity, impact radius, status.",
     bulk: "No",
     mobile:
-      "Orphan — consumer card removed in #309. Decision pending on EPI-25.",
+      "Collapsible PollutionSourcesCard on the Dashboard + dedicated PollutionSourcesScreen, cascade-aware (city → state → country).",
   },
   {
     section: "Guide",
@@ -226,10 +226,9 @@ const dataPatterns = [
   },
   {
     pattern: "Reference catalog (orphan — see EPI-25)",
-    examples:
-      "EPA radon zones, INSPQ Lyme endemic status, landfill location + impact radius.",
-    where: "/observations (per-record) or /pollution-sources (map-pin)",
-    bulk: "No bulk path today, and the mobile consumer cards were removed in #309 — do not enter data here until EPI-25 closes.",
+    examples: "EPA radon zones, INSPQ Lyme endemic status.",
+    where: "/observations (per-record)",
+    bulk: "No bulk path today, and the mobile consumer card was removed in #309 — do not enter data here until EPI-25 closes.",
   },
 ];
 

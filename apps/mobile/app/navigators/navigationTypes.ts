@@ -50,6 +50,8 @@ export type AppStackParamList = {
     city: string
     state: string
     country: string
+    /** Optional source to scroll into view and highlight on mount. */
+    sourceId?: string
   }
   // 🔥 Your screens go here
   // IGNITE_GENERATOR_ANCHOR_APP_STACK_PARAM_LIST

@@ -11,9 +11,10 @@
  * docs-cascade-work-handoff-2026-05-10-md-clever-peacock.md.
  */
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import {
   ActivityIndicator,
+  LayoutChangeEvent,
   RefreshControl,
   ScrollView,
   View,
@@ -32,23 +33,15 @@ import { usePollutionSources } from "@/hooks/usePollutionSources"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import type { AmplifyPollutionSource } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
+import {
+  SEVERITY_COLORS,
+  STATUS_COLORS,
+  isPollutionSeverity,
+  isPollutionStatus,
+} from "@/theme/pollutionColors"
 
 type PollutionSourcesRouteProp = RouteProp<AppStackParamList, "PollutionSources">
 type NavigationProp = NativeStackNavigationProp<AppStackParamList>
-
-const SEVERITY_COLORS: Record<string, string> = {
-  low: "#10B981",
-  moderate: "#F59E0B",
-  high: "#F97316",
-  critical: "#DC2626",
-}
-
-const STATUS_COLORS: Record<string, string> = {
-  active: "#DC2626",
-  monitored: "#F59E0B",
-  remediated: "#10B981",
-  closed: "#6B7280",
-}
 
 function formatRadius(meters: number): string {
   if (meters >= 1000) {
@@ -75,7 +68,7 @@ export function PollutionSourcesScreen() {
   const navigation = useNavigation<NavigationProp>()
   const route = useRoute<PollutionSourcesRouteProp>()
   const { theme } = useAppTheme()
-  const { city, state, country } = route.params
+  const { city, state, country, sourceId } = route.params
 
   const { sources, isLoading, error, scope, refresh } = usePollutionSources(city, state, country)
 
@@ -89,11 +82,37 @@ export function PollutionSourcesScreen() {
     }
   }, [refresh])
 
+  const scrollRef = useRef<ScrollView>(null)
+  const cardOffsets = useRef<Record<string, number>>({})
+  const didScrollToTargetRef = useRef(false)
+  const [highlightedId, setHighlightedId] = useState<string | null>(null)
+
+  // Reset the scroll-to-target flag whenever the requested source changes so
+  // navigating to a fresh source from the dashboard scrolls again.
+  useEffect(() => {
+    didScrollToTargetRef.current = false
+    setHighlightedId(sourceId ?? null)
+  }, [sourceId])
+
+  useEffect(() => {
+    if (!sourceId || didScrollToTargetRef.current) return
+    if (sources.length === 0) return
+    const offset = cardOffsets.current[sourceId]
+    if (offset === undefined) return
+    scrollRef.current?.scrollTo({ y: Math.max(offset - 24, 0), animated: true })
+    didScrollToTargetRef.current = true
+    const timer = setTimeout(() => {
+      setHighlightedId(null)
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [sourceId, sources])
+
   return (
     <Screen safeAreaEdges={["top"]} preset="fixed" contentContainerStyle={$root}>
       <Header title="Pollution Sources" leftIcon="back" onLeftPress={() => navigation.goBack()} />
 
       <ScrollView
+        ref={scrollRef}
         contentContainerStyle={$scrollContent}
         refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} />}
       >
@@ -129,7 +148,14 @@ export function PollutionSourcesScreen() {
         ) : (
           <View style={$listContainer}>
             {sources.map((source) => (
-              <SourceCard key={source.id} source={source} />
+              <SourceCard
+                key={source.id}
+                source={source}
+                highlighted={highlightedId === source.id}
+                onLayout={(event) => {
+                  cardOffsets.current[source.id] = event.nativeEvent.layout.y
+                }}
+              />
             ))}
           </View>
         )}
@@ -138,21 +164,32 @@ export function PollutionSourcesScreen() {
   )
 }
 
-function SourceCard({ source }: { source: AmplifyPollutionSource }) {
+interface SourceCardProps {
+  source: AmplifyPollutionSource
+  highlighted?: boolean
+  onLayout?: (event: LayoutChangeEvent) => void
+}
+
+function SourceCard({ source, highlighted, onLayout }: SourceCardProps) {
   const { theme } = useAppTheme()
-  const severityColor = source.severityLevel
-    ? (SEVERITY_COLORS[source.severityLevel] ?? theme.colors.textDim)
+  const rawLevel: string | null | undefined = source.severityLevel
+  const rawStatus: string | null | undefined = source.status
+  const severityColor = isPollutionSeverity(rawLevel)
+    ? SEVERITY_COLORS[rawLevel]
     : theme.colors.textDim
-  const statusColor = source.status
-    ? (STATUS_COLORS[source.status] ?? theme.colors.textDim)
-    : theme.colors.textDim
+  const statusColor = isPollutionStatus(rawStatus) ? STATUS_COLORS[rawStatus] : theme.colors.textDim
 
   return (
     <View
+      onLayout={onLayout}
       style={[
         $card,
         // eslint-disable-next-line react-native/no-inline-styles
-        { backgroundColor: theme.colors.background, borderColor: theme.colors.border },
+        {
+          backgroundColor: theme.colors.background,
+          borderColor: highlighted ? theme.colors.tint : theme.colors.border,
+          borderWidth: highlighted ? 2 : 1,
+        },
       ]}
     >
       <View style={$cardHeader}>

@@ -22,7 +22,6 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import dynamic from "next/dynamic";
-import { OrphanBanner } from "@/components/orphan-banner";
 
 // Dynamic import for map component to avoid SSR issues
 const PollutionSourceMap = dynamic(
@@ -295,7 +294,6 @@ export default function PollutionSourcesPage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] p-6 gap-4">
-      <OrphanBanner pageLabel="pollution sources" />
       <div className="flex flex-1 min-h-0 gap-6">
         {/* Left Panel - Filters and Source List */}
         <div className="w-80 flex flex-col gap-4">
