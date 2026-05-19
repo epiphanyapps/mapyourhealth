@@ -1039,7 +1039,7 @@ const allSections: AdminSection[] = [
     title: "Pollution Sources",
     route: "/pollution-sources",
     icon: Factory,
-    group: "orphan",
+    group: "daily-ops",
     purpose:
       "Pin known pollution sources (industrial sites, landfills, etc.) to the map. Each source has a location, an impact radius, a severity, and a status. Mobile renders these on the dedicated PollutionSourcesScreen.",
     lists: [
@@ -1089,9 +1089,11 @@ const allSections: AdminSection[] = [
     ],
     mobileImpact: {
       summary:
-        "ORPHAN (EPI-25): no current mobile consumer. Service helpers exist in apps/mobile/app/services/amplify/data.ts but no screen, hook, or component renders pollution sources. Edits here are not visible to users today.",
+        "Mobile surfaces pollution sources in two places. The Dashboard shows a collapsible PollutionSourcesCard with the count, worst severity, and the top sources nearby. Tapping the card (or a row inside it) opens the full PollutionSourcesScreen list. Both use usePollutionSources with the same city → state → country cascade as banners and measurements; LocationScopeBadge surfaces whichever scope returned data.",
       edgeCases: [
-        "If EPI-25 reinstates a PollutionSourcesScreen, the cascade rules (city → state → country) will mirror banners and measurements.",
+        "Empty cascade at every level hides the Dashboard card entirely; the dedicated screen still renders its own empty-state copy for direct navigation.",
+        "Sources with status `remediated` or `closed` are excluded from the inline Dashboard summary but remain visible on the detail screen.",
+        "Inline rows are sorted by severity (critical → low) and capped at three; the 'View all N sources' footer always navigates to the full list.",
       ],
     },
   },

@@ -15,6 +15,7 @@ import { LocationHeader } from "@/components/LocationHeader"
 import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { NavHeader } from "@/components/NavHeader"
 import { PlacesSearchBar } from "@/components/PlacesSearchBar"
+import { PollutionSourcesCard } from "@/components/PollutionSourcesCard"
 import { ProfileMenu } from "@/components/ProfileMenu"
 import { Screen } from "@/components/Screen"
 import { CATEGORY_DISPLAY_NAMES } from "@/components/StatCategoryCard"
@@ -1018,33 +1019,13 @@ View details: ${shareUrl}`
         ))}
       </View>
 
-      {/* Pollution Sources entry point — navigates to the cascade-aware list */}
+      {/* Pollution Sources — collapsible card with cascade-aware data */}
       {currentLocation && (
-        <Pressable
-          onPress={() =>
-            navigation.navigate("PollutionSources", {
-              city: currentLocation.city || "",
-              state: currentLocation.state || "",
-              country: currentLocation.country || "",
-            })
-          }
-          style={({ pressed }) => [
-            $pollutionSourcesCard,
-            { borderColor: theme.colors.border, backgroundColor: theme.colors.background },
-            pressed && { opacity: 0.8 },
-          ]}
-          accessibilityRole="button"
-          accessibilityLabel="View pollution sources for this location"
-        >
-          <MaterialCommunityIcons name="factory" size={22} color={theme.colors.tint} />
-          <View style={$pollutionSourcesTextContainer}>
-            <Text style={$pollutionSourcesTitle}>Pollution Sources</Text>
-            <Text style={$pollutionSourcesSubtitle}>
-              Industrial sites, landfills, and other emitters near this location
-            </Text>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.textDim} />
-        </Pressable>
+        <PollutionSourcesCard
+          city={currentLocation.city || ""}
+          state={currentLocation.state || ""}
+          country={currentLocation.country || ""}
+        />
       )}
 
       {/* Report Hazard Button */}
@@ -1096,33 +1077,6 @@ const $actionButton: ViewStyle = {
 const $actionButtonText: TextStyle = {
   fontSize: 14,
   fontWeight: "600",
-}
-
-const $pollutionSourcesCard: ViewStyle = {
-  flexDirection: "row",
-  alignItems: "center",
-  marginHorizontal: 16,
-  marginTop: 16,
-  paddingVertical: 14,
-  paddingHorizontal: 16,
-  borderRadius: 12,
-  borderWidth: 1,
-  gap: 12,
-}
-
-const $pollutionSourcesTextContainer: ViewStyle = {
-  flex: 1,
-}
-
-const $pollutionSourcesTitle: TextStyle = {
-  fontSize: 15,
-  fontWeight: "600",
-}
-
-const $pollutionSourcesSubtitle: TextStyle = {
-  fontSize: 12,
-  opacity: 0.7,
-  marginTop: 2,
 }
 
 const $reportButton: ViewStyle = {
