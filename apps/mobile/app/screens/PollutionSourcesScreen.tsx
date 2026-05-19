@@ -30,6 +30,7 @@ import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { Screen } from "@/components/Screen"
 import { Text } from "@/components/Text"
 import { usePollutionSources } from "@/hooks/usePollutionSources"
+import { formatRadius, formatSourceType } from "@/lib/pollutionFormat"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import type { AmplifyPollutionSource } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
@@ -42,22 +43,6 @@ import {
 
 type PollutionSourcesRouteProp = RouteProp<AppStackParamList, "PollutionSources">
 type NavigationProp = NativeStackNavigationProp<AppStackParamList>
-
-function formatRadius(meters: number): string {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`
-  }
-  return `${Math.round(meters)} m`
-}
-
-function formatSourceType(type: string | null | undefined): string {
-  if (!type) return "Unknown"
-  // industrial → Industrial; waste_site → Waste site
-  return type
-    .split("_")
-    .map((w, i) => (i === 0 ? w.charAt(0).toUpperCase() + w.slice(1) : w))
-    .join(" ")
-}
 
 function formatTitleCase(value: string | null | undefined): string {
   if (!value) return ""
@@ -83,9 +68,16 @@ export function PollutionSourcesScreen() {
   }, [refresh])
 
   const scrollRef = useRef<ScrollView>(null)
-  const cardOffsets = useRef<Record<string, number>>({})
   const didScrollToTargetRef = useRef(false)
+  // Offsets live in state so the scroll-to-target effect re-runs when the
+  // target card's `onLayout` fires (which is async from native). With a ref
+  // we'd race the effect and silently miss the scroll on first paint.
+  const [cardOffsets, setCardOffsets] = useState<Record<string, number>>({})
   const [highlightedId, setHighlightedId] = useState<string | null>(null)
+
+  const recordCardOffset = useCallback((id: string, y: number) => {
+    setCardOffsets((prev) => (prev[id] === y ? prev : { ...prev, [id]: y }))
+  }, [])
 
   // Reset the scroll-to-target flag whenever the requested source changes so
   // navigating to a fresh source from the dashboard scrolls again.
@@ -96,8 +88,7 @@ export function PollutionSourcesScreen() {
 
   useEffect(() => {
     if (!sourceId || didScrollToTargetRef.current) return
-    if (sources.length === 0) return
-    const offset = cardOffsets.current[sourceId]
+    const offset = cardOffsets[sourceId]
     if (offset === undefined) return
     scrollRef.current?.scrollTo({ y: Math.max(offset - 24, 0), animated: true })
     didScrollToTargetRef.current = true
@@ -105,7 +96,7 @@ export function PollutionSourcesScreen() {
       setHighlightedId(null)
     }, 2000)
     return () => clearTimeout(timer)
-  }, [sourceId, sources])
+  }, [sourceId, cardOffsets])
 
   return (
     <Screen safeAreaEdges={["top"]} preset="fixed" contentContainerStyle={$root}>
@@ -152,9 +143,7 @@ export function PollutionSourcesScreen() {
                 key={source.id}
                 source={source}
                 highlighted={highlightedId === source.id}
-                onLayout={(event) => {
-                  cardOffsets.current[source.id] = event.nativeEvent.layout.y
-                }}
+                onLayout={(event) => recordCardOffset(source.id, event.nativeEvent.layout.y)}
               />
             ))}
           </View>

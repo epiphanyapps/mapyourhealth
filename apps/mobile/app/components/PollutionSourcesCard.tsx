@@ -16,7 +16,6 @@ import type { NativeStackNavigationProp } from "@react-navigation/native-stack"
 import Animated, {
   Easing,
   interpolate,
-  runOnJS,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -25,6 +24,7 @@ import Animated, {
 import { LocationScopeBadge } from "@/components/LocationScopeBadge"
 import { Text } from "@/components/Text"
 import { usePollutionSources } from "@/hooks/usePollutionSources"
+import { formatRadius, formatSourceType } from "@/lib/pollutionFormat"
 import type { AppStackParamList } from "@/navigators/navigationTypes"
 import type { AmplifyPollutionSource } from "@/services/amplify/data"
 import { useAppTheme } from "@/theme/context"
@@ -50,36 +50,6 @@ export interface PollutionSourcesCardProps {
   style?: StyleProp<ViewStyle>
 }
 
-function titleCase(value: string): string {
-  if (!value) return ""
-  return value.charAt(0).toUpperCase() + value.slice(1)
-}
-
-function formatSourceType(type: string | null | undefined): string {
-  if (!type) return "Unknown"
-  return type
-    .split("_")
-    .map((part, index) => (index === 0 ? titleCase(part) : part))
-    .join(" ")
-}
-
-function formatRadius(meters: number): string {
-  if (meters >= 1000) {
-    return `${(meters / 1000).toFixed(1)} km`
-  }
-  return `${Math.round(meters)} m`
-}
-
-function summariseCounts(sources: AmplifyPollutionSource[]): {
-  total: number
-  worst: PollutionSeverity | null
-} {
-  return {
-    total: sources.length,
-    worst: worstSeverity(sources),
-  }
-}
-
 export function PollutionSourcesCard(props: PollutionSourcesCardProps) {
   const { city, state, country, style } = props
   const { theme } = useAppTheme()
@@ -90,27 +60,21 @@ export function PollutionSourcesCard(props: PollutionSourcesCardProps) {
   const orderedInline = sortBySeverityDesc(inlineSources).slice(0, INLINE_ROW_LIMIT)
   const totalCount = sources.length
   const inlineCount = inlineSources.length
-  const { worst } = summariseCounts(inlineSources)
+  const worst: PollutionSeverity | null = worstSeverity(inlineSources)
   const worstColor = worst ? SEVERITY_COLORS[worst] : theme.colors.tint
 
   const [expanded, setExpanded] = useState(false)
-  const [, setMeasured] = useState(false)
   const contentHeight = useSharedValue(0)
   const progress = useSharedValue(0)
-
-  const handleMeasured = useCallback(() => {
-    setMeasured(true)
-  }, [])
 
   const onContentLayout = useCallback(
     (event: LayoutChangeEvent) => {
       const height = event.nativeEvent.layout.height
       if (height > 0 && contentHeight.value === 0) {
         contentHeight.value = height
-        runOnJS(handleMeasured)()
       }
     },
-    [contentHeight, handleMeasured],
+    [contentHeight],
   )
 
   const toggleExpand = useCallback(() => {
@@ -166,15 +130,20 @@ export function PollutionSourcesCard(props: PollutionSourcesCardProps) {
       return `${totalCount} reported · all remediated or closed`
     }
     const noun = inlineCount === 1 ? "active source" : "active sources"
-    if (!worst) return `${inlineCount} ${noun} nearby`
     return `${inlineCount} ${noun} nearby`
   })()
 
-  const collapsedAccessibilityLabel = error
-    ? "Pollution sources, could not load, double tap to retry"
-    : `Pollution sources, ${inlineCount} ${inlineCount === 1 ? "active source" : "active sources"} nearby${
-        worst ? `, worst severity ${worst}` : ""
-      }`
+  const collapsedAccessibilityLabel = (() => {
+    if (isLoading) return "Pollution sources, loading"
+    if (error) return "Pollution sources, could not load, double tap to retry"
+    if (inlineCount === 0 && totalCount > 0) {
+      const noun = totalCount === 1 ? "source" : "sources"
+      return `Pollution sources, ${totalCount} ${noun} reported, all remediated or closed`
+    }
+    const noun = inlineCount === 1 ? "active source" : "active sources"
+    const severitySuffix = worst ? `, worst severity ${worst}` : ""
+    return `Pollution sources, ${inlineCount} ${noun} nearby${severitySuffix}`
+  })()
 
   return (
     <View
@@ -216,7 +185,12 @@ export function PollutionSourcesCard(props: PollutionSourcesCardProps) {
             {worst && !isLoading && !error ? (
               <>
                 <Text style={[$summaryDivider, { color: theme.colors.textDim }]}> · </Text>
-                <Text style={[$severityDot, { color: SEVERITY_COLORS[worst] }]}>●</Text>
+                <View
+                  // eslint-disable-next-line react-native/no-inline-styles
+                  style={[$severityDot, { backgroundColor: SEVERITY_COLORS[worst] }]}
+                  accessibilityElementsHidden
+                  importantForAccessibility="no-hide-descendants"
+                />
                 <Text style={[$severityLabel, { color: theme.colors.textDim }]}> {worst}</Text>
               </>
             ) : null}
@@ -287,7 +261,12 @@ function SourceRow({ source, onPress }: SourceRowProps) {
       accessibilityLabel={accessibilityLabel}
     >
       <View style={$rowSeverityCol}>
-        <Text style={[$rowDot, { color: severityColor }]}>●</Text>
+        <View
+          // eslint-disable-next-line react-native/no-inline-styles
+          style={[$rowDot, { backgroundColor: severityColor }]}
+          accessibilityElementsHidden
+          importantForAccessibility="no-hide-descendants"
+        />
         <Text style={[$rowSeverityLabel, { color: theme.colors.textDim }]} numberOfLines={1}>
           {severity ?? "unknown"}
         </Text>
@@ -359,8 +338,10 @@ const $summaryDivider: TextStyle = {
   fontSize: 13,
 }
 
-const $severityDot: TextStyle = {
-  fontSize: 12,
+const $severityDot: ViewStyle = {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
 }
 
 const $severityLabel: TextStyle = {
@@ -410,8 +391,10 @@ const $rowSeverityCol: ViewStyle = {
   gap: 4,
 }
 
-const $rowDot: TextStyle = {
-  fontSize: 12,
+const $rowDot: ViewStyle = {
+  width: 8,
+  height: 8,
+  borderRadius: 4,
 }
 
 const $rowSeverityLabel: TextStyle = {

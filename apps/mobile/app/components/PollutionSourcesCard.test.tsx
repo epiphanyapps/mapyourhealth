@@ -84,6 +84,7 @@ function resetHook(partial: Partial<typeof mockHookResult>) {
 
 beforeEach(() => {
   mockNavigate.mockClear()
+  mockHookResult.refresh.mockClear()
   resetHook({})
 })
 
@@ -226,5 +227,64 @@ describe("PollutionSourcesCard", () => {
       <PollutionSourcesCard city="Sorel-Tracy" state="QC" country="CA" />,
     )
     expect(getByTestId("pollution-sources-scope-badge")).toBeTruthy()
+  })
+
+  it("renders loading state and announces it on the header", () => {
+    resetHook({ isLoading: true, sources: [], scope: "none" })
+    const { getByLabelText, getByText } = render(
+      <PollutionSourcesCard city="Montreal" state="QC" country="CA" />,
+    )
+    expect(getByText("Loading sources…")).toBeTruthy()
+    expect(getByLabelText("Pollution sources, loading")).toBeTruthy()
+  })
+
+  it("renders error state and retries on header tap", () => {
+    resetHook({ error: "boom", scope: "none" })
+    const { getByLabelText, getByText } = render(
+      <PollutionSourcesCard city="Montreal" state="QC" country="CA" />,
+    )
+    expect(getByText("Could not load — tap to retry")).toBeTruthy()
+    fireEvent.press(getByLabelText(/could not load/i))
+    expect(mockHookResult.refresh).toHaveBeenCalledTimes(1)
+  })
+
+  it("renders 'all remediated' summary when every source is inactive", () => {
+    resetHook({
+      sources: [
+        makeSource({ id: "r1", status: "remediated", severityLevel: "high" }),
+        makeSource({ id: "c1", status: "closed", severityLevel: "moderate" }),
+      ],
+      scope: "city",
+    })
+    const { getByText, getByLabelText } = render(
+      <PollutionSourcesCard city="Montreal" state="QC" country="CA" />,
+    )
+    expect(getByText("2 reported · all remediated or closed")).toBeTruthy()
+    // Severity dot is hidden when no inline (active/monitored) sources exist —
+    // the worst-severity affordance only applies to currently-active sources.
+    expect(
+      getByLabelText("Pollution sources, 2 sources reported, all remediated or closed"),
+    ).toBeTruthy()
+  })
+
+  it("pluralises the footer for one vs many sources", () => {
+    resetHook({
+      sources: [makeSource({ id: "only", severityLevel: "moderate" })],
+      scope: "city",
+    })
+    const { getByText, rerender } = render(
+      <PollutionSourcesCard city="Montreal" state="QC" country="CA" />,
+    )
+    expect(getByText("View all 1 source")).toBeTruthy()
+
+    resetHook({
+      sources: [
+        makeSource({ id: "a", severityLevel: "moderate" }),
+        makeSource({ id: "b", severityLevel: "low" }),
+      ],
+      scope: "city",
+    })
+    rerender(<PollutionSourcesCard city="Montreal" state="QC" country="CA" />)
+    expect(getByText("View all 2 sources")).toBeTruthy()
   })
 })
