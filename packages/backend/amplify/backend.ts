@@ -217,6 +217,15 @@ new CfnOutput(authStack, 'RequestMagicLinkFunctionUrl', {
   exportName: `${authStack.stackName}-RequestMagicLinkUrl`,
 });
 
+// Expose the magic-link URL through amplify_outputs.json so the mobile app
+// can read the per-env URL at runtime instead of relying on a hardcoded
+// string in app/config (GH #353).
+backend.addOutput({
+  custom: {
+    magicLinkApiUrl: functionUrl.url,
+  },
+});
+
 // ============================================
 // Process Notifications Lambda Setup
 // ============================================

@@ -26,6 +26,10 @@ import {
   getLastNotificationResponse,
   NotificationStatus,
 } from "@/services/notifications"
+import { getEnvOverride } from "@/utils/envOverride"
+
+import prodOutputs from "../../amplify_outputs.json" // eslint-disable-line import/no-unresolved
+import stagingOutputs from "../../amplify_outputs.staging.json" // eslint-disable-line import/no-unresolved
 
 /**
  * Notification data structure from backend (process-notifications Lambda)
@@ -55,8 +59,14 @@ function handleNotificationNavigation(data: NotificationData | undefined): void 
   }
 }
 
-// Magic link API endpoint - this will be set from backend outputs
-const MAGIC_LINK_API_URL = Config.MAGIC_LINK_API_URL || ""
+// Magic link API endpoint. Sourced from amplify_outputs.json's `custom` section
+// per env (so staging and prod each point at their own Lambda Function URL),
+// with the legacy Config value as a build-time fallback. See GH #353.
+const magicLinkOutputs = getEnvOverride() === "staging" ? stagingOutputs : prodOutputs
+const MAGIC_LINK_API_URL =
+  (magicLinkOutputs as { custom?: { magicLinkApiUrl?: string } }).custom?.magicLinkApiUrl ??
+  Config.MAGIC_LINK_API_URL ??
+  ""
 
 export type AuthContextType = {
   isAuthenticated: boolean
