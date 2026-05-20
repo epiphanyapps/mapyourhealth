@@ -531,8 +531,17 @@ export interface ComputeStatusOptions {
  *
  * Numeric comparison, given a limit:
  *  - `warningThreshold = limit * threshold.warningRatio`
- *  - `higherIsBad`: at-or-above limit → `"danger"`; at-or-above warning → `"warning"`; below → `"safe"`
- *  - `!higherIsBad`: at-or-below limit → `"danger"`; at-or-below warning → `"warning"`; above → `"safe"`
+ *  - `higherIsBad`: at-or-above limit → `"danger"`; at-or-above limit × warningRatio → `"warning"`; below → `"safe"`
+ *  - `!higherIsBad`: at-or-below limit → `"danger"`; at-or-below limit ÷ warningRatio → `"warning"`; above → `"safe"`
+ *
+ * The asymmetry on warningThreshold is intentional. For `higherIsBad: true`
+ * the warning zone sits *just below* the danger limit (multiply pulls the
+ * threshold down). For `!higherIsBad` the warning zone sits *just above* the
+ * danger limit (divide pushes the threshold up). Using the same multiply on
+ * both branches leaves `warningThreshold < limit`, which made every
+ * `value <= warningThreshold` case fall through the `value <= limit → danger`
+ * check first — `warning` was unreachable for "lower is worse" properties
+ * (dissolved oxygen, pH proxies). #EPI-NN.
  *
  * Special case for `higherIsBad`: when `limit === 0` ("must be absent" rule —
  * e.g. lead, asbestos), `value === 0` means "none detected" → `"safe"`, not
@@ -553,14 +562,18 @@ export function computeStatus(
   }
 
   const limit = threshold.limitValue
-  const warningThreshold = limit * threshold.warningRatio
 
   if (higherIsBad) {
     if (limit === 0 && value === 0) return "safe"
+    const warningThreshold = limit * threshold.warningRatio
     if (value >= limit) return "danger"
     if (value >= warningThreshold) return "warning"
     return "safe"
   }
+  // `!higherIsBad` — lower is worse. Warning zone sits just above the limit,
+  // not just below: warningThreshold > limit so the conditional ladder
+  // resolves as { safe → warning → danger } as value falls.
+  const warningThreshold = threshold.warningRatio > 0 ? limit / threshold.warningRatio : limit
   if (value <= limit) return "danger"
   if (value <= warningThreshold) return "warning"
   return "safe"

@@ -70,18 +70,36 @@ describe("computeStatus", () => {
   })
 
   describe("higherIsBad: false (lower is worse — dissolved oxygen, pH proxies)", () => {
+    // Warning zone for `!higherIsBad` sits *above* the danger limit, not
+    // below: warningThreshold = limit / warningRatio. With limit=15 and
+    // warningRatio=0.8, that's `15 / 0.8 = 18.75`, so:
+    //   value > 18.75 → safe
+    //   15 <  value ≤ 18.75 → warning (close to dangerous)
+    //   value ≤ 15 → danger
+
     it("returns 'danger' at or below the limit", () => {
       expect(computeStatus(15, baseThreshold, false)).toBe("danger")
       expect(computeStatus(10, baseThreshold, false)).toBe("danger")
     })
 
-    it("returns 'warning' at or below limit × warningRatio", () => {
-      // limit=15, warningRatio=0.8 → warning at 12 (and lower, until danger)
-      expect(computeStatus(12, baseThreshold, false)).toBe("warning")
+    it("returns 'warning' between the limit and limit ÷ warningRatio", () => {
+      expect(computeStatus(16, baseThreshold, false)).toBe("warning")
+      expect(computeStatus(18, baseThreshold, false)).toBe("warning")
+      expect(computeStatus(18.75, baseThreshold, false)).toBe("warning")
     })
 
     it("returns 'safe' above the warning threshold", () => {
+      expect(computeStatus(19, baseThreshold, false)).toBe("safe")
       expect(computeStatus(20, baseThreshold, false)).toBe("safe")
+    })
+
+    it("falls back to limit-only comparison when warningRatio is 0", () => {
+      // Defensive: warningRatio=0 would divide by zero. Treat as no
+      // warning zone — every value is either safe (above limit) or
+      // danger (at/below limit), no warning.
+      const zeroRatio = { ...baseThreshold, warningRatio: 0 }
+      expect(computeStatus(15, zeroRatio, false)).toBe("danger")
+      expect(computeStatus(16, zeroRatio, false)).toBe("safe")
     })
   })
 })

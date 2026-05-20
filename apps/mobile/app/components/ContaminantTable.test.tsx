@@ -112,9 +112,13 @@ describe("ContaminantTable", () => {
 
       const { queryByText } = render(<ContaminantTable rows={rows} />)
 
-      // Local cell renders "N/A" when localLimit is null; WHO cell
-      // renders "NO STANDARD". Neither should append a unit.
-      expect(queryByText("N/A")).toBeTruthy()
+      // Local cell renders "NO LOCAL STANDARD" when localLimit is null; WHO
+      // cell renders "NO STANDARD". The "NO LOCAL STANDARD" wording (vs the
+      // previous "N/A") was a Rayane-2026-05-15 fix so the column doesn't
+      // look identical to a populated WHO value. Neither label appends a
+      // unit (no "NO STANDARD μg/L"), which is the actual invariant this
+      // test pins.
+      expect(queryByText("NO LOCAL STANDARD")).toBeTruthy()
       expect(queryByText("NO STANDARD")).toBeTruthy()
     })
   })
