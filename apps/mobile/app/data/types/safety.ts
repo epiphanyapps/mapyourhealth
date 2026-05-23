@@ -541,7 +541,7 @@ export interface ComputeStatusOptions {
  * both branches leaves `warningThreshold < limit`, which made every
  * `value <= warningThreshold` case fall through the `value <= limit → danger`
  * check first — `warning` was unreachable for "lower is worse" properties
- * (dissolved oxygen, pH proxies). #EPI-NN.
+ * (dissolved oxygen, pH proxies).
  *
  * Special case for `higherIsBad`: when `limit === 0` ("must be absent" rule —
  * e.g. lead, asbestos), `value === 0` means "none detected" → `"safe"`, not
@@ -573,7 +573,8 @@ export function computeStatus(
   // `!higherIsBad` — lower is worse. Warning zone sits just above the limit,
   // not just below: warningThreshold > limit so the conditional ladder
   // resolves as { safe → warning → danger } as value falls.
-  const warningThreshold = threshold.warningRatio > 0 ? limit / threshold.warningRatio : limit
+  const ratio = threshold.warningRatio
+  const warningThreshold = Number.isFinite(ratio) && ratio > 0 ? limit / ratio : limit
   if (value <= limit) return "danger"
   if (value <= warningThreshold) return "warning"
   return "safe"

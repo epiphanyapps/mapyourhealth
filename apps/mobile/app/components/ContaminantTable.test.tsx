@@ -120,6 +120,8 @@ describe("ContaminantTable", () => {
       // test pins.
       expect(queryByText("NO LOCAL STANDARD")).toBeTruthy()
       expect(queryByText("NO STANDARD")).toBeTruthy()
+      // Guard against regression to the old "N/A" wording.
+      expect(queryByText("N/A")).toBeNull()
     })
   })
 
