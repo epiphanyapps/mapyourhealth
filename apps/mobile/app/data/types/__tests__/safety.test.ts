@@ -70,18 +70,64 @@ describe("computeStatus", () => {
   })
 
   describe("higherIsBad: false (lower is worse — dissolved oxygen, pH proxies)", () => {
+    // Warning zone for `!higherIsBad` sits *above* the danger limit, not
+    // below: warningThreshold = limit / warningRatio. With limit=15 and
+    // warningRatio=0.8, that's `15 / 0.8 = 18.75`, so:
+    //   value > 18.75 → safe
+    //   15 <  value ≤ 18.75 → warning (close to dangerous)
+    //   value ≤ 15 → danger
+
     it("returns 'danger' at or below the limit", () => {
       expect(computeStatus(15, baseThreshold, false)).toBe("danger")
       expect(computeStatus(10, baseThreshold, false)).toBe("danger")
     })
 
-    it("returns 'warning' at or below limit × warningRatio", () => {
-      // limit=15, warningRatio=0.8 → warning at 12 (and lower, until danger)
-      expect(computeStatus(12, baseThreshold, false)).toBe("warning")
+    it("returns 'warning' between the limit and limit ÷ warningRatio", () => {
+      expect(computeStatus(16, baseThreshold, false)).toBe("warning")
+      expect(computeStatus(18, baseThreshold, false)).toBe("warning")
+      expect(computeStatus(18.75, baseThreshold, false)).toBe("warning")
     })
 
     it("returns 'safe' above the warning threshold", () => {
+      expect(computeStatus(19, baseThreshold, false)).toBe("safe")
       expect(computeStatus(20, baseThreshold, false)).toBe("safe")
+    })
+
+    it("falls back to limit-only comparison when warningRatio is 0", () => {
+      // Defensive: warningRatio=0 would divide by zero. Treat as no
+      // warning zone — every value is either safe (above limit) or
+      // danger (at/below limit), no warning.
+      const zeroRatio = { ...baseThreshold, warningRatio: 0 }
+      expect(computeStatus(15, zeroRatio, false)).toBe("danger")
+      expect(computeStatus(16, zeroRatio, false)).toBe("safe")
+    })
+
+    it("collapses the warning band to empty when warningRatio === 1", () => {
+      // limit / 1 = limit, so the ladder is { ≤ limit → danger,
+      // > limit → safe } with no intermediate warning band.
+      const fullRatio = { ...baseThreshold, warningRatio: 1 }
+      expect(computeStatus(15, fullRatio, false)).toBe("danger")
+      expect(computeStatus(15.01, fullRatio, false)).toBe("safe")
+    })
+  })
+
+  describe("higherIsBad: true — warningRatio edge cases", () => {
+    it("warningRatio === 0 makes warning band span [0, limit)", () => {
+      // warningThreshold = limit × 0 = 0, so any value ≥ 0 and < limit
+      // matches `value >= 0 → warning`. Surprising but the current
+      // documented behavior — pin it so it doesn't drift silently.
+      const zeroRatio = { ...baseThreshold, warningRatio: 0 }
+      expect(computeStatus(0, zeroRatio, true)).toBe("warning")
+      expect(computeStatus(14.99, zeroRatio, true)).toBe("warning")
+      expect(computeStatus(15, zeroRatio, true)).toBe("danger")
+    })
+
+    it("warningRatio === 1 collapses the warning band to empty", () => {
+      // limit × 1 = limit, so the ladder is { ≥ limit → danger,
+      // < limit → safe } with no warning band.
+      const fullRatio = { ...baseThreshold, warningRatio: 1 }
+      expect(computeStatus(14.99, fullRatio, true)).toBe("safe")
+      expect(computeStatus(15, fullRatio, true)).toBe("danger")
     })
   })
 })
